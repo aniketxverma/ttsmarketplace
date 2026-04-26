@@ -5,8 +5,9 @@ import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { loginSchema } from '@/lib/validation/schemas'
+import { Suspense } from 'react'
 
-export default function LoginPage() {
+function LoginContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const redirectTo = searchParams.get('redirect')
@@ -113,5 +114,13 @@ export default function LoginPage() {
         </Link>
       </div>
     </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="bg-card rounded-xl border shadow-sm p-8 flex justify-center text-sm text-muted-foreground">Loading...</div>}>
+      <LoginContent />
+    </Suspense>
   )
 }
