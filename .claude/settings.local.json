@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir -p \"/c/Users/anike/OneDrive/Desktop/tts.es/ttai/app/\\(public\\)/marketplace/[productId]\")",
+      "Bash(mkdir -p \"/c/Users/anike/OneDrive/Desktop/tts.es/ttai/app/\\(public\\)/store/[citySlug]\")",
+      "Bash(mkdir -p \"/c/Users/anike/OneDrive/Desktop/tts.es/ttai/app/\\(public\\)/store/[citySlug]/[productId]\")",
+      "Bash(mkdir -p \"/c/Users/anike/OneDrive/Desktop/tts.es/ttai/app/\\(public\\)/suppliers/[supplierId]\")",
+      "Bash(mkdir -p \"/c/Users/anike/OneDrive/Desktop/tts.es/ttai/app/\\(public\\)/brokers/[brokerId]\")",
+      "Bash(mkdir -p \"/c/Users/anike/OneDrive/Desktop/tts.es/ttai/app/\\(dashboard\\)/supplier/products/[id]/edit\")",
+      "Bash(mkdir -p \"/c/Users/anike/OneDrive/Desktop/tts.es/ttai/app/\\(dashboard\\)/supplier/orders/[id]\")",
+      "Bash(mkdir -p \"/c/Users/anike/OneDrive/Desktop/tts.es/ttai/app/api/orders/[id]/fulfill\")",
+      "Bash(mkdir -p \"/c/Users/anike/OneDrive/Desktop/tts.es/ttai/app/\\(dashboard\\)/admin/suppliers/[id]\")",
+      "Bash(mkdir -p \"/c/Users/anike/OneDrive/Desktop/tts.es/ttai/app/\\(dashboard\\)/admin/brokers/[id]\")",
+      "Bash(mkdir -p \"/c/Users/anike/OneDrive/Desktop/tts.es/ttai/app/api/admin/suppliers/[id]/transition\")",
+      "Bash(mkdir -p \"/c/Users/anike/OneDrive/Desktop/tts.es/ttai/app/api/admin/suppliers/[id]/notes\")",
+      "Bash(mkdir -p \"/c/Users/anike/OneDrive/Desktop/tts.es/ttai/app/api/admin/brokers/[id]/suspend\")",
+      "Bash(mkdir -p \"/c/Users/anike/OneDrive/Desktop/tts.es/ttai/app/\\(dashboard\\)/admin/brokers/[id]/assignments\")",
+      "Bash(mkdir -p \"/c/Users/anike/OneDrive/Desktop/tts.es/ttai/app/api/admin/brokers/[id]/assign-supplier\")",
+      "Bash(mkdir -p \"/c/Users/anike/OneDrive/Desktop/tts.es/ttai/app/api/admin/brokers/[id]/commission\")"
+    ]
+  }
+}

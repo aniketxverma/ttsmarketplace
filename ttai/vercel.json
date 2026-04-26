@@ -1,0 +1,20 @@
+{
+  "crons": [
+    { "path": "/api/cron/expiring-promotions", "schedule": "0 9 * * *" },
+    { "path": "/api/cron/auto-deliver", "schedule": "0 3 * * 0" }
+  ],
+  "functions": {
+    "app/api/webhooks/stripe/route.ts": { "maxDuration": 30 },
+    "app/api/checkout/route.ts": { "maxDuration": 15 }
+  },
+  "regions": ["fra1"],
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Frame-Options", "value": "DENY" }
+      ]
+    }
+  ]
+}
