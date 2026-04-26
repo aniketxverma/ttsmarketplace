@@ -18,7 +18,7 @@ export default async function BuyerOrderDetailPage({ params }: { params: { id: s
 
   if (!order) notFound()
 
-  const supplier = order.suppliers as { legal_name: string } | null
+  const supplier = order.suppliers as any as { legal_name: string } | null
 
   return (
     <div className="max-w-2xl space-y-6">

@@ -32,7 +32,7 @@ export default async function RetailProductPage({
 
   if (!product) notFound()
 
-  const supplier = product.suppliers as { id: string; legal_name: string; trade_name: string | null }
+  const supplier = product.suppliers as any as { id: string; legal_name: string; trade_name: string | null }
   const images = (product.product_images as { url: string; sort_order: number }[]).sort(
     (a, b) => a.sort_order - b.sort_order
   )

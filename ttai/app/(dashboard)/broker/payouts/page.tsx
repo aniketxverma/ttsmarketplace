@@ -21,7 +21,7 @@ export default async function BrokerPayoutsPage() {
         .order('created_at', { ascending: false })
     : { data: [] }
 
-  const totalPaid = payouts?.filter((p) => p.status === 'paid').reduce((s, p) => s + p.amount_cents, 0) ?? 0
+  const totalPaid = payouts?.filter((p) => p.status === 'completed').reduce((s, p) => s + p.amount_cents, 0) ?? 0
   const totalPending = payouts?.filter((p) => p.status === 'pending').reduce((s, p) => s + p.amount_cents, 0) ?? 0
 
   return (

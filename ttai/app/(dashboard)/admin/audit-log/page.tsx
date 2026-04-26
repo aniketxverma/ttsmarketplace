@@ -41,7 +41,7 @@ export default async function AdminAuditLogPage({
           </thead>
           <tbody className="divide-y">
             {data?.map((entry) => {
-              const actor = entry.profiles as { full_name: string | null } | null
+              const actor = entry.profiles as any as { full_name: string | null } | null
               return (
                 <tr key={entry.id} className="hover:bg-muted/30">
                   <td className="px-4 py-3">

@@ -69,7 +69,7 @@ export default async function AdminSuppliersPage({
           </thead>
           <tbody className="divide-y">
             {suppliers?.map((s) => {
-              const country = s.countries as { iso_code: string } | null
+              const country = s.countries as any as { iso_code: string } | null
               return (
                 <tr key={s.id} className="hover:bg-muted/30">
                   <td className="px-4 py-3">

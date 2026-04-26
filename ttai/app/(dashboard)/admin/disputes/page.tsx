@@ -32,7 +32,7 @@ export default async function AdminDisputesPage() {
             </thead>
             <tbody className="divide-y">
               {orders.map((o) => {
-                const buyer = o.profiles as { full_name: string | null } | null
+                const buyer = o.profiles as any as { full_name: string | null } | null
                 return (
                   <tr key={o.id} className="hover:bg-muted/30">
                     <td className="px-4 py-3 font-mono text-xs">{o.id.slice(0, 8)}…</td>

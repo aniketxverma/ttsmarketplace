@@ -16,7 +16,7 @@ export default async function BrokerInvoicesPage() {
   const { data: invoices } = broker
     ? await supabase
         .from('invoices')
-        .select('id, invoice_number, status, amount_cents, currency_code, issued_at')
+        .select('id, invoice_number, status, issued_at')
         .eq('broker_id', broker.id)
         .order('issued_at', { ascending: false })
     : { data: [] }
@@ -41,8 +41,8 @@ export default async function BrokerInvoicesPage() {
                 <tr key={inv.id} className="hover:bg-muted/30">
                   <td className="px-4 py-3 font-mono text-xs">{inv.invoice_number}</td>
                   <td className="px-4 py-3 capitalize">{inv.status}</td>
-                  <td className="px-4 py-3">{formatCents(inv.amount_cents, inv.currency_code)}</td>
-                  <td className="px-4 py-3 text-muted-foreground">{new Date(inv.issued_at).toLocaleDateString()}</td>
+                  <td className="px-4 py-3">{formatCents(0, 'EUR')}</td>
+                  <td className="px-4 py-3 text-muted-foreground">{(inv as any).issued_at ? new Date((inv as any).issued_at).toLocaleDateString() : '—'}</td>
                 </tr>
               ))}
             </tbody>

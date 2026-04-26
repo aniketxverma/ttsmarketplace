@@ -59,7 +59,7 @@ export default async function SupplierProductsPage() {
             </thead>
             <tbody className="divide-y">
               {products.map((p) => {
-                const cat = p.categories as { name: string } | null
+                const cat = p.categories as any as { name: string } | null
                 return (
                   <tr key={p.id} className="hover:bg-muted/30">
                     <td className="px-4 py-3 font-medium">{p.name}</td>

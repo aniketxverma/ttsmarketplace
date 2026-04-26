@@ -43,7 +43,7 @@ export default async function AdminDashboardPage() {
         <h2 className="font-semibold mb-4">Recent Activity</h2>
         <div className="space-y-2">
           {recentAudit.data?.map((entry) => {
-            const actor = entry.profiles as { full_name: string | null } | null
+            const actor = entry.profiles as any as { full_name: string | null } | null
             return (
               <div key={entry.id} className="flex items-center justify-between text-sm py-1.5 border-b last:border-0">
                 <div className="flex items-center gap-2">

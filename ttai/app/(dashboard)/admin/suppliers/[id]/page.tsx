@@ -54,7 +54,7 @@ export default function AdminSupplierDetailPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">{supplier.legal_name as string}</h1>
-          {supplier.trade_name && <p className="text-muted-foreground text-sm">{supplier.trade_name as string}</p>}
+          {(supplier.trade_name as string) && <p className="text-muted-foreground text-sm">{supplier.trade_name as string}</p>}
         </div>
         <div className="flex items-center gap-3">
           <StatusBadge status={status} />
@@ -122,7 +122,7 @@ export default function AdminSupplierDetailPage() {
         </div>
       </div>
 
-      {supplier.description && (
+      {(supplier.description as string) && (
         <div className="rounded-xl border bg-card p-4">
           <h2 className="font-semibold text-sm mb-2">Description</h2>
           <p className="text-sm text-muted-foreground">{supplier.description as string}</p>

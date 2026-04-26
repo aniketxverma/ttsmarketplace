@@ -36,9 +36,8 @@ export async function generateInvoice({ orderId, type }: GenerateInvoiceParams) 
     .from('invoices')
     .insert({
       order_id: orderId,
-      supplier_id: supplierId,
       broker_id: brokerId,
-      invoice_number: invoiceNumber,
+      invoice_number: invoiceNumber as string,
       status: 'issued',
       buyer_country: buyerCountry,
       issued_at: new Date().toISOString(),

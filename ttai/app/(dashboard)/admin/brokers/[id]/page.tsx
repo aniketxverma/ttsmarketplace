@@ -50,7 +50,7 @@ export default async function AdminBrokerDetailPage({ params }: { params: { id: 
         <h2 className="font-semibold mb-3">Assigned Suppliers ({assignments?.length ?? 0})</h2>
         <div className="space-y-2">
           {assignments?.map((a) => {
-            const supplier = a.suppliers as { legal_name: string; status: string } | null
+            const supplier = a.suppliers as any as { legal_name: string; status: string } | null
             return (
               <div key={a.supplier_id} className="flex items-center justify-between text-sm border-b pb-2 last:border-0">
                 <p className="font-medium">{supplier?.legal_name}</p>

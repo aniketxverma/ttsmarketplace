@@ -41,7 +41,7 @@ export default async function BrokerSuppliersPage() {
             </thead>
             <tbody className="divide-y">
               {assignments.map((a) => {
-                const s = a.suppliers as { id: string; legal_name: string; status: string; reliability_tier: string } | null
+                const s = a.suppliers as any as { id: string; legal_name: string; status: string; reliability_tier: string } | null
                 return (
                   <tr key={a.supplier_id} className="hover:bg-muted/30">
                     <td className="px-4 py-3 font-medium">{s?.legal_name ?? '—'}</td>
