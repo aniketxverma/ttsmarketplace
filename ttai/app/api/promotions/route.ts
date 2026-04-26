@@ -7,17 +7,16 @@ export async function GET(req: NextRequest) {
   const supabase = createClient()
   const url = new URL(req.url)
   const productId = url.searchParams.get('product_id')
-  const supplierId = url.searchParams.get('supplier_id')
 
+  // Use broker_promotions table (actual table name in DB)
   let query = supabase
-    .from('promotions')
+    .from('broker_promotions')
     .select('*')
-    .eq('active', true)
+    .eq('is_active', true)
     .lte('starts_at', new Date().toISOString())
     .gte('ends_at', new Date().toISOString())
 
   if (productId) query = query.eq('product_id', productId)
-  if (supplierId) query = query.eq('supplier_id', supplierId)
 
   const { data, error } = await query
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
@@ -41,13 +40,22 @@ export async function POST(req: NextRequest) {
     .eq('user_id', user.id)
     .single()
 
-  if (!broker || broker.status !== 'active') {
+  if (!broker || broker.status !== 'ACTIVE') {
     return NextResponse.json({ error: 'Active broker account required' }, { status: 403 })
   }
 
+  // Map camelCase schema fields → snake_case DB columns
   const { data, error } = await admin
-    .from('promotions')
-    .insert({ ...parsed.data, broker_id: broker.id, active: true })
+    .from('broker_promotions')
+    .insert({
+      broker_id: broker.id,
+      product_id: parsed.data.productId,
+      promotion_slot: parsed.data.promotionSlot,
+      starts_at: parsed.data.startsAt,
+      ends_at: parsed.data.endsAt,
+      custom_pitch: parsed.data.customPitch ?? null,
+      is_active: true,
+    })
     .select()
     .single()
 

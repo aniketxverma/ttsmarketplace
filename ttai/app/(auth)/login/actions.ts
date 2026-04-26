@@ -36,18 +36,15 @@ export async function loginAction(
     .eq('id', data.user.id)
     .single()
 
-  if (!profile) {
-    redirect('/buyer')
-  }
-
   let dest = '/buyer'
 
   if (redirectParam) {
     dest = redirectParam
   } else {
-    if (profile.role === 'admin') dest = '/admin'
-    else if (profile.role === 'supplier') dest = '/supplier'
-    else if (profile.role === 'broker') dest = '/broker'
+    const role = profile?.role
+    if (role === 'admin') dest = '/admin'
+    else if (role === 'supplier') dest = '/supplier'
+    else if (role === 'broker') dest = '/broker'
   }
 
   redirect(dest)

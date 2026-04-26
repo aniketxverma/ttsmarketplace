@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createCheckoutSession } from '@/lib/stripe/checkout'
-import { determineVatTreatment, getVatRate, calculateVat } from '@/lib/vat/conditions'
+import { determineVatTreatment, calculateVat } from '@/lib/vat/conditions'
 import { calculateFeeSplit } from '@/lib/fees/engine'
 import { checkoutSessionSchema } from '@/lib/validation/schemas'
 
@@ -15,7 +15,12 @@ export async function POST(req: NextRequest) {
   const parsed = checkoutSessionSchema.safeParse(body)
   if (!parsed.success) return NextResponse.json({ error: parsed.error.errors[0].message }, { status: 400 })
 
-  const { product_id, quantity, buyer_vat_number, idempotency_key } = parsed.data
+  // Map schema shape (camelCase / items array) to local variables
+  const { items, buyerVatNumber, idempotencyKey } = parsed.data
+  const { productId: product_id, quantity } = items[0]
+  const buyer_vat_number = buyerVatNumber ?? null
+  const idempotency_key = idempotencyKey
+
   const admin = createAdminClient()
 
   const { data: product } = await admin
@@ -27,14 +32,23 @@ export async function POST(req: NextRequest) {
 
   if (!product) return NextResponse.json({ error: 'Product not found' }, { status: 404 })
 
+  // suppliers table has no broker_id — fetch without it
   const { data: supplier } = await admin
     .from('suppliers')
-    .select('id, legal_name, country_id, broker_id, countries(iso_code)')
+    .select('id, legal_name, country_id, countries(iso_code)')
     .eq('id', product.supplier_id)
     .eq('status', 'ACTIVE')
     .single()
 
   if (!supplier) return NextResponse.json({ error: 'Supplier unavailable' }, { status: 404 })
+
+  // Broker assignment lives in broker_supplier_assignments
+  const { data: brokerAssignment } = await admin
+    .from('broker_supplier_assignments')
+    .select('broker_id')
+    .eq('supplier_id', supplier.id)
+    .single()
+  const brokerSupplierId = brokerAssignment?.broker_id ?? null
 
   const { data: buyerProfile } = await admin
     .from('profiles')
@@ -49,7 +63,7 @@ export async function POST(req: NextRequest) {
   const vatTreatment = determineVatTreatment({
     supplierCountry: supplierCountryIso,
     buyerCountry: buyerCountryIso,
-    buyerVatNumber: buyer_vat_number ?? null,
+    buyerVatNumber: buyer_vat_number,
     marketplaceContext: product.marketplace_context === 'wholesale' ? 'b2b' : 'b2c',
   })
 
@@ -64,11 +78,11 @@ export async function POST(req: NextRequest) {
   let ttaiCommissionPct = 5
   let ttaiFixedCents = 0
 
-  if ((supplier as any).broker_id) {
+  if (brokerSupplierId) {
     const { data: broker } = await admin
       .from('brokers')
       .select('stripe_account_id, broker_share_pct, commission_pct, fixed_fee_cents')
-      .eq('id', (supplier as any).broker_id)
+      .eq('id', brokerSupplierId)
       .eq('stripe_onboarding_complete', true)
       .single()
 
@@ -104,7 +118,7 @@ export async function POST(req: NextRequest) {
     .insert({
       buyer_id: user.id,
       supplier_id: supplier.id,
-      broker_id: (supplier as any).broker_id ?? null,
+      broker_id: brokerSupplierId,
       status: 'pending',
       marketplace_context: product.marketplace_context,
       subtotal_cents: subtotalCents,

@@ -43,7 +43,7 @@ export async function PATCH(
 
   if (!product) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
-  const supplier = product.suppliers as { owner_id: string } | null
+  const supplier = product.suppliers as any as { owner_id: string } | null
   if (supplier?.owner_id !== user.id) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }

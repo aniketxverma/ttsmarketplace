@@ -40,10 +40,9 @@ export async function generateInvoice({ orderId, type }: GenerateInvoiceParams) 
       broker_id: brokerId,
       invoice_number: invoiceNumber,
       status: 'issued',
-      amount_cents: amountCents,
-      currency_code: order.currency_code,
       buyer_country: buyerCountry,
       issued_at: new Date().toISOString(),
+      vat_treatment: 'standard',
     })
     .select()
     .single()
