@@ -99,10 +99,10 @@ export const checkoutSessionSchema = z.object({
     city: z.string(),
     postalCode: z.string(),
     countryIso: z.string().length(2),
-  }),
+  }).optional(),
   buyerIsVatRegistered: z.boolean().default(false),
   buyerVatNumber: z.string().optional(),
-  idempotencyKey: z.string().uuid(),
+  idempotencyKey: z.string().min(1),
 })
 
 // ─── Promotions ───────────────────────────────────────────────────────────────

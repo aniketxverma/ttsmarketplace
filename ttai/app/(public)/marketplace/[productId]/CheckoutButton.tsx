@@ -23,7 +23,10 @@ export function CheckoutButton({ productId, disabled }: CheckoutButtonProps) {
     const res = await fetch('/api/checkout', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ product_id: productId, quantity: 1, idempotency_key: idempotencyKey }),
+      body: JSON.stringify({
+        items: [{ productId, quantity: 1 }],
+        idempotencyKey,
+      }),
     })
 
     const data = await res.json()
