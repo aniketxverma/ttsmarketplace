@@ -2,6 +2,7 @@ import { notFound, redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { requireAuth } from '@/lib/auth/rbac'
 import { ProductForm } from '@/components/supplier/ProductForm'
+import { ProductImageManager } from '@/components/supplier/ProductImageManager'
 
 export default async function EditProductPage({ params }: { params: { id: string } }) {
   const user = await requireAuth()
@@ -17,12 +18,16 @@ export default async function EditProductPage({ params }: { params: { id: string
 
   const { data: product } = await supabase
     .from('products')
-    .select('*')
+    .select('*, product_images(id, url, sort_order)')
     .eq('id', params.id)
     .eq('supplier_id', supplier.id)
     .single()
 
   if (!product) notFound()
+
+  const images = (product.product_images ?? []).sort(
+    (a: { sort_order: number }, b: { sort_order: number }) => a.sort_order - b.sort_order
+  )
 
   return (
     <div className="max-w-2xl space-y-6">
@@ -30,6 +35,18 @@ export default async function EditProductPage({ params }: { params: { id: string
         <h1 className="text-2xl font-bold">Edit Product</h1>
         <p className="text-muted-foreground text-sm mt-0.5">{product.name}</p>
       </div>
+
+      {/* Images */}
+      <div className="rounded-xl border bg-card p-6 space-y-3">
+        <h2 className="font-bold text-[#0B1F4D] text-sm pb-2 border-b">Product Images</h2>
+        <ProductImageManager
+          productId={product.id}
+          supplierId={supplier.id}
+          initialImages={images}
+        />
+      </div>
+
+      {/* Product details form */}
       <div className="rounded-xl border bg-card p-6">
         <ProductForm
           supplierId={supplier.id}

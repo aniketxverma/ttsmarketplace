@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import { slugify } from '@/lib/utils'
 
@@ -38,6 +39,10 @@ export function ProductForm({ supplierId, mode, productId, initialData }: Produc
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
+  // create-mode only: stage images before product exists
+  const [pendingFiles, setPendingFiles] = useState<File[]>([])
+  const [pendingPreviews, setPendingPreviews] = useState<string[]>([])
+  const fileRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     const supabase = createClient()
@@ -88,10 +93,25 @@ export function ProductForm({ supplierId, mode, productId, initialData }: Produc
     const supabase = createClient()
 
     if (mode === 'create') {
-      const { error: insertError } = await supabase.from('products').insert({
-        ...payload, supplier_id: supplierId,
-      })
-      if (insertError) { setError(insertError.message); setLoading(false); return }
+      const { data: newProduct, error: insertError } = await supabase
+        .from('products')
+        .insert({ ...payload, supplier_id: supplierId })
+        .select('id')
+        .single()
+      if (insertError || !newProduct) { setError(insertError?.message ?? 'Insert failed'); setLoading(false); return }
+
+      // Upload staged images
+      for (let i = 0; i < pendingFiles.length; i++) {
+        const file = pendingFiles[i]
+        const ext = file.name.split('.').pop() ?? 'jpg'
+        const path = `${supplierId}/${newProduct.id}/${Date.now()}-${i}.${ext}`
+        const { error: upErr } = await supabase.storage
+          .from('product-images')
+          .upload(path, file, { upsert: false, contentType: file.type })
+        if (upErr) continue
+        const { data: { publicUrl } } = supabase.storage.from('product-images').getPublicUrl(path)
+        await supabase.from('product_images').insert({ product_id: newProduct.id, url: publicUrl, sort_order: i })
+      }
     } else if (mode === 'edit' && productId) {
       const { error: updateError } = await supabase.from('products').update(payload).eq('id', productId)
       if (updateError) { setError(updateError.message); setLoading(false); return }
@@ -99,6 +119,19 @@ export function ProductForm({ supplierId, mode, productId, initialData }: Produc
 
     setSuccess(true)
     setTimeout(() => router.push('/supplier/products'), 800)
+  }
+
+  function handlePendingFiles(fileList: FileList) {
+    const allowed = Array.from(fileList).filter(f => f.type.startsWith('image/')).slice(0, 10)
+    const previews = allowed.map(f => URL.createObjectURL(f))
+    setPendingFiles(prev => [...prev, ...allowed].slice(0, 10))
+    setPendingPreviews(prev => [...prev, ...previews].slice(0, 10))
+  }
+
+  function removePending(index: number) {
+    URL.revokeObjectURL(pendingPreviews[index])
+    setPendingFiles(prev => prev.filter((_, i) => i !== index))
+    setPendingPreviews(prev => prev.filter((_, i) => i !== index))
   }
 
   const inputCls = 'w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B1F4D] focus:border-transparent transition-all bg-white'
@@ -215,6 +248,71 @@ export function ProductForm({ supplierId, mode, productId, initialData }: Produc
           </div>
         </div>
       </div>
+
+      {/* Images — create mode only (edit mode uses ProductImageManager on the page) */}
+      {mode === 'create' && (
+        <div>
+          <h3 className="font-bold text-[#0B1F4D] text-sm mb-4 pb-2 border-b">Product Images</h3>
+          {pendingPreviews.length > 0 ? (
+            <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 mb-3">
+              {pendingPreviews.map((src, i) => (
+                <div key={i} className="relative aspect-square rounded-xl overflow-hidden border border-gray-200 bg-gray-50 group">
+                  <Image src={src} alt={`Preview ${i + 1}`} fill className="object-cover" sizes="120px" />
+                  {i === 0 && (
+                    <span className="absolute top-1 left-1 bg-[#F5A623] text-[#0B1F4D] text-[9px] font-black px-1.5 py-0.5 rounded-full z-10">
+                      Primary
+                    </span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => removePending(i)}
+                    className="absolute top-1 right-1 w-5 h-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+              {pendingPreviews.length < 10 && (
+                <button
+                  type="button"
+                  onClick={() => fileRef.current?.click()}
+                  className="aspect-square rounded-xl border-2 border-dashed border-gray-300 hover:border-[#0B1F4D] hover:bg-blue-50/50 transition-all flex flex-col items-center justify-center gap-1 text-gray-400 hover:text-[#0B1F4D]"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  <span className="text-[10px] font-semibold">Add</span>
+                </button>
+              )}
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              className="w-full rounded-2xl border-2 border-dashed border-gray-300 hover:border-[#0B1F4D] hover:bg-blue-50/30 transition-all p-8 flex flex-col items-center gap-2 text-gray-400 hover:text-[#0B1F4D]"
+            >
+              <div className="w-12 h-12 rounded-2xl bg-gray-100 flex items-center justify-center">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <div className="text-center">
+                <p className="font-bold text-sm">Click to add product images</p>
+                <p className="text-xs mt-0.5">JPG, PNG, WebP — up to 10 images</p>
+              </div>
+            </button>
+          )}
+          <p className="text-xs text-gray-400 mt-2">First image becomes the primary listing photo. Images upload after the product is created.</p>
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*"
+            multiple
+            className="hidden"
+            onChange={(e) => e.target.files && handlePendingFiles(e.target.files)}
+          />
+        </div>
+      )}
 
       {/* Publish toggle */}
       <div className="rounded-xl border border-gray-200 p-4 flex items-center justify-between">
