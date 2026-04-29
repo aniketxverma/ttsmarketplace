@@ -10,8 +10,11 @@ import { Suspense } from 'react'
 function LoginContent() {
   const searchParams = useSearchParams()
   const redirectTo = searchParams.get('redirect')
-  
-  const [error, setError] = useState<string | null>(null)
+  const urlError = searchParams.get('error')
+
+  const [error, setError] = useState<string | null>(
+    urlError === 'verification_failed' ? 'Email verification failed or link expired. Please try again.' : null
+  )
   const [loading, setLoading] = useState(false)
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
