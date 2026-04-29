@@ -19,7 +19,18 @@ export default async function BuyerDashboardPage() {
 
   return (
     <div className="space-y-6 max-w-4xl">
-      <h1 className="text-2xl font-bold">My Orders</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">My Orders</h1>
+        <Link
+          href="/buyer/messages"
+          className="flex items-center gap-2 rounded-xl border border-gray-200 text-gray-600 px-4 py-2 text-sm font-semibold hover:border-[#0B1F4D] hover:text-[#0B1F4D] transition-all"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+          </svg>
+          Messages
+        </Link>
+      </div>
 
       <div className="grid grid-cols-3 gap-4">
         <div className="rounded-xl border bg-card p-4">

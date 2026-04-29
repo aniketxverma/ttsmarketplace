@@ -3,6 +3,7 @@ import Image from 'next/image'
 import { createClient } from '@/lib/supabase/server'
 import { ProductCard } from '@/components/marketplace/ProductCard'
 import { ProductGrid } from '@/components/marketplace/ProductGrid'
+import { MessageButton } from '@/components/messages/MessageButton'
 import type { ReliabilityTier } from '@/types/domain'
 
 const TIER_DESCRIPTIONS: Record<ReliabilityTier, string> = {
@@ -52,11 +53,19 @@ export default async function SupplierProfilePage({
             </div>
           )}
           <div className="flex-1">
-            <h1 className="text-2xl font-bold">{displayName}</h1>
-            {supplier.trade_name && <p className="text-sm text-muted-foreground">{supplier.legal_name}</p>}
-            <div className="flex items-center gap-2 mt-2">
-              <span className="text-xs rounded-full border px-2 py-0.5 font-medium">{tier}</span>
-              <span className="text-xs text-muted-foreground">{TIER_DESCRIPTIONS[tier]}</span>
+            <div className="flex items-start justify-between gap-4 flex-wrap">
+              <div>
+                <h1 className="text-2xl font-bold">{displayName}</h1>
+                {supplier.trade_name && <p className="text-sm text-muted-foreground">{supplier.legal_name}</p>}
+                <div className="flex items-center gap-2 mt-2">
+                  <span className="text-xs rounded-full border px-2 py-0.5 font-medium">{tier}</span>
+                  <span className="text-xs text-muted-foreground">{TIER_DESCRIPTIONS[tier]}</span>
+                </div>
+              </div>
+              <MessageButton
+                supplierId={supplier.id}
+                redirectBase="/buyer/messages"
+              />
             </div>
           </div>
         </div>

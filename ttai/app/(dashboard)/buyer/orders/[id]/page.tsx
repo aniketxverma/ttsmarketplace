@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { requireAuth } from '@/lib/auth/rbac'
 import { formatCents } from '@/lib/utils'
 import { StatusBadge } from '@/components/dashboard/StatusBadge'
+import { MessageButton } from '@/components/messages/MessageButton'
 
 export default async function BuyerOrderDetailPage({ params }: { params: { id: string } }) {
   await requireAuth()
@@ -11,7 +12,7 @@ export default async function BuyerOrderDetailPage({ params }: { params: { id: s
 
   const { data: order } = await supabase
     .from('orders')
-    .select('id, status, total_cents, vat_cents, currency_code, marketplace_context, created_at, suppliers(legal_name), order_items(*, products(name, sku))')
+    .select('id, status, supplier_id, total_cents, vat_cents, currency_code, marketplace_context, created_at, suppliers!supplier_id(legal_name), order_items(*, products(name, sku))')
     .eq('id', params.id)
     .eq('buyer_id', user!.id)
     .single()
@@ -22,12 +23,25 @@ export default async function BuyerOrderDetailPage({ params }: { params: { id: s
 
   return (
     <div className="max-w-2xl space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold">Order Details</h1>
           <p className="text-muted-foreground text-sm font-mono">{order.id}</p>
         </div>
-        <StatusBadge status={order.status} />
+        <div className="flex items-center gap-3">
+          {order.supplier_id && (
+            <MessageButton
+              supplierId={order.supplier_id as string}
+              orderId={order.id}
+              subject={`Order ${order.id.split('-')[0].toUpperCase()}`}
+              redirectBase="/buyer/messages"
+              className="flex items-center gap-2 rounded-xl border border-gray-200 text-gray-600 px-4 py-2 text-sm font-semibold hover:border-[#0B1F4D] hover:text-[#0B1F4D] transition-all"
+            >
+              Message Supplier
+            </MessageButton>
+          )}
+          <StatusBadge status={order.status} />
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4 text-sm">

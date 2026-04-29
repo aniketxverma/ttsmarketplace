@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { MessageButton } from '@/components/messages/MessageButton'
 
 function fmt(cents: number, currency: string) {
   return new Intl.NumberFormat('en-EU', { style: 'currency', currency }).format(cents / 100)
@@ -156,7 +157,20 @@ export default function SupplierOrderDetailPage() {
 
         {/* Buyer Info */}
         <div className="rounded-2xl border border-gray-100 bg-white p-5 space-y-3">
-          <h2 className="font-bold text-[#0B1F4D]">Buyer</h2>
+          <div className="flex items-center justify-between">
+            <h2 className="font-bold text-[#0B1F4D]">Buyer</h2>
+            {typeof order.buyer_id === 'string' && (
+              <MessageButton
+                buyerId={order.buyer_id}
+                orderId={order.id as string}
+                subject={`Order ${(order.id as string).split('-')[0].toUpperCase()}`}
+                redirectBase="/supplier/messages"
+                className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 hover:text-[#0B1F4D] transition-colors"
+              >
+                Message Buyer
+              </MessageButton>
+            )}
+          </div>
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-[#0B1F4D] flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
               {buyer?.full_name?.[0]?.toUpperCase() ?? '?'}
