@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { Header } from '@/components/shared/Header'
-import { Sidebar } from '@/components/dashboard/Sidebar'
+import { DashboardShell } from '@/components/dashboard/DashboardShell'
 import type { UserRole } from '@/types/domain'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -21,10 +21,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
   return (
     <div className="flex flex-col min-h-screen">
       <Header />
-      <div className="flex flex-1">
-        <Sidebar role={profile.role as UserRole} />
-        <main className="flex-1 p-6 overflow-auto">{children}</main>
-      </div>
+      <DashboardShell role={profile.role as UserRole}>
+        {children}
+      </DashboardShell>
     </div>
   )
 }

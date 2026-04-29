@@ -57,12 +57,12 @@ function isActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(href + '/')
 }
 
-export function Sidebar({ role }: { role: UserRole }) {
+export function Sidebar({ role, className }: { role: UserRole; className?: string }) {
   const pathname = usePathname()
   const items = NAV_BY_ROLE[role] ?? BUYER_NAV
 
   return (
-    <aside className="w-56 flex-shrink-0 border-r bg-muted/30 min-h-[calc(100vh-4rem)]">
+    <aside className={className ?? 'w-56 flex-shrink-0 border-r bg-muted/30 min-h-[calc(100vh-4rem)]'}>
       <nav className="p-4 space-y-1">
         {items.map((item) => (
           <Link

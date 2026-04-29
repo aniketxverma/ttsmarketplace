@@ -34,14 +34,16 @@ export default async function SupplierChatPage({ params }: { params: { id: strin
     .order('created_at', { ascending: true })
 
   return (
-    <ChatThread
-      conversationId={(conv as any).id}
-      initialMessages={messages ?? []}
-      currentUserId={user.id}
-      otherPartyName={buyerName}
-      backHref="/supplier/messages"
-      backLabel="Your Messages"
-      orderHref={(conv as any).order_id ? `/supplier/orders/${(conv as any).order_id}` : undefined}
-    />
+    <div className="-m-4 lg:m-0">
+      <ChatThread
+        conversationId={(conv as any).id}
+        initialMessages={messages ?? []}
+        currentUserId={user.id}
+        otherPartyName={buyerName}
+        backHref="/supplier/messages"
+        backLabel="Your Messages"
+        orderHref={(conv as any).order_id ? `/supplier/orders/${(conv as any).order_id}` : undefined}
+      />
+    </div>
   )
 }

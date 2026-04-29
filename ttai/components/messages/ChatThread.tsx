@@ -128,18 +128,10 @@ export function ChatThread({
       d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
   }
 
+  // Mobile:  100svh − header(4rem) − subnav(2.75rem) = 100svh − 6.75rem
+  // Desktop: 100svh − header(4rem) only
   return (
-    /*
-     * Use flex column + calc height so the component fills exactly the
-     * available viewport regardless of screen size.
-     * 4rem  = sticky header height
-     * We avoid 100vh because iOS Safari over-reports it (URL bar is included).
-     * 100svh (small viewport height) gives the minimum guaranteed space.
-     */
-    <div
-      className="flex flex-col bg-white overflow-hidden"
-      style={{ height: 'calc(100svh - 4rem)' }}
-    >
+    <div className="flex flex-col bg-white overflow-hidden h-[calc(100svh-6.75rem)] lg:h-[calc(100svh-4rem)]">
       {/* ── Top bar ─────────────────────────────────────────────────────── */}
       <div className="flex items-center gap-3 px-4 py-3 border-b bg-white flex-shrink-0 shadow-sm">
         <Link
