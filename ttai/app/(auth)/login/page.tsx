@@ -2,13 +2,12 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { loginSchema } from '@/lib/validation/schemas'
 import { Suspense } from 'react'
 
 function LoginContent() {
-  const router = useRouter()
   const searchParams = useSearchParams()
   const redirectTo = searchParams.get('redirect')
   
@@ -58,8 +57,7 @@ function LoginContent() {
       else if (role === 'broker') dest = '/broker'
     }
 
-    router.push(dest)
-    router.refresh()
+    window.location.href = dest
   }
 
   return (
