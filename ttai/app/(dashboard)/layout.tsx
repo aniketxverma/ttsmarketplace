@@ -19,7 +19,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   if (!profile) redirect('/login')
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="h-screen flex flex-col overflow-hidden">
       <Header />
       <DashboardShell role={profile.role as UserRole}>
         {children}
