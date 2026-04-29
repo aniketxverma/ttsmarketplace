@@ -250,8 +250,8 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
           {suppliers && suppliers.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {suppliers.map((s) => {
-                const city = s.cities as { name: string } | null
-                const country = s.countries as { name: string; iso_code: string } | null
+                const city = s.cities as unknown as { name: string } | null
+                const country = s.countries as unknown as { name: string; iso_code: string } | null
                 const displayName = s.trade_name ?? s.legal_name
                 const initials = displayName.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase()
                 return (
