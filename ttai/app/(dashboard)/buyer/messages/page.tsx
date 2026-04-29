@@ -6,51 +6,54 @@ export default async function BuyerMessagesPage() {
   const user = await requireAuth()
   const supabase = createClient()
 
-  const { data: conversations } = await supabase
+  const { data: conversations } = await (supabase as any)
     .from('conversations')
     .select('id, subject, last_message_at, order_id, suppliers!supplier_id(legal_name, trade_name)')
     .eq('buyer_id', user.id)
     .order('last_message_at', { ascending: false })
 
-  const convIds = (conversations ?? []).map((c) => c.id)
+  const convIds = ((conversations as any[]) ?? []).map((c: any) => c.id)
   const unreadMap: Record<string, number> = {}
+
   if (convIds.length > 0) {
-    const { data: unread } = await supabase
+    const { data: unread } = await (supabase as any)
       .from('messages')
       .select('conversation_id')
       .in('conversation_id', convIds)
       .neq('sender_id', user.id)
       .eq('is_read', false)
-    for (const m of unread ?? []) {
+    for (const m of (unread as any[]) ?? [])
       unreadMap[m.conversation_id] = (unreadMap[m.conversation_id] ?? 0) + 1
-    }
   }
 
   const totalUnread = Object.values(unreadMap).reduce((a, b) => a + b, 0)
+  const convList = (conversations as any[]) ?? []
 
   return (
-    <div className="max-w-2xl space-y-5">
-      <div className="flex items-center justify-between">
+    <div className="max-w-2xl w-full">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-5">
         <div>
-          <h1 className="text-2xl font-bold text-[#0B1F4D]">Messages</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-[#0B1F4D]">Messages</h1>
           {totalUnread > 0 && (
-            <p className="text-sm text-gray-500 mt-0.5">
-              {totalUnread} unread message{totalUnread !== 1 ? 's' : ''}
+            <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
+              {totalUnread} unread
             </p>
           )}
         </div>
         <Link
           href="/suppliers"
-          className="flex items-center gap-2 rounded-xl bg-[#0B1F4D] text-white px-4 py-2 text-sm font-semibold hover:bg-[#162d6e] transition-colors"
+          className="flex items-center gap-2 rounded-xl bg-[#0B1F4D] text-white px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold hover:bg-[#162d6e] transition-colors"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
-          New Message
+          <span className="hidden sm:inline">New Message</span>
+          <span className="sm:hidden">New</span>
         </Link>
       </div>
 
-      {!conversations?.length ? (
+      {convList.length === 0 ? (
         <div className="text-center py-16 rounded-2xl border-2 border-dashed border-gray-200">
           <div className="w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center mx-auto mb-3">
             <svg className="w-7 h-7 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -58,41 +61,53 @@ export default async function BuyerMessagesPage() {
             </svg>
           </div>
           <p className="font-semibold text-gray-600">No conversations yet</p>
-          <p className="text-sm text-gray-400 mt-1">Visit a supplier&apos;s profile to start chatting</p>
+          <p className="text-sm text-gray-400 mt-1 px-4">Visit a supplier&apos;s profile to start chatting</p>
           <Link href="/suppliers" className="inline-block mt-4 text-sm font-bold text-[#0B1F4D] hover:underline">
             Browse Suppliers →
           </Link>
         </div>
       ) : (
-        <div className="space-y-2">
-          {conversations.map((c) => {
+        <div className="space-y-1.5">
+          {convList.map((c: any) => {
             const s = c.suppliers as { legal_name: string; trade_name: string | null } | null
             const name = s?.trade_name ?? s?.legal_name ?? 'Supplier'
             const unread = unreadMap[c.id] ?? 0
-            const timeAgo = new Date(c.last_message_at).toLocaleDateString([], { month: 'short', day: 'numeric' })
+            const dt = new Date(c.last_message_at)
+            const now = new Date()
+            const isToday = dt.toDateString() === now.toDateString()
+            const timeLabel = isToday
+              ? dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+              : dt.toLocaleDateString([], { month: 'short', day: 'numeric' })
 
             return (
               <Link
                 key={c.id}
                 href={`/buyer/messages/${c.id}`}
-                className={`flex items-center gap-4 rounded-2xl border bg-white hover:shadow-sm transition-all p-4 ${unread > 0 ? 'border-[#0B1F4D]/20 bg-blue-50/30' : 'border-gray-100'}`}
+                className={`flex items-center gap-3 sm:gap-4 rounded-2xl border bg-white active:scale-[0.99] hover:shadow-sm transition-all p-3.5 sm:p-4 ${
+                  unread > 0 ? 'border-[#0B1F4D]/20 bg-blue-50/30' : 'border-gray-100'
+                }`}
               >
+                {/* Avatar */}
                 <div className="w-11 h-11 rounded-full bg-[#0B1F4D] flex items-center justify-center text-white font-black text-base flex-shrink-0">
                   {name[0].toUpperCase()}
                 </div>
+
+                {/* Text */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-2">
                     <p className={`text-sm truncate ${unread > 0 ? 'font-bold text-gray-900' : 'font-semibold text-gray-700'}`}>
                       {name}
                     </p>
-                    <span className="text-[11px] text-gray-400 flex-shrink-0">{timeAgo}</span>
+                    <span className="text-[11px] text-gray-400 flex-shrink-0">{timeLabel}</span>
                   </div>
                   <p className="text-xs text-gray-500 truncate mt-0.5">
                     {c.subject ?? (c.order_id ? 'Order discussion' : 'General inquiry')}
                   </p>
                 </div>
+
+                {/* Unread badge */}
                 {unread > 0 && (
-                  <span className="w-5 h-5 rounded-full bg-[#F5A623] text-[#0B1F4D] text-[10px] font-black flex items-center justify-center flex-shrink-0">
+                  <span className="min-w-[20px] h-5 rounded-full bg-[#F5A623] text-[#0B1F4D] text-[10px] font-black flex items-center justify-center px-1 flex-shrink-0">
                     {unread > 9 ? '9+' : unread}
                   </span>
                 )}
