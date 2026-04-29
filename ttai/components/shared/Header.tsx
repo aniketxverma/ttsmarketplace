@@ -90,7 +90,7 @@ export async function Header() {
               href="/login"
               className="rounded-xl bg-[#0B1F4D] text-white px-5 py-2 text-sm font-semibold hover:bg-[#162d6e] hover:shadow-md transition-all duration-200"
             >
-              Login / Register
+              Login
             </Link>
           )}
 
