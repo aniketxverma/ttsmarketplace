@@ -282,9 +282,9 @@ BEGIN
    'FAS-003', 3600, 'EUR', 5, 3000, true, 20),
 
   (v_sup_fash, v_cat_text, 'wholesale', NULL,
-   'Men\'s Business Suit (MOQ 50 units)',
+   'Men''s Business Suit (MOQ 50 units)',
    'demo-fash-suits',
-   'Slim-fit 2-piece suit. 70% polyester / 30% viscose. Sizes 46–58. Multiple colourways. Private label available.',
+   'Slim-fit 2-piece suit. 70% polyester / 30% viscose. Sizes 46-58. Multiple colourways. Private label available.',
    'FAS-004', 14900, 'EUR', 50, 800, true, 20),
 
   (v_sup_fash, v_cat_text, 'wholesale', NULL,
