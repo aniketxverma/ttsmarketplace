@@ -110,6 +110,12 @@ export default async function ProductDetailPage({
 
           <CheckoutButton
             productId={params.productId}
+            name={product.name}
+            price_cents={product.price_cents}
+            currency_code={product.currency_code}
+            imageUrl={images[0]?.url}
+            supplierName={displayName}
+            min_order_qty={product.min_order_qty}
             disabled={product.stock_qty === 0}
           />
 

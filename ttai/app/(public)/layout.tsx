@@ -1,5 +1,6 @@
 import { Header } from '@/components/shared/Header'
 import { Footer } from '@/components/shared/Footer'
+import { CartDrawer } from '@/components/cart/CartDrawer'
 
 export default function PublicLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -7,6 +8,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
       <Header />
       <main className="flex-1">{children}</main>
       <Footer />
+      <CartDrawer />
     </div>
   )
 }

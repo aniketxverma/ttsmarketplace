@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { UserMenu } from './UserMenu'
+import { CartIcon } from '@/components/cart/CartIcon'
 
 const NAV = [
   { label: 'Home',        href: '/' },
@@ -73,6 +74,9 @@ export async function Header() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
             </svg>
           </button>
+
+          {/* Cart */}
+          <CartIcon />
 
           {/* Auth */}
           {user && profile ? (
