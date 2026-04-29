@@ -43,12 +43,13 @@ export default async function EditProductPage({ params }: { params: { id: string
             cityId:             product.city_id ?? '',
             description:        product.description ?? '',
             sku:                product.sku ?? '',
-            priceCents:         product.price_cents.toString(),
+            priceDisplay:       (product.price_cents / 100).toFixed(2),
             currencyCode:       product.currency_code,
             minOrderQty:        product.min_order_qty.toString(),
             stockQty:           product.stock_qty.toString(),
             vatRate:            product.vat_rate?.toString() ?? '',
             weightGrams:        product.weight_grams?.toString() ?? '',
+            isPublished:        product.is_published ?? false,
           }}
         />
       </div>

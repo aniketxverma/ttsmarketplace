@@ -2,21 +2,20 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { registerSchema } from '@/lib/validation/schemas'
 
 const ROLES = [
-  { value: 'buyer',           label: 'Buyer — purchase products' },
-  { value: 'business_client', label: 'Business Client — B2B purchasing' },
-  { value: 'supplier',        label: 'Supplier — sell products' },
-  { value: 'broker',          label: 'Broker — mediate transactions' },
+  { value: 'buyer',           label: 'Buyer',           desc: 'Purchase products from verified suppliers' },
+  { value: 'business_client', label: 'Business Client', desc: 'B2B purchasing with volume discounts' },
+  { value: 'supplier',        label: 'Supplier',        desc: 'List and sell your products' },
+  { value: 'broker',          label: 'Broker',          desc: 'Mediate deals and earn commissions' },
 ]
 
 export default function RegisterPage() {
-  const router = useRouter()
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [selectedRole, setSelectedRole] = useState('buyer')
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -25,10 +24,10 @@ export default function RegisterPage() {
 
     const formData = new FormData(e.currentTarget)
     const parsed = registerSchema.safeParse({
-      email: formData.get('email'),
+      email:    formData.get('email'),
       password: formData.get('password'),
       fullName: formData.get('fullName'),
-      role: formData.get('role') || 'buyer',
+      role:     selectedRole,
     })
 
     if (!parsed.success) {
@@ -39,13 +38,10 @@ export default function RegisterPage() {
 
     const supabase = createClient()
     const { data, error: signUpError } = await supabase.auth.signUp({
-      email: parsed.data.email,
+      email:    parsed.data.email,
       password: parsed.data.password,
       options: {
-        data: {
-          full_name: parsed.data.fullName,
-          requested_role: parsed.data.role,
-        },
+        data: { full_name: parsed.data.fullName, requested_role: parsed.data.role },
       },
     })
 
@@ -56,92 +52,102 @@ export default function RegisterPage() {
     }
 
     if (data.user) {
-      const safeRole = ['buyer', 'business_client'].includes(parsed.data.role)
-        ? parsed.data.role
-        : 'buyer'
-
       await supabase
         .from('profiles')
-        .update({ full_name: parsed.data.fullName, role: safeRole })
+        .update({ full_name: parsed.data.fullName, role: parsed.data.role })
         .eq('id', data.user.id)
     }
 
-    router.push('/verify-email')
+    window.location.href = '/verify-email'
   }
 
   return (
-    <div className="bg-card rounded-xl border shadow-sm p-8 space-y-6">
-      <div className="space-y-1">
-        <h1 className="text-2xl font-bold">Create account</h1>
-        <p className="text-muted-foreground text-sm">Join the TTAI global trade ecosystem</p>
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 space-y-6">
+      <div>
+        <h1 className="text-2xl font-extrabold text-[#0B1F4D]">Create account</h1>
+        <p className="text-gray-500 text-sm mt-1">Join the TTAI global trade ecosystem</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="space-y-1">
-          <label htmlFor="fullName" className="text-sm font-medium">Full name</label>
+      <form onSubmit={handleSubmit} className="space-y-5">
+        <div className="space-y-1.5">
+          <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Full Name *</label>
           <input
-            id="fullName"
             name="fullName"
             type="text"
             required
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            placeholder="John Smith"
+            className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B1F4D] focus:border-transparent transition-all"
           />
         </div>
 
-        <div className="space-y-1">
-          <label htmlFor="email" className="text-sm font-medium">Email</label>
+        <div className="space-y-1.5">
+          <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Email *</label>
           <input
-            id="email"
             name="email"
             type="email"
             required
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            placeholder="you@company.com"
+            className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B1F4D] focus:border-transparent transition-all"
           />
         </div>
 
-        <div className="space-y-1">
-          <label htmlFor="password" className="text-sm font-medium">Password</label>
+        <div className="space-y-1.5">
+          <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Password *</label>
           <input
-            id="password"
             name="password"
             type="password"
             required
             minLength={8}
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            placeholder="Min 8 characters"
+            className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B1F4D] focus:border-transparent transition-all"
           />
-          <p className="text-xs text-muted-foreground">Min 8 characters</p>
         </div>
 
-        <div className="space-y-1">
-          <label htmlFor="role" className="text-sm font-medium">I am a...</label>
-          <select
-            id="role"
-            name="role"
-            defaultValue="buyer"
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-          >
+        <div className="space-y-2">
+          <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">I am a...</label>
+          <div className="grid grid-cols-2 gap-2">
             {ROLES.map((r) => (
-              <option key={r.value} value={r.value}>{r.label}</option>
+              <button
+                key={r.value}
+                type="button"
+                onClick={() => setSelectedRole(r.value)}
+                className={`rounded-xl border-2 p-3 text-left transition-all ${
+                  selectedRole === r.value
+                    ? 'border-[#0B1F4D] bg-[#0B1F4D]/5'
+                    : 'border-gray-200 hover:border-gray-300'
+                }`}
+              >
+                <p className={`text-sm font-bold ${selectedRole === r.value ? 'text-[#0B1F4D]' : 'text-gray-800'}`}>{r.label}</p>
+                <p className="text-xs text-gray-500 mt-0.5 leading-tight">{r.desc}</p>
+              </button>
             ))}
-          </select>
+          </div>
         </div>
+
+        {(selectedRole === 'supplier' || selectedRole === 'broker') && (
+          <div className="rounded-xl bg-amber-50 border border-amber-200 px-4 py-3 text-xs text-amber-800">
+            <strong>Application required.</strong> After registering you'll complete an onboarding form. Your account will be reviewed within 48 hours.
+          </div>
+        )}
 
         {error && (
-          <p className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-md">{error}</p>
+          <div className="rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+            {error}
+          </div>
         )}
 
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm font-medium hover:bg-primary/90 disabled:opacity-50"
+          className="w-full rounded-xl bg-[#0B1F4D] text-white py-3.5 text-sm font-bold hover:bg-[#162d6e] transition-colors disabled:opacity-60"
         >
-          {loading ? 'Creating account...' : 'Create account'}
+          {loading ? 'Creating account...' : 'Create Account'}
         </button>
       </form>
 
-      <p className="text-center text-sm text-muted-foreground">
+      <p className="text-center text-sm text-gray-500">
         Already have an account?{' '}
-        <Link href="/login" className="text-primary hover:underline font-medium">
+        <Link href="/login" className="text-[#0B1F4D] hover:underline font-semibold">
           Sign in
         </Link>
       </p>
