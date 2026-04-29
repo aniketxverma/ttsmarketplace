@@ -97,7 +97,7 @@ export function DashboardShell({ role, children }: Props) {
       <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
 
         {/* Mobile sub-bar (hamburger + page title) */}
-        <div className="lg:hidden flex items-center gap-3 px-3 h-11 border-b bg-white/95 backdrop-blur-md sticky top-16 z-20 flex-shrink-0">
+        <div className="lg:hidden flex items-center gap-3 px-3 h-11 border-b bg-white flex-shrink-0">
           <button
             onClick={() => setOpen(true)}
             className="flex items-center justify-center w-8 h-8 rounded-lg text-gray-600 hover:bg-gray-100 active:bg-gray-200 transition-colors flex-shrink-0"
