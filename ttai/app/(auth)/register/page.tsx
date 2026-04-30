@@ -58,7 +58,16 @@ export default function RegisterPage() {
         .eq('id', data.user.id)
     }
 
-    window.location.href = '/verify-email'
+    // If email confirmation is disabled in Supabase, session exists immediately
+    if (data.session) {
+      const role = parsed.data.role
+      if (role === 'supplier') window.location.href = '/supplier/onboarding'
+      else if (role === 'broker') window.location.href = '/broker/register'
+      else window.location.href = '/buyer'
+    } else {
+      // Email confirmation still on — send to login
+      window.location.href = '/login'
+    }
   }
 
   return (
