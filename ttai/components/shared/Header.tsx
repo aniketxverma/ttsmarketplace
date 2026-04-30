@@ -6,6 +6,7 @@ import { CartIcon } from '@/components/cart/CartIcon'
 const NAV = [
   { label: 'Home',        href: '/' },
   { label: 'Marketplace', href: '/marketplace' },
+  { label: 'Regions',     href: '/#shop-by-region' },
   { label: 'Store',       href: '/store' },
   { label: 'Suppliers',   href: '/suppliers' },
 ]

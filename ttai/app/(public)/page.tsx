@@ -181,10 +181,10 @@ function StepIcons({ step }: { step: number }) {
 
 /* ─── Data ──────────────────────────────────────────────────────────────── */
 const REGIONS = [
-  { label: 'Middle East', desc: 'Discover verified suppliers across the region', Icon: IconMiddleEast, href: '/marketplace?region=me' },
-  { label: 'Europe',      desc: 'Explore European factories and manufacturers',  Icon: IconEurope,     href: '/marketplace?region=eu' },
-  { label: 'USA',         desc: 'Find suppliers in the United States',           Icon: IconUSA,        href: '/marketplace?region=us' },
-  { label: 'Africa',      desc: 'Explore African suppliers and producers',       Icon: IconAfrica,     href: '/marketplace?region=af' },
+  { label: 'Middle East', desc: 'Dubai, Lebanon, Saudi Arabia & more', Icon: IconMiddleEast, href: '/regions/middle-east' },
+  { label: 'Europe',      desc: 'Germany, France, UK, Italy & more',   Icon: IconEurope,     href: '/regions/europe' },
+  { label: 'Americas',    desc: 'USA, Canada, Brazil & more',          Icon: IconUSA,        href: '/regions/americas' },
+  { label: 'Africa',      desc: 'Morocco, Egypt, South Africa & more', Icon: IconAfrica,     href: '/regions/africa' },
 ]
 
 const PRODUCT_FAMILIES = [
@@ -420,6 +420,117 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
                 </div>
               </Link>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════════════════════════
+          SHOP BY REGION
+      ══════════════════════════════════════════════════════════════════ */}
+      <section id="shop-by-region" className="py-24 px-4 bg-[#0B1F4D] overflow-hidden relative">
+        {/* Subtle dot grid */}
+        <div className="absolute inset-0 opacity-[0.06] pointer-events-none"
+          style={{ backgroundImage: 'radial-gradient(circle, #ffffff 1px, transparent 1px)', backgroundSize: '32px 32px' }} />
+        {/* Glow orbs */}
+        <div className="absolute -top-32 -right-32 w-[500px] h-[500px] rounded-full bg-[#F5A623]/10 blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-32 -left-32 w-[400px] h-[400px] rounded-full bg-blue-500/10 blur-3xl pointer-events-none" />
+
+        <div className="container mx-auto relative">
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-12">
+            <div>
+              <p className="text-[#F5A623] font-semibold text-sm uppercase tracking-widest mb-2">Global Discovery</p>
+              <h2 className="text-3xl sm:text-4xl font-extrabold text-white">Shop by Region</h2>
+              <p className="text-blue-300 mt-2 text-sm max-w-md">Discover curated product collections tailored to each region&apos;s taste and demand.</p>
+            </div>
+            <Link
+              href="/marketplace"
+              className="inline-flex items-center gap-2 text-sm font-bold text-[#F5A623] hover:text-[#fbb93a] transition-colors flex-shrink-0"
+            >
+              View all products
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+              </svg>
+            </Link>
+          </div>
+
+          {/* Region cards grid — 2 large + 3 small */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {/* Large cards: first 2 */}
+            {[
+              { id: 'middle-east', name: 'Middle East', tagline: 'From historic souks to gleaming skylines', img: 'https://images.unsplash.com/photo-1518684079-3c830dcef090?w=900&q=80', countries: 6, span: true },
+              { id: 'europe',      name: 'Europe',      tagline: 'Quality, precision and centuries of craftsmanship', img: 'https://images.unsplash.com/photo-1467269204594-9661b134dd2b?w=900&q=80', countries: 5, span: true },
+            ].map((r, i) => (
+              <Link
+                key={r.id}
+                href={`/regions/${r.id}`}
+                className="group relative rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 bg-gray-800 sm:col-span-1"
+                style={{ animationDelay: `${i * 80}ms` }}
+              >
+                <div className="relative h-56 sm:h-64 lg:h-72">
+                  <Image
+                    src={r.img}
+                    alt={r.name}
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-600"
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                </div>
+                <div className="absolute bottom-0 left-0 right-0 p-5">
+                  <div className="flex items-end justify-between">
+                    <div>
+                      <h3 className="text-white font-extrabold text-xl">{r.name}</h3>
+                      <p className="text-white/60 text-xs mt-1 leading-snug max-w-[200px]">{r.tagline}</p>
+                      <p className="text-[#F5A623] text-xs font-bold mt-2">{r.countries} countries →</p>
+                    </div>
+                    <div className="w-10 h-10 rounded-full bg-white/15 backdrop-blur-sm border border-white/20 flex items-center justify-center group-hover:bg-[#F5A623] group-hover:border-[#F5A623] transition-all flex-shrink-0">
+                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            ))}
+
+            {/* Small cards: Asia, Africa, Americas stacked */}
+            <div className="flex flex-col gap-4">
+              {[
+                { id: 'asia',     name: 'Asia',     tagline: 'The engine of global manufacturing', img: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=700&q=80', countries: 4 },
+                { id: 'africa',   name: 'Africa',   tagline: 'A continent of rising markets',       img: 'https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?w=700&q=80', countries: 3 },
+                { id: 'americas', name: 'Americas', tagline: 'Vast markets coast to coast',         img: 'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=700&q=80', countries: 3 },
+              ].map((r, i) => (
+                <Link
+                  key={r.id}
+                  href={`/regions/${r.id}`}
+                  className="group relative rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5 bg-gray-800 flex-1"
+                  style={{ animationDelay: `${(i + 2) * 80}ms` }}
+                >
+                  <div className="relative h-32 sm:h-36">
+                    <Image
+                      src={r.img}
+                      alt={r.name}
+                      fill
+                      className="object-cover group-hover:scale-105 transition-transform duration-500"
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/30 to-transparent" />
+                  </div>
+                  <div className="absolute inset-0 flex items-center px-5">
+                    <div className="flex-1">
+                      <h3 className="text-white font-extrabold text-base">{r.name}</h3>
+                      <p className="text-white/60 text-[11px] mt-0.5 leading-snug max-w-[180px]">{r.tagline}</p>
+                    </div>
+                    <div className="w-8 h-8 rounded-full bg-white/15 backdrop-blur-sm border border-white/20 flex items-center justify-center group-hover:bg-[#F5A623] group-hover:border-[#F5A623] transition-all flex-shrink-0">
+                      <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
           </div>
         </div>
       </section>
