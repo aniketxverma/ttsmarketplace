@@ -1,15 +1,17 @@
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { requireRole } from '@/lib/auth/rbac'
 import { formatCents } from '@/lib/utils'
 
 export default async function AdminDashboardPage() {
   await requireRole('admin')
   const supabase = createClient()
+  const adminDb = createAdminClient()
 
   const [
     pendingCount, activeCount, transactionsRes, disputesCount,
     usersCount, productsCount, ordersCount, categoriesCount,
-    recentAudit,
+    aiChatsCount, recentAudit,
   ] = await Promise.all([
     supabase.from('suppliers').select('id', { count: 'exact', head: true }).in('status', ['PENDING', 'UNDER_REVIEW']),
     supabase.from('suppliers').select('id', { count: 'exact', head: true }).eq('status', 'ACTIVE'),
@@ -19,6 +21,7 @@ export default async function AdminDashboardPage() {
     supabase.from('products').select('id', { count: 'exact', head: true }).eq('is_published', true),
     supabase.from('orders').select('id', { count: 'exact', head: true }),
     supabase.from('categories').select('id', { count: 'exact', head: true }),
+    (adminDb.from('ai_chats' as any) as any).select('id', { count: 'exact', head: true }).eq('role', 'user'),
     supabase.from('admin_audit_log').select('id, action, target_type, created_at, profiles(full_name)').order('created_at', { ascending: false }).limit(10),
   ])
 
@@ -32,7 +35,8 @@ export default async function AdminDashboardPage() {
     { label: 'Total Orders',         value: ordersCount.count ?? 0,   href: '/admin/orders',                  color: 'text-purple-600' },
     { label: 'Categories',           value: categoriesCount.count ?? 0, href: '/admin/categories',            color: 'text-teal-600' },
     { label: 'Transactions (30d)',   value: `${transactionsRes.data?.length ?? 0} / ${formatCents(txTotal, 'EUR')}`, href: '/admin/transactions', color: 'text-emerald-600' },
-    { label: 'Open Disputes',        value: disputesCount.count ?? 0, href: '/admin/disputes',                color: 'text-red-600' },
+    { label: 'Open Disputes',        value: disputesCount.count ?? 0,  href: '/admin/disputes',   color: 'text-red-600' },
+    { label: 'AI Chat Messages',     value: (aiChatsCount as any).count ?? 0, href: '/admin/ai-chats', color: 'text-pink-600' },
   ]
 
   return (
