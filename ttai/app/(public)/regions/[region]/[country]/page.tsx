@@ -2,6 +2,9 @@ import { notFound } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { getCountry, REGIONS } from '@/lib/regions-data'
+import { createClient } from '@/lib/supabase/server'
+
+export const revalidate = 60
 
 export function generateStaticParams() {
   return REGIONS.flatMap((r) =>
@@ -15,11 +18,34 @@ export async function generateMetadata({ params }: { params: { region: string; c
   return { title: `${result.country.name} Collections · TTAI EMA` }
 }
 
-export default function CountryPage({ params }: { params: { region: string; country: string } }) {
+export default async function CountryPage({ params }: { params: { region: string; country: string } }) {
   const result = getCountry(params.region, params.country)
   if (!result) notFound()
 
   const { region, country } = result
+
+  // Fetch real products from suppliers who serve this region/country
+  const supabase = createClient()
+  const regionKey = params.region
+  const countryKey = `${params.region}:${params.country}`
+
+  const { data: srRows } = await (supabase.from('supplier_regions' as any) as any)
+    .select('supplier_id')
+    .in('region_key', [regionKey, countryKey])
+
+  const supplierIds: string[] = (srRows ?? []).map((r: any) => r.supplier_id)
+
+  let regionProducts: any[] = []
+  if (supplierIds.length > 0) {
+    const { data } = await supabase
+      .from('products')
+      .select('id, name, slug, price_cents, currency_code, product_images(url, sort_order)')
+      .in('supplier_id', supplierIds)
+      .eq('is_published', true)
+      .order('created_at', { ascending: false })
+      .limit(12)
+    regionProducts = data ?? []
+  }
 
   return (
     <div className="min-h-screen bg-white">
@@ -150,6 +176,68 @@ export default function CountryPage({ params }: { params: { region: string; coun
           </Link>
         </div>
       </div>
+
+      {/* ── Real products from suppliers in this region ─────────────── */}
+      {regionProducts.length > 0 && (
+        <div className="border-t py-14">
+          <div className="container mx-auto px-4 sm:px-8">
+            <div className="mb-8">
+              <p className="text-[#F5A623] text-xs font-bold uppercase tracking-widest mb-1">Available Now</p>
+              <h2 className="text-xl sm:text-2xl font-extrabold text-[#0B1F4D]">
+                Products Shipped to {country.name}
+              </h2>
+              <p className="text-gray-400 text-sm mt-1">From verified suppliers who serve this market</p>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+              {regionProducts.map((p) => {
+                const images = ((p.product_images ?? []) as { url: string; sort_order: number }[])
+                  .sort((a, b) => a.sort_order - b.sort_order)
+                const thumb = images[0]?.url
+                const price = new Intl.NumberFormat('en-EU', {
+                  style: 'currency',
+                  currency: p.currency_code ?? 'EUR',
+                }).format(p.price_cents / 100)
+                return (
+                  <Link
+                    key={p.id}
+                    href={`/marketplace/${p.slug}`}
+                    className="group rounded-2xl border border-gray-100 bg-white overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5"
+                  >
+                    <div className="relative h-40 sm:h-48 bg-gray-100">
+                      {thumb ? (
+                        <Image
+                          src={thumb}
+                          alt={p.name}
+                          fill
+                          className="object-cover group-hover:scale-105 transition-transform duration-500"
+                          sizes="(max-width: 640px) 50vw, 25vw"
+                        />
+                      ) : (
+                        <div className="absolute inset-0 flex items-center justify-center text-gray-300 text-3xl">📦</div>
+                      )}
+                    </div>
+                    <div className="p-3 sm:p-4">
+                      <h3 className="font-semibold text-gray-900 text-sm leading-tight line-clamp-2">{p.name}</h3>
+                      <p className="text-[#0B1F4D] font-extrabold text-sm mt-1.5">{price}</p>
+                    </div>
+                  </Link>
+                )
+              })}
+            </div>
+            <div className="mt-8 text-center">
+              <Link
+                href="/marketplace"
+                className="inline-flex items-center gap-2 text-sm font-bold text-[#0B1F4D] hover:underline"
+              >
+                View all products in marketplace
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                </svg>
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Other countries in this region ───────────────────────────── */}
       <div className="border-t bg-gray-50 py-12">
