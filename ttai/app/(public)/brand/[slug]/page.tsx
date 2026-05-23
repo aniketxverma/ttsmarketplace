@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation'
 import Image from 'next/image'
+import { Crown, ShieldCheck, Award, Store } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { BrandTabs } from './BrandTabs'
 
@@ -26,11 +27,14 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   }
 }
 
-const TIER_CONFIG: Record<string, { label: string; bg: string; text: string; dot: string; glow: string }> = {
-  GOLD:       { label: 'Gold Supplier',     bg: 'bg-gradient-to-r from-amber-400 to-yellow-300', text: 'text-amber-900', dot: 'bg-amber-500', glow: 'shadow-amber-200' },
-  SILVER:     { label: 'Verified Supplier', bg: 'bg-gradient-to-r from-gray-300 to-slate-200',   text: 'text-gray-700',  dot: 'bg-gray-400',  glow: 'shadow-gray-200' },
-  BRONZE:     { label: 'Bronze Supplier',   bg: 'bg-gradient-to-r from-orange-300 to-amber-200', text: 'text-orange-900', dot: 'bg-orange-500', glow: 'shadow-orange-200' },
-  UNVERIFIED: { label: 'Supplier',          bg: 'bg-gray-100',  text: 'text-gray-500', dot: 'bg-gray-400', glow: '' },
+const TIER_CONFIG: Record<string, {
+  label: string; bg: string; text: string; dot: string
+  Icon: React.ComponentType<{ className?: string }>
+}> = {
+  GOLD:       { label: 'Gold Verified',     bg: 'bg-gradient-to-r from-amber-400 to-yellow-300', text: 'text-amber-900', dot: 'bg-amber-500',  Icon: Crown },
+  SILVER:     { label: 'Verified Supplier', bg: 'bg-gradient-to-r from-slate-300 to-gray-200',   text: 'text-gray-800',  dot: 'bg-slate-400',  Icon: ShieldCheck },
+  BRONZE:     { label: 'Bronze Supplier',   bg: 'bg-gradient-to-r from-orange-400 to-amber-300', text: 'text-orange-900',dot: 'bg-orange-500', Icon: Award },
+  UNVERIFIED: { label: 'Supplier',          bg: 'bg-white/20',  text: 'text-white/80', dot: 'bg-gray-400', Icon: Store },
 }
 
 function StarRating({ rating, count }: { rating: number; count: number }) {
@@ -173,7 +177,8 @@ export default async function BrandPage({ params }: { params: { slug: string } }
                 <h1 className="text-2xl sm:text-3xl font-extrabold text-white leading-tight drop-shadow-sm">
                   {supplier.trade_name ?? supplier.legal_name}
                 </h1>
-                <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold ${tier.bg} ${tier.text} shadow`}>
+                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold ${tier.bg} ${tier.text} shadow-md`}>
+                  <tier.Icon className="w-3.5 h-3.5" />
                   {tier.label}
                 </span>
               </div>
