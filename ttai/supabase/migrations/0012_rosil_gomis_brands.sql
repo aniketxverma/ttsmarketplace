@@ -76,24 +76,31 @@ BEGIN
   SELECT id INTO v_cat_text   FROM categories WHERE slug = 'textiles-apparel'   AND parent_id IS NULL;
   SELECT id INTO v_cat_health FROM categories WHERE slug = 'health-beauty'      AND parent_id IS NULL;
 
-  -- Ensure sub-categories
+  -- Ensure sub-categories (existence-check pattern — avoids ON CONFLICT (slug) which
+  -- fails because the unique constraint on categories is (parent_id, slug) not just (slug))
   IF v_cat_food IS NOT NULL THEN
-    INSERT INTO categories (parent_id, name, slug, marketplace_context, depth, sort_order)
-    VALUES (v_cat_food, 'Olive Oil & Condiments', 'olive-oil-condiments', 'both', 1, 10)
-    ON CONFLICT (slug) DO NOTHING;
-    SELECT id INTO v_sub_olive FROM categories WHERE slug = 'olive-oil-condiments';
+    SELECT id INTO v_sub_olive FROM categories WHERE slug = 'olive-oil-condiments' AND parent_id = v_cat_food;
+    IF v_sub_olive IS NULL THEN
+      INSERT INTO categories (parent_id, name, slug, marketplace_context, depth, sort_order)
+      VALUES (v_cat_food, 'Olive Oil & Condiments', 'olive-oil-condiments', 'both', 1, 10)
+      RETURNING id INTO v_sub_olive;
+    END IF;
 
-    INSERT INTO categories (parent_id, name, slug, marketplace_context, depth, sort_order)
-    VALUES (v_cat_food, 'Beverages', 'beverages', 'both', 1, 3)
-    ON CONFLICT (slug) DO NOTHING;
-    SELECT id INTO v_sub_bev FROM categories WHERE slug = 'beverages';
+    SELECT id INTO v_sub_bev FROM categories WHERE slug = 'beverages' AND parent_id = v_cat_food;
+    IF v_sub_bev IS NULL THEN
+      INSERT INTO categories (parent_id, name, slug, marketplace_context, depth, sort_order)
+      VALUES (v_cat_food, 'Beverages', 'beverages', 'both', 1, 3)
+      RETURNING id INTO v_sub_bev;
+    END IF;
   END IF;
 
   IF v_cat_text IS NOT NULL THEN
-    INSERT INTO categories (parent_id, name, slug, marketplace_context, depth, sort_order)
-    VALUES (v_cat_text, 'Workwear & Uniforms', 'workwear-uniforms', 'both', 1, 5)
-    ON CONFLICT (slug) DO NOTHING;
-    SELECT id INTO v_sub_fashion FROM categories WHERE slug = 'workwear-uniforms';
+    SELECT id INTO v_sub_fashion FROM categories WHERE slug = 'workwear-uniforms' AND parent_id = v_cat_text;
+    IF v_sub_fashion IS NULL THEN
+      INSERT INTO categories (parent_id, name, slug, marketplace_context, depth, sort_order)
+      VALUES (v_cat_text, 'Workwear & Uniforms', 'workwear-uniforms', 'both', 1, 5)
+      RETURNING id INTO v_sub_fashion;
+    END IF;
   END IF;
 
   -- ── 5. Wipe existing Rosil & Gomis data ───────────────────────────────────

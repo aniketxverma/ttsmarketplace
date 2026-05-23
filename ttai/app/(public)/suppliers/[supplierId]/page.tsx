@@ -1,4 +1,4 @@
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/server'
 import { ProductCard } from '@/components/marketplace/ProductCard'
@@ -20,14 +20,18 @@ export default async function SupplierProfilePage({
 }) {
   const supabase = createClient()
 
-  const { data: supplier } = await supabase
-    .from('suppliers')
-    .select('id, legal_name, trade_name, description, logo_url, reliability_tier, status, country_id')
+  const { data: supplier } = await (supabase.from('suppliers') as any)
+    .select('id, legal_name, trade_name, description, logo_url, reliability_tier, status, country_id, brand_slug')
     .eq('id', params.supplierId)
     .eq('status', 'ACTIVE')
-    .single()
+    .single() as { data: any }
 
   if (!supplier) notFound()
+
+  // If this supplier has a brand profile, redirect to the premium brand page
+  if (supplier.brand_slug) {
+    redirect(`/brand/${supplier.brand_slug}`)
+  }
 
   const { data: products } = await supabase
     .from('products')
@@ -78,7 +82,7 @@ export default async function SupplierProfilePage({
 
       {products && products.length > 0 ? (
         <ProductGrid>
-          {products.map((p) => {
+          {products.map((p: any) => {
             const images = p.product_images as { url: string; sort_order: number }[]
             const mainImg = images?.sort((a, b) => a.sort_order - b.sort_order)[0]?.url
             return (
