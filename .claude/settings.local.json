@@ -16,7 +16,22 @@
       "Bash(mkdir -p \"/c/Users/anike/OneDrive/Desktop/tts.es/ttai/app/api/admin/brokers/[id]/suspend\")",
       "Bash(mkdir -p \"/c/Users/anike/OneDrive/Desktop/tts.es/ttai/app/\\(dashboard\\)/admin/brokers/[id]/assignments\")",
       "Bash(mkdir -p \"/c/Users/anike/OneDrive/Desktop/tts.es/ttai/app/api/admin/brokers/[id]/assign-supplier\")",
-      "Bash(mkdir -p \"/c/Users/anike/OneDrive/Desktop/tts.es/ttai/app/api/admin/brokers/[id]/commission\")"
+      "Bash(mkdir -p \"/c/Users/anike/OneDrive/Desktop/tts.es/ttai/app/api/admin/brokers/[id]/commission\")",
+      "Bash(git push *)",
+      "Bash(xargs ls *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git add *)",
+      "Bash(git revert *)",
+      "Bash(mkdir -p \"c:\\\\Users\\\\anike\\\\OneDrive\\\\Desktop\\\\tts.es\\\\ttai\\\\app\\\\api\\\\conversations\\\\[id]\\\\messages\")",
+      "Bash(mkdir -p \"c:\\\\Users\\\\anike\\\\OneDrive\\\\Desktop\\\\tts.es\\\\ttai\\\\app\\\\api\\\\conversations\\\\[id]\\\\read\")",
+      "Bash(mkdir -p \"c:\\\\Users\\\\anike\\\\OneDrive\\\\Desktop\\\\tts.es\\\\ttai\\\\app\\\\\\(dashboard\\)\\\\buyer\\\\messages\\\\[id]\")",
+      "Bash(mkdir -p \"c:\\\\Users\\\\anike\\\\OneDrive\\\\Desktop\\\\tts.es\\\\ttai\\\\app\\\\\\(dashboard\\)\\\\supplier\\\\messages\\\\[id]\")",
+      "Bash(xargs basename *)",
+      "Bash(mkdir -p \"c:/Users/anike/OneDrive/Desktop/tts.es/ttai/app/\\(public\\)/regions/[region]\")",
+      "Bash(mkdir -p \"c:/Users/anike/OneDrive/Desktop/tts.es/ttai/app/\\(public\\)/regions/[region]/[country]\")",
+      "Bash(npx supabase *)",
+      "Bash(node -e ' *)",
+      "Bash(curl -s -X POST https://vtjtrbdyotsnautbqadi.supabase.co/rest/v1/rpc/exec_sql -H 'apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ0anRyYmR5b3RzbmF1dGJxYWRpIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NzE3NzA2NiwiZXhwIjoyMDkyNzUzMDY2fQ.FjNLcMvvgjWzVMsKScl3NwR8j7LwcWyiQ7cRLmVcL0g' -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ0anRyYmR5b3RzbmF1dGJxYWRpIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NzE3NzA2NiwiZXhwIjoyMDkyNzUzMDY2fQ.FjNLcMvvgjWzVMsKScl3NwR8j7LwcWyiQ7cRLmVcL0g' -H 'Content-Type: application/json' --data-binary @/tmp/migration_body.json)"
     ]
   }
 }

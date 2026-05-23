@@ -12,13 +12,14 @@ interface NavItem {
 }
 
 const SUPPLIER_NAV: NavItem[] = [
-  { label: 'Dashboard',  href: '/supplier',           icon: <GridIcon /> },
-  { label: 'Products',   href: '/supplier/products',  icon: <BoxIcon /> },
-  { label: 'Regions',    href: '/supplier/regions',   icon: <GlobeIcon /> },
-  { label: 'Orders',     href: '/supplier/orders',    icon: <OrderIcon /> },
-  { label: 'Messages',   href: '/supplier/messages',  icon: <ChatIcon /> },
-  { label: 'Documents',  href: '/supplier/documents', icon: <DocIcon /> },
-  { label: 'Settings',   href: '/supplier/settings',  icon: <SettingsIcon /> },
+  { label: 'Dashboard',     href: '/supplier',               icon: <GridIcon /> },
+  { label: 'Products',      href: '/supplier/products',      icon: <BoxIcon /> },
+  { label: 'Regions',       href: '/supplier/regions',       icon: <GlobeIcon /> },
+  { label: 'Brand Profile', href: '/supplier/brand',         icon: <SparkIcon /> },
+  { label: 'Orders',        href: '/supplier/orders',        icon: <OrderIcon /> },
+  { label: 'Messages',      href: '/supplier/messages',      icon: <ChatIcon /> },
+  { label: 'Documents',     href: '/supplier/documents',     icon: <DocIcon /> },
+  { label: 'Settings',      href: '/supplier/settings',      icon: <SettingsIcon /> },
 ]
 
 const BROKER_NAV: NavItem[] = [
