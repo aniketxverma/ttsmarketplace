@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { StatusBanner } from '@/components/supplier/StatusBanner'
+import { ProfileCompletion } from '@/components/supplier/ProfileCompletion'
 import { requireAuth } from '@/lib/auth/rbac'
 import type { SupplierStatus } from '@/types/domain'
 
@@ -27,11 +28,10 @@ export default async function SupplierDashboardPage() {
   const user = await requireAuth()
   const supabase = createClient()
 
-  const { data: supplier } = await supabase
-    .from('suppliers')
-    .select('id, status, legal_name, trade_name, reliability_tier, created_at')
+  const { data: supplier } = await (supabase.from('suppliers') as any)
+    .select('id, status, legal_name, trade_name, reliability_tier, created_at, brand_slug, about_company, phone, logo_url')
     .eq('owner_id', user.id)
-    .single()
+    .single() as { data: any }
 
   if (!supplier) redirect('/supplier/onboarding')
 
@@ -56,6 +56,20 @@ export default async function SupplierDashboardPage() {
       .order('created_at', { ascending: false })
       .limit(4),
   ])
+
+  const posCountRes = await (supabase.from('supplier_pos' as any) as any)
+    .select('id', { count: 'exact', head: true })
+    .eq('supplier_id', supplier.id) as { count: number }
+
+  const completionItems = [
+    { label: 'Add company logo',      done: !!supplier.logo_url,      href: '/supplier/brand',    points: 15 },
+    { label: 'Write company about',   done: !!supplier.about_company,  href: '/supplier/brand',    points: 15 },
+    { label: 'Set brand page slug',   done: !!supplier.brand_slug,     href: '/supplier/brand',    points: 10 },
+    { label: 'Add phone number',      done: !!supplier.phone,          href: '/supplier/brand',    points: 10 },
+    { label: 'Upload documents',      done: (docsRes.count ?? 0) > 0,  href: '/supplier/documents',points: 20 },
+    { label: 'List first product',    done: (productsRes.count ?? 0) > 0, href: '/supplier/products/new', points: 20 },
+    { label: 'Add point of sale',     done: (posCountRes?.count ?? 0) > 0, href: '/supplier/pos',  points: 10 },
+  ]
 
   const allOrders = ordersRes.data ?? []
   const totalRevenue = allOrders
@@ -225,6 +239,9 @@ export default async function SupplierDashboardPage() {
 
         {/* Right column */}
         <div className="space-y-4">
+
+          {/* Profile Completion */}
+          <ProfileCompletion items={completionItems} />
 
           {/* Quick actions */}
           <div className="rounded-2xl border border-gray-100 bg-white p-5">

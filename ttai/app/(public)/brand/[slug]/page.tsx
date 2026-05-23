@@ -70,7 +70,7 @@ export default async function BrandPage({ params }: { params: { slug: string } }
 
   if (!supplier) notFound()
 
-  const [productsRes, galleryRes, certsRes, reviewsRes, docsRes] = await Promise.all([
+  const [productsRes, galleryRes, certsRes, reviewsRes, docsRes, posRes] = await Promise.all([
     supabase
       .from('products')
       .select('id, name, slug, price_cents, currency_code, min_order_qty, product_images(url, sort_order), categories(name)')
@@ -96,6 +96,11 @@ export default async function BrandPage({ params }: { params: { slug: string } }
       .from('supplier_documents')
       .select('id, doc_type, file_url, uploaded_at')
       .eq('supplier_id', supplier.id),
+    (supabase.from('supplier_pos' as any) as any)
+      .select('id, name, type, status, is_public, pos_locations(*), pos_details(phone, whatsapp, email, opening_hours, services_offered, accepts_walk_ins)')
+      .eq('supplier_id', supplier.id)
+      .eq('is_public', true)
+      .order('sort_order', { ascending: true }),
   ])
 
   const reviews = (reviewsRes.data ?? []) as any[]
@@ -279,6 +284,8 @@ export default async function BrandPage({ params }: { params: { slug: string } }
           documents={(docsRes.data ?? []) as any[]}
           avgRating={avgRating}
           sectionVisibility={sv}
+          pos={(posRes.data ?? []) as any[]}
+          brandSlug={params.slug}
         />
       </div>
     </div>

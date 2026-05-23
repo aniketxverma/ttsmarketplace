@@ -86,6 +86,8 @@ interface Props {
   documents: Document[]
   avgRating: number
   sectionVisibility: Record<string, boolean>
+  pos: any[]
+  brandSlug: string
 }
 
 // ── Tab config ─────────────────────────────────────────────────────────────────
@@ -95,6 +97,7 @@ const TABS = [
   { id: 'gallery',          label: 'Gallery' },
   { id: 'certifications',   label: 'Certifications' },
   { id: 'reviews',          label: 'Reviews' },
+  { id: 'pos',              label: 'Locations' },
   { id: 'contact',          label: 'Contact' },
 ]
 
@@ -488,6 +491,99 @@ function ReviewsTab({ reviews, avgRating }: { reviews: Review[]; avgRating: numb
   )
 }
 
+// ── POS Tab ───────────────────────────────────────────────────────────────────
+const POS_TYPE_LABELS: Record<string, { label: string; color: string }> = {
+  shop:         { label: 'Retail Shop',    color: 'bg-blue-100 text-blue-700' },
+  warehouse:    { label: 'Warehouse',      color: 'bg-gray-100 text-gray-700' },
+  distributor:  { label: 'Distributor',    color: 'bg-amber-100 text-amber-700' },
+  pickup_point: { label: 'Pickup Point',   color: 'bg-green-100 text-green-700' },
+  franchise:    { label: 'Franchise',      color: 'bg-purple-100 text-purple-700' },
+  client_store: { label: 'Client Store',   color: 'bg-pink-100 text-pink-700' },
+  agent_office: { label: 'Agent Office',   color: 'bg-indigo-100 text-indigo-700' },
+  export_hub:   { label: 'Export Hub',     color: 'bg-teal-100 text-teal-700' },
+}
+
+const POS_STATUS_COLORS: Record<string, string> = {
+  active:             'bg-green-100 text-green-700',
+  temporarily_closed: 'bg-yellow-100 text-yellow-700',
+  closed:             'bg-red-100 text-red-700',
+}
+
+function PosTab({ pos, brandSlug }: { pos: any[]; brandSlug: string }) {
+  if (pos.length === 0) {
+    return (
+      <div className="bg-white rounded-2xl border border-gray-100 p-12 text-center shadow-sm">
+        <svg className="w-12 h-12 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+        <p className="text-gray-400 font-medium">No locations listed</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-3">
+      {pos.map((p) => {
+        const loc = p.pos_locations as any
+        const det = p.pos_details as any
+        const typeInfo = POS_TYPE_LABELS[p.type] ?? { label: p.type, color: 'bg-gray-100 text-gray-700' }
+        const statusColor = POS_STATUS_COLORS[p.status] ?? 'bg-gray-100 text-gray-600'
+        return (
+          <div key={p.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+            <div className="flex items-start gap-4">
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${typeInfo.color}`}>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex flex-wrap items-center gap-2 mb-1">
+                  <p className="font-bold text-gray-900">{p.name}</p>
+                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${typeInfo.color}`}>{typeInfo.label}</span>
+                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${statusColor}`}>{p.status.replace('_', ' ')}</span>
+                </div>
+                {(loc?.address_line1 || loc?.city) && (
+                  <p className="text-sm text-gray-500 mb-2">
+                    {[loc.address_line1, loc.city, loc.country].filter(Boolean).join(', ')}
+                  </p>
+                )}
+                <div className="flex flex-wrap gap-3 text-sm">
+                  {det?.phone && (
+                    <a href={`tel:${det.phone}`} className="flex items-center gap-1.5 text-gray-600 hover:text-[#0B1F4D] transition-colors">
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
+                      {det.phone}
+                    </a>
+                  )}
+                  {det?.whatsapp && (
+                    <a href={`https://wa.me/${det.whatsapp.replace(/\D/g,'')}`} target="_blank" rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 text-green-600 hover:text-green-700 transition-colors">
+                      <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                      WhatsApp
+                    </a>
+                  )}
+                </div>
+                {det?.services_offered?.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    {(det.services_offered as string[]).map((s) => (
+                      <span key={s} className="px-2 py-0.5 bg-blue-50 text-blue-700 rounded-full text-xs font-medium">{s}</span>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <Link href={`/brand/${brandSlug}/pos/${p.id}`}
+                className="flex-shrink-0 px-3.5 py-2 rounded-xl border border-[#0B1F4D] text-[#0B1F4D] text-xs font-bold hover:bg-[#0B1F4D] hover:text-white transition-all whitespace-nowrap">
+                View Details
+              </Link>
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 // ── Contact Tab ───────────────────────────────────────────────────────────────
 function ContactTab({ supplier }: { supplier: Supplier }) {
   const country = supplier.countries as any as { name: string } | null
@@ -603,6 +699,8 @@ export function BrandTabs({
   documents,
   avgRating,
   sectionVisibility,
+  pos,
+  brandSlug,
 }: Props) {
   const [activeTab, setActiveTab] = useState('overview')
 
@@ -610,6 +708,7 @@ export function BrandTabs({
     if (tab.id === 'gallery'       && sectionVisibility.gallery       === false) return false
     if (tab.id === 'certifications' && sectionVisibility.certifications === false) return false
     if (tab.id === 'reviews'       && sectionVisibility.reviews        === false) return false
+    if (tab.id === 'pos'           && pos.length === 0) return false
     return true
   })
 
@@ -639,6 +738,11 @@ export function BrandTabs({
                   {reviews.length}
                 </span>
               )}
+              {tab.id === 'pos' && pos.length > 0 && (
+                <span className={`ml-1.5 text-xs px-1.5 py-0.5 rounded-full ${activeTab === 'pos' ? 'bg-white/20' : 'bg-gray-100 text-gray-500'}`}>
+                  {pos.length}
+                </span>
+              )}
             </button>
           ))}
         </div>
@@ -650,6 +754,7 @@ export function BrandTabs({
       {activeTab === 'gallery'        && <GalleryTab gallery={gallery} />}
       {activeTab === 'certifications' && <CertificationsTab certifications={certifications} documents={documents} />}
       {activeTab === 'reviews'        && <ReviewsTab reviews={reviews} avgRating={avgRating} />}
+      {activeTab === 'pos'            && <PosTab pos={pos} brandSlug={brandSlug} />}
       {activeTab === 'contact'        && <ContactTab supplier={supplier} />}
     </div>
   )

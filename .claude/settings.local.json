@@ -31,7 +31,12 @@
       "Bash(mkdir -p \"c:/Users/anike/OneDrive/Desktop/tts.es/ttai/app/\\(public\\)/regions/[region]/[country]\")",
       "Bash(npx supabase *)",
       "Bash(node -e ' *)",
-      "Bash(curl -s -X POST https://vtjtrbdyotsnautbqadi.supabase.co/rest/v1/rpc/exec_sql -H 'apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ0anRyYmR5b3RzbmF1dGJxYWRpIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NzE3NzA2NiwiZXhwIjoyMDkyNzUzMDY2fQ.FjNLcMvvgjWzVMsKScl3NwR8j7LwcWyiQ7cRLmVcL0g' -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ0anRyYmR5b3RzbmF1dGJxYWRpIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NzE3NzA2NiwiZXhwIjoyMDkyNzUzMDY2fQ.FjNLcMvvgjWzVMsKScl3NwR8j7LwcWyiQ7cRLmVcL0g' -H 'Content-Type: application/json' --data-binary @/tmp/migration_body.json)"
+      "Bash(curl -s -X POST https://vtjtrbdyotsnautbqadi.supabase.co/rest/v1/rpc/exec_sql -H 'apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ0anRyYmR5b3RzbmF1dGJxYWRpIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NzE3NzA2NiwiZXhwIjoyMDkyNzUzMDY2fQ.FjNLcMvvgjWzVMsKScl3NwR8j7LwcWyiQ7cRLmVcL0g' -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ0anRyYmR5b3RzbmF1dGJxYWRpIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NzE3NzA2NiwiZXhwIjoyMDkyNzUzMDY2fQ.FjNLcMvvgjWzVMsKScl3NwR8j7LwcWyiQ7cRLmVcL0g' -H 'Content-Type: application/json' --data-binary @/tmp/migration_body.json)",
+      "Bash(mkdir -p \"c:\\\\Users\\\\anike\\\\OneDrive\\\\Desktop\\\\tts.es\\\\ttai\\\\supabase\\\\migrations\" *)",
+      "Bash(git commit -m 'Add POS system, profile completion, and location pages *)"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\anike\\OneDrive\\Desktop\\tts.es\\ttai\\app\\(public)\\brand\\[slug]\\pos"
     ]
   }
 }
