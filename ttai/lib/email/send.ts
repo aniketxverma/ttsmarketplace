@@ -1,5 +1,5 @@
 import * as Sentry from '@sentry/nextjs'
-import { resend } from './client'
+import { getResendClient } from './client'
 import type { ReactElement } from 'react'
 
 interface SendEmailParams {
@@ -16,7 +16,7 @@ export async function sendEmail(params: SendEmailParams) {
   }
 
   try {
-    const result = await resend.emails.send({
+    const result = await getResendClient().emails.send({
       from: process.env.EMAIL_FROM!,
       to: params.to,
       subject: params.subject,
