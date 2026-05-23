@@ -169,62 +169,62 @@ BEGIN
   ) RETURNING id INTO v_rosil;
 
   -- ── Rosil Products (6) ─────────────────────────────────────────────────────
-  INSERT INTO products (supplier_id, name, slug, description, price_cents, currency_code, min_order_qty, stock_qty, is_published, category_id)
+  INSERT INTO products (supplier_id, name, slug, description, price_cents, currency_code, min_order_qty, stock_qty, is_published, marketplace_context, category_id)
   VALUES
     (v_rosil, 'Extra Virgin Olive Oil — Premium Single Estate 5L',
      'rosil-evoo-5l',
      'Cold-pressed within 24 hours of harvest. Harvested from century-old Picual trees in Jaén. Acidity < 0.2%. Ideal for wholesale distribution to gourmet retailers and food service.',
-     1850, 'EUR', 50, 5000, true, v_sub_olive)
+     1850, 'EUR', 50, 5000, true, 'wholesale', v_sub_olive)
   RETURNING id INTO v_rp1;
 
-  INSERT INTO products (supplier_id, name, slug, description, price_cents, currency_code, min_order_qty, stock_qty, is_published, category_id)
+  INSERT INTO products (supplier_id, name, slug, description, price_cents, currency_code, min_order_qty, stock_qty, is_published, marketplace_context, category_id)
   VALUES
     (v_rosil, 'Organic Extra Virgin Olive Oil 750ml — EU Certified',
      'rosil-organic-evoo-750ml',
      'EU Organic certified, single-varietal Arbequina from Catalonia. Fruity, mild, perfect for dressings. Available in branded or white-label packaging.',
-     490, 'EUR', 200, 20000, true, v_sub_olive)
+     490, 'EUR', 200, 20000, true, 'wholesale', v_sub_olive)
   RETURNING id INTO v_rp2;
 
-  INSERT INTO products (supplier_id, name, slug, description, price_cents, currency_code, min_order_qty, stock_qty, is_published, category_id)
+  INSERT INTO products (supplier_id, name, slug, description, price_cents, currency_code, min_order_qty, stock_qty, is_published, marketplace_context, category_id)
   VALUES
     (v_rosil, 'Spanish Sherry Vinegar PDO — 500ml Bottle',
      'rosil-sherry-vinegar-500ml',
      'Protected Designation of Origin Sherry vinegar aged minimum 2 years in American oak barrels. Complex, nutty flavour. MOQ 100 units.',
-     380, 'EUR', 100, 8000, true, v_sub_olive)
+     380, 'EUR', 100, 8000, true, 'wholesale', v_sub_olive)
   RETURNING id INTO v_rp3;
 
-  INSERT INTO products (supplier_id, name, slug, description, price_cents, currency_code, min_order_qty, stock_qty, is_published, category_id)
+  INSERT INTO products (supplier_id, name, slug, description, price_cents, currency_code, min_order_qty, stock_qty, is_published, marketplace_context, category_id)
   VALUES
     (v_rosil, 'Manzanilla Olives in Brine — 4.25kg Catering Tin',
      'rosil-manzanilla-olives-tin',
      'Hand-picked Manzanilla olives from Seville. Pitted or whole, natural brine or marinated variants. Catering-size tin ideal for food service buyers.',
-     620, 'EUR', 48, 3000, true, v_sub_olive)
+     620, 'EUR', 48, 3000, true, 'wholesale', v_sub_olive)
   RETURNING id INTO v_rp4;
 
-  INSERT INTO products (supplier_id, name, slug, description, price_cents, currency_code, min_order_qty, stock_qty, is_published, category_id)
+  INSERT INTO products (supplier_id, name, slug, description, price_cents, currency_code, min_order_qty, stock_qty, is_published, marketplace_context, category_id)
   VALUES
     (v_rosil, 'Rosil Premium Gift Set — Olive Oil Tasting Collection',
      'rosil-gift-set-tasting',
      'Curated gift box: 4 × 250ml estate olive oils (Picual, Arbequina, Hojiblanca, Cornicabra). Ideal for corporate gifting, hotel minibars, and premium retail.',
-     2200, 'EUR', 24, 500, true, v_sub_olive)
+     2200, 'EUR', 24, 500, true, 'wholesale', v_sub_olive)
   RETURNING id INTO v_rp5;
 
-  INSERT INTO products (supplier_id, name, slug, description, price_cents, currency_code, min_order_qty, stock_qty, is_published, category_id)
+  INSERT INTO products (supplier_id, name, slug, description, price_cents, currency_code, min_order_qty, stock_qty, is_published, marketplace_context, category_id)
   VALUES
     (v_rosil, 'Tomato Frito Sauce — Spanish Style 3kg Bulk',
      'rosil-tomato-frito-3kg',
      'Traditional Spanish fried tomato sauce made with sunflower oil, ripe tomatoes, and sea salt. No preservatives. Catering and food-manufacturing pack.',
-     540, 'EUR', 60, 4000, true, v_sub_olive)
+     540, 'EUR', 60, 4000, true, 'wholesale', v_sub_olive)
   RETURNING id INTO v_rp6;
 
   -- Product images — Rosil
-  INSERT INTO product_images (product_id, url, sort_order, is_primary) VALUES
-    (v_rp1, 'https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=600&q=80', 0, true),
-    (v_rp2, 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80', 0, true),
-    (v_rp3, 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&q=80', 0, true),
-    (v_rp4, 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=600&q=80', 0, true),
-    (v_rp5, 'https://images.unsplash.com/photo-1611171711912-e3f3c45d04cd?w=600&q=80', 0, true),
-    (v_rp6, 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&q=80', 0, true);
+  INSERT INTO product_images (product_id, url, sort_order) VALUES
+    (v_rp1, 'https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=600&q=80', 0),
+    (v_rp2, 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80', 0),
+    (v_rp3, 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&q=80', 0),
+    (v_rp4, 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=600&q=80', 0),
+    (v_rp5, 'https://images.unsplash.com/photo-1611171711912-e3f3c45d04cd?w=600&q=80', 0),
+    (v_rp6, 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&q=80', 0);
 
   -- ── Rosil Gallery (6 images) ───────────────────────────────────────────────
   INSERT INTO brand_gallery (supplier_id, url, type, caption, sort_order) VALUES
@@ -384,62 +384,62 @@ BEGIN
   ) RETURNING id INTO v_gomis;
 
   -- ── Gomis Products (6) ─────────────────────────────────────────────────────
-  INSERT INTO products (supplier_id, name, slug, description, price_cents, currency_code, min_order_qty, stock_qty, is_published, category_id)
+  INSERT INTO products (supplier_id, name, slug, description, price_cents, currency_code, min_order_qty, stock_qty, is_published, marketplace_context, category_id)
   VALUES
     (v_gomis, 'Chef Jacket — Classic White Long Sleeve',
      'gomis-chef-jacket-white',
      'Professional kitchen jacket in 65/35 poly-cotton, double-breasted, knotted buttons. Available in XS–4XL. Custom embroidery from 50 units. EN 13688 compliant.',
-     1890, 'EUR', 50, 3000, true, v_sub_fashion)
+     1890, 'EUR', 50, 3000, true, 'wholesale', v_sub_fashion)
   RETURNING id INTO v_gp1;
 
-  INSERT INTO products (supplier_id, name, slug, description, price_cents, currency_code, min_order_qty, stock_qty, is_published, category_id)
+  INSERT INTO products (supplier_id, name, slug, description, price_cents, currency_code, min_order_qty, stock_qty, is_published, marketplace_context, category_id)
   VALUES
     (v_gomis, 'Hotel Housekeeping Uniform Set — Polo + Trousers',
      'gomis-hotel-housekeeping-set',
      'Complete housekeeping uniform: moisture-wicking polo shirt + tailored trousers with reinforced pockets. Available in 12 standard colours. Custom logo included from 100 sets.',
-     3450, 'EUR', 100, 2000, true, v_sub_fashion)
+     3450, 'EUR', 100, 2000, true, 'wholesale', v_sub_fashion)
   RETURNING id INTO v_gp2;
 
-  INSERT INTO products (supplier_id, name, slug, description, price_cents, currency_code, min_order_qty, stock_qty, is_published, category_id)
+  INSERT INTO products (supplier_id, name, slug, description, price_cents, currency_code, min_order_qty, stock_qty, is_published, marketplace_context, category_id)
   VALUES
     (v_gomis, 'Hi-Vis Safety Jacket — EN ISO 20471 Class 3',
      'gomis-hivis-jacket-en20471',
      'High-visibility reflective jacket meeting EN ISO 20471 Class 3. Waterproof outer shell, quilted lining, multiple pockets. Construction, logistics, and roadworks certified.',
-     4200, 'EUR', 50, 1500, true, v_sub_fashion)
+     4200, 'EUR', 50, 1500, true, 'wholesale', v_sub_fashion)
   RETURNING id INTO v_gp3;
 
-  INSERT INTO products (supplier_id, name, slug, description, price_cents, currency_code, min_order_qty, stock_qty, is_published, category_id)
+  INSERT INTO products (supplier_id, name, slug, description, price_cents, currency_code, min_order_qty, stock_qty, is_published, marketplace_context, category_id)
   VALUES
     (v_gomis, 'Restaurant Waiter Apron — Bistro Style',
      'gomis-waiter-apron-bistro',
      'Classic French bistro apron, 70% cotton 30% linen blend. Double cross-back ties. Three colour options (black, navy, stone). Embroidery pocket available.',
-     890, 'EUR', 100, 5000, true, v_sub_fashion)
+     890, 'EUR', 100, 5000, true, 'wholesale', v_sub_fashion)
   RETURNING id INTO v_gp4;
 
-  INSERT INTO products (supplier_id, name, slug, description, price_cents, currency_code, min_order_qty, stock_qty, is_published, category_id)
+  INSERT INTO products (supplier_id, name, slug, description, price_cents, currency_code, min_order_qty, stock_qty, is_published, marketplace_context, category_id)
   VALUES
     (v_gomis, 'Corporate Polo Shirt — Custom Logo Print',
      'gomis-corporate-polo-custom',
      '220 g/m² piqué cotton-polyester polo. Available in 24 standard colours. Full-colour sublimation print or embroidered logo. 14-day production. Sizes XS–5XL.',
-     1250, 'EUR', 50, 10000, true, v_sub_fashion)
+     1250, 'EUR', 50, 10000, true, 'wholesale', v_sub_fashion)
   RETURNING id INTO v_gp5;
 
-  INSERT INTO products (supplier_id, name, slug, description, price_cents, currency_code, min_order_qty, stock_qty, is_published, category_id)
+  INSERT INTO products (supplier_id, name, slug, description, price_cents, currency_code, min_order_qty, stock_qty, is_published, marketplace_context, category_id)
   VALUES
     (v_gomis, 'Medical Scrub Set — Unisex Stretch Fabric',
      'gomis-medical-scrub-set',
      'Comfortable 4-way stretch scrub top and trousers. Anti-bacterial, fluid-resistant fabric. Hospital and clinic standard. Colour-coded department options.',
-     2800, 'EUR', 50, 4000, true, v_sub_fashion)
+     2800, 'EUR', 50, 4000, true, 'wholesale', v_sub_fashion)
   RETURNING id INTO v_gp6;
 
   -- Product images — Gomis
-  INSERT INTO product_images (product_id, url, sort_order, is_primary) VALUES
-    (v_gp1, 'https://images.unsplash.com/photo-1577219491135-ce391730fb2c?w=600&q=80', 0, true),
-    (v_gp2, 'https://images.unsplash.com/photo-1583394293214-0b3b3b3b3b3b?w=600&q=80', 0, true),
-    (v_gp3, 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=600&q=80', 0, true),
-    (v_gp4, 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=600&q=80', 0, true),
-    (v_gp5, 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=600&q=80', 0, true),
-    (v_gp6, 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=600&q=80', 0, true);
+  INSERT INTO product_images (product_id, url, sort_order) VALUES
+    (v_gp1, 'https://images.unsplash.com/photo-1577219491135-ce391730fb2c?w=600&q=80', 0),
+    (v_gp2, 'https://images.unsplash.com/photo-1583394293214-0b3b3b3b3b3b?w=600&q=80', 0),
+    (v_gp3, 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=600&q=80', 0),
+    (v_gp4, 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=600&q=80', 0),
+    (v_gp5, 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=600&q=80', 0),
+    (v_gp6, 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=600&q=80', 0);
 
   -- ── Gomis Gallery (6 images) ───────────────────────────────────────────────
   INSERT INTO brand_gallery (supplier_id, url, type, caption, sort_order) VALUES
