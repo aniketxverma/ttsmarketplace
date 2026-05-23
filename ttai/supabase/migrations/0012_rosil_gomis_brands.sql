@@ -117,7 +117,7 @@ BEGIN
   -- ════════════════════════════════════════════════════════════════════════════
 
   INSERT INTO suppliers (
-    owner_id, trade_name, legal_name, status, reliability_tier,
+    owner_id, trade_name, legal_name, tax_id, status, reliability_tier,
     country_id, city_id,
     address_line1, postal_code,
     brand_slug, tagline, logo_url, banner_image,
@@ -133,6 +133,7 @@ BEGIN
     v_owner,
     'Rosil Spain',
     'Rosil Export S.L.',
+    'ESB12345678',
     'ACTIVE', 'GOLD',
     v_es, v_madrid,
     'Calle de Serrano 41, Planta 3', '28001',
@@ -331,7 +332,7 @@ BEGIN
   -- ════════════════════════════════════════════════════════════════════════════
 
   INSERT INTO suppliers (
-    owner_id, trade_name, legal_name, status, reliability_tier,
+    owner_id, trade_name, legal_name, tax_id, status, reliability_tier,
     country_id, city_id,
     address_line1, postal_code,
     brand_slug, tagline, logo_url, banner_image,
@@ -347,6 +348,7 @@ BEGIN
     v_owner,
     'Gomis Export',
     'Textiles Gomis Export S.A.',
+    'ESA87654321',
     'ACTIVE', 'SILVER',
     v_es, v_val,
     'Polígono Industrial La Pascualeta, Nave 7', '46910',
