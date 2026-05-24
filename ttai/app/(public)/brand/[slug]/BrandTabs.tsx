@@ -7,8 +7,7 @@ import {
   Package, Images, Award, Star, MapPin, MessageCircle, Info,
   Store, Warehouse, Truck, Building2, ShoppingBag, Briefcase, Anchor,
   Calendar, Globe, Share2, Check, Phone, Mail, Clock, Navigation,
-  ExternalLink, Download, Play, X, BadgeCheck, ChevronRight, ChevronLeft,
-  Reply, Users, Tag
+  ExternalLink, Download, Play, X, BadgeCheck, ChevronRight, ChevronLeft, Reply
 } from 'lucide-react'
 import { formatCents } from '@/lib/utils'
 
@@ -46,7 +45,7 @@ function WaIcon({ className }: { className?: string }) {
   )
 }
 
-// ── Stars helper ──────────────────────────────────────────────────────────────
+// ── Stars ─────────────────────────────────────────────────────────────────────
 function Stars({ rating, size = 'sm' }: { rating: number; size?: 'sm'|'lg' }) {
   const sz = size === 'lg' ? 'w-5 h-5' : 'w-3.5 h-3.5'
   return (
@@ -56,31 +55,6 @@ function Stars({ rating, size = 'sm' }: { rating: number; size?: 'sm'|'lg' }) {
           <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
         </svg>
       ))}
-    </div>
-  )
-}
-
-// ── Section heading ───────────────────────────────────────────────────────────
-function SectionHeading({
-  icon: Icon, title, subtitle, action
-}: {
-  icon: React.ComponentType<{className?: string}>
-  title: string
-  subtitle?: string
-  action?: React.ReactNode
-}) {
-  return (
-    <div className="flex items-start justify-between gap-4 mb-8">
-      <div className="flex items-center gap-4">
-        <div className="w-12 h-12 rounded-2xl bg-[#0B1F4D] flex items-center justify-center shadow-md flex-shrink-0">
-          <Icon className="w-6 h-6 text-white" />
-        </div>
-        <div>
-          <h2 className="text-2xl font-extrabold text-[#0B1F4D] leading-tight">{title}</h2>
-          {subtitle && <p className="text-sm text-gray-400 mt-0.5">{subtitle}</p>}
-        </div>
-      </div>
-      {action}
     </div>
   )
 }
@@ -103,111 +77,164 @@ function ShareButton({ url }: { url: string }) {
   )
 }
 
-// ── Product card (compact, for sliders) ──────────────────────────────────────
-function ProductCard({ product, wa }: { product: Product; wa: string | null }) {
+// ── Section heading — color-coded per section ─────────────────────────────────
+function SectionHeading({
+  icon: Icon, title, subtitle, action, accent = '#0B1F4D'
+}: {
+  icon: React.ComponentType<{className?: string}>
+  title: string; subtitle?: string; action?: React.ReactNode; accent?: string
+}) {
   return (
-    <div className="group bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-lg transition-all duration-200 hover:-translate-y-1 flex flex-col h-full">
-      <div className="relative aspect-square bg-gray-50 overflow-hidden">
-        {product.thumb ? (
-          <Image
-            src={product.thumb} alt={product.name} fill
-            className="object-cover group-hover:scale-105 transition-transform duration-300"
-            sizes="(max-width:640px) 45vw, 220px"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <Images className="w-10 h-10 text-gray-200" />
-          </div>
-        )}
-        {/* MOQ badge */}
-        {product.min_order_qty && (
-          <div className="absolute bottom-2 left-2 bg-[#0B1F4D] text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
-            MOQ {product.min_order_qty}
-          </div>
-        )}
-        {/* Hover inquiry overlay */}
-        {wa && (
-          <div className="absolute inset-0 bg-[#0B1F4D]/80 opacity-0 group-hover:opacity-100 transition-opacity duration-150 flex items-center justify-center gap-2 p-3">
-            <a href={`${wa}?text=Hi! I'd like to request a sample of: ${product.name}`}
-              target="_blank" rel="noopener noreferrer"
-              onClick={e => e.stopPropagation()}
-              className="flex-1 flex items-center justify-center py-2 bg-white text-[#0B1F4D] rounded-xl text-xs font-bold hover:bg-gray-100 transition-colors">
-              Sample
-            </a>
-            <a href={`${wa}?text=Hi! I'm interested in: ${product.name}`}
-              target="_blank" rel="noopener noreferrer"
-              onClick={e => e.stopPropagation()}
-              className="flex-1 flex items-center justify-center py-2 bg-[#F5A623] text-[#0B1F4D] rounded-xl text-xs font-bold hover:bg-amber-400 transition-colors">
-              Enquire
-            </a>
-          </div>
-        )}
+    <div className="flex items-start justify-between gap-4 mb-8">
+      <div className="flex items-center gap-4">
+        <div className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-md flex-shrink-0" style={{ background: accent }}>
+          <Icon className="w-6 h-6 text-white" />
+        </div>
+        <div>
+          <h2 className="text-2xl font-extrabold leading-tight" style={{ color: accent }}>{title}</h2>
+          {subtitle && <p className="text-sm text-gray-400 mt-0.5">{subtitle}</p>}
+        </div>
       </div>
-      <div className="p-3.5 flex-1 flex flex-col">
-        {product.category_name && (
-          <p className="text-[10px] text-[#F5A623] font-bold mb-0.5 uppercase tracking-wide">{product.category_name}</p>
-        )}
-        <h3 className="text-sm font-semibold text-gray-800 line-clamp-2 leading-snug flex-1 mb-2">{product.name}</h3>
-        <span className="font-extrabold text-[#0B1F4D] text-sm">
-          {product.price_cents > 0 ? formatCents(product.price_cents, product.currency_code) : <span className="text-gray-400 font-normal italic text-xs">Price on request</span>}
-        </span>
-      </div>
+      {action}
     </div>
   )
 }
 
-// ── Horizontal category slider ────────────────────────────────────────────────
+// ── Product card ──────────────────────────────────────────────────────────────
+function ProductCard({ product, wa }: { product: Product; wa: string | null }) {
+  const productHref = `/marketplace/${product.slug ?? product.id}`
+  return (
+    <div className="group bg-white rounded-xl border border-gray-100 overflow-hidden flex flex-col h-full"
+      style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.07)', transition: 'box-shadow 0.25s ease, transform 0.25s cubic-bezier(0.16,1,0.3,1)' }}
+      onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.boxShadow = '0 8px 24px rgba(0,0,0,0.13)'; el.style.transform = 'translateY(-3px)' }}
+      onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.boxShadow = '0 1px 4px rgba(0,0,0,0.07)'; el.style.transform = '' }}>
+      {/* Image — clickable to product page */}
+      <Link href={productHref} className="relative overflow-hidden flex-shrink-0 block" style={{ aspectRatio: '1/1', background: '#F5F5F3' }}>
+        {product.thumb ? (
+          <Image src={product.thumb} alt={product.name} fill className="object-cover"
+            style={{ transition: 'transform 0.4s cubic-bezier(0.16,1,0.3,1)' }}
+            sizes="220px"
+            onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.06)')}
+            onMouseLeave={e => (e.currentTarget.style.transform = '')} />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <Images className="w-8 h-8 text-gray-200" />
+          </div>
+        )}
+        {/* MOQ */}
+        {product.min_order_qty && (
+          <div className="absolute bottom-2 left-2 bg-[#0B1F4D]/90 text-white text-[10px] font-bold px-2 py-0.5 rounded-full backdrop-blur-sm">
+            MOQ {product.min_order_qty}
+          </div>
+        )}
+        {/* Hover overlay — View + Enquire */}
+        <div className="absolute inset-0 bg-[#0B1F4D]/75 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-end p-2.5 gap-2">
+          <span className="flex-1 flex items-center justify-center py-1.5 bg-white text-[#0B1F4D] rounded-lg text-[11px] font-bold">
+            View Details
+          </span>
+          {wa && (
+            <a href={`${wa}?text=Hi! I'm interested in: ${product.name}`}
+              target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
+              className="flex-1 flex items-center justify-center py-1.5 bg-[#F5A623] text-[#0B1F4D] rounded-lg text-[11px] font-bold hover:bg-amber-400 transition-colors">
+              Enquire
+            </a>
+          )}
+        </div>
+      </Link>
+      {/* Info — also clickable */}
+      <Link href={productHref} className="p-3 flex-1 flex flex-col hover:bg-gray-50/60 transition-colors">
+        {product.category_name && (
+          <p className="text-[10px] text-[#F5A623] font-bold uppercase tracking-wide mb-0.5 truncate">{product.category_name}</p>
+        )}
+        <h3 className="text-[13px] font-semibold text-gray-800 line-clamp-2 leading-snug flex-1 mb-1.5">{product.name}</h3>
+        <span className="text-[13px] font-extrabold text-[#0B1F4D]">
+          {product.price_cents > 0
+            ? formatCents(product.price_cents, product.currency_code)
+            : <span className="text-gray-400 font-normal italic text-[11px]">Price on request</span>}
+        </span>
+      </Link>
+    </div>
+  )
+}
+
+// ── Category slider — auto 2-row when category has 6+ products ────────────────
 function CategorySlider({ name, products, wa }: { name: string; products: Product[]; wa: string | null }) {
   const ref = useRef<HTMLDivElement>(null)
-  const scroll = (dir: 'left' | 'right') =>
-    ref.current?.scrollBy({ left: dir === 'right' ? 240 : -240, behavior: 'smooth' })
+  const rows = products.length >= 6 ? 2 : 1
+  const cardW = 200
+
+  const scroll = (dir: 'left' | 'right') => {
+    const amount = (cardW + 12) * (rows === 2 ? 2 : 3)
+    ref.current?.scrollBy({ left: dir === 'right' ? amount : -amount, behavior: 'smooth' })
+  }
 
   return (
     <div>
-      {/* Row header */}
+      {/* Header row */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2.5">
-          <span className="text-base font-extrabold text-[#0B1F4D]">{name}</span>
-          <span className="text-xs bg-gray-100 text-gray-500 font-bold px-2 py-0.5 rounded-full">{products.length}</span>
+          <span className="text-[15px] font-extrabold text-[#0B1F4D]">{name}</span>
+          <span className="text-[11px] bg-[#0B1F4D]/8 text-[#0B1F4D] font-bold px-2 py-0.5 rounded-full border border-[#0B1F4D]/10">
+            {products.length}
+          </span>
+          {rows === 2 && (
+            <span className="text-[10px] bg-amber-50 text-amber-700 font-bold px-2 py-0.5 rounded-full border border-amber-200 uppercase tracking-wide">
+              2 rows
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-1.5">
           <button onClick={() => scroll('left')}
-            className="w-8 h-8 rounded-full border border-gray-200 bg-white flex items-center justify-center hover:border-[#0B1F4D] hover:bg-[#0B1F4D] hover:text-white transition-all text-gray-400">
+            className="w-8 h-8 rounded-full border border-gray-200 bg-white flex items-center justify-center text-gray-400 hover:bg-[#0B1F4D] hover:text-white hover:border-[#0B1F4D] transition-all duration-150 shadow-sm">
             <ChevronLeft className="w-4 h-4" />
           </button>
           <button onClick={() => scroll('right')}
-            className="w-8 h-8 rounded-full border border-gray-200 bg-white flex items-center justify-center hover:border-[#0B1F4D] hover:bg-[#0B1F4D] hover:text-white transition-all text-gray-400">
+            className="w-8 h-8 rounded-full border border-gray-200 bg-white flex items-center justify-center text-gray-400 hover:bg-[#0B1F4D] hover:text-white hover:border-[#0B1F4D] transition-all duration-150 shadow-sm">
             <ChevronRight className="w-4 h-4" />
           </button>
         </div>
       </div>
 
-      {/* Scrollable row */}
-      <div
-        ref={ref}
-        className="flex gap-3.5 overflow-x-auto pb-3"
-        style={{ scrollSnapType: 'x mandatory', scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' as any }}
-      >
-        {products.map(p => (
-          <div key={p.id} className="flex-shrink-0 w-[180px] sm:w-[210px]" style={{ scrollSnapAlign: 'start' }}>
-            <ProductCard product={p} wa={wa} />
-          </div>
-        ))}
-        <div className="flex-shrink-0 w-2" />
+      {/* Slider with right-fade hint */}
+      <div className="relative">
+        <div
+          ref={ref}
+          className="overflow-x-auto pb-2"
+          style={{
+            display: 'grid',
+            gridTemplateRows: `repeat(${rows}, auto)`,
+            gridAutoFlow: 'column',
+            gridAutoColumns: `${cardW}px`,
+            gap: '12px',
+            scrollSnapType: 'x mandatory',
+            scrollbarWidth: 'none',
+            WebkitOverflowScrolling: 'touch' as any,
+          }}
+        >
+          {products.map((p, i) => (
+            <div key={p.id} style={{ scrollSnapAlign: i % rows === 0 ? 'start' : 'none' }}>
+              <ProductCard product={p} wa={wa} />
+            </div>
+          ))}
+          <div style={{ width: 8, gridRow: `span ${rows}` }} />
+        </div>
+        {/* Right fade hint */}
+        <div className="pointer-events-none absolute top-0 right-0 bottom-2 w-16 rounded-r-xl"
+          style={{ background: 'linear-gradient(to right, transparent, rgba(247,248,250,0.95))' }} />
       </div>
     </div>
   )
 }
 
-// ── Section nav config (products first) ──────────────────────────────────────
+// ── Nav config ────────────────────────────────────────────────────────────────
 const NAV_ITEMS = [
-  { id: 'products',       label: 'Products',       Icon: Package },
-  { id: 'about',          label: 'About',          Icon: Info },
-  { id: 'gallery',        label: 'Gallery',        Icon: Images },
-  { id: 'certifications', label: 'Certifications', Icon: Award },
-  { id: 'reviews',        label: 'Reviews',        Icon: Star },
-  { id: 'locations',      label: 'Locations',      Icon: MapPin },
-  { id: 'contact',        label: 'Contact',        Icon: MessageCircle },
+  { id: 'products',       label: 'Products',       Icon: Package,        accent: '#0B1F4D' },
+  { id: 'about',          label: 'About',          Icon: Info,           accent: '#1D4ED8' },
+  { id: 'gallery',        label: 'Gallery',        Icon: Images,         accent: '#5B21B6' },
+  { id: 'certifications', label: 'Certifications', Icon: Award,          accent: '#B45309' },
+  { id: 'reviews',        label: 'Reviews',        Icon: Star,           accent: '#B45309' },
+  { id: 'locations',      label: 'Locations',      Icon: MapPin,         accent: '#065F46' },
+  { id: 'contact',        label: 'Contact',        Icon: MessageCircle,  accent: '#0E7490' },
 ]
 
 // ── POS type config ───────────────────────────────────────────────────────────
@@ -222,7 +249,7 @@ const POS_TYPE_CONFIG: Record<string, { label: string; color: string; bg: string
   export_hub:   { label: 'Export Hub',   color: 'text-teal-700',   bg: 'bg-teal-50',   Icon: Anchor },
 }
 
-// ── Main Component ─────────────────────────────────────────────────────────────
+// ── Main component ────────────────────────────────────────────────────────────
 export function BrandTabs({
   supplier, products, gallery, certifications, reviews, documents,
   avgRating, sectionVisibility, pos, brandSlug, shareUrl
@@ -234,7 +261,7 @@ export function BrandTabs({
   const country = supplier.countries as any as { name: string } | null
   const city    = supplier.cities   as any as { name: string } | null
 
-  // Group products by category for sliders
+  // Group products by category
   const productsByCategory = useMemo(() => {
     const map = new Map<string, Product[]>()
     products.forEach(p => {
@@ -245,7 +272,7 @@ export function BrandTabs({
     return Array.from(map.entries())
   }, [products])
 
-  // Visible nav items
+  // Visible nav
   const visibleNav = NAV_ITEMS.filter(item => {
     if (item.id === 'products'       && products.length === 0) return false
     if (item.id === 'gallery'        && (gallery.length === 0 || sectionVisibility.gallery === false)) return false
@@ -255,13 +282,38 @@ export function BrandTabs({
     return true
   })
 
-  // Scrollspy
+  // Scroll reveal — runs once after mount
   useEffect(() => {
+    const DURATION = '0.55s'
+    const EASE = 'cubic-bezier(0.16,1,0.3,1)'
+    const observer = new IntersectionObserver(
+      entries => entries.forEach(e => {
+        if (e.isIntersecting) {
+          const el = e.target as HTMLElement
+          el.style.opacity = '1'
+          el.style.transform = 'translateY(0)'
+          observer.unobserve(el)
+        }
+      }),
+      { threshold: 0.07, rootMargin: '-10px' }
+    )
+    document.querySelectorAll('[data-reveal]').forEach(el => {
+      const h = el as HTMLElement
+      h.style.opacity = '0'
+      h.style.transform = 'translateY(22px)'
+      h.style.transition = `opacity ${DURATION} ${EASE}, transform ${DURATION} ${EASE}`
+      observer.observe(h)
+    })
+    return () => observer.disconnect()
+  }, [])
+
+  // Scrollspy — fixed offset: sub-bar (48px) + BrandTabs nav (~48px) = 96px + buffer
+  useEffect(() => {
+    const OFFSET = 108
     const onScroll = () => {
-      const offset = 140
       for (let i = visibleNav.length - 1; i >= 0; i--) {
         const el = document.getElementById(`sec-${visibleNav[i].id}`)
-        if (el && el.getBoundingClientRect().top <= offset) {
+        if (el && el.getBoundingClientRect().top <= OFFSET) {
           setActiveSection(visibleNav[i].id)
           return
         }
@@ -275,45 +327,56 @@ export function BrandTabs({
   const scrollTo = (id: string) => {
     const el = document.getElementById(`sec-${id}`)
     if (!el) return
-    window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 120, behavior: 'smooth' })
+    window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 105, behavior: 'smooth' })
   }
 
   return (
     <>
-      {/* ── STICKY SECTION NAV ─────────────────────────────────────────────── */}
-      <div className="sticky top-[48px] z-20 bg-white/95 backdrop-blur-sm border-b border-gray-200 -mx-4 sm:-mx-8 mb-0">
-        <div className="max-w-6xl mx-auto px-4 sm:px-8 flex items-center justify-between">
-          <div className="overflow-x-auto flex-1" style={{ scrollbarWidth: 'none' }}>
-            <div className="flex items-center min-w-max">
-              {visibleNav.map(item => {
-                const isActive = activeSection === item.id
-                const NavIcon = item.Icon
-                const count =
-                  item.id === 'products'  ? products.length :
-                  item.id === 'reviews'   ? reviews.length  :
-                  item.id === 'locations' ? pos.length       :
-                  item.id === 'gallery'   ? gallery.length   : 0
-                return (
-                  <button key={item.id} onClick={() => scrollTo(item.id)}
-                    className={`flex items-center gap-1.5 px-4 py-3.5 text-sm font-semibold border-b-2 transition-all whitespace-nowrap ${
-                      isActive
-                        ? 'border-[#0B1F4D] text-[#0B1F4D]'
-                        : 'border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-300'
-                    }`}>
-                    <NavIcon className={`w-4 h-4 ${isActive ? 'text-[#0B1F4D]' : 'text-gray-400'}`} />
-                    <span>{item.label}</span>
-                    {count > 0 && (
-                      <span className={`text-xs px-1.5 py-0.5 rounded-full font-bold ${
-                        isActive ? 'bg-[#0B1F4D] text-white' : 'bg-gray-100 text-gray-500'
-                      }`}>{count}</span>
-                    )}
-                  </button>
-                )
-              })}
+      {/* ── STICKY TAB NAV ─────────────────────────────────────────────────── */}
+      <div className="sticky top-[48px] z-20 bg-white/96 backdrop-blur border-b border-gray-200 -mx-4 sm:-mx-8">
+        <div className="max-w-6xl mx-auto px-4 sm:px-8 flex items-center">
+          {/* Tab list with right-fade to signal overflow */}
+          <div className="relative flex-1 min-w-0">
+            <div className="overflow-x-auto flex-1" style={{ scrollbarWidth: 'none' }}>
+              <div className="flex items-center min-w-max">
+                {visibleNav.map(item => {
+                  const isActive = activeSection === item.id
+                  const count =
+                    item.id === 'products'  ? products.length :
+                    item.id === 'reviews'   ? reviews.length  :
+                    item.id === 'locations' ? pos.length       :
+                    item.id === 'gallery'   ? gallery.length   : 0
+                  return (
+                    <button key={item.id} onClick={() => scrollTo(item.id)}
+                      className="relative flex items-center gap-1.5 px-3.5 sm:px-4 py-3.5 text-[13px] font-semibold transition-colors whitespace-nowrap"
+                      style={{ color: isActive ? item.accent : '#9CA3AF' }}>
+                      {/* Icon only on active or desktop */}
+                      {isActive
+                        ? <item.Icon className="w-3.5 h-3.5 flex-shrink-0" />
+                        : <item.Icon className="w-3.5 h-3.5 flex-shrink-0 hidden sm:block" />
+                      }
+                      <span>{item.label}</span>
+                      {count > 0 && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-full font-bold flex-shrink-0"
+                          style={{ background: isActive ? item.accent : '#F3F4F6', color: isActive ? 'white' : '#9CA3AF' }}>
+                          {count}
+                        </span>
+                      )}
+                      {isActive && (
+                        <span className="absolute bottom-0 left-2 right-2 h-[2px] rounded-full"
+                          style={{ background: item.accent }} />
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
             </div>
+            {/* Fade hint — more tabs to the right */}
+            <div className="pointer-events-none absolute top-0 right-0 bottom-0 w-10 sm:hidden"
+              style={{ background: 'linear-gradient(to right, transparent, rgba(255,255,255,0.95))' }} />
           </div>
           {shareUrl && (
-            <div className="pl-3 flex-shrink-0 hidden sm:block">
+            <div className="pl-2 flex-shrink-0 hidden sm:block border-l border-gray-200 ml-1">
               <ShareButton url={shareUrl} />
             </div>
           )}
@@ -321,152 +384,110 @@ export function BrandTabs({
       </div>
 
       {/* ── PAGE CONTENT ───────────────────────────────────────────────────── */}
-      <div className="mt-8 space-y-20 pb-28 sm:pb-14">
+      <div className="mt-8 space-y-24 pb-28 sm:pb-14">
 
-        {/* ── PRODUCTS (sliders — two rows, then rest) ──────────────────────── */}
+        {/* ══════════════ PRODUCTS ════════════════════════════════════════════ */}
         {products.length > 0 && (
           <section id="sec-products">
-            <SectionHeading
-              icon={Package}
-              title="Our Products"
-              subtitle={`${products.length} wholesale products`}
-              action={wa ? (
-                <a href={`${wa}?text=Hi! I'd like to request your full catalogue.`}
-                  target="_blank" rel="noopener noreferrer"
-                  className="hidden sm:flex items-center gap-2 bg-green-500 hover:bg-green-400 text-white px-4 py-2 rounded-xl text-sm font-bold transition-colors shadow-sm">
-                  <WaIcon className="w-4 h-4" />Request Catalogue
-                </a>
-              ) : undefined}
-            />
+            <div data-reveal>
+              <SectionHeading
+                icon={Package}
+                title="Our Products"
+                subtitle={`${products.length} wholesale products across ${productsByCategory.length} ${productsByCategory.length === 1 ? 'category' : 'categories'}`}
+                accent="#0B1F4D"
+                action={wa ? (
+                  <a href={`${wa}?text=Hi! I'd like to request your full catalogue.`}
+                    target="_blank" rel="noopener noreferrer"
+                    className="hidden sm:flex items-center gap-2 bg-green-500 hover:bg-green-400 text-white px-4 py-2 rounded-xl text-sm font-bold transition-colors shadow-sm">
+                    <WaIcon className="w-4 h-4" />Request Catalogue
+                  </a>
+                ) : undefined}
+              />
+            </div>
 
-            {/* ── Category sliders: first 2 categories get slider rows ── */}
-            <div className="space-y-10">
-              {productsByCategory.slice(0, 2).map(([cat, prods]) => (
-                <CategorySlider key={cat} name={cat} products={prods} wa={wa} />
+            <div className="space-y-12">
+              {productsByCategory.map(([cat, prods], idx) => (
+                <div key={cat} data-reveal style={{ transitionDelay: `${idx * 60}ms` }}>
+                  <CategorySlider name={cat} products={prods} wa={wa} />
+                </div>
               ))}
             </div>
 
-            {/* ── Remaining categories (3+) in a regular grid ── */}
-            {productsByCategory.length > 2 && (
-              <div className="mt-10 space-y-10">
-                <div className="flex items-center gap-3">
-                  <div className="h-px flex-1 bg-gray-200" />
-                  <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">More Products</span>
-                  <div className="h-px flex-1 bg-gray-200" />
-                </div>
-                {productsByCategory.slice(2).map(([cat, prods]) => (
-                  <CategorySlider key={cat} name={cat} products={prods} wa={wa} />
-                ))}
-              </div>
-            )}
-
-            {/* ── CTA banner ── */}
+            {/* CTA banner */}
             {wa && (
-              <div className="mt-10 bg-gradient-to-br from-[#0B1F4D] to-[#1a3a7a] rounded-2xl p-8 flex flex-col sm:flex-row items-center justify-between gap-5">
-                <div>
-                  <p className="text-white font-extrabold text-xl">Need a custom quote?</p>
-                  <p className="text-white/60 text-sm mt-1">Contact us for bulk pricing, catalogues, or custom orders.</p>
+              <div data-reveal className="mt-12 rounded-2xl overflow-hidden" style={{ background: 'linear-gradient(135deg, #0B1F4D 0%, #1a3a7a 60%, #0d3060 100%)' }}>
+                <div className="px-8 py-9 flex flex-col sm:flex-row items-center justify-between gap-5">
+                  <div>
+                    <p className="text-white font-extrabold text-xl mb-1">Need a custom quote or bulk pricing?</p>
+                    <p className="text-white/55 text-sm">Contact us directly — we respond within hours.</p>
+                  </div>
+                  <a href={`${wa}?text=Hi! I'd like to request a catalogue and pricing from your store.`}
+                    target="_blank" rel="noopener noreferrer"
+                    className="flex-shrink-0 flex items-center gap-2 bg-[#F5A623] hover:bg-amber-400 text-[#0B1F4D] px-6 py-3.5 rounded-xl font-extrabold transition-colors shadow-lg whitespace-nowrap">
+                    <WaIcon className="w-5 h-5" />Request Custom Quote
+                  </a>
                 </div>
-                <a href={`${wa}?text=Hi! I'd like to request a catalogue and pricing from your store.`}
-                  target="_blank" rel="noopener noreferrer"
-                  className="flex-shrink-0 flex items-center gap-2 bg-[#F5A623] hover:bg-amber-400 text-[#0B1F4D] px-6 py-3.5 rounded-xl font-extrabold transition-colors shadow-lg whitespace-nowrap">
-                  <WaIcon className="w-5 h-5" />Request Custom Quote
-                </a>
               </div>
             )}
           </section>
         )}
 
-        {/* ── ABOUT ────────────────────────────────────────────────────────── */}
+        {/* ══════════════ ABOUT ═══════════════════════════════════════════════ */}
         <section id="sec-about">
-          <SectionHeading icon={Info} title="About the Company" />
+          <div data-reveal>
+            <SectionHeading icon={Info} title="About the Company" accent="#1D4ED8" />
+          </div>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Description */}
-            <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 p-7 shadow-sm">
+            {/* Description — blue left accent */}
+            <div data-reveal className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 p-7 shadow-sm"
+              style={{ borderLeft: '4px solid #1D4ED8' }}>
               {(supplier.about_company || supplier.description) ? (
-                <p className="text-gray-600 leading-relaxed text-base whitespace-pre-line">
+                <p className="text-gray-600 leading-relaxed text-[15px] whitespace-pre-line">
                   {supplier.about_company ?? supplier.description}
                 </p>
               ) : (
                 <p className="text-gray-400 italic text-sm">No company description added yet.</p>
               )}
-
-              {/* Social links */}
               {[supplier.instagram, supplier.linkedin, supplier.facebook, supplier.youtube].some(Boolean) && (
                 <div className="mt-6 pt-6 border-t border-gray-100 flex flex-wrap gap-3">
                   {[
-                    { url: supplier.instagram, label: 'Instagram', bg: 'bg-gradient-to-br from-pink-500 to-purple-600',
-                      svg: <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg> },
-                    { url: supplier.linkedin, label: 'LinkedIn', bg: 'bg-blue-700',
-                      svg: <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg> },
-                    { url: supplier.facebook, label: 'Facebook', bg: 'bg-blue-600',
-                      svg: <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg> },
-                    { url: supplier.youtube, label: 'YouTube', bg: 'bg-red-600',
-                      svg: <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg> },
+                    { url: supplier.instagram, label: 'Instagram', color: '#E1306C' },
+                    { url: supplier.linkedin,  label: 'LinkedIn',  color: '#0077B5' },
+                    { url: supplier.facebook,  label: 'Facebook',  color: '#1877F2' },
+                    { url: supplier.youtube,   label: 'YouTube',   color: '#FF0000' },
                   ].filter(s => s.url).map(s => (
                     <a key={s.label} href={s.url!} target="_blank" rel="noopener noreferrer"
-                      className="flex items-center gap-2 text-sm font-semibold text-gray-600 hover:text-[#0B1F4D] transition-colors group">
-                      <span className={`w-8 h-8 rounded-lg ${s.bg} flex items-center justify-center text-white shadow-sm group-hover:scale-110 transition-transform flex-shrink-0`}>
-                        {s.svg}
-                      </span>
-                      {s.label}
+                      className="text-sm font-semibold hover:opacity-70 transition-opacity"
+                      style={{ color: s.color }}>
+                      {s.label} ↗
                     </a>
                   ))}
                 </div>
               )}
             </div>
-
-            {/* Quick facts sidebar */}
-            <div className="space-y-3">
-              {supplier.founded_year && (
-                <div className="bg-white rounded-2xl border border-gray-100 px-5 py-4 shadow-sm flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center flex-shrink-0">
-                    <Calendar className="w-5 h-5 text-indigo-600" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-400 uppercase tracking-wide font-semibold">Founded</p>
-                    <p className="font-extrabold text-[#0B1F4D]">{supplier.founded_year}</p>
-                  </div>
-                </div>
-              )}
-              {(city || country) && (
-                <div className="bg-white rounded-2xl border border-gray-100 px-5 py-4 shadow-sm flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center flex-shrink-0">
-                    <MapPin className="w-5 h-5 text-green-600" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-400 uppercase tracking-wide font-semibold">Location</p>
-                    <p className="font-extrabold text-[#0B1F4D] text-sm">
-                      {city ? `${(city as any).name}, ` : ''}{country ? (country as any).name : ''}
-                    </p>
-                  </div>
-                </div>
-              )}
-              {supplier.website && (
-                <div className="bg-white rounded-2xl border border-gray-100 px-5 py-4 shadow-sm flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0">
-                    <Globe className="w-5 h-5 text-blue-600" />
+            {/* Quick facts */}
+            <div data-reveal className="space-y-3">
+              {[
+                { label: 'Founded',   value: supplier.founded_year?.toString(), Icon: Calendar, bg: 'bg-indigo-50',  iconColor: 'text-indigo-600' },
+                { label: 'Location',  value: city ? `${(city as any).name}, ${(country as any)?.name ?? ''}` : country ? (country as any).name : null, Icon: MapPin, bg: 'bg-green-50', iconColor: 'text-green-600' },
+                { label: 'Website',   value: supplier.website?.replace(/^https?:\/\//, '') ?? null, Icon: Globe, bg: 'bg-blue-50', iconColor: 'text-blue-600', href: supplier.website },
+                { label: 'Hours',     value: supplier.working_hours, Icon: Clock, bg: 'bg-orange-50', iconColor: 'text-orange-500' },
+              ].filter(r => r.value).map(r => (
+                <div key={r.label} className="bg-white rounded-2xl border border-gray-100 px-5 py-4 shadow-sm flex items-center gap-4">
+                  <div className={`w-10 h-10 rounded-xl ${r.bg} flex items-center justify-center flex-shrink-0`}>
+                    <r.Icon className={`w-5 h-5 ${r.iconColor}`} />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-xs text-gray-400 uppercase tracking-wide font-semibold">Website</p>
-                    <a href={supplier.website} target="_blank" rel="noopener noreferrer"
-                      className="font-extrabold text-[#0B1F4D] text-sm hover:underline truncate block">
-                      {supplier.website.replace(/^https?:\/\//, '')}
-                    </a>
+                    <p className="text-xs text-gray-400 uppercase tracking-wide font-semibold">{r.label}</p>
+                    {r.href ? (
+                      <a href={r.href} target="_blank" rel="noopener noreferrer"
+                        className="font-extrabold text-[#0B1F4D] text-sm hover:underline truncate block">{r.value}</a>
+                    ) : (
+                      <p className="font-extrabold text-[#0B1F4D] text-sm truncate">{r.value}</p>
+                    )}
                   </div>
                 </div>
-              )}
-              {supplier.working_hours && (
-                <div className="bg-white rounded-2xl border border-gray-100 px-5 py-4 shadow-sm flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center flex-shrink-0">
-                    <Clock className="w-5 h-5 text-orange-500" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-400 uppercase tracking-wide font-semibold">Hours</p>
-                    <p className="font-semibold text-[#0B1F4D] text-sm whitespace-pre-line leading-snug">{supplier.working_hours}</p>
-                  </div>
-                </div>
-              )}
+              ))}
               {wa && (
                 <a href={`${wa}?text=Hi! I found your store on TTAI and I'd like to know more.`}
                   target="_blank" rel="noopener noreferrer"
@@ -478,87 +499,91 @@ export function BrandTabs({
           </div>
         </section>
 
-        {/* ── GALLERY ──────────────────────────────────────────────────────── */}
+        {/* ══════════════ GALLERY ═════════════════════════════════════════════ */}
         {gallery.length > 0 && sectionVisibility.gallery !== false && (
           <section id="sec-gallery">
-            <SectionHeading icon={Images} title="Gallery" subtitle={`${gallery.length} photos & videos`} />
-            <div className="grid grid-cols-3 gap-3">
+            <div data-reveal>
+              <SectionHeading icon={Images} title="Gallery" subtitle={`${gallery.length} photos & videos`} accent="#5B21B6" />
+            </div>
+            {/* Masonry-inspired grid */}
+            <div data-reveal className="grid grid-cols-3 gap-3">
               <button onClick={() => setLightbox(gallery[0])}
-                className="col-span-3 sm:col-span-2 row-span-2 group relative aspect-video sm:aspect-auto sm:h-80 rounded-2xl overflow-hidden bg-gray-100 hover:ring-4 hover:ring-[#F5A623] transition-all shadow-sm">
+                className="col-span-3 sm:col-span-2 row-span-2 group relative aspect-video sm:aspect-auto sm:h-80 rounded-2xl overflow-hidden bg-gray-900 hover:ring-2 hover:ring-purple-400 transition-all shadow-md">
                 {gallery[0].type === 'video'
-                  ? <div className="w-full h-full bg-gray-800 flex items-center justify-center">
-                      <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-sm">
+                  ? <div className="w-full h-full bg-gray-900 flex items-center justify-center">
+                      <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-sm group-hover:scale-110 transition-transform">
                         <Play className="w-8 h-8 text-white fill-white" />
                       </div>
                     </div>
-                  : <Image src={gallery[0].url} alt={gallery[0].caption ?? ''} fill className="object-cover group-hover:scale-105 transition-transform duration-500" sizes="(max-width:640px) 100vw, 66vw" />
+                  : <Image src={gallery[0].url} alt={gallery[0].caption ?? ''} fill className="object-cover group-hover:scale-105 transition-transform duration-700" sizes="(max-width:640px) 100vw, 66vw" />
                 }
                 {gallery[0].caption && (
-                  <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/70 to-transparent text-white text-sm px-4 py-3 translate-y-full group-hover:translate-y-0 transition-transform font-medium">
+                  <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent text-white text-sm px-4 py-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300 font-medium">
                     {gallery[0].caption}
                   </div>
                 )}
               </button>
               {gallery.slice(1).map(item => (
                 <button key={item.id} onClick={() => setLightbox(item)}
-                  className="group relative aspect-square rounded-2xl overflow-hidden bg-gray-100 hover:ring-4 hover:ring-[#F5A623] transition-all shadow-sm">
+                  className="group relative aspect-square rounded-2xl overflow-hidden bg-gray-900 hover:ring-2 hover:ring-purple-400 transition-all shadow-sm">
                   {item.type === 'video'
                     ? <div className="w-full h-full bg-gray-800 flex items-center justify-center">
-                        <Play className="w-6 h-6 text-white fill-white" />
+                        <Play className="w-6 h-6 text-white fill-white group-hover:scale-110 transition-transform" />
                       </div>
-                    : <Image src={item.url} alt={item.caption ?? ''} fill className="object-cover group-hover:scale-110 transition-transform duration-300" sizes="33vw" />
+                    : <Image src={item.url} alt={item.caption ?? ''} fill className="object-cover group-hover:scale-110 transition-transform duration-500" sizes="33vw" />
                   }
-                  {item.caption && (
-                    <div className="absolute bottom-0 inset-x-0 bg-black/60 text-white text-xs px-2 py-1.5 translate-y-full group-hover:translate-y-0 transition-transform truncate">
-                      {item.caption}
-                    </div>
-                  )}
                 </button>
               ))}
             </div>
           </section>
         )}
 
-        {/* ── CERTIFICATIONS ───────────────────────────────────────────────── */}
+        {/* ══════════════ CERTIFICATIONS ══════════════════════════════════════ */}
         {(certifications.length > 0 || documents.length > 0) && sectionVisibility.certifications !== false && (
           <section id="sec-certifications">
-            <SectionHeading icon={Award} title="Certifications & Documents" subtitle="Quality assurance and compliance" />
+            <div data-reveal>
+              <SectionHeading icon={Award} title="Certifications & Documents" subtitle="Quality assurance and compliance" accent="#B45309" />
+            </div>
             {certifications.length > 0 && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-                {certifications.map(cert => (
-                  <div key={cert.id} className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm hover:shadow-md transition-shadow flex gap-4">
-                    {cert.image_url ? (
-                      <div className="relative w-16 h-16 flex-shrink-0 rounded-xl overflow-hidden border border-gray-100">
-                        <Image src={cert.image_url} alt={cert.title} fill className="object-contain p-1.5" sizes="64px" />
-                      </div>
-                    ) : (
-                      <div className="w-16 h-16 flex-shrink-0 rounded-xl bg-amber-50 flex items-center justify-center">
-                        <Award className="w-8 h-8 text-amber-500" />
-                      </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold text-gray-900 leading-snug">{cert.title}</p>
-                      {cert.issuer && <p className="text-xs text-gray-400 mt-0.5">{cert.issuer}</p>}
-                      {cert.expiry_date && (
-                        <div className={`mt-2 inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full ${
-                          new Date(cert.expiry_date) > new Date() ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'
-                        }`}>
-                          <BadgeCheck className="w-3 h-3" />
-                          {new Date(cert.expiry_date) > new Date() ? 'Valid' : 'Expired'} · {new Date(cert.expiry_date).getFullYear()}
+              <div data-reveal className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+                {certifications.map(cert => {
+                  const valid = cert.expiry_date ? new Date(cert.expiry_date) > new Date() : true
+                  return (
+                    <div key={cert.id} className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm hover:shadow-md transition-shadow flex gap-4"
+                      style={{ borderLeft: `4px solid ${valid ? '#D97706' : '#EF4444'}` }}>
+                      {cert.image_url ? (
+                        <div className="relative w-14 h-14 flex-shrink-0 rounded-xl overflow-hidden border border-gray-100">
+                          <Image src={cert.image_url} alt={cert.title} fill className="object-contain p-1" sizes="56px" />
+                        </div>
+                      ) : (
+                        <div className="w-14 h-14 flex-shrink-0 rounded-xl bg-amber-50 flex items-center justify-center">
+                          <Award className="w-7 h-7 text-amber-500" />
                         </div>
                       )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold text-gray-900 leading-snug">{cert.title}</p>
+                        {cert.issuer && <p className="text-xs text-gray-400 mt-0.5">{cert.issuer}</p>}
+                        {cert.expiry_date && (
+                          <div className={`mt-2 inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full ${
+                            valid ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'
+                          }`}>
+                            <BadgeCheck className="w-3 h-3" />
+                            {valid ? 'Valid' : 'Expired'} · {new Date(cert.expiry_date).getFullYear()}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             )}
             {documents.length > 0 && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div data-reveal className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {documents.map(doc => (
                   <a key={doc.id} href={doc.file_url} target="_blank" rel="noopener noreferrer"
-                    className="flex items-center gap-4 bg-white rounded-2xl border border-gray-100 p-4 shadow-sm hover:shadow-md hover:border-[#0B1F4D]/20 transition-all group">
-                    <div className="w-12 h-12 flex-shrink-0 rounded-xl bg-red-50 flex items-center justify-center">
-                      <svg className="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    className="flex items-center gap-4 bg-white rounded-2xl border border-gray-100 p-4 shadow-sm hover:shadow-md transition-all group hover:border-amber-200">
+                    <div className="w-11 h-11 flex-shrink-0 rounded-xl bg-red-50 flex items-center justify-center">
+                      <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                       </svg>
                     </div>
@@ -566,7 +591,7 @@ export function BrandTabs({
                       <p className="text-sm font-bold text-gray-800 capitalize">{doc.doc_type.replace(/_/g, ' ')}</p>
                       <p className="text-xs text-gray-400">{new Date(doc.uploaded_at).toLocaleDateString()}</p>
                     </div>
-                    <Download className="w-4 h-4 text-gray-300 group-hover:text-[#0B1F4D] transition-colors flex-shrink-0" />
+                    <Download className="w-4 h-4 text-gray-300 group-hover:text-amber-500 transition-colors flex-shrink-0" />
                   </a>
                 ))}
               </div>
@@ -574,30 +599,33 @@ export function BrandTabs({
           </section>
         )}
 
-        {/* ── REVIEWS ──────────────────────────────────────────────────────── */}
+        {/* ══════════════ REVIEWS ═════════════════════════════════════════════ */}
         {sectionVisibility.reviews !== false && (
           <section id="sec-reviews">
-            <SectionHeading
-              icon={Star}
-              title="Customer Reviews"
-              subtitle={reviews.length > 0 ? `${avgRating.toFixed(1)} average · ${reviews.length} reviews` : 'No reviews yet'}
-            />
+            <div data-reveal>
+              <SectionHeading icon={Star} title="Customer Reviews"
+                subtitle={reviews.length > 0 ? `${avgRating.toFixed(1)} avg · ${reviews.length} reviews` : 'No reviews yet'}
+                accent="#B45309" />
+            </div>
             {reviews.length > 0 ? (
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-1">
-                  <div className="bg-gradient-to-br from-[#0B1F4D] to-[#1a3a7a] rounded-2xl p-6 text-white sticky top-[110px]">
+                {/* Summary panel */}
+                <div data-reveal className="lg:col-span-1">
+                  <div className="rounded-2xl p-6 text-white sticky top-[105px]"
+                    style={{ background: 'linear-gradient(135deg, #0B1F4D 0%, #1a3a7a 100%)' }}>
                     <p className="text-6xl font-black text-center">{avgRating.toFixed(1)}</p>
                     <div className="flex justify-center mt-2"><Stars rating={avgRating} size="lg" /></div>
-                    <p className="text-white/60 text-sm text-center mt-2">{reviews.length} {reviews.length === 1 ? 'review' : 'reviews'}</p>
-                    <div className="mt-6 space-y-2">
+                    <p className="text-white/55 text-sm text-center mt-2">{reviews.length} {reviews.length === 1 ? 'review' : 'reviews'}</p>
+                    <div className="mt-6 space-y-2.5">
                       {[5,4,3,2,1].map(star => {
                         const count = reviews.filter(r => r.rating === star).length
+                        const pct = reviews.length ? (count / reviews.length) * 100 : 0
                         return (
                           <div key={star} className="flex items-center gap-2.5">
                             <span className="text-xs font-bold text-white/50 w-2">{star}</span>
                             <Star className="w-3 h-3 text-amber-400 fill-amber-400 flex-shrink-0" />
-                            <div className="flex-1 bg-white/10 rounded-full h-1.5">
-                              <div className="bg-amber-400 h-1.5 rounded-full" style={{ width: reviews.length ? `${(count/reviews.length)*100}%` : '0%' }} />
+                            <div className="flex-1 bg-white/10 rounded-full h-1.5 overflow-hidden">
+                              <div className="bg-amber-400 h-1.5 rounded-full transition-all duration-700" style={{ width: `${pct}%` }} />
                             </div>
                             <span className="text-xs text-white/40 w-3 text-right">{count}</span>
                           </div>
@@ -606,17 +634,17 @@ export function BrandTabs({
                     </div>
                   </div>
                 </div>
-                <div className="lg:col-span-2 space-y-4">
+                {/* Review cards */}
+                <div data-reveal className="lg:col-span-2 space-y-4">
                   {reviews.map((r, i) => {
                     const name = (r.profiles as any)?.full_name ?? 'Anonymous Buyer'
-                    const color = ['bg-blue-500','bg-purple-500','bg-green-500','bg-amber-500','bg-pink-500','bg-teal-500'][i % 6]
+                    const color = ['#3B82F6','#8B5CF6','#10B981','#F59E0B','#EC4899','#14B8A6'][i % 6]
                     const initials = name.split(' ').slice(0,2).map((n: string) => n[0]).join('').toUpperCase()
                     return (
-                      <div key={r.id} className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
+                      <div key={r.id} className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm hover:shadow-md transition-shadow">
                         <div className="flex items-start gap-4">
-                          <div className={`w-10 h-10 rounded-full ${color} flex items-center justify-center flex-shrink-0 text-white text-sm font-bold`}>
-                            {initials}
-                          </div>
+                          <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 text-white text-sm font-bold shadow-sm"
+                            style={{ background: color }}>{initials}</div>
                           <div className="flex-1">
                             <div className="flex items-start justify-between gap-2 mb-2">
                               <div>
@@ -649,7 +677,7 @@ export function BrandTabs({
                 </div>
               </div>
             ) : (
-              <div className="bg-white rounded-2xl border border-dashed border-gray-200 p-14 text-center flex flex-col items-center gap-3">
+              <div data-reveal className="bg-white rounded-2xl border border-dashed border-gray-200 p-14 text-center flex flex-col items-center gap-3">
                 <div className="w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center">
                   <Star className="w-7 h-7 text-gray-300" />
                 </div>
@@ -659,11 +687,15 @@ export function BrandTabs({
           </section>
         )}
 
-        {/* ── LOCATIONS ────────────────────────────────────────────────────── */}
+        {/* ══════════════ LOCATIONS ═══════════════════════════════════════════ */}
         {pos.length > 0 && (
           <section id="sec-locations">
-            <SectionHeading icon={MapPin} title="Our Locations" subtitle={`${pos.length} ${pos.length === 1 ? 'location' : 'locations'} worldwide`} />
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div data-reveal>
+              <SectionHeading icon={MapPin} title="Our Locations"
+                subtitle={`${pos.length} ${pos.length === 1 ? 'location' : 'locations'} worldwide`}
+                accent="#065F46" />
+            </div>
+            <div data-reveal className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {pos.map((p: any) => {
                 const loc = p.pos_locations as any
                 const det = p.pos_details as any
@@ -674,7 +706,7 @@ export function BrandTabs({
                   <div key={p.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow">
                     <div className={`px-4 py-2.5 flex items-center justify-between ${isActive ? 'bg-green-50 border-b border-green-100' : 'bg-gray-50 border-b border-gray-100'}`}>
                       <span className={`flex items-center gap-1.5 text-xs font-bold ${isActive ? 'text-green-700' : 'text-gray-500'}`}>
-                        <span className={`w-2 h-2 rounded-full ${isActive ? 'bg-green-500' : 'bg-gray-400'}`} />
+                        <span className={`w-2 h-2 rounded-full ${isActive ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`} />
                         {isActive ? 'Open' : p.status.replace('_', ' ')}
                       </span>
                       <span className={`flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full ${cfg.bg} ${cfg.color}`}>
@@ -692,7 +724,7 @@ export function BrandTabs({
                       {det?.services_offered?.length > 0 && (
                         <div className="flex flex-wrap gap-1.5 mb-3">
                           {(det.services_offered as string[]).map((s: string) => (
-                            <span key={s} className="px-2 py-0.5 bg-blue-50 text-blue-700 rounded-full text-xs font-medium">{s}</span>
+                            <span key={s} className="px-2 py-0.5 bg-green-50 text-green-700 rounded-full text-xs font-medium">{s}</span>
                           ))}
                         </div>
                       )}
@@ -716,11 +748,16 @@ export function BrandTabs({
           </section>
         )}
 
-        {/* ── CONTACT ──────────────────────────────────────────────────────── */}
+        {/* ══════════════ CONTACT ═════════════════════════════════════════════ */}
         <section id="sec-contact">
-          <SectionHeading icon={MessageCircle} title="Get In Touch" subtitle="Reach out for inquiries, quotes or partnerships" />
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <div className="bg-white rounded-2xl border border-gray-100 p-7 shadow-sm space-y-5">
+          <div data-reveal>
+            <SectionHeading icon={MessageCircle} title="Get In Touch"
+              subtitle="Reach out for inquiries, quotes or partnerships"
+              accent="#0E7490" />
+          </div>
+          <div data-reveal className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            {/* Contact methods */}
+            <div className="bg-white rounded-2xl border border-gray-100 p-7 shadow-sm space-y-5" style={{ borderLeft: '4px solid #0E7490' }}>
               <h3 className="font-extrabold text-[#0B1F4D] text-base">Contact Details</h3>
               <div className="space-y-4">
                 {supplier.whatsapp && (
@@ -760,8 +797,8 @@ export function BrandTabs({
                 )}
               </div>
             </div>
-
-            <div className="bg-white rounded-2xl border border-gray-100 p-7 shadow-sm space-y-5">
+            {/* Address */}
+            <div className="bg-white rounded-2xl border border-gray-100 p-7 shadow-sm space-y-5" style={{ borderLeft: '4px solid #EF4444' }}>
               <h3 className="font-extrabold text-[#0B1F4D] text-base">Address</h3>
               {(supplier.address_line1 || city || country) && (
                 <div className="flex items-start gap-3">
@@ -769,7 +806,7 @@ export function BrandTabs({
                     <MapPin className="w-5 h-5 text-red-500" />
                   </div>
                   <div className="text-sm text-gray-600 leading-relaxed">
-                    {supplier.address_line1 && <p className="font-semibold">{supplier.address_line1}</p>}
+                    {supplier.address_line1 && <p className="font-semibold text-gray-800">{supplier.address_line1}</p>}
                     {supplier.address_line2 && <p>{supplier.address_line2}</p>}
                     {(city || country) && (
                       <p>{city ? `${(city as any).name}, ` : ''}{country ? (country as any).name : ''} {supplier.postal_code ?? ''}</p>
@@ -806,13 +843,11 @@ export function BrandTabs({
           <div className="relative max-w-5xl w-full" onClick={e => e.stopPropagation()}>
             <div className="relative w-full rounded-2xl overflow-hidden" style={{ aspectRatio: '16/9' }}>
               {lightbox.type === 'video'
-                ? <video src={lightbox.url} controls className="w-full h-full" />
+                ? <video src={lightbox.url} controls className="w-full h-full" autoPlay />
                 : <Image src={lightbox.url} alt={lightbox.caption ?? ''} fill className="object-contain" sizes="100vw" />
               }
             </div>
-            {lightbox.caption && (
-              <p className="text-center text-white/70 text-sm mt-4 font-medium">{lightbox.caption}</p>
-            )}
+            {lightbox.caption && <p className="text-center text-white/70 text-sm mt-4 font-medium">{lightbox.caption}</p>}
           </div>
         </div>
       )}
