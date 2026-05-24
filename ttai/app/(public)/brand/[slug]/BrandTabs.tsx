@@ -44,6 +44,7 @@ interface Props {
   reviews: Review[]; documents: Document[]; avgRating: number; sectionVisibility: Record<string, boolean>
   pos: any[]; brandSlug: string; shareUrl?: string
   channel?: Channel | null; channelPosts?: ChannelPost[]
+  isAuthenticated?: boolean
 }
 
 // ── WhatsApp icon ─────────────────────────────────────────────────────────────
@@ -281,7 +282,7 @@ const POS_TYPE_CONFIG: Record<string, { label: string; color: string; bg: string
 export function BrandTabs({
   supplier, products, gallery, certifications, reviews, documents,
   avgRating, sectionVisibility, pos, brandSlug, shareUrl,
-  channel, channelPosts = [],
+  channel, channelPosts = [], isAuthenticated = false,
 }: Props) {
   const [activeSection, setActiveSection] = useState('products')
   const [lightbox, setLightbox] = useState<GalleryItem | null>(null)
@@ -967,30 +968,47 @@ export function BrandTabs({
             </div>
             <div data-reveal className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {pos.map((p: any) => {
-                const loc = p.pos_locations as any
-                const det = p.pos_details as any
-                const cfg = POS_TYPE_CONFIG[p.type] ?? { label: p.type, color: 'text-gray-700', bg: 'bg-gray-100', Icon: MapPin }
-                const TypeIcon = cfg.Icon
-                const isActive = p.status === 'active'
+                const loc  = p.pos_locations as any
+                const det  = p.pos_details  as any
+                const priv = p.pos_private_details as any   // wholesale-only contact
+                const cfg  = POS_TYPE_CONFIG[p.type] ?? { label: p.type, color: 'text-gray-700', bg: 'bg-gray-100', Icon: MapPin }
+                const TypeIcon  = cfg.Icon
+                const isOpen    = p.status === 'active'
+                const isClient  = p.type === 'client_store'
+                const shopActive = p.shop_active === true
+                const shopSlug   = p.shop_slug as string | null
+
                 return (
                   <div key={p.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow">
-                    <div className={`px-4 py-2.5 flex items-center justify-between ${isActive ? 'bg-green-50 border-b border-green-100' : 'bg-gray-50 border-b border-gray-100'}`}>
-                      <span className={`flex items-center gap-1.5 text-xs font-bold ${isActive ? 'text-green-700' : 'text-gray-500'}`}>
-                        <span className={`w-2 h-2 rounded-full ${isActive ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`} />
-                        {isActive ? 'Open' : p.status.replace('_', ' ')}
+                    {/* Status + type header */}
+                    <div className={`px-4 py-2.5 flex items-center justify-between ${isOpen ? 'bg-green-50 border-b border-green-100' : 'bg-gray-50 border-b border-gray-100'}`}>
+                      <span className={`flex items-center gap-1.5 text-xs font-bold ${isOpen ? 'text-green-700' : 'text-gray-500'}`}>
+                        <span className={`w-2 h-2 rounded-full ${isOpen ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`} />
+                        {isOpen ? 'Active' : p.status.replace('_', ' ')}
                       </span>
                       <span className={`flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full ${cfg.bg} ${cfg.color}`}>
                         <TypeIcon className="w-3.5 h-3.5" />{cfg.label}
                       </span>
                     </div>
+
                     <div className="p-4">
+                      {/* Manager name (if client store) */}
+                      {isClient && det?.manager_name && (
+                        <p className="text-[11px] font-bold text-[#F5A623] uppercase tracking-widest mb-0.5">
+                          {det.manager_name}
+                        </p>
+                      )}
                       <h3 className="font-bold text-gray-900 mb-1">{p.name}</h3>
+
+                      {/* Address */}
                       {(loc?.address_line1 || loc?.city) && (
                         <p className="text-sm text-gray-500 flex items-start gap-1.5 mb-3">
                           <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0 text-gray-400" />
-                          {[loc.address_line1, loc.city, loc.country].filter(Boolean).join(', ')}
+                          {[loc.address_line1, loc.city, loc.region, loc.country].filter(Boolean).join(', ')}
                         </p>
                       )}
+
+                      {/* Services */}
                       {det?.services_offered?.length > 0 && (
                         <div className="flex flex-wrap gap-1.5 mb-3">
                           {(det.services_offered as string[]).map((s: string) => (
@@ -998,17 +1016,70 @@ export function BrandTabs({
                           ))}
                         </div>
                       )}
-                      <div className="flex gap-2 mt-2">
+
+                      {/* Wholesale-only contact — shown only when authenticated */}
+                      {isClient && (
+                        <div className="mb-3">
+                          {isAuthenticated && priv?.phone ? (
+                            <a href={`tel:${priv.phone}`}
+                              className="flex items-center gap-2 text-sm font-bold text-[#0B1F4D] hover:text-blue-700 transition-colors">
+                              <Phone className="w-3.5 h-3.5 flex-shrink-0" />
+                              {priv.phone}
+                            </a>
+                          ) : !isAuthenticated ? (
+                            <Link href="/login"
+                              className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-[#0B1F4D] transition-colors">
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                              </svg>
+                              Login to see contact
+                            </Link>
+                          ) : null}
+                        </div>
+                      )}
+
+                      {/* Online Shop badge — core feature */}
+                      {isClient && (
+                        <div className="mb-3">
+                          {shopActive && shopSlug ? (
+                            <Link href={`/shop/${shopSlug}`}
+                              className="flex items-center gap-2 w-full bg-gradient-to-r from-[#0B1F4D] to-[#1a3a7a] text-white py-2.5 px-4 rounded-xl text-xs font-extrabold hover:opacity-90 transition-opacity shadow-sm">
+                              <ShoppingBag className="w-3.5 h-3.5 flex-shrink-0" />
+                              <span className="flex-1">Tienda Online</span>
+                              <span className="bg-green-400 text-green-900 text-[9px] font-extrabold px-1.5 py-0.5 rounded-full uppercase tracking-wide">Activa</span>
+                            </Link>
+                          ) : (
+                            <div className="flex items-center gap-2 w-full bg-gray-50 border border-dashed border-gray-200 text-gray-400 py-2.5 px-4 rounded-xl text-xs font-semibold">
+                              <ShoppingBag className="w-3.5 h-3.5 flex-shrink-0" />
+                              <span className="flex-1">Tienda Online</span>
+                              <span className="bg-gray-100 text-gray-400 text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wide">Próximamente</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Action buttons */}
+                      <div className="flex gap-2 mt-1">
                         {det?.whatsapp && (
-                          <a href={`https://wa.me/${det.whatsapp.replace(/\D/g,'')}`} target="_blank" rel="noopener noreferrer"
+                          <a href={`https://wa.me/${det.whatsapp.replace(/\D/g,'')}`}
+                            target="_blank" rel="noopener noreferrer"
                             className="flex-1 flex items-center justify-center gap-1.5 bg-green-50 text-green-700 hover:bg-green-500 hover:text-white py-2 rounded-xl text-xs font-bold transition-all">
                             <WaIcon className="w-3.5 h-3.5" />WhatsApp
                           </a>
                         )}
-                        <Link href={`/brand/${brandSlug}/pos/${p.id}`}
-                          className="flex-1 flex items-center justify-center gap-1 bg-[#0B1F4D] text-white hover:bg-[#162d6e] py-2 rounded-xl text-xs font-bold transition-colors">
-                          Details <ChevronRight className="w-3.5 h-3.5" />
-                        </Link>
+                        {loc?.latitude && loc?.longitude && (
+                          <a href={`https://maps.google.com/?q=${loc.latitude},${loc.longitude}`}
+                            target="_blank" rel="noopener noreferrer"
+                            className="flex-1 flex items-center justify-center gap-1 bg-gray-50 border border-gray-100 text-gray-600 hover:bg-[#0B1F4D] hover:text-white hover:border-transparent py-2 rounded-xl text-xs font-bold transition-all">
+                            <Navigation className="w-3.5 h-3.5" />Mapa
+                          </a>
+                        )}
+                        {!loc?.latitude && (
+                          <Link href={`/brand/${brandSlug}/pos/${p.id}`}
+                            className="flex-1 flex items-center justify-center gap-1 bg-[#0B1F4D] text-white hover:bg-[#162d6e] py-2 rounded-xl text-xs font-bold transition-colors">
+                            Detalles <ChevronRight className="w-3.5 h-3.5" />
+                          </Link>
+                        )}
                       </div>
                     </div>
                   </div>

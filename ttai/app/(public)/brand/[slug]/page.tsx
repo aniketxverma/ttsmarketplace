@@ -73,6 +73,10 @@ export default async function BrandPage({ params }: { params: { slug: string } }
 
   if (!supplier) notFound()
 
+  // Check auth state — authenticated users see wholesale-only POS contacts
+  const { data: { user } } = await supabase.auth.getUser()
+  const isAuthenticated = !!user
+
   const [productsRes, galleryRes, certsRes, reviewsRes, docsRes, posRes, channelRes] = await Promise.all([
     supabase
       .from('products')
@@ -96,11 +100,27 @@ export default async function BrandPage({ params }: { params: { slug: string } }
       .from('supplier_documents')
       .select('id, doc_type, file_url, uploaded_at')
       .eq('supplier_id', supplier.id),
-    (supabase.from('supplier_pos' as any) as any)
-      .select('id, name, type, status, is_public, pos_locations(*), pos_details(phone, whatsapp, email, opening_hours, services_offered, accepts_walk_ins)')
-      .eq('supplier_id', supplier.id)
-      .eq('is_public', true)
-      .order('sort_order', { ascending: true }),
+    // Try with shop columns (migration 0015); fallback to basic query if columns missing
+    (async () => {
+      const full = await (supabase.from('supplier_pos' as any) as any)
+        .select(`
+          id, name, type, status, is_public, sort_order,
+          shop_active, shop_slug, shop_name, shop_tagline,
+          pos_locations(*),
+          pos_details(manager_name, phone, whatsapp, email, opening_hours, services_offered, accepts_walk_ins),
+          pos_private_details(phone, whatsapp, notes)
+        `)
+        .eq('supplier_id', supplier.id)
+        .eq('is_public', true)
+        .order('sort_order', { ascending: true })
+      if (!full.error) return full
+      // Fallback without shop columns
+      return (supabase.from('supplier_pos' as any) as any)
+        .select('id, name, type, status, is_public, sort_order, pos_locations(*), pos_details(manager_name, phone, whatsapp, email, opening_hours, services_offered, accepts_walk_ins)')
+        .eq('supplier_id', supplier.id)
+        .eq('is_public', true)
+        .order('sort_order', { ascending: true })
+    })(),
     (supabase.from('supplier_channels' as any) as any)
       .select('id, name, description, whatsapp, member_count, post_count, invite_code')
       .eq('supplier_id', supplier.id)
@@ -312,6 +332,7 @@ export default async function BrandPage({ params }: { params: { slug: string } }
           shareUrl={shareUrl}
           channel={channel}
           channelPosts={(channelPostsRes.data ?? []) as any[]}
+          isAuthenticated={isAuthenticated}
         />
       </div>
 

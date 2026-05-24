@@ -53,11 +53,18 @@
       "Bash(git commit -m 'feat: Rozil product images — uploaded to Supabase storage *)",
       "Bash(node scripts/setup-rozil-owner.js)",
       "Bash(mkdir -p \"c:/Users/anike/OneDrive/Desktop/tts.es/ttai/app/\\(public\\)/product/[slug]\")",
-      "Bash(git commit -m 'feat: product detail pages + header gap fix + Rozil canal & owner photo *)"
+      "Bash(git commit -m 'feat: product detail pages + header gap fix + Rozil canal & owner photo *)",
+      "Bash(git rm *)",
+      "Bash(git commit -m 'chore: remove WhatsApp images + .env.hostinger from repo; update .gitignore *)",
+      "Bash(mkdir -p \"c:\\\\Users\\\\anike\\\\OneDrive\\\\Desktop\\\\tts.es\\\\ttai\\\\app\\\\\\(public\\)\\\\shop\\\\[slug]\")",
+      "PowerShell(supabase --version 2>&1)",
+      "PowerShell(npx supabase --version 2>&1)",
+      "PowerShell($tokenPath = \"$env:USERPROFILE\\\\.supabase\\\\access-token\"; if \\(Test-Path $tokenPath\\) { Write-Host \"Token exists\" } else { Write-Host \"No token found at $tokenPath\" })"
     ],
     "additionalDirectories": [
       "c:\\Users\\anike\\OneDrive\\Desktop\\tts.es\\ttai\\app\\(public)\\brand\\[slug]\\pos",
-      "c:\\Users\\anike\\OneDrive\\Desktop\\tts.es\\ttai\\app\\(public)\\product"
+      "c:\\Users\\anike\\OneDrive\\Desktop\\tts.es\\ttai\\app\\(public)\\product",
+      "c:\\Users\\anike\\OneDrive\\Desktop\\tts.es\\ttai\\app\\(public)\\shop"
     ]
   }
 }
