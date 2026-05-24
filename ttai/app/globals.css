@@ -112,6 +112,13 @@
   50%       { opacity: 0.3; }
 }
 
+/* ── Button click glow — radial light burst from click point ────────────── */
+@keyframes glowBurst {
+  0%   { transform: scale(0.15); opacity: 1;    }
+  55%  { opacity: 0.55; }
+  100% { transform: scale(1);    opacity: 0;    }
+}
+
 /* ── Cinematic breathing — inhale / exhale ──────────────────────────────── */
 /* Applied ONLY to the ecosystem chain: Europe → Spain → Málaga → Cleaning → Rozil */
 @keyframes breathe {

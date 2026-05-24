@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import { Toaster } from '@/components/ui/toaster'
 import { CartProvider } from '@/lib/cart/CartContext'
+import { GlowEffect } from '@/components/GlowEffect'
 // import { ChatWidget } from '@/components/ai/ChatWidget'  // hidden for now
 import './globals.css'
 
@@ -21,6 +22,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           {/* <ChatWidget /> */}
         </CartProvider>
         <Toaster />
+        <GlowEffect />
       </body>
     </html>
   )
