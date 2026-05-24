@@ -37,3 +37,11 @@ next-env.d.ts
 # supabase
 supabase/.branches
 supabase/.temp
+
+# secrets & env
+.env.hostinger
+
+# WhatsApp source images (uploaded to Supabase storage; not for repo)
+WhatsApp*/
+WhatsApp Image*
+WhatsApp Unknown*/
