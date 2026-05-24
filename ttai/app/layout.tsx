@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const locale = await getLocale()
+  const locale = getLocale()
   const messages = await getMessages(locale)
   const dir = messages.dir ?? 'ltr'
 

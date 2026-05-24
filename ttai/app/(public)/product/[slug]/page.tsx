@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { Crown, ShieldCheck, Award, Store, ChevronLeft, Package, Users, ArrowRight } from 'lucide-react'
 import { ProductImageGallery } from './ProductImageGallery'
 import { useServerTranslations } from '@/lib/i18n/server'
+import { BrandLogo } from '@/components/BrandLogo'
 
 export const revalidate = 60
 
@@ -41,23 +42,37 @@ export default async function ProductPage({ params }: { params: { slug: string }
   const { t } = await useServerTranslations()
   const supabase = createClient()
 
-  const { data: product } = await supabase
+  const PRODUCT_SELECT = `
+    id, name, slug, description, price_cents, currency_code,
+    min_order_qty, stock_qty, is_published, marketplace_context,
+    product_images(url, sort_order),
+    categories(name, slug),
+    suppliers(
+      id, trade_name, legal_name, brand_slug, logo_url, tagline,
+      phone, whatsapp, business_email, reliability_tier,
+      years_experience, employee_count, countries_served,
+      countries(name), cities(name)
+    )
+  `
+
+  // Try slug lookup first
+  let { data: product } = await supabase
     .from('products')
-    .select(`
-      id, name, slug, description, price_cents, currency_code,
-      min_order_qty, stock_qty, is_published, marketplace_context,
-      product_images(url, sort_order),
-      categories(name, slug),
-      suppliers(
-        id, trade_name, legal_name, brand_slug, logo_url, tagline,
-        phone, whatsapp, business_email, reliability_tier,
-        years_experience, employee_count, countries_served,
-        countries(name), cities(name)
-      )
-    `)
+    .select(PRODUCT_SELECT)
     .eq('slug', params.slug)
     .eq('is_published', true)
     .single() as { data: any }
+
+  // Fallback: treat the param as a UUID (id) — handles old links or brand-page ID links
+  if (!product) {
+    const { data: byId } = await supabase
+      .from('products')
+      .select(PRODUCT_SELECT)
+      .eq('id', params.slug)
+      .eq('is_published', true)
+      .single() as { data: any }
+    product = byId
+  }
 
   if (!product) notFound()
 
@@ -189,13 +204,12 @@ export default async function ProductPage({ params }: { params: { slug: string }
                 className="flex items-center gap-4 bg-white rounded-2xl border border-gray-100 shadow-sm p-4 hover:shadow-md hover:border-[#0B1F4D]/20 transition-all group">
                 {/* Logo */}
                 <div className="w-14 h-14 rounded-xl overflow-hidden border border-gray-100 flex-shrink-0 bg-white">
-                  {supplier.logo_url ? (
-                    <Image src={supplier.logo_url} alt={supplier.trade_name ?? ''} width={56} height={56} className="object-cover w-full h-full" />
-                  ) : (
-                    <div className="w-full h-full bg-[#0B1F4D] flex items-center justify-center">
-                      <span className="text-white font-extrabold text-xl">{(supplier.trade_name ?? 'S')[0]}</span>
-                    </div>
-                  )}
+                  <BrandLogo
+                    src={supplier.logo_url}
+                    name={supplier.trade_name ?? supplier.legal_name ?? 'S'}
+                    size={56}
+                    textClass="text-xl"
+                  />
                 </div>
                 {/* Info */}
                 <div className="flex-1 min-w-0">

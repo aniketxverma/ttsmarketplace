@@ -4,6 +4,7 @@ import { Crown, ShieldCheck, Award, Store } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { BrandTabs } from './BrandTabs'
 import { StatsBar } from './StatsBar'
+import { BrandLogo } from '@/components/BrandLogo'
 
 export const revalidate = 60
 
@@ -194,13 +195,12 @@ export default async function BrandPage({ params }: { params: { slug: string } }
               {/* Logo */}
               <div className="flex-shrink-0 relative mb-1">
                 <div className="w-[72px] h-[72px] sm:w-[88px] sm:h-[88px] rounded-2xl border-[3px] border-white/80 shadow-2xl overflow-hidden bg-white">
-                  {supplier.logo_url ? (
-                    <Image src={supplier.logo_url} alt={supplier.trade_name ?? ''} width={88} height={88} className="object-cover w-full h-full" />
-                  ) : (
-                    <div className="w-full h-full bg-[#0B1F4D] flex items-center justify-center">
-                      <span className="text-white text-3xl font-extrabold">{(supplier.trade_name ?? 'S')[0].toUpperCase()}</span>
-                    </div>
-                  )}
+                  <BrandLogo
+                    src={supplier.logo_url}
+                    name={supplier.trade_name ?? supplier.legal_name ?? 'S'}
+                    size={88}
+                    textClass="text-3xl"
+                  />
                 </div>
                 {supplier.reliability_tier !== 'UNVERIFIED' && (
                   <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full ${tier.dot} border-2 border-white flex items-center justify-center`}>

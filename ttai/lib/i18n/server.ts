@@ -16,11 +16,19 @@ type DotPath<T, Prefix extends string = ''> = T extends object
 
 export type MessageKey = DotPath<Messages>
 
-/** Read the current locale from the TTAI_LOCALE cookie (set by middleware) */
-export async function getLocale(): Promise<Locale> {
-  const cookieStore = await cookies()
-  const saved = cookieStore.get('TTAI_LOCALE')?.value
-  if (saved && SUPPORTED_LOCALES.includes(saved as Locale)) return saved as Locale
+/**
+ * Read the current locale from the TTAI_LOCALE cookie (set by middleware).
+ * Wrapped in try/catch so it never throws during ISR background revalidation,
+ * where there is no request context and cookies() would otherwise throw.
+ */
+export function getLocale(): Locale {
+  try {
+    const cookieStore = cookies()
+    const saved = cookieStore.get('TTAI_LOCALE')?.value
+    if (saved && SUPPORTED_LOCALES.includes(saved as Locale)) return saved as Locale
+  } catch {
+    // ISR background revalidation has no request context — fall through to default
+  }
   return DEFAULT_LOCALE
 }
 
@@ -52,7 +60,7 @@ export function createT(messages: Messages) {
 
 /** Convenience: get locale + messages + t() in one call for server components */
 export async function useServerTranslations() {
-  const locale = await getLocale()
+  const locale = getLocale()           // synchronous — safe in ISR context
   const messages = await getMessages(locale)
   const t = createT(messages)
   return { locale, messages, t }
