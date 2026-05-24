@@ -91,7 +91,7 @@ export default async function SupplierProfilePage({
                 product={p as Parameters<typeof ProductCard>[0]['product']}
                 supplier={{ legal_name: supplier.legal_name, trade_name: supplier.trade_name, reliability_tier: tier }}
                 mainImageUrl={mainImg}
-                href={`/marketplace/${p.id}`}
+                href={`/product/${p.slug ?? p.id}`}
               />
             )
           })}

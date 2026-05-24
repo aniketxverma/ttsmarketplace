@@ -102,7 +102,7 @@ export default async function MarketplacePage({
                       product={p as Parameters<typeof ProductCard>[0]['product']}
                       supplier={supplier}
                       mainImageUrl={mainImg}
-                      href={`/marketplace/${p.id}`}
+                      href={`/product/${p.slug ?? p.id}`}
                     />
                   )
                 })}

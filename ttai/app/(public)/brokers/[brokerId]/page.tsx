@@ -56,7 +56,7 @@ export default async function BrokerProfilePage({
                   product={{ ...p, slug: p.id }}
                   supplier={p.suppliers}
                   mainImageUrl={mainImg}
-                  href={`/marketplace/${p.id}`}
+                  href={`/product/${p.id}`}
                 />
               </div>
             )

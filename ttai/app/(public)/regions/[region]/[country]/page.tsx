@@ -200,7 +200,7 @@ export default async function CountryPage({ params }: { params: { region: string
                 return (
                   <Link
                     key={p.id}
-                    href={`/marketplace/${p.slug}`}
+                    href={`/product/${p.slug ?? p.id}`}
                     className="group rounded-2xl border border-gray-100 bg-white overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5"
                   >
                     <div className="relative h-40 sm:h-48 bg-gray-100">

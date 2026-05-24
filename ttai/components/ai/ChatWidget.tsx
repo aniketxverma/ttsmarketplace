@@ -59,7 +59,7 @@ const CATEGORIES = [
 function ProductCard({ p }: { p: ChatProduct }) {
   return (
     <Link
-      href={`/marketplace/${p.slug}`}
+      href={`/product/${p.slug}`}
       target="_blank"
       className="flex-shrink-0 w-40 rounded-2xl border border-gray-100 bg-white hover:shadow-lg transition-all duration-200 overflow-hidden group"
     >
