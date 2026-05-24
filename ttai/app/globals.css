@@ -112,6 +112,37 @@
   50%       { opacity: 0.3; }
 }
 
+/* ── Cinematic breathing — inhale / exhale ──────────────────────────────── */
+/* Applied ONLY to the ecosystem chain: Europe → Spain → Málaga → Cleaning → Rozil */
+@keyframes breathe {
+  0%, 100% {
+    transform:  scale(1) translateY(0px);
+    box-shadow: 0 0 0px 0px rgba(201,168,76,0),
+                0 4px 24px rgba(0,0,0,0.45);
+    filter:     brightness(1);
+  }
+  50% {
+    transform:  scale(1.03) translateY(-2px);
+    box-shadow: 0 0 22px 7px rgba(201,168,76,0.45),
+                0 12px 48px rgba(0,0,0,0.55);
+    filter:     brightness(1.08);
+  }
+}
+
+/* ── Connector flow dot — pulse traverses left→right ───────────────────── */
+@keyframes flowPulse {
+  0%    { left:  0%;  opacity: 0;   transform: scale(0.6); }
+  8%    { opacity: 1; transform: scale(1); }
+  92%   { opacity: 1; transform: scale(1); }
+  100%  { left: 100%; opacity: 0; transform: scale(0.6); }
+}
+
+/* ── Connector dashes animated scroll ──────────────────────────────────── */
+@keyframes dashScroll {
+  from { stroke-dashoffset: 24; }
+  to   { stroke-dashoffset: 0; }
+}
+
 @layer utilities {
   .animate-fade-in-up   { animation: fadeInUp 0.65s ease both; }
   .animate-fade-in      { animation: fadeIn 0.65s ease both; }
@@ -121,6 +152,11 @@
   .animate-scale-in     { animation: scaleIn 0.55s ease both; }
   .animate-line-grow    { animation: lineGrow 0.8s ease both; }
   .animate-blink        { animation: blink-dot 2s ease-in-out infinite; }
+
+  /* Ecosystem chain breathing — scoped to .ecosystem-node only */
+  .ecosystem-node       { animation: breathe 4s ease-in-out infinite; }
+  .ecosystem-flow-dot   { animation: flowPulse 2.8s ease-in-out infinite; position: absolute; }
+  .ecosystem-dash       { animation: dashScroll 0.9s linear infinite; }
 
   .delay-75   { animation-delay: 75ms; }
   .delay-150  { animation-delay: 150ms; }
