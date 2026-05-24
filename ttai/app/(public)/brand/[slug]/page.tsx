@@ -73,7 +73,7 @@ export default async function BrandPage({ params }: { params: { slug: string } }
 
   if (!supplier) notFound()
 
-  const [productsRes, galleryRes, certsRes, reviewsRes, docsRes, posRes] = await Promise.all([
+  const [productsRes, galleryRes, certsRes, reviewsRes, docsRes, posRes, channelRes] = await Promise.all([
     supabase
       .from('products')
       .select('id, name, slug, price_cents, currency_code, min_order_qty, description, product_images(url, sort_order), categories(name)')
@@ -101,7 +101,21 @@ export default async function BrandPage({ params }: { params: { slug: string } }
       .eq('supplier_id', supplier.id)
       .eq('is_public', true)
       .order('sort_order', { ascending: true }),
+    (supabase.from('supplier_channels' as any) as any)
+      .select('id, name, description, whatsapp, member_count, post_count, invite_code')
+      .eq('supplier_id', supplier.id)
+      .eq('is_active', true)
+      .maybeSingle(),
   ])
+
+  const channel      = (channelRes.data ?? null) as any
+  const channelPostsRes = channel
+    ? await (supabase.from('channel_posts' as any) as any)
+        .select('id, content, image_url, post_type, created_at')
+        .eq('channel_id', channel.id)
+        .order('created_at', { ascending: false })
+        .limit(5)
+    : { data: [] }
 
   const reviews = (reviewsRes.data ?? []) as any[]
   const avgRating = reviews.length
@@ -296,6 +310,8 @@ export default async function BrandPage({ params }: { params: { slug: string } }
           pos={(posRes.data ?? []) as any[]}
           brandSlug={params.slug}
           shareUrl={shareUrl}
+          channel={channel}
+          channelPosts={(channelPostsRes.data ?? []) as any[]}
         />
       </div>
 

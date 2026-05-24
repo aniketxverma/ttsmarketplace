@@ -22,6 +22,11 @@ const PAGE_LABELS: Record<string, string> = {
   'invoices':  'Invoices',
   'payouts':   'Payouts',
   'onboarding':'Onboarding',
+  'channel':   'Canal',
+  'channels':  'My Canales',
+  'brand':     'Brand Profile',
+  'pos':       'Points of Sale',
+  'regions':   'Regions',
 }
 
 export function DashboardShell({ role, children }: Props) {

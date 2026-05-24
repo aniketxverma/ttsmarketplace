@@ -7,8 +7,10 @@ import {
   Package, Images, Award, Star, MapPin, MessageCircle, Info,
   Store, Warehouse, Truck, Building2, ShoppingBag, Briefcase, Anchor,
   Calendar, Globe, Share2, Check, Phone, Mail, Clock, Navigation,
-  ExternalLink, Download, Play, X, BadgeCheck, ChevronRight, ChevronLeft, Reply
+  ExternalLink, Download, Play, X, BadgeCheck, ChevronRight, ChevronLeft, Reply,
+  Radio, Users, FileText, Bell, Tag, Megaphone, LogIn, Loader, UserMinus,
 } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
 import { formatCents } from '@/lib/utils'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -30,10 +32,18 @@ interface GalleryItem { id: string; url: string; type: 'image'|'video'; caption:
 interface Certification { id: string; title: string; issuer: string | null; issued_date: string | null; expiry_date: string | null; image_url: string | null }
 interface Review { id: string; rating: number; comment: string | null; verified_purchase: boolean; supplier_reply: string | null; created_at: string; profiles: { full_name: string | null } | null }
 interface Document { id: string; doc_type: string; file_url: string; uploaded_at: string }
+interface Channel {
+  id: string; name: string; description: string | null; whatsapp: string | null
+  member_count: number; post_count: number
+}
+interface ChannelPost {
+  id: string; content: string; image_url: string | null; post_type: string; created_at: string
+}
 interface Props {
   supplier: Supplier; products: Product[]; gallery: GalleryItem[]; certifications: Certification[]
   reviews: Review[]; documents: Document[]; avgRating: number; sectionVisibility: Record<string, boolean>
   pos: any[]; brandSlug: string; shareUrl?: string
+  channel?: Channel | null; channelPosts?: ChannelPost[]
 }
 
 // ── WhatsApp icon ─────────────────────────────────────────────────────────────
@@ -235,9 +245,18 @@ function CategorySlider({ name, products, wa }: { name: string; products: Produc
   )
 }
 
+// ── Canal post type config ────────────────────────────────────────────────────
+const CANAL_POST_TYPES: Record<string, { label: string; badge: string; Icon: React.ComponentType<{ className?: string }> }> = {
+  update:       { label: 'Update',       badge: 'bg-blue-100 text-blue-700',    Icon: Bell      },
+  offer:        { label: 'Offer',        badge: 'bg-amber-100 text-amber-700',  Icon: Tag       },
+  product:      { label: 'Product',      badge: 'bg-purple-100 text-purple-700',Icon: Package   },
+  announcement: { label: 'Announcement', badge: 'bg-green-100 text-green-700',  Icon: Megaphone },
+}
+
 // ── Nav config ────────────────────────────────────────────────────────────────
 const NAV_ITEMS = [
   { id: 'products',       label: 'Products',       Icon: Package,        accent: '#0B1F4D' },
+  { id: 'canal',          label: 'Canal',          Icon: Radio,          accent: '#7C3AED' },
   { id: 'about',          label: 'About',          Icon: Info,           accent: '#1D4ED8' },
   { id: 'gallery',        label: 'Gallery',        Icon: Images,         accent: '#5B21B6' },
   { id: 'certifications', label: 'Certifications', Icon: Award,          accent: '#B45309' },
@@ -261,10 +280,17 @@ const POS_TYPE_CONFIG: Record<string, { label: string; color: string; bg: string
 // ── Main component ────────────────────────────────────────────────────────────
 export function BrandTabs({
   supplier, products, gallery, certifications, reviews, documents,
-  avgRating, sectionVisibility, pos, brandSlug, shareUrl
+  avgRating, sectionVisibility, pos, brandSlug, shareUrl,
+  channel, channelPosts = [],
 }: Props) {
   const [activeSection, setActiveSection] = useState('products')
   const [lightbox, setLightbox] = useState<GalleryItem | null>(null)
+
+  // Canal join state
+  const [canalUser,     setCanalUser]     = useState<{ id: string } | null>(null)
+  const [canalMember,   setCanalMember]   = useState(false)
+  const [canalLoading,  setCanalLoading]  = useState(false)
+  const [canalBusy,     setCanalBusy]     = useState(false)
 
   const wa = supplier.whatsapp ? `https://wa.me/${supplier.whatsapp.replace(/\D/g,'')}` : null
   const country = supplier.countries as any as { name: string } | null
@@ -281,9 +307,44 @@ export function BrandTabs({
     return Array.from(map.entries())
   }, [products])
 
+  // Canal auth check — runs when channel prop is present
+  useEffect(() => {
+    if (!channel) return
+    const supabase = createClient()
+    setCanalLoading(true)
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setCanalUser(user)
+      if (user) {
+        ;(supabase.from('channel_members') as any)
+          .select('id')
+          .eq('channel_id', channel.id)
+          .eq('user_id', user.id)
+          .maybeSingle()
+          .then(({ data }: { data: any }) => { setCanalMember(!!data); setCanalLoading(false) })
+      } else {
+        setCanalLoading(false)
+      }
+    })
+  }, [channel])
+
+  const handleCanalJoin = async () => {
+    if (!channel) return
+    if (!canalUser) { window.location.href = `/login?next=/brand/${brandSlug}`; return }
+    setCanalBusy(true)
+    if (canalMember) {
+      await fetch(`/api/channels/${channel.id}/join`, { method: 'DELETE' })
+      setCanalMember(false)
+    } else {
+      await fetch(`/api/channels/${channel.id}/join`, { method: 'POST' })
+      setCanalMember(true)
+    }
+    setCanalBusy(false)
+  }
+
   // Visible nav
   const visibleNav = NAV_ITEMS.filter(item => {
     if (item.id === 'products'       && products.length === 0) return false
+    if (item.id === 'canal'          && !channel) return false
     if (item.id === 'gallery'        && (gallery.length === 0 || sectionVisibility.gallery === false)) return false
     if (item.id === 'certifications' && (certifications.length === 0 || sectionVisibility.certifications === false)) return false
     if (item.id === 'reviews'        && sectionVisibility.reviews === false) return false
@@ -351,10 +412,11 @@ export function BrandTabs({
                 {visibleNav.map(item => {
                   const isActive = activeSection === item.id
                   const count =
-                    item.id === 'products'  ? products.length :
-                    item.id === 'reviews'   ? reviews.length  :
-                    item.id === 'locations' ? pos.length       :
-                    item.id === 'gallery'   ? gallery.length   : 0
+                    item.id === 'products'  ? products.length          :
+                    item.id === 'reviews'   ? reviews.length           :
+                    item.id === 'locations' ? pos.length               :
+                    item.id === 'gallery'   ? gallery.length           :
+                    item.id === 'canal'     ? (channel?.member_count ?? 0) : 0
                   return (
                     <button key={item.id} onClick={() => scrollTo(item.id)}
                       className="relative flex items-center gap-1.5 px-3.5 sm:px-4 py-3.5 text-[13px] font-semibold transition-colors whitespace-nowrap"
@@ -436,6 +498,127 @@ export function BrandTabs({
                     <WaIcon className="w-5 h-5" />Request Custom Quote
                   </a>
                 </div>
+              </div>
+            )}
+          </section>
+        )}
+
+        {/* ══════════════ CANAL ═══════════════════════════════════════════════ */}
+        {channel && (
+          <section id="sec-canal">
+            <div data-reveal>
+              <SectionHeading
+                icon={Radio}
+                title={channel.name}
+                subtitle="Join to receive exclusive updates, offers and announcements"
+                accent="#7C3AED"
+              />
+            </div>
+
+            {/* Hero join card */}
+            <div data-reveal className="rounded-2xl overflow-hidden shadow-lg mb-6"
+              style={{ background: 'linear-gradient(135deg, #4C1D95 0%, #7C3AED 60%, #6D28D9 100%)' }}>
+              <div className="px-7 py-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2.5 mb-2">
+                    <Radio className="w-5 h-5 text-purple-300" />
+                    <span className="text-purple-200 text-xs font-bold uppercase tracking-widest">Official Canal</span>
+                  </div>
+                  <h3 className="text-xl font-extrabold text-white mb-1 leading-tight">{channel.name}</h3>
+                  {channel.description && (
+                    <p className="text-white/60 text-sm leading-relaxed">{channel.description}</p>
+                  )}
+                  <div className="flex items-center gap-5 mt-4">
+                    <div className="flex items-center gap-1.5 text-white/60 text-sm">
+                      <Users className="w-4 h-4" />
+                      <span className="font-extrabold text-white">{channel.member_count.toLocaleString()}</span>
+                      <span>members</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-white/60 text-sm">
+                      <FileText className="w-4 h-4" />
+                      <span className="font-extrabold text-white">{channel.post_count.toLocaleString()}</span>
+                      <span>posts</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* CTA buttons */}
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 flex-shrink-0">
+                  <button onClick={handleCanalJoin} disabled={canalLoading || canalBusy}
+                    className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm shadow-lg transition-all disabled:opacity-60 ${
+                      canalMember
+                        ? 'bg-white/20 hover:bg-red-500 text-white border border-white/30'
+                        : canalUser
+                          ? 'bg-[#F5A623] hover:bg-amber-400 text-[#0B1F4D]'
+                          : 'bg-white hover:bg-gray-100 text-[#7C3AED]'
+                    }`}>
+                    {(canalLoading || canalBusy)
+                      ? <Loader className="w-4 h-4 animate-spin" />
+                      : canalMember
+                        ? <><Check className="w-4 h-4" /></>
+                        : canalUser
+                          ? <Radio className="w-4 h-4" />
+                          : <LogIn className="w-4 h-4" />
+                    }
+                    {(canalLoading || canalBusy)
+                      ? 'Please wait…'
+                      : canalMember ? 'Joined ✓'
+                      : canalUser   ? 'Join Canal'
+                      : 'Login to Join'
+                    }
+                  </button>
+                  {channel.whatsapp && (
+                    <a href={`https://wa.me/${channel.whatsapp.replace(/\D/g,'')}?text=Hi! I joined your TTAI canal.`}
+                      target="_blank" rel="noopener noreferrer"
+                      className="flex items-center gap-2 px-5 py-3 rounded-xl font-bold text-sm bg-green-500 hover:bg-green-400 text-white transition-colors shadow-lg">
+                      <WaIcon className="w-4 h-4" />WhatsApp
+                    </a>
+                  )}
+                  <a href={`/channel/${channel.id}`} target="_blank" rel="noopener noreferrer"
+                    className="flex items-center gap-2 px-4 py-3 rounded-xl font-bold text-sm bg-white/10 hover:bg-white/20 text-white border border-white/20 transition-colors">
+                    <ExternalLink className="w-4 h-4" />View Feed
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            {/* Recent posts preview */}
+            {channelPosts.length > 0 && (
+              <div data-reveal className="space-y-3">
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Latest from the canal</p>
+                {channelPosts.map((post, idx) => {
+                  const cfg = CANAL_POST_TYPES[post.post_type] ?? CANAL_POST_TYPES.update
+                  const PostIcon = cfg.Icon
+                  return (
+                    <div key={post.id}
+                      className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 hover:shadow-md transition-shadow"
+                      style={{ transitionDelay: `${idx * 60}ms` }}>
+                      <div className="flex items-center justify-between gap-3 mb-2">
+                        <span className={`flex items-center gap-1 text-[10px] font-extrabold px-2.5 py-1 rounded-full uppercase tracking-wide ${cfg.badge}`}>
+                          <PostIcon className="w-3 h-3" />{cfg.label}
+                        </span>
+                        <span className="text-[11px] text-gray-400">
+                          {new Date(post.created_at).toLocaleDateString('en', { day: 'numeric', month: 'short' })}
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-700 leading-relaxed line-clamp-3">{post.content}</p>
+                      {post.image_url && (
+                        <img src={post.image_url} alt="" className="mt-2 w-full rounded-xl object-cover max-h-40" />
+                      )}
+                    </div>
+                  )
+                })}
+                <a href={`/channel/${channel.id}`} target="_blank" rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-2 w-full py-3 rounded-xl border-2 border-[#7C3AED] text-[#7C3AED] font-bold text-sm hover:bg-[#7C3AED] hover:text-white transition-all">
+                  <Radio className="w-4 h-4" />View All Posts
+                </a>
+              </div>
+            )}
+
+            {channelPosts.length === 0 && (
+              <div data-reveal className="bg-white rounded-2xl border border-dashed border-purple-200 p-10 text-center">
+                <Radio className="w-8 h-8 text-purple-200 mx-auto mb-2" />
+                <p className="text-gray-400 text-sm font-medium">No posts yet — join to be first to know when they post!</p>
               </div>
             )}
           </section>
