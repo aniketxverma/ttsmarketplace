@@ -281,7 +281,7 @@ export function BrandTabs({
   return (
     <>
       {/* ── STICKY SECTION NAV ─────────────────────────────────────────────── */}
-      <div className="sticky top-[52px] z-20 bg-white/95 backdrop-blur-sm border-b border-gray-200 -mx-4 sm:-mx-8 mb-0">
+      <div className="sticky top-[48px] z-20 bg-white/95 backdrop-blur-sm border-b border-gray-200 -mx-4 sm:-mx-8 mb-0">
         <div className="max-w-6xl mx-auto px-4 sm:px-8 flex items-center justify-between">
           <div className="overflow-x-auto flex-1" style={{ scrollbarWidth: 'none' }}>
             <div className="flex items-center min-w-max">
@@ -322,50 +322,6 @@ export function BrandTabs({
 
       {/* ── PAGE CONTENT ───────────────────────────────────────────────────── */}
       <div className="mt-8 space-y-20 pb-28 sm:pb-14">
-
-        {/* ── QUICK INFO STRIP ─────────────────────────────────────────────── */}
-        {(supplier.about_company || supplier.description || supplier.founded_year || city || country || supplier.website || supplier.working_hours) && (
-          <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
-            {/* Short description */}
-            {(supplier.about_company || supplier.description) && (
-              <p className="text-gray-600 text-sm leading-relaxed flex-1 line-clamp-2">
-                {(supplier.about_company ?? supplier.description ?? '').slice(0, 160)}
-                {(supplier.about_company ?? supplier.description ?? '').length > 160 && '…'}
-              </p>
-            )}
-            {/* Stat chips */}
-            <div className="flex flex-wrap gap-2 flex-shrink-0">
-              {supplier.founded_year && (
-                <div className="flex items-center gap-1.5 bg-white border border-gray-200 rounded-full px-3 py-1.5 text-xs font-semibold text-gray-600 shadow-sm">
-                  <Calendar className="w-3.5 h-3.5 text-indigo-500" />Est. {supplier.founded_year}
-                </div>
-              )}
-              {(city || country) && (
-                <div className="flex items-center gap-1.5 bg-white border border-gray-200 rounded-full px-3 py-1.5 text-xs font-semibold text-gray-600 shadow-sm">
-                  <MapPin className="w-3.5 h-3.5 text-green-500" />
-                  {city ? `${(city as any).name}, ` : ''}{country ? (country as any).name : ''}
-                </div>
-              )}
-              {products.length > 0 && (
-                <div className="flex items-center gap-1.5 bg-white border border-gray-200 rounded-full px-3 py-1.5 text-xs font-semibold text-gray-600 shadow-sm">
-                  <Package className="w-3.5 h-3.5 text-blue-500" />{products.length} products
-                </div>
-              )}
-              {reviews.length > 0 && (
-                <div className="flex items-center gap-1.5 bg-white border border-gray-200 rounded-full px-3 py-1.5 text-xs font-semibold text-gray-600 shadow-sm">
-                  <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />{avgRating.toFixed(1)} ({reviews.length})
-                </div>
-              )}
-              {wa && (
-                <a href={`${wa}?text=Hi! I found your store on TTAI and I'd like to know more.`}
-                  target="_blank" rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 bg-green-500 hover:bg-green-400 text-white rounded-full px-3.5 py-1.5 text-xs font-bold transition-colors shadow-sm">
-                  <WaIcon className="w-3.5 h-3.5" />Chat on WhatsApp
-                </a>
-              )}
-            </div>
-          </div>
-        )}
 
         {/* ── PRODUCTS (sliders — two rows, then rest) ──────────────────────── */}
         {products.length > 0 && (
