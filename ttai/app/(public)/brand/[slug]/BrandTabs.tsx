@@ -112,7 +112,7 @@ function SectionHeading({
 
 // ── Product card ──────────────────────────────────────────────────────────────
 function ProductCard({ product, wa }: { product: Product; wa: string | null }) {
-  const productHref = `/marketplace/${product.slug ?? product.id}`
+  const productHref = `/product/${product.slug ?? product.id}`
   return (
     <div className="group bg-white rounded-xl border border-gray-100 overflow-hidden flex flex-col h-full"
       style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.07)', transition: 'box-shadow 0.25s ease, transform 0.25s cubic-bezier(0.16,1,0.3,1)' }}

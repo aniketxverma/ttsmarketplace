@@ -263,7 +263,7 @@ export default async function BrandPage({ params }: { params: { slug: string } }
       </div>
 
       {/* ══ COMPACT STATS + NAV ANCHOR (sticky) ══════════════════════════════ */}
-      <div className="bg-white border-b border-gray-100 shadow-sm sticky top-0 z-30">
+      <div className="bg-white border-b border-gray-100 shadow-sm sticky top-16 z-30">
         <div className="max-w-6xl mx-auto px-4 sm:px-8 h-12 flex items-center justify-between gap-4 overflow-hidden">
           {/* Animated stats bar */}
           <StatsBar

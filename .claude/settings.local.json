@@ -33,10 +33,31 @@
       "Bash(node -e ' *)",
       "Bash(curl -s -X POST https://vtjtrbdyotsnautbqadi.supabase.co/rest/v1/rpc/exec_sql -H 'apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ0anRyYmR5b3RzbmF1dGJxYWRpIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NzE3NzA2NiwiZXhwIjoyMDkyNzUzMDY2fQ.FjNLcMvvgjWzVMsKScl3NwR8j7LwcWyiQ7cRLmVcL0g' -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ0anRyYmR5b3RzbmF1dGJxYWRpIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NzE3NzA2NiwiZXhwIjoyMDkyNzUzMDY2fQ.FjNLcMvvgjWzVMsKScl3NwR8j7LwcWyiQ7cRLmVcL0g' -H 'Content-Type: application/json' --data-binary @/tmp/migration_body.json)",
       "Bash(mkdir -p \"c:\\\\Users\\\\anike\\\\OneDrive\\\\Desktop\\\\tts.es\\\\ttai\\\\supabase\\\\migrations\" *)",
-      "Bash(git commit -m 'Add POS system, profile completion, and location pages *)"
+      "Bash(git commit -m 'Add POS system, profile completion, and location pages *)",
+      "Bash(git reset *)",
+      "PowerShell(Get-Process -Id 23232 -ErrorAction SilentlyContinue)",
+      "PowerShell(Stop-Process -Id 23232 -Force)",
+      "PowerShell(netstat -ano)",
+      "Bash(git commit -m 'Brand page: animated stats, desktop product grid, gallery & certs overhaul *)",
+      "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\anike\\\\OneDrive\\\\Desktop\\\\tts.es\\\\ttai\" -Directory)",
+      "Bash(Select-Object Name)",
+      "PowerShell(tree \"c:\\\\Users\\\\anike\\\\OneDrive\\\\Desktop\\\\tts.es\\\\ttai\\\\app\" -L 3)",
+      "PowerShell($dirs = @\\(\\); Get-ChildItem -Path \"c:\\\\Users\\\\anike\\\\OneDrive\\\\Desktop\\\\tts.es\\\\ttai\\\\app\" -Directory | ForEach-Object { if \\($_.Name -match '\\\\\\(supplier\\\\\\)'\\) { $dirs += $_.FullName } }; if \\($dirs\\) { ls $dirs[0] } else { \"No supplier directory found\" })",
+      "Bash(git commit -m 'feat: Canal \\(channel\\) system for suppliers and buyers *)",
+      "Bash(npm list *)",
+      "Bash(node scripts/upload-rozil-images.js)",
+      "Bash(cat .supabase)",
+      "Bash(ls supabase/.temp/)",
+      "Bash(node scripts/seed-rozil.js)",
+      "Bash(git commit -m 'feat: Rozil \\(Químicas Rozaf\\) brand profile — full seed + image upload scripts *)",
+      "Bash(git commit -m 'feat: Rozil product images — uploaded to Supabase storage *)",
+      "Bash(node scripts/setup-rozil-owner.js)",
+      "Bash(mkdir -p \"c:/Users/anike/OneDrive/Desktop/tts.es/ttai/app/\\(public\\)/product/[slug]\")",
+      "Bash(git commit -m 'feat: product detail pages + header gap fix + Rozil canal & owner photo *)"
     ],
     "additionalDirectories": [
-      "c:\\Users\\anike\\OneDrive\\Desktop\\tts.es\\ttai\\app\\(public)\\brand\\[slug]\\pos"
+      "c:\\Users\\anike\\OneDrive\\Desktop\\tts.es\\ttai\\app\\(public)\\brand\\[slug]\\pos",
+      "c:\\Users\\anike\\OneDrive\\Desktop\\tts.es\\ttai\\app\\(public)\\product"
     ]
   }
 }
