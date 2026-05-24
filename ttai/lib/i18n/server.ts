@@ -1,25 +1,25 @@
+/**
+ * SERVER-ONLY i18n helpers.
+ *
+ * ⚠️  Do NOT import this file from a 'use client' component.
+ *     Pure utilities (Messages type, createT) live in ./utils so that
+ *     client.tsx can import them without pulling next/headers into the
+ *     client bundle and breaking the build.
+ */
 import { cookies } from 'next/headers'
 import type { Locale } from './locales'
 import { DEFAULT_LOCALE, SUPPORTED_LOCALES } from './locales'
+import { createT } from './utils'
+import type { Messages } from './utils'
 
-export type Messages = typeof import('./messages/en').default
-
-type DotPath<T, Prefix extends string = ''> = T extends object
-  ? { [K in keyof T & string]:
-      T[K] extends Array<infer _U>
-        ? `${Prefix}${K}`
-        : T[K] extends object
-          ? DotPath<T[K], `${Prefix}${K}.`>
-          : `${Prefix}${K}`
-    }[keyof T & string]
-  : never
-
-export type MessageKey = DotPath<Messages>
+// Re-export so existing callers can keep `import ... from '@/lib/i18n/server'`
+export type { Messages, MessageKey } from './utils'
+export { createT } from './utils'
 
 /**
  * Read the current locale from the TTAI_LOCALE cookie (set by middleware).
- * Wrapped in try/catch so it never throws during ISR background revalidation,
- * where there is no request context and cookies() would otherwise throw.
+ * Wrapped in try/catch — cookies() throws during ISR background revalidation
+ * (no request context). Falls back to DEFAULT_LOCALE in that case.
  */
 export function getLocale(): Locale {
   try {
@@ -44,23 +44,9 @@ export async function getMessages(locale: Locale): Promise<Messages> {
   }
 }
 
-/** Dot-notation getter — t('brand.tab_products') */
-export function createT(messages: Messages) {
-  return function t(key: string): string {
-    const parts = key.split('.')
-    let val: unknown = messages
-    for (const part of parts) {
-      if (val == null || typeof val !== 'object') return key
-      val = (val as Record<string, unknown>)[part]
-    }
-    if (typeof val === 'string') return val
-    return key
-  }
-}
-
 /** Convenience: get locale + messages + t() in one call for server components */
 export async function useServerTranslations() {
-  const locale = getLocale()           // synchronous — safe in ISR context
+  const locale = getLocale()
   const messages = await getMessages(locale)
   const t = createT(messages)
   return { locale, messages, t }

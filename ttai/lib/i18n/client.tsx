@@ -5,8 +5,8 @@ import {
   useContext,
   type ReactNode,
 } from 'react'
-import type { Messages } from './server'
-import { createT } from './server'
+import type { Messages } from './utils'
+import { createT } from './utils'
 import type { Locale } from './locales'
 
 interface I18nContextValue {
