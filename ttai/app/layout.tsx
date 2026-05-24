@@ -3,6 +3,8 @@ import { Inter } from 'next/font/google'
 import { Toaster } from '@/components/ui/toaster'
 import { CartProvider } from '@/lib/cart/CartContext'
 import { GlowEffect } from '@/components/GlowEffect'
+import { LocaleProvider } from '@/lib/i18n/client'
+import { getLocale, getMessages } from '@/lib/i18n/server'
 // import { ChatWidget } from '@/components/ai/ChatWidget'  // hidden for now
 import './globals.css'
 
@@ -13,16 +15,22 @@ export const metadata: Metadata = {
   description: 'B2B wholesale marketplace and B2C city store platform',
 }
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const locale = await getLocale()
+  const messages = await getMessages(locale)
+  const dir = messages.dir ?? 'ltr'
+
   return (
-    <html lang="en">
+    <html lang={locale} dir={dir}>
       <body className={inter.className}>
-        <CartProvider>
-          {children}
-          {/* <ChatWidget /> */}
-        </CartProvider>
-        <Toaster />
-        <GlowEffect />
+        <LocaleProvider locale={locale} messages={messages}>
+          <CartProvider>
+            {children}
+            {/* <ChatWidget /> */}
+          </CartProvider>
+          <Toaster />
+          <GlowEffect />
+        </LocaleProvider>
       </body>
     </html>
   )

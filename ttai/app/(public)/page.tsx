@@ -3,6 +3,7 @@ import Image from 'next/image'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { EcosystemChain } from './EcosystemChain'
+import { useServerTranslations } from '@/lib/i18n/server'
 
 /* ─── SVG icon components ───────────────────────────────────────────────── */
 function IconGlobe({ className = 'w-6 h-6' }: { className?: string }) {
@@ -216,6 +217,8 @@ const STATS = [
 export default async function HomePage({ searchParams }: { searchParams: { code?: string } }) {
   if (searchParams.code) redirect(`/auth/callback?code=${searchParams.code}`)
 
+  const { t, messages } = await useServerTranslations()
+
   const supabase = createClient()
   const { data: suppliers } = await supabase
     .from('suppliers')
@@ -223,6 +226,16 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
     .eq('status', 'ACTIVE')
     .order('created_at', { ascending: true })
     .limit(3)
+
+  const HOW_STEPS = messages.home.how_steps
+  const TRUST_CARDS = messages.home.trust_cards
+
+  const STATS_T = [
+    { value: '50+',  label: t('home.stats_countries') },
+    { value: '200+', label: t('home.stats_suppliers') },
+    { value: '5K+',  label: t('home.stats_products') },
+    { value: '99%',  label: t('home.stats_satisfaction') },
+  ]
 
   return (
     <>
@@ -253,28 +266,28 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
               {/* Badge */}
               <div className="animate-fade-in-up inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-4 py-1.5 text-sm font-medium text-blue-100">
                 <span className="w-2 h-2 rounded-full bg-[#F5A623] animate-blink" />
-                Global B2B Trade Platform
+                {t('home.badge')}
               </div>
 
               {/* Headline */}
               <div className="space-y-3 animate-fade-in-up delay-150">
                 <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-[1.1] tracking-tight">
-                  Global Marketplace<br />
-                  Managed by{' '}
+                  {t('home.hero_title_1')}<br />
+                  {t('home.hero_title_2')}{' '}
                   <span className="text-gradient-gold">TTAI EMA</span>
                 </h1>
                 <p className="text-lg text-blue-200 max-w-md leading-relaxed">
-                  Connecting verified factories, suppliers, and global buyers — all in one trusted platform.
+                  {t('home.hero_subtitle')}
                 </p>
               </div>
 
               {/* Trust icons */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 animate-fade-in-up delay-300">
                 {[
-                  { Icon: IconGlobe,     label: 'Global Reach' },
-                  { Icon: IconShield,    label: 'Verified' },
-                  { Icon: IconPackage,   label: 'Wide Range' },
-                  { Icon: IconHandshake, label: 'Trusted' },
+                  { Icon: IconGlobe,     label: t('home.trust_global') },
+                  { Icon: IconShield,    label: t('home.trust_verified') },
+                  { Icon: IconPackage,   label: t('home.trust_range') },
+                  { Icon: IconHandshake, label: t('home.trust_trusted') },
                 ].map(({ Icon, label }, i) => (
                   <div key={label} className="flex flex-col items-center gap-2 p-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors">
                     <div className="w-10 h-10 rounded-full bg-[#F5A623]/20 flex items-center justify-center">
@@ -291,14 +304,14 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
                   href="/marketplace"
                   className="inline-flex items-center gap-2 rounded-lg bg-[#F5A623] text-[#0B1F4D] px-7 py-3.5 text-sm font-bold hover:bg-[#fbb93a] hover:shadow-lg hover:shadow-[#F5A623]/30 transition-all duration-200 hover:-translate-y-0.5"
                 >
-                  Explore Marketplace
+                  {t('home.cta_explore')}
                   <IconArrowRight className="w-4 h-4" />
                 </Link>
                 <Link
                   href="/suppliers"
                   className="inline-flex items-center gap-2 rounded-lg border border-white/30 text-white px-7 py-3.5 text-sm font-semibold hover:bg-white/10 transition-all duration-200"
                 >
-                  View Suppliers
+                  {t('home.cta_suppliers')}
                 </Link>
               </div>
             </div>
@@ -311,9 +324,9 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
                     <div className="w-8 h-8 rounded-lg bg-[#F5A623]/20 flex items-center justify-center">
                       <IconMapPin className="w-4 h-4 text-[#F5A623]" />
                     </div>
-                    <h2 className="font-bold text-white text-lg">Find Products by Region</h2>
+                    <h2 className="font-bold text-white text-lg">{t('home.find_by_region')}</h2>
                   </div>
-                  <p className="text-sm text-blue-200 ml-10">Select a region to discover suppliers</p>
+                  <p className="text-sm text-blue-200 ml-10">{t('home.find_subtitle')}</p>
                 </div>
 
                 <div className="divide-y divide-gray-100">
@@ -346,7 +359,7 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
                     className="flex items-center justify-center gap-2 text-[#0B1F4D] text-sm font-semibold hover:text-blue-700 transition-colors"
                   >
                     <IconSearch className="w-4 h-4" />
-                    Browse all products
+                    {t('home.browse_all')}
                   </Link>
                 </div>
               </div>
@@ -364,7 +377,7 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
       <section className="bg-[#0f2a5e] border-t border-white/10">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-white/10">
-            {STATS.map(({ value, label }, i) => (
+            {STATS_T.map(({ value, label }, i) => (
               <div
                 key={label}
                 className="py-6 px-6 text-center animate-fade-in-up"
@@ -384,9 +397,9 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
       <section className="py-24 px-4 bg-white">
         <div className="container mx-auto">
           <div className="text-center mb-14">
-            <p className="text-[#F5A623] font-semibold text-sm uppercase tracking-widest mb-2">What We Offer</p>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-[#0B1F4D]">Explore Our Product Families</h2>
-            <p className="text-gray-400 mt-3 max-w-xl mx-auto">Discover high-quality products from verified factories across 6 major categories</p>
+            <p className="text-[#F5A623] font-semibold text-sm uppercase tracking-widest mb-2">{t('home.what_we_offer')}</p>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-[#0B1F4D]">{t('home.families_title')}</h2>
+            <p className="text-gray-400 mt-3 max-w-xl mx-auto">{t('home.families_subtitle')}</p>
             <div className="mt-4 mx-auto w-16 h-1 bg-[#F5A623] rounded-full" />
           </div>
 
@@ -415,7 +428,7 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
                   <h3 className="font-bold text-[#0B1F4D] text-base group-hover:text-blue-700 transition-colors">{cat.name}</h3>
                   <p className="text-xs text-gray-500 mt-1.5 leading-relaxed">{cat.desc}</p>
                   <div className="mt-4 flex items-center gap-1.5 text-xs font-bold text-[#F5A623] group-hover:gap-2.5 transition-all">
-                    Browse products
+                    {t('home.families_cta')}
                     <IconArrowRight className="w-3.5 h-3.5" />
                   </div>
                 </div>
@@ -440,15 +453,15 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-12">
             <div>
-              <p className="text-[#F5A623] font-semibold text-sm uppercase tracking-widest mb-2">Global Discovery</p>
-              <h2 className="text-3xl sm:text-4xl font-extrabold text-white">Shop by Region</h2>
-              <p className="text-blue-300 mt-2 text-sm max-w-md">Discover curated product collections tailored to each region&apos;s taste and demand.</p>
+              <p className="text-[#F5A623] font-semibold text-sm uppercase tracking-widest mb-2">{t('home.region_title')}</p>
+              <h2 className="text-3xl sm:text-4xl font-extrabold text-white">{t('home.region_heading')}</h2>
+              <p className="text-blue-300 mt-2 text-sm max-w-md">{t('home.region_subtitle')}</p>
             </div>
             <Link
               href="/marketplace"
               className="inline-flex items-center gap-2 text-sm font-bold text-[#F5A623] hover:text-[#fbb93a] transition-colors flex-shrink-0"
             >
-              View all products
+              {t('home.region_view_all')}
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 8l4 4m0 0l-4 4m4-4H3" />
               </svg>
@@ -483,7 +496,7 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
                     <div>
                       <h3 className="text-white font-extrabold text-xl">{r.name}</h3>
                       <p className="text-white/60 text-xs mt-1 leading-snug max-w-[200px]">{r.tagline}</p>
-                      <p className="text-[#F5A623] text-xs font-bold mt-2">{r.countries} countries →</p>
+                      <p className="text-[#F5A623] text-xs font-bold mt-2">{r.countries} {t('home.region_finder_cta')}</p>
                     </div>
                     <div className="w-10 h-10 rounded-full bg-white/15 backdrop-blur-sm border border-white/20 flex items-center justify-center group-hover:bg-[#F5A623] group-hover:border-[#F5A623] transition-all flex-shrink-0">
                       <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -542,25 +555,25 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
       <section className="py-24 px-4 bg-gray-50 overflow-hidden">
         <div className="container mx-auto">
           <div className="text-center mb-16">
-            <p className="text-[#F5A623] font-semibold text-sm uppercase tracking-widest mb-2">Simple Process</p>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-[#0B1F4D]">How It Works</h2>
+            <p className="text-[#F5A623] font-semibold text-sm uppercase tracking-widest mb-2">{t('home.how_label')}</p>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-[#0B1F4D]">{t('home.how_title')}</h2>
             <div className="mt-4 mx-auto w-16 h-1 bg-[#F5A623] rounded-full" />
           </div>
 
           {/* Desktop stepper */}
           <div className="hidden md:flex items-start gap-0">
-            {HOW_IT_WORKS.map((item, i) => (
-              <div key={item.step} className="flex items-start flex-1 animate-fade-in-up" style={{ animationDelay: `${i * 120}ms` }}>
+            {HOW_STEPS.map((item, i) => (
+              <div key={i} className="flex items-start flex-1 animate-fade-in-up" style={{ animationDelay: `${i * 120}ms` }}>
                 <div className="flex flex-col items-center flex-1">
                   {/* Connector + icon row */}
                   <div className="flex items-center w-full mb-6">
                     <div className="w-14 h-14 rounded-2xl bg-[#0B1F4D] text-white flex items-center justify-center shadow-lg flex-shrink-0 group hover:bg-[#F5A623] transition-colors duration-300 cursor-default relative">
-                      <StepIcons step={item.step} />
+                      <StepIcons step={i + 1} />
                       <div className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-[#F5A623] text-[#0B1F4D] text-[10px] font-extrabold flex items-center justify-center">
-                        {item.step}
+                        {i + 1}
                       </div>
                     </div>
-                    {i < HOW_IT_WORKS.length - 1 && (
+                    {i < HOW_STEPS.length - 1 && (
                       <div className="flex-1 h-0.5 bg-gradient-to-r from-[#0B1F4D]/40 to-gray-200 mx-3 animate-line-grow" style={{ animationDelay: `${i * 120 + 200}ms` }} />
                     )}
                   </div>
@@ -576,16 +589,16 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
 
           {/* Mobile stepper */}
           <div className="flex flex-col gap-4 md:hidden">
-            {HOW_IT_WORKS.map((item, i) => (
-              <div key={item.step} className="flex items-start gap-4 animate-fade-in-up" style={{ animationDelay: `${i * 100}ms` }}>
+            {HOW_STEPS.map((item, i) => (
+              <div key={i} className="flex items-start gap-4 animate-fade-in-up" style={{ animationDelay: `${i * 100}ms` }}>
                 <div className="relative flex-shrink-0">
                   <div className="w-12 h-12 rounded-xl bg-[#0B1F4D] text-white flex items-center justify-center shadow-md">
-                    <StepIcons step={item.step} />
+                    <StepIcons step={i + 1} />
                   </div>
                   <div className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-[#F5A623] text-[#0B1F4D] text-[10px] font-extrabold flex items-center justify-center">
-                    {item.step}
+                    {i + 1}
                   </div>
-                  {i < HOW_IT_WORKS.length - 1 && (
+                  {i < HOW_STEPS.length - 1 && (
                     <div className="absolute top-12 left-1/2 -translate-x-1/2 w-0.5 h-4 bg-gray-200" />
                   )}
                 </div>
@@ -605,10 +618,10 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
       <section className="py-24 px-4 bg-white">
         <div className="container mx-auto">
           <div className="text-center mb-12">
-            <p className="text-[#F5A623] font-semibold text-sm uppercase tracking-widest mb-2">Our Network</p>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-[#0B1F4D]">Main Factories & Zones</h2>
+            <p className="text-[#F5A623] font-semibold text-sm uppercase tracking-widest mb-2">{t('home.factories_label')}</p>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-[#0B1F4D]">{t('home.factories_title')}</h2>
             <p className="text-gray-400 mt-3 text-sm">
-              All managed and verified by <span className="text-[#F5A623] font-bold">TTAI EMA</span>
+              {t('home.factories_subtitle')} <span className="text-[#F5A623] font-bold">TTAI EMA</span>
             </p>
             <div className="mt-4 mx-auto w-16 h-1 bg-[#F5A623] rounded-full" />
           </div>
@@ -656,13 +669,13 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
                         <div className="w-4 h-4 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
                           <IconCheck className="w-3 h-3" />
                         </div>
-                        Verified & managed by TTAI EMA
+                        {t('home.factories_verified')}
                       </div>
                       {s.description && (
                         <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed">{s.description}</p>
                       )}
                       <div className="flex items-center gap-2">
-                        {['Wholesale', 'Export', 'B2B'].map((tag) => (
+                        {[t('common.wholesale'), t('common.export_tag'), t('common.b2b')].map((tag) => (
                           <span key={tag} className="text-[11px] bg-blue-50 text-blue-700 rounded-full px-2.5 py-0.5 font-semibold">
                             {tag}
                           </span>
@@ -670,7 +683,7 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
                       </div>
                       <div className="pt-1 flex items-center gap-1 text-xs font-bold text-[#F5A623] group-hover:gap-2 transition-all">
                         <IconFactory className="w-3.5 h-3.5" />
-                        View supplier profile
+                        {t('home.factories_view')}
                         <IconArrowRight className="w-3 h-3" />
                       </div>
                     </div>
@@ -692,7 +705,7 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
               className="inline-flex items-center gap-2.5 rounded-xl border-2 border-[#0B1F4D] text-[#0B1F4D] px-8 py-3.5 text-sm font-bold hover:bg-[#0B1F4D] hover:text-white transition-all duration-200 hover:shadow-lg"
             >
               <IconFactory className="w-4 h-4" />
-              View All Suppliers
+              {t('home.factories_cta')}
               <IconArrowRight className="w-4 h-4" />
             </Link>
           </div>
@@ -721,14 +734,14 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
             <div className="text-center mb-12">
               <div className="inline-flex items-center gap-2 bg-[#F5A623]/15 border border-[#F5A623]/30 rounded-full px-4 py-2 text-xs font-bold text-[#F5A623] uppercase tracking-widest mb-6">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#F5A623] animate-pulse" />
-                Join the Network
+                {t('home.cta_label')}
               </div>
               <h2 className="text-4xl sm:text-5xl font-extrabold mb-5 leading-tight">
-                Ready to Start<br className="hidden sm:block" />
-                <span className="text-[#F5A623]"> Trading?</span>
+                {t('home.cta_title_1')}<br className="hidden sm:block" />
+                <span className="text-[#F5A623]"> {t('home.cta_title_2')}</span>
               </h2>
               <p className="text-blue-200 max-w-xl mx-auto text-base leading-relaxed">
-                Join thousands of verified suppliers and buyers on TTAI EMA&apos;s trusted global marketplace.
+                {t('home.cta_subtitle')}
               </p>
             </div>
 
@@ -743,8 +756,8 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                   </svg>
                 </div>
-                <p className="text-base font-black">Join as Supplier</p>
-                <p className="text-xs font-normal text-[#0B1F4D]/70 mt-1">List products and reach global buyers</p>
+                <p className="text-base font-black">{t('home.join_supplier')}</p>
+                <p className="text-xs font-normal text-[#0B1F4D]/70 mt-1">{t('home.join_supplier_sub')}</p>
               </Link>
               <Link
                 href="/marketplace"
@@ -755,25 +768,19 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
                   </svg>
                 </div>
-                <p className="text-base font-black">Browse Marketplace</p>
-                <p className="text-xs font-normal text-blue-200 mt-1">Discover verified suppliers worldwide</p>
+                <p className="text-base font-black">{t('home.browse_market')}</p>
+                <p className="text-xs font-normal text-blue-200 mt-1">{t('home.browse_market_sub')}</p>
               </Link>
             </div>
 
             {/* Social proof */}
             <div className="flex flex-wrap justify-center items-center gap-6 text-xs text-blue-300">
-              <span className="flex items-center gap-1.5">
-                <svg className="w-3.5 h-3.5 text-green-400" fill="currentColor" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                No setup fee
-              </span>
-              <span className="flex items-center gap-1.5">
-                <svg className="w-3.5 h-3.5 text-green-400" fill="currentColor" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                Verified in 48 hours
-              </span>
-              <span className="flex items-center gap-1.5">
-                <svg className="w-3.5 h-3.5 text-green-400" fill="currentColor" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                Cancel anytime
-              </span>
+              {messages.home.social_proof.map((proof, i) => (
+                <span key={i} className="flex items-center gap-1.5">
+                  <svg className="w-3.5 h-3.5 text-green-400" fill="currentColor" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                  {proof}
+                </span>
+              ))}
             </div>
           </div>
         </div>
@@ -784,24 +791,24 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
       ══════════════════════════════════════════════════════════════════ */}
       <section className="py-16 px-4 bg-gray-50 border-t border-gray-100">
         <div className="container mx-auto">
-          <p className="text-center text-xs font-black uppercase tracking-widest text-[#F5A623] mb-10">Why businesses trust us</p>
+          <p className="text-center text-xs font-black uppercase tracking-widest text-[#F5A623] mb-10">{t('home.trust_label')}</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[
-              { Icon: IconShield, label: 'Verified Suppliers',  desc: 'Every factory audited, certified, and continuously monitored by our compliance team.', color: 'bg-blue-50 text-blue-600' },
-              { Icon: IconGlobe,  label: 'Global Network',      desc: '50+ countries connected on one platform with local support in every major region.', color: 'bg-green-50 text-green-600' },
-              { Icon: IconLock,   label: 'Secure Transactions', desc: 'End-to-end encrypted trade environment with escrow and invoice payment protection.', color: 'bg-purple-50 text-purple-600' },
-              { Icon: IconPhone,  label: '24/7 Support',        desc: 'Dedicated trade specialists available around the clock to resolve any issue fast.', color: 'bg-orange-50 text-orange-600' },
-            ].map(({ Icon, label, desc, color }, i) => (
+            {([
+              { Icon: IconShield, color: 'bg-blue-50 text-blue-600' },
+              { Icon: IconGlobe,  color: 'bg-green-50 text-green-600' },
+              { Icon: IconLock,   color: 'bg-purple-50 text-purple-600' },
+              { Icon: IconPhone,  color: 'bg-orange-50 text-orange-600' },
+            ] as const).map(({ Icon, color }, i) => (
               <div
-                key={label}
+                key={i}
                 className="bg-white rounded-2xl border border-gray-100 p-6 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 animate-fade-in-up"
                 style={{ animationDelay: `${i * 80}ms` }}
               >
                 <div className={`w-12 h-12 rounded-2xl ${color} flex items-center justify-center mb-4`}>
                   <Icon className="w-6 h-6" />
                 </div>
-                <h3 className="font-bold text-[#0B1F4D] text-sm mb-2">{label}</h3>
-                <p className="text-xs text-gray-500 leading-relaxed">{desc}</p>
+                <h3 className="font-bold text-[#0B1F4D] text-sm mb-2">{TRUST_CARDS[i]?.label}</h3>
+                <p className="text-xs text-gray-500 leading-relaxed">{TRUST_CARDS[i]?.desc}</p>
               </div>
             ))}
           </div>

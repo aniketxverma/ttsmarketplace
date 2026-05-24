@@ -2,18 +2,13 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { UserMenu } from './UserMenu'
 import { CartIcon } from '@/components/cart/CartIcon'
-
-const NAV = [
-  { label: 'Home',        href: '/' },
-  { label: 'Marketplace', href: '/marketplace' },
-  { label: 'Regions',     href: '/#shop-by-region' },
-  { label: 'Store',       href: '/store' },
-  { label: 'Suppliers',   href: '/suppliers' },
-]
+import { LocaleSwitcher } from '@/components/LocaleSwitcher'
+import { useServerTranslations } from '@/lib/i18n/server'
 
 export async function Header() {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
+  const { t } = await useServerTranslations()
 
   let profile = null
   if (user) {
@@ -24,6 +19,14 @@ export async function Header() {
       .single()
     profile = data
   }
+
+  const NAV = [
+    { label: 'Home',                    href: '/' },
+    { label: t('nav.marketplace'),      href: '/marketplace' },
+    { label: 'Regions',                 href: '/#shop-by-region' },
+    { label: 'Store',                   href: '/store' },
+    { label: t('nav.suppliers'),        href: '/suppliers' },
+  ]
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-gray-100 bg-white/95 backdrop-blur-md shadow-sm">
@@ -64,17 +67,11 @@ export async function Header() {
         </nav>
 
         {/* ── Right ───────────────────────────────────────────────────── */}
-        <div className="flex items-center gap-2.5">
-          {/* Language selector */}
-          <button className="hidden sm:flex items-center gap-1.5 text-sm text-gray-600 border border-gray-200 rounded-lg px-3 py-1.5 hover:border-gray-300 hover:bg-gray-50 transition-colors">
-            <svg className="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span className="font-semibold text-xs">EN</span>
-            <svg className="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
+        <div className="flex items-center gap-2">
+          {/* Language switcher — client component with flag dropdown */}
+          <div className="hidden sm:block">
+            <LocaleSwitcherLight />
+          </div>
 
           {/* Cart */}
           <CartIcon />
@@ -91,7 +88,7 @@ export async function Header() {
               href="/login"
               className="rounded-xl bg-[#0B1F4D] text-white px-5 py-2 text-sm font-semibold hover:bg-[#162d6e] hover:shadow-md transition-all duration-200"
             >
-              Login
+              {t('common.login')}
             </Link>
           )}
 
@@ -105,4 +102,9 @@ export async function Header() {
       </div>
     </header>
   )
+}
+
+// Light-theme wrapper — renders LocaleSwitcher adapted for the white header
+function LocaleSwitcherLight() {
+  return <LocaleSwitcher variant="light" />
 }

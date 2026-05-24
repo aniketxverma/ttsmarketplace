@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { formatCents } from '@/lib/utils'
+import { useT } from '@/lib/i18n/client'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface Supplier {
@@ -73,6 +74,7 @@ function Stars({ rating, size = 'sm' }: { rating: number; size?: 'sm'|'lg' }) {
 // ── Share button ──────────────────────────────────────────────────────────────
 function ShareButton({ url }: { url: string }) {
   const [copied, setCopied] = useState(false)
+  const t = useT()
   const copy = async () => {
     await navigator.clipboard.writeText(url).catch(() => {})
     setCopied(true)
@@ -83,7 +85,7 @@ function ShareButton({ url }: { url: string }) {
       className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold border-2 transition-all whitespace-nowrap ${
         copied ? 'bg-green-500 border-green-500 text-white' : 'border-gray-200 text-gray-600 hover:border-[#0B1F4D] hover:text-[#0B1F4D] bg-white'
       }`}>
-      {copied ? <><Check className="w-4 h-4" />Copied!</> : <><Share2 className="w-4 h-4" />Share</>}
+      {copied ? <><Check className="w-4 h-4" />{t('brand.copied')}</> : <><Share2 className="w-4 h-4" />{t('brand.share')}</>}
     </button>
   )
 }
@@ -254,16 +256,16 @@ const CANAL_POST_TYPES: Record<string, { label: string; badge: string; Icon: Rea
   announcement: { label: 'Announcement', badge: 'bg-green-100 text-green-700',  Icon: Megaphone },
 }
 
-// ── Nav config ────────────────────────────────────────────────────────────────
-const NAV_ITEMS = [
-  { id: 'products',       label: 'Products',       Icon: Package,        accent: '#0B1F4D' },
-  { id: 'canal',          label: 'Canal',          Icon: Radio,          accent: '#7C3AED' },
-  { id: 'about',          label: 'About',          Icon: Info,           accent: '#1D4ED8' },
-  { id: 'gallery',        label: 'Gallery',        Icon: Images,         accent: '#5B21B6' },
-  { id: 'certifications', label: 'Certifications', Icon: Award,          accent: '#B45309' },
-  { id: 'reviews',        label: 'Reviews',        Icon: Star,           accent: '#B45309' },
-  { id: 'locations',      label: 'Locations',      Icon: MapPin,         accent: '#065F46' },
-  { id: 'contact',        label: 'Contact',        Icon: MessageCircle,  accent: '#0E7490' },
+// ── Nav config (static IDs — labels translated inside component) ──────────────
+const NAV_ITEM_IDS = [
+  { id: 'products',       msgKey: 'brand.tab_products', Icon: Package,        accent: '#0B1F4D' },
+  { id: 'canal',          msgKey: 'brand.tab_canal',    Icon: Radio,          accent: '#7C3AED' },
+  { id: 'about',          msgKey: 'brand.tab_about',    Icon: Info,           accent: '#1D4ED8' },
+  { id: 'gallery',        msgKey: 'brand.tab_gallery',  Icon: Images,         accent: '#5B21B6' },
+  { id: 'certifications', msgKey: 'brand.tab_certs',    Icon: Award,          accent: '#B45309' },
+  { id: 'reviews',        msgKey: 'brand.tab_reviews',  Icon: Star,           accent: '#B45309' },
+  { id: 'locations',      msgKey: 'brand.tab_locations',Icon: MapPin,         accent: '#065F46' },
+  { id: 'contact',        msgKey: 'brand.tab_contact',  Icon: MessageCircle,  accent: '#0E7490' },
 ]
 
 // ── POS type config ───────────────────────────────────────────────────────────
@@ -284,6 +286,9 @@ export function BrandTabs({
   avgRating, sectionVisibility, pos, brandSlug, shareUrl,
   channel, channelPosts = [], isAuthenticated = false,
 }: Props) {
+  const t = useT()
+  const NAV_ITEMS = NAV_ITEM_IDS.map(item => ({ ...item, label: t(item.msgKey) }))
+
   const [activeSection, setActiveSection] = useState('products')
   const [lightbox, setLightbox] = useState<GalleryItem | null>(null)
 
@@ -464,14 +469,14 @@ export function BrandTabs({
             <div data-reveal>
               <SectionHeading
                 icon={Package}
-                title="Our Products"
-                subtitle={`${products.length} wholesale products across ${productsByCategory.length} ${productsByCategory.length === 1 ? 'category' : 'categories'}`}
+                title={t('brand.products_title')}
+                subtitle={`${products.length} ${t('brand.products_subtitle_suffix')} ${productsByCategory.length} ${t('brand.products_categories')}`}
                 accent="#0B1F4D"
                 action={wa ? (
                   <a href={`${wa}?text=Hi! I'd like to request your full catalogue.`}
                     target="_blank" rel="noopener noreferrer"
                     className="hidden sm:flex items-center gap-2 bg-green-500 hover:bg-green-400 text-white px-4 py-2 rounded-xl text-sm font-bold transition-colors shadow-sm">
-                    <WaIcon className="w-4 h-4" />Request Catalogue
+                    <WaIcon className="w-4 h-4" />{t('brand.request_catalogue')}
                   </a>
                 ) : undefined}
               />
@@ -490,13 +495,13 @@ export function BrandTabs({
               <div data-reveal className="mt-12 rounded-2xl overflow-hidden" style={{ background: 'linear-gradient(135deg, #0B1F4D 0%, #1a3a7a 60%, #0d3060 100%)' }}>
                 <div className="px-8 py-9 flex flex-col sm:flex-row items-center justify-between gap-5">
                   <div>
-                    <p className="text-white font-extrabold text-xl mb-1">Need a custom quote or bulk pricing?</p>
-                    <p className="text-white/55 text-sm">Contact us directly — we respond within hours.</p>
+                    <p className="text-white font-extrabold text-xl mb-1">{t('brand.bulk_cta')}</p>
+                    <p className="text-white/55 text-sm">{t('brand.bulk_sub')}</p>
                   </div>
                   <a href={`${wa}?text=Hi! I'd like to request a catalogue and pricing from your store.`}
                     target="_blank" rel="noopener noreferrer"
                     className="flex-shrink-0 flex items-center gap-2 bg-[#F5A623] hover:bg-amber-400 text-[#0B1F4D] px-6 py-3.5 rounded-xl font-extrabold transition-colors shadow-lg whitespace-nowrap">
-                    <WaIcon className="w-5 h-5" />Request Custom Quote
+                    <WaIcon className="w-5 h-5" />{t('brand.bulk_btn')}
                   </a>
                 </div>
               </div>
@@ -562,10 +567,10 @@ export function BrandTabs({
                           : <LogIn className="w-4 h-4" />
                     }
                     {(canalLoading || canalBusy)
-                      ? 'Please wait…'
-                      : canalMember ? 'Joined ✓'
-                      : canalUser   ? 'Join Canal'
-                      : 'Login to Join'
+                      ? t('brand.channel_waiting')
+                      : canalMember ? t('brand.channel_joined')
+                      : canalUser   ? t('brand.channel_join')
+                      : t('brand.channel_login')
                     }
                   </button>
                   {channel.whatsapp && (
@@ -577,7 +582,7 @@ export function BrandTabs({
                   )}
                   <a href={`/channel/${channel.id}`} target="_blank" rel="noopener noreferrer"
                     className="flex items-center gap-2 px-4 py-3 rounded-xl font-bold text-sm bg-white/10 hover:bg-white/20 text-white border border-white/20 transition-colors">
-                    <ExternalLink className="w-4 h-4" />View Feed
+                    <ExternalLink className="w-4 h-4" />{t('brand.channel_view')}
                   </a>
                 </div>
               </div>
@@ -586,7 +591,7 @@ export function BrandTabs({
             {/* Recent posts preview */}
             {channelPosts.length > 0 && (
               <div data-reveal className="space-y-3">
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Latest from the canal</p>
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">{t('brand.channel_posts')}</p>
                 {channelPosts.map((post, idx) => {
                   const cfg = CANAL_POST_TYPES[post.post_type] ?? CANAL_POST_TYPES.update
                   const PostIcon = cfg.Icon
@@ -611,7 +616,7 @@ export function BrandTabs({
                 })}
                 <a href={`/channel/${channel.id}`} target="_blank" rel="noopener noreferrer"
                   className="flex items-center justify-center gap-2 w-full py-3 rounded-xl border-2 border-[#7C3AED] text-[#7C3AED] font-bold text-sm hover:bg-[#7C3AED] hover:text-white transition-all">
-                  <Radio className="w-4 h-4" />View All Posts
+                  <Radio className="w-4 h-4" />{t('brand.channel_view_all')}
                 </a>
               </div>
             )}
@@ -619,7 +624,7 @@ export function BrandTabs({
             {channelPosts.length === 0 && (
               <div data-reveal className="bg-white rounded-2xl border border-dashed border-purple-200 p-10 text-center">
                 <Radio className="w-8 h-8 text-purple-200 mx-auto mb-2" />
-                <p className="text-gray-400 text-sm font-medium">No posts yet — join to be first to know when they post!</p>
+                <p className="text-gray-400 text-sm font-medium">{t('brand.channel_empty')}</p>
               </div>
             )}
           </section>
@@ -628,7 +633,7 @@ export function BrandTabs({
         {/* ══════════════ ABOUT ═══════════════════════════════════════════════ */}
         <section id="sec-about">
           <div data-reveal>
-            <SectionHeading icon={Info} title="About the Company" accent="#1D4ED8" />
+            <SectionHeading icon={Info} title={t('brand.about_title')} accent="#1D4ED8" />
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Description — blue left accent */}
@@ -661,10 +666,10 @@ export function BrandTabs({
             {/* Quick facts */}
             <div data-reveal className="space-y-3">
               {[
-                { label: 'Founded',   value: supplier.founded_year?.toString(), Icon: Calendar, bg: 'bg-indigo-50',  iconColor: 'text-indigo-600' },
-                { label: 'Location',  value: city ? `${(city as any).name}, ${(country as any)?.name ?? ''}` : country ? (country as any).name : null, Icon: MapPin, bg: 'bg-green-50', iconColor: 'text-green-600' },
-                { label: 'Website',   value: supplier.website?.replace(/^https?:\/\//, '') ?? null, Icon: Globe, bg: 'bg-blue-50', iconColor: 'text-blue-600', href: supplier.website },
-                { label: 'Hours',     value: supplier.working_hours, Icon: Clock, bg: 'bg-orange-50', iconColor: 'text-orange-500' },
+                { label: t('brand.founded'),  value: supplier.founded_year?.toString(), Icon: Calendar, bg: 'bg-indigo-50',  iconColor: 'text-indigo-600' },
+                { label: t('brand.location'), value: city ? `${(city as any).name}, ${(country as any)?.name ?? ''}` : country ? (country as any).name : null, Icon: MapPin, bg: 'bg-green-50', iconColor: 'text-green-600' },
+                { label: t('brand.website'),  value: supplier.website?.replace(/^https?:\/\//, '') ?? null, Icon: Globe, bg: 'bg-blue-50', iconColor: 'text-blue-600', href: supplier.website },
+                { label: t('brand.hours'),    value: supplier.working_hours, Icon: Clock, bg: 'bg-orange-50', iconColor: 'text-orange-500' },
               ].filter(r => r.value).map(r => (
                 <div key={r.label} className="bg-white rounded-2xl border border-gray-100 px-5 py-4 shadow-sm flex items-center gap-4">
                   <div className={`w-10 h-10 rounded-xl ${r.bg} flex items-center justify-center flex-shrink-0`}>
@@ -685,7 +690,7 @@ export function BrandTabs({
                 <a href={`${wa}?text=Hi! I found your store on TTAI and I'd like to know more.`}
                   target="_blank" rel="noopener noreferrer"
                   className="flex items-center justify-center gap-2 w-full bg-green-500 hover:bg-green-400 text-white py-3.5 rounded-2xl font-bold text-sm transition-colors shadow-sm mt-2">
-                  <WaIcon className="w-5 h-5" />Send a Message
+                  <WaIcon className="w-5 h-5" />{t('brand.send_message')}
                 </a>
               )}
             </div>
@@ -829,10 +834,10 @@ export function BrandTabs({
                             }`}>
                               <BadgeCheck className="w-3 h-3" />
                               {!valid
-                                ? 'Expired'
+                                ? t('brand.expired')
                                 : urgency
                                   ? `${daysLeft}d left`
-                                  : 'Valid'}
+                                  : t('brand.valid')}
                               {cert.expiry_date && ` · ${new Date(cert.expiry_date).getFullYear()}`}
                             </span>
                           </div>
@@ -845,7 +850,7 @@ export function BrandTabs({
             )}
             {documents.length > 0 && (
               <div data-reveal>
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Documents</p>
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">{t('brand.documents')}</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {documents.map(doc => (
                     <a key={doc.id} href={doc.file_url} target="_blank" rel="noopener noreferrer"
@@ -874,8 +879,8 @@ export function BrandTabs({
         {sectionVisibility.reviews !== false && (
           <section id="sec-reviews">
             <div data-reveal>
-              <SectionHeading icon={Star} title="Customer Reviews"
-                subtitle={reviews.length > 0 ? `${avgRating.toFixed(1)} avg · ${reviews.length} reviews` : 'No reviews yet'}
+              <SectionHeading icon={Star} title={t('brand.reviews_title')}
+                subtitle={reviews.length > 0 ? `${avgRating.toFixed(1)} ${t('brand.reviews_avg')} · ${reviews.length}` : t('brand.reviews_none')}
                 accent="#B45309" />
             </div>
             {reviews.length > 0 ? (
@@ -925,7 +930,7 @@ export function BrandTabs({
                               <div className="flex flex-col items-end gap-1 flex-shrink-0">
                                 {r.verified_purchase && (
                                   <span className="inline-flex items-center gap-1 text-xs font-bold text-green-700 bg-green-50 px-2 py-0.5 rounded-full">
-                                    <Check className="w-3 h-3" />Verified
+                                    <Check className="w-3 h-3" />{t('brand.verified_purchase')}
                                   </span>
                                 )}
                                 <p className="text-xs text-gray-400">{new Date(r.created_at).toLocaleDateString()}</p>
@@ -935,7 +940,7 @@ export function BrandTabs({
                             {r.supplier_reply && (
                               <div className="mt-3 bg-blue-50 rounded-xl p-3.5 border-l-4 border-[#0B1F4D]">
                                 <p className="text-xs font-bold text-[#0B1F4D] mb-1 flex items-center gap-1.5">
-                                  <Reply className="w-3.5 h-3.5" />Supplier Reply
+                                  <Reply className="w-3.5 h-3.5" />{t('brand.supplier_reply')}
                                 </p>
                                 <p className="text-sm text-gray-600">{r.supplier_reply}</p>
                               </div>
@@ -962,8 +967,8 @@ export function BrandTabs({
         {pos.length > 0 && (
           <section id="sec-locations">
             <div data-reveal>
-              <SectionHeading icon={MapPin} title="Our Locations"
-                subtitle={`${pos.length} ${pos.length === 1 ? 'location' : 'locations'} worldwide`}
+              <SectionHeading icon={MapPin} title={t('brand.locations_title')}
+                subtitle={`${pos.length} ${t('brand.locations_sub')}`}
                 accent="#065F46" />
             </div>
             <div data-reveal className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -984,7 +989,7 @@ export function BrandTabs({
                     <div className={`px-4 py-2.5 flex items-center justify-between ${isOpen ? 'bg-green-50 border-b border-green-100' : 'bg-gray-50 border-b border-gray-100'}`}>
                       <span className={`flex items-center gap-1.5 text-xs font-bold ${isOpen ? 'text-green-700' : 'text-gray-500'}`}>
                         <span className={`w-2 h-2 rounded-full ${isOpen ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`} />
-                        {isOpen ? 'Active' : p.status.replace('_', ' ')}
+                        {isOpen ? t('brand.open_store') : p.status.replace('_', ' ')}
                       </span>
                       <span className={`flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full ${cfg.bg} ${cfg.color}`}>
                         <TypeIcon className="w-3.5 h-3.5" />{cfg.label}
@@ -1032,7 +1037,7 @@ export function BrandTabs({
                               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                               </svg>
-                              Login to see contact
+                              {t('brand.login_to_see')}
                             </Link>
                           ) : null}
                         </div>
@@ -1045,14 +1050,14 @@ export function BrandTabs({
                             <Link href={`/shop/${shopSlug}`}
                               className="flex items-center gap-2 w-full bg-gradient-to-r from-[#0B1F4D] to-[#1a3a7a] text-white py-2.5 px-4 rounded-xl text-xs font-extrabold hover:opacity-90 transition-opacity shadow-sm">
                               <ShoppingBag className="w-3.5 h-3.5 flex-shrink-0" />
-                              <span className="flex-1">Tienda Online</span>
-                              <span className="bg-green-400 text-green-900 text-[9px] font-extrabold px-1.5 py-0.5 rounded-full uppercase tracking-wide">Activa</span>
+                              <span className="flex-1">{t('brand.shop_online')}</span>
+                              <span className="bg-green-400 text-green-900 text-[9px] font-extrabold px-1.5 py-0.5 rounded-full uppercase tracking-wide">{t('brand.shop_active')}</span>
                             </Link>
                           ) : (
                             <div className="flex items-center gap-2 w-full bg-gray-50 border border-dashed border-gray-200 text-gray-400 py-2.5 px-4 rounded-xl text-xs font-semibold">
                               <ShoppingBag className="w-3.5 h-3.5 flex-shrink-0" />
-                              <span className="flex-1">Tienda Online</span>
-                              <span className="bg-gray-100 text-gray-400 text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wide">Próximamente</span>
+                              <span className="flex-1">{t('brand.shop_online')}</span>
+                              <span className="bg-gray-100 text-gray-400 text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wide">{t('brand.shop_soon')}</span>
                             </div>
                           )}
                         </div>
@@ -1071,13 +1076,13 @@ export function BrandTabs({
                           <a href={`https://maps.google.com/?q=${loc.latitude},${loc.longitude}`}
                             target="_blank" rel="noopener noreferrer"
                             className="flex-1 flex items-center justify-center gap-1 bg-gray-50 border border-gray-100 text-gray-600 hover:bg-[#0B1F4D] hover:text-white hover:border-transparent py-2 rounded-xl text-xs font-bold transition-all">
-                            <Navigation className="w-3.5 h-3.5" />Mapa
+                            <Navigation className="w-3.5 h-3.5" />{t('common.map_nav')}
                           </a>
                         )}
                         {!loc?.latitude && (
                           <Link href={`/brand/${brandSlug}/pos/${p.id}`}
                             className="flex-1 flex items-center justify-center gap-1 bg-[#0B1F4D] text-white hover:bg-[#162d6e] py-2 rounded-xl text-xs font-bold transition-colors">
-                            Detalles <ChevronRight className="w-3.5 h-3.5" />
+                            {t('common.details')} <ChevronRight className="w-3.5 h-3.5" />
                           </Link>
                         )}
                       </div>
@@ -1092,14 +1097,14 @@ export function BrandTabs({
         {/* ══════════════ CONTACT ═════════════════════════════════════════════ */}
         <section id="sec-contact">
           <div data-reveal>
-            <SectionHeading icon={MessageCircle} title="Get In Touch"
-              subtitle="Reach out for inquiries, quotes or partnerships"
+            <SectionHeading icon={MessageCircle} title={t('brand.contact_title')}
+              subtitle={t('brand.contact_sub')}
               accent="#0E7490" />
           </div>
           <div data-reveal className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             {/* Contact methods */}
             <div className="bg-white rounded-2xl border border-gray-100 p-7 shadow-sm space-y-5" style={{ borderLeft: '4px solid #0E7490' }}>
-              <h3 className="font-extrabold text-[#0B1F4D] text-base">Contact Details</h3>
+              <h3 className="font-extrabold text-[#0B1F4D] text-base">{t('brand.contact_details')}</h3>
               <div className="space-y-4">
                 {supplier.whatsapp && (
                   <a href={`https://wa.me/${supplier.whatsapp.replace(/\D/g,'')}?text=Hi! I'd like to get in touch.`}
@@ -1140,7 +1145,7 @@ export function BrandTabs({
             </div>
             {/* Address */}
             <div className="bg-white rounded-2xl border border-gray-100 p-7 shadow-sm space-y-5" style={{ borderLeft: '4px solid #EF4444' }}>
-              <h3 className="font-extrabold text-[#0B1F4D] text-base">Address</h3>
+              <h3 className="font-extrabold text-[#0B1F4D] text-base">{t('brand.address')}</h3>
               {(supplier.address_line1 || city || country) && (
                 <div className="flex items-start gap-3">
                   <div className="w-11 h-11 rounded-xl bg-red-50 flex items-center justify-center flex-shrink-0">
@@ -1159,13 +1164,13 @@ export function BrandTabs({
                 {supplier.google_map_link && (
                   <a href={supplier.google_map_link} target="_blank" rel="noopener noreferrer"
                     className="flex items-center justify-center gap-2 w-full py-3 px-4 rounded-xl bg-[#0B1F4D] text-white text-sm font-bold hover:bg-[#162d6e] transition-colors shadow-sm">
-                    <Navigation className="w-4 h-4" />Open in Google Maps
+                    <Navigation className="w-4 h-4" />{t('brand.open_maps')}
                   </a>
                 )}
                 {supplier.website && (
                   <a href={supplier.website} target="_blank" rel="noopener noreferrer"
                     className="flex items-center justify-center gap-2 w-full py-3 px-4 rounded-xl border-2 border-[#0B1F4D] text-[#0B1F4D] text-sm font-bold hover:bg-[#0B1F4D] hover:text-white transition-all">
-                    <ExternalLink className="w-4 h-4" />Visit Website
+                    <ExternalLink className="w-4 h-4" />{t('brand.visit_site')}
                   </a>
                 )}
               </div>
