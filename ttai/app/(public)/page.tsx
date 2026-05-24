@@ -160,10 +160,12 @@ function CareIcon() {
   return <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
 }
 function IndustrialIcon() {
-  return <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065zM15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+  {/* Home appliance / washing-machine drum icon */}
+  return <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"/><circle cx="12" cy="13" r="4" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round"/><circle cx="7.5" cy="7.5" r="0.5" fill="currentColor"/><circle cx="10.5" cy="7.5" r="0.5" fill="currentColor"/></svg>
 }
 function ElectronicsIcon() {
-  return <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18" /></svg>
+  {/* Smartphone icon — fits "Smartphones, laptops, iPhones" */}
+  return <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
 }
 function RecycleIcon() {
   return <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
@@ -190,12 +192,18 @@ const REGIONS = [
 ]
 
 const PRODUCT_FAMILIES = [
-  { name: 'Food & Beverages',      desc: 'Canned food, snacks, drinks, dairy, oils and more.',          img: 'https://images.unsplash.com/photo-1546094096-0df4bcaaa337?w=600&q=80', Icon: FoodIcon,        color: 'bg-green-500',   slug: 'agriculture-food' },
-  { name: 'Cleaning & Household',  desc: 'Detergents, surface cleaners, disinfectants, and more.',      img: 'https://images.unsplash.com/photo-1563453392212-326f5e854473?w=600&q=80', Icon: CleanIcon,       color: 'bg-blue-500',    slug: 'health-beauty' },
-  { name: 'Personal Care',         desc: 'Shampoos, soaps, creams, oral care, and more.',               img: 'https://images.unsplash.com/photo-1556228578-8c89e6adf883?w=600&q=80', Icon: CareIcon,        color: 'bg-purple-500',  slug: 'health-beauty' },
-  { name: 'Industrial & Technical',desc: 'Raw materials, chemicals, lubricants, solutions.',            img: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=600&q=80', Icon: IndustrialIcon,  color: 'bg-orange-500',  slug: 'industrial-machinery' },
-  { name: 'Electronics & Tech',    desc: 'Electronics, accessories, components and more.',              img: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=600&q=80', Icon: ElectronicsIcon, color: 'bg-slate-600',   slug: 'electronics-technology' },
-  { name: 'Recycling & Sustainable',desc: 'Eco-friendly, recycled and sustainable solutions.',         img: 'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?w=600&q=80', Icon: RecycleIcon,     color: 'bg-emerald-600', slug: 'home-garden' },
+  // Branded drinks & canned goods — Pepsi, Coca-Cola, snacks on shelf
+  { name: 'Food & Beverages',      desc: 'Branded drinks, canned goods, snacks, dairy, oils and more.',        img: 'https://images.unsplash.com/photo-1553456558-aff63285bdd1?w=600&q=80', Icon: FoodIcon,        color: 'bg-green-500',   slug: 'agriculture-food' },
+  // Branded cleaning products shelf — Rozil, detergents, sprays
+  { name: 'Cleaning & Household',  desc: 'Branded detergents, sprays, disinfectants, household cleaners.',     img: 'https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=600&q=80', Icon: CleanIcon,       color: 'bg-blue-500',    slug: 'health-beauty' },
+  // Perfume & cosmetics — Nivea, Axe, Arabic oud, skincare
+  { name: 'Personal Care',         desc: 'Perfumes, Nivea, Axe, shampoos, creams and cosmetics.',              img: 'https://images.unsplash.com/photo-1541643600914-78b084683702?w=600&q=80', Icon: CareIcon,        color: 'bg-purple-500',  slug: 'health-beauty' },
+  // White goods & home appliances — fridges, washing machines, ovens
+  { name: 'Home Appliances',       desc: 'Fridges, washing machines, ovens, white goods and more.',            img: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80', Icon: IndustrialIcon,  color: 'bg-orange-500',  slug: 'industrial-machinery' },
+  // Consumer electronics — iPhone, MacBook, laptops, gadgets
+  { name: 'Electronics & Tech',    desc: 'Smartphones, laptops, iPhones, computers and accessories.',          img: 'https://images.unsplash.com/photo-1498049794561-7780e7231661?w=600&q=80', Icon: ElectronicsIcon, color: 'bg-slate-600',   slug: 'electronics-technology' },
+  // Eco / recycling — keep existing
+  { name: 'Recycling & Sustainable',desc: 'Eco-friendly, recycled and sustainable solutions.',                 img: 'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?w=600&q=80', Icon: RecycleIcon,     color: 'bg-emerald-600', slug: 'home-garden' },
 ]
 
 const HOW_IT_WORKS = [
