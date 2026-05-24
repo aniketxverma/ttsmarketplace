@@ -157,15 +157,15 @@ function ProductCard({ product, wa }: { product: Product; wa: string | null }) {
   )
 }
 
-// ── Category slider — auto 2-row when category has 6+ products ────────────────
+// ── Category slider — mobile: 2-row scroll slider | desktop: auto-fill grid ───
 function CategorySlider({ name, products, wa }: { name: string; products: Product[]; wa: string | null }) {
-  const ref = useRef<HTMLDivElement>(null)
+  const mobileRef = useRef<HTMLDivElement>(null)
   const rows = products.length >= 6 ? 2 : 1
-  const cardW = 200
+  const cardW = 188
 
   const scroll = (dir: 'left' | 'right') => {
     const amount = (cardW + 12) * (rows === 2 ? 2 : 3)
-    ref.current?.scrollBy({ left: dir === 'right' ? amount : -amount, behavior: 'smooth' })
+    mobileRef.current?.scrollBy({ left: dir === 'right' ? amount : -amount, behavior: 'smooth' })
   }
 
   return (
@@ -178,12 +178,13 @@ function CategorySlider({ name, products, wa }: { name: string; products: Produc
             {products.length}
           </span>
           {rows === 2 && (
-            <span className="text-[10px] bg-amber-50 text-amber-700 font-bold px-2 py-0.5 rounded-full border border-amber-200 uppercase tracking-wide">
+            <span className="sm:hidden text-[10px] bg-amber-50 text-amber-700 font-bold px-2 py-0.5 rounded-full border border-amber-200 uppercase tracking-wide">
               2 rows
             </span>
           )}
         </div>
-        <div className="flex items-center gap-1.5">
+        {/* Scroll arrows — mobile only */}
+        <div className="flex items-center gap-1.5 sm:hidden">
           <button onClick={() => scroll('left')}
             className="w-8 h-8 rounded-full border border-gray-200 bg-white flex items-center justify-center text-gray-400 hover:bg-[#0B1F4D] hover:text-white hover:border-[#0B1F4D] transition-all duration-150 shadow-sm">
             <ChevronLeft className="w-4 h-4" />
@@ -195,10 +196,10 @@ function CategorySlider({ name, products, wa }: { name: string; products: Produc
         </div>
       </div>
 
-      {/* Slider with right-fade hint */}
-      <div className="relative">
+      {/* ── MOBILE: 2-row horizontal scroll slider ── */}
+      <div className="relative sm:hidden">
         <div
-          ref={ref}
+          ref={mobileRef}
           className="overflow-x-auto pb-2"
           style={{
             display: 'grid',
@@ -221,6 +222,14 @@ function CategorySlider({ name, products, wa }: { name: string; products: Produc
         {/* Right fade hint */}
         <div className="pointer-events-none absolute top-0 right-0 bottom-2 w-16 rounded-r-xl"
           style={{ background: 'linear-gradient(to right, transparent, rgba(247,248,250,0.95))' }} />
+      </div>
+
+      {/* ── DESKTOP: Auto-fill responsive grid (4-5 cols) ── */}
+      <div className="hidden sm:grid gap-4"
+        style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(185px, 1fr))' }}>
+        {products.map((p) => (
+          <ProductCard key={p.id} product={p} wa={wa} />
+        ))}
       </div>
     </div>
   )
@@ -505,35 +514,75 @@ export function BrandTabs({
             <div data-reveal>
               <SectionHeading icon={Images} title="Gallery" subtitle={`${gallery.length} photos & videos`} accent="#5B21B6" />
             </div>
-            {/* Masonry-inspired grid */}
-            <div data-reveal className="grid grid-cols-3 gap-3">
+
+            {/* Hero feature image */}
+            <div data-reveal>
               <button onClick={() => setLightbox(gallery[0])}
-                className="col-span-3 sm:col-span-2 row-span-2 group relative aspect-video sm:aspect-auto sm:h-80 rounded-2xl overflow-hidden bg-gray-900 hover:ring-2 hover:ring-purple-400 transition-all shadow-md">
-                {gallery[0].type === 'video'
-                  ? <div className="w-full h-full bg-gray-900 flex items-center justify-center">
-                      <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-sm group-hover:scale-110 transition-transform">
-                        <Play className="w-8 h-8 text-white fill-white" />
-                      </div>
+                className="group relative w-full rounded-2xl overflow-hidden bg-gray-900 shadow-lg hover:shadow-2xl transition-all duration-500 block mb-3"
+                style={{ aspectRatio: '21/9' }}>
+                {gallery[0].type === 'video' ? (
+                  <div className="w-full h-full bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center">
+                    <div className="w-20 h-20 rounded-full bg-white/15 backdrop-blur-sm flex items-center justify-center group-hover:scale-110 group-hover:bg-white/25 transition-all duration-300 shadow-2xl">
+                      <Play className="w-10 h-10 text-white fill-white ml-1" />
                     </div>
-                  : <Image src={gallery[0].url} alt={gallery[0].caption ?? ''} fill className="object-cover group-hover:scale-105 transition-transform duration-700" sizes="(max-width:640px) 100vw, 66vw" />
-                }
+                  </div>
+                ) : (
+                  <Image src={gallery[0].url} alt={gallery[0].caption ?? ''} fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                    sizes="100vw" priority />
+                )}
+                {/* Gradient overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                {/* Caption slide-up */}
                 {gallery[0].caption && (
-                  <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent text-white text-sm px-4 py-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300 font-medium">
-                    {gallery[0].caption}
+                  <div className="absolute bottom-0 inset-x-0 px-6 py-5 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out">
+                    <p className="text-white font-semibold text-sm drop-shadow-lg">{gallery[0].caption}</p>
                   </div>
                 )}
+                {/* Count badge */}
+                <div className="absolute top-4 right-4 flex items-center gap-1.5 bg-black/50 backdrop-blur-sm text-white text-xs font-bold px-3 py-1.5 rounded-full">
+                  <Images className="w-3.5 h-3.5" />{gallery.length}
+                </div>
               </button>
-              {gallery.slice(1).map(item => (
-                <button key={item.id} onClick={() => setLightbox(item)}
-                  className="group relative aspect-square rounded-2xl overflow-hidden bg-gray-900 hover:ring-2 hover:ring-purple-400 transition-all shadow-sm">
-                  {item.type === 'video'
-                    ? <div className="w-full h-full bg-gray-800 flex items-center justify-center">
-                        <Play className="w-6 h-6 text-white fill-white group-hover:scale-110 transition-transform" />
+
+              {/* Thumbnails grid */}
+              {gallery.length > 1 && (
+                <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-6 gap-2.5">
+                  {gallery.slice(1, 11).map((item, idx) => (
+                    <button key={item.id} onClick={() => setLightbox(item)}
+                      className="group relative aspect-square rounded-xl overflow-hidden bg-gray-900 shadow-sm transition-all duration-300 hover:shadow-lg hover:ring-2 hover:ring-purple-400 hover:-translate-y-0.5">
+                      {item.type === 'video' ? (
+                        <div className="w-full h-full bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center">
+                          <Play className="w-5 h-5 text-white fill-white group-hover:scale-110 transition-transform" />
+                        </div>
+                      ) : (
+                        <Image src={item.url} alt={item.caption ?? ''} fill
+                          className="object-cover group-hover:scale-110 transition-transform duration-500"
+                          sizes="(max-width:640px) 33vw, 16vw" />
+                      )}
+                      <div className="absolute inset-0 bg-purple-900/20 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+                      {item.caption && (
+                        <div className="absolute bottom-0 inset-x-0 bg-black/70 text-white text-[9px] px-1.5 py-1 truncate opacity-0 group-hover:opacity-100 transition-opacity">
+                          {item.caption}
+                        </div>
+                      )}
+                    </button>
+                  ))}
+                  {/* "+N more" card */}
+                  {gallery.length > 11 && (
+                    <button onClick={() => setLightbox(gallery[11])}
+                      className="group relative aspect-square rounded-xl overflow-hidden bg-gray-900 shadow-sm hover:shadow-lg transition-all">
+                      {gallery[11].type !== 'video' && (
+                        <Image src={gallery[11].url} alt="" fill className="object-cover opacity-30" sizes="16vw" />
+                      )}
+                      <div className="absolute inset-0 bg-[#5B21B6]/80 flex flex-col items-center justify-center gap-1">
+                        <span className="text-white font-extrabold text-2xl">+{gallery.length - 11}</span>
+                        <span className="text-white/70 text-[10px] font-semibold">more</span>
                       </div>
-                    : <Image src={item.url} alt={item.caption ?? ''} fill className="object-cover group-hover:scale-110 transition-transform duration-500" sizes="33vw" />
-                  }
-                </button>
-              ))}
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
           </section>
         )}
@@ -542,35 +591,68 @@ export function BrandTabs({
         {(certifications.length > 0 || documents.length > 0) && sectionVisibility.certifications !== false && (
           <section id="sec-certifications">
             <div data-reveal>
-              <SectionHeading icon={Award} title="Certifications & Documents" subtitle="Quality assurance and compliance" accent="#B45309" />
+              <SectionHeading icon={Award} title="Certifications & Documents"
+                subtitle={`${certifications.length} certifications · quality assured`}
+                accent="#B45309" />
             </div>
             {certifications.length > 0 && (
-              <div data-reveal className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-                {certifications.map(cert => {
+              <div data-reveal className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+                {certifications.map((cert, idx) => {
                   const valid = cert.expiry_date ? new Date(cert.expiry_date) > new Date() : true
+                  const daysLeft = cert.expiry_date
+                    ? Math.ceil((new Date(cert.expiry_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+                    : null
+                  const urgency = daysLeft !== null && daysLeft > 0 && daysLeft < 90
                   return (
-                    <div key={cert.id} className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm hover:shadow-md transition-shadow flex gap-4"
-                      style={{ borderLeft: `4px solid ${valid ? '#D97706' : '#EF4444'}` }}>
-                      {cert.image_url ? (
-                        <div className="relative w-14 h-14 flex-shrink-0 rounded-xl overflow-hidden border border-gray-100">
-                          <Image src={cert.image_url} alt={cert.title} fill className="object-contain p-1" sizes="56px" />
-                        </div>
-                      ) : (
-                        <div className="w-14 h-14 flex-shrink-0 rounded-xl bg-amber-50 flex items-center justify-center">
-                          <Award className="w-7 h-7 text-amber-500" />
-                        </div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold text-gray-900 leading-snug">{cert.title}</p>
-                        {cert.issuer && <p className="text-xs text-gray-400 mt-0.5">{cert.issuer}</p>}
-                        {cert.expiry_date && (
-                          <div className={`mt-2 inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full ${
-                            valid ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'
+                    <div key={cert.id}
+                      className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 group">
+                      {/* Color accent bar */}
+                      <div className="h-1.5 w-full"
+                        style={{ background: valid
+                          ? urgency
+                            ? 'linear-gradient(to right, #F59E0B, #FCD34D)'
+                            : 'linear-gradient(to right, #D97706, #F59E0B)'
+                          : 'linear-gradient(to right, #EF4444, #F87171)' }} />
+                      <div className="p-5 flex gap-4 items-start">
+                        {cert.image_url ? (
+                          <div className="relative w-14 h-14 flex-shrink-0 rounded-xl overflow-hidden border border-gray-100 shadow-sm bg-white">
+                            <Image src={cert.image_url} alt={cert.title} fill className="object-contain p-1.5" sizes="56px" />
+                          </div>
+                        ) : (
+                          <div className={`w-14 h-14 flex-shrink-0 rounded-xl flex items-center justify-center shadow-sm ${
+                            valid ? 'bg-gradient-to-br from-amber-50 to-yellow-100' : 'bg-red-50'
                           }`}>
-                            <BadgeCheck className="w-3 h-3" />
-                            {valid ? 'Valid' : 'Expired'} · {new Date(cert.expiry_date).getFullYear()}
+                            <Award className={`w-7 h-7 ${valid ? 'text-amber-500' : 'text-red-400'}`} />
                           </div>
                         )}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-bold text-gray-900 leading-snug mb-0.5 group-hover:text-[#B45309] transition-colors">{cert.title}</p>
+                          {cert.issuer && (
+                            <p className="text-xs text-gray-400 mb-2.5">{cert.issuer}</p>
+                          )}
+                          <div className="flex flex-wrap gap-1.5">
+                            {cert.issued_date && (
+                              <span className="text-[10px] text-gray-400 bg-gray-50 border border-gray-100 px-2 py-0.5 rounded-full font-medium">
+                                {new Date(cert.issued_date).toLocaleDateString('en', { month: 'short', year: 'numeric' })}
+                              </span>
+                            )}
+                            <span className={`inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full ${
+                              !valid
+                                ? 'bg-red-50 text-red-600'
+                                : urgency
+                                  ? 'bg-amber-50 text-amber-700'
+                                  : 'bg-green-50 text-green-700'
+                            }`}>
+                              <BadgeCheck className="w-3 h-3" />
+                              {!valid
+                                ? 'Expired'
+                                : urgency
+                                  ? `${daysLeft}d left`
+                                  : 'Valid'}
+                              {cert.expiry_date && ` · ${new Date(cert.expiry_date).getFullYear()}`}
+                            </span>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   )
@@ -578,22 +660,27 @@ export function BrandTabs({
               </div>
             )}
             {documents.length > 0 && (
-              <div data-reveal className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {documents.map(doc => (
-                  <a key={doc.id} href={doc.file_url} target="_blank" rel="noopener noreferrer"
-                    className="flex items-center gap-4 bg-white rounded-2xl border border-gray-100 p-4 shadow-sm hover:shadow-md transition-all group hover:border-amber-200">
-                    <div className="w-11 h-11 flex-shrink-0 rounded-xl bg-red-50 flex items-center justify-center">
-                      <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                      </svg>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold text-gray-800 capitalize">{doc.doc_type.replace(/_/g, ' ')}</p>
-                      <p className="text-xs text-gray-400">{new Date(doc.uploaded_at).toLocaleDateString()}</p>
-                    </div>
-                    <Download className="w-4 h-4 text-gray-300 group-hover:text-amber-500 transition-colors flex-shrink-0" />
-                  </a>
-                ))}
+              <div data-reveal>
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Documents</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {documents.map(doc => (
+                    <a key={doc.id} href={doc.file_url} target="_blank" rel="noopener noreferrer"
+                      className="flex items-center gap-4 bg-white rounded-2xl border border-gray-100 p-4 shadow-sm hover:shadow-md transition-all group hover:border-amber-200 hover:-translate-y-0.5">
+                      <div className="w-11 h-11 flex-shrink-0 rounded-xl bg-gradient-to-br from-red-50 to-red-100 flex items-center justify-center shadow-sm">
+                        <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                        </svg>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold text-gray-800 capitalize group-hover:text-[#B45309] transition-colors">{doc.doc_type.replace(/_/g, ' ')}</p>
+                        <p className="text-xs text-gray-400">{new Date(doc.uploaded_at).toLocaleDateString('en', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+                      </div>
+                      <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-amber-50 group-hover:bg-amber-500 flex items-center justify-center transition-colors">
+                        <Download className="w-4 h-4 text-amber-500 group-hover:text-white transition-colors" />
+                      </div>
+                    </a>
+                  ))}
+                </div>
               </div>
             )}
           </section>

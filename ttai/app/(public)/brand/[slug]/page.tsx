@@ -3,6 +3,7 @@ import Image from 'next/image'
 import { Crown, ShieldCheck, Award, Store } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { BrandTabs } from './BrandTabs'
+import { StatsBar } from './StatsBar'
 
 export const revalidate = 60
 
@@ -250,33 +251,13 @@ export default async function BrandPage({ params }: { params: { slug: string } }
       {/* ══ COMPACT STATS + NAV ANCHOR (sticky) ══════════════════════════════ */}
       <div className="bg-white border-b border-gray-100 shadow-sm sticky top-0 z-30">
         <div className="max-w-6xl mx-auto px-4 sm:px-8 h-12 flex items-center justify-between gap-4 overflow-hidden">
-          {/* Inline stats — scroll on mobile */}
-          <div className="flex items-center gap-5 overflow-x-auto flex-1" style={{ scrollbarWidth: 'none' }}>
-            {supplier.years_experience && (
-              <div className="flex items-center gap-1.5 whitespace-nowrap flex-shrink-0">
-                <span className="text-base font-extrabold text-[#0B1F4D]">{supplier.years_experience}+</span>
-                <span className="text-xs text-gray-400 font-medium">yrs experience</span>
-              </div>
-            )}
-            {products.length > 0 && (
-              <div className="flex items-center gap-1.5 whitespace-nowrap flex-shrink-0">
-                <span className="text-base font-extrabold text-[#0B1F4D]">{products.length}</span>
-                <span className="text-xs text-gray-400 font-medium">products</span>
-              </div>
-            )}
-            {supplier.employee_count && (
-              <div className="flex items-center gap-1.5 whitespace-nowrap flex-shrink-0">
-                <span className="text-base font-extrabold text-[#0B1F4D]">{supplier.employee_count}+</span>
-                <span className="text-xs text-gray-400 font-medium">employees</span>
-              </div>
-            )}
-            {supplier.countries_served && supplier.countries_served > 0 && (
-              <div className="flex items-center gap-1.5 whitespace-nowrap flex-shrink-0">
-                <span className="text-base font-extrabold text-[#0B1F4D]">{supplier.countries_served}+</span>
-                <span className="text-xs text-gray-400 font-medium">countries</span>
-              </div>
-            )}
-          </div>
+          {/* Animated stats bar */}
+          <StatsBar
+            yearsExp={supplier.years_experience}
+            productCount={products.length}
+            employeeCount={supplier.employee_count}
+            countriesServed={supplier.countries_served}
+          />
           {/* Mobile-only quick CTAs */}
           <div className="flex gap-2 sm:hidden flex-shrink-0">
             {waHref && (
