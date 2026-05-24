@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { getRegion, REGIONS } from '@/lib/regions-data'
+import { OpenCountryCard, LockedCountryCard } from './CountryCards'
 
 export function generateStaticParams() {
   return REGIONS.map((r) => ({ region: r.id }))
@@ -66,53 +67,43 @@ export default function RegionPage({ params }: { params: { region: string } }) {
           </p>
         </div>
 
+        {/* ── Gating notice (regions that have a free demo country) ── */}
+        {region.freeCountryId && (
+          <div className="mb-8 flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3.5">
+            <svg className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+            </svg>
+            <div>
+              <p className="text-sm font-bold text-amber-800">Spain is open — explore for free!</p>
+              <p className="text-xs text-amber-700 mt-0.5">
+                Other countries are gated.{' '}
+                <Link href="/login" className="underline font-semibold hover:text-amber-900">
+                  Create a free account
+                </Link>{' '}
+                to unlock all regions and suppliers.
+              </p>
+            </div>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {region.countries.map((country, i) => (
-            <Link
-              key={country.id}
-              href={`/regions/${region.id}/${country.id}`}
-              className="group relative rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 bg-gray-100"
-              style={{ animationDelay: `${i * 60}ms` }}
-            >
-              {/* Image */}
-              <div className="relative h-52 sm:h-60">
-                <Image
-                  src={country.image}
-                  alt={country.name}
-                  fill
-                  className="object-cover group-hover:scale-105 transition-transform duration-500"
-                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-              </div>
-
-              {/* Overlay content */}
-              <div className="absolute bottom-0 left-0 right-0 p-5">
-                <div className="flex items-end justify-between">
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-2xl leading-none">{country.flag}</span>
-                      <h3 className="text-white font-extrabold text-lg leading-tight">{country.name}</h3>
-                    </div>
-                    <p className="text-white/70 text-xs leading-snug max-w-[220px]">{country.tagline}</p>
-                    <div className="mt-2.5 flex items-center gap-1 text-xs font-bold text-[#F5A623]">
-                      <span>{country.categories.length} collections</span>
-                      <svg className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                      </svg>
-                    </div>
-                  </div>
-
-                  {/* Arrow button */}
-                  <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center group-hover:bg-[#F5A623] group-hover:border-[#F5A623] transition-all flex-shrink-0">
-                    <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </div>
-                </div>
-              </div>
-            </Link>
-          ))}
+          {region.countries.map((country, i) =>
+            country.id === region.freeCountryId ? (
+              <OpenCountryCard
+                key={country.id}
+                country={country}
+                regionId={region.id}
+                index={i}
+              />
+            ) : (
+              <LockedCountryCard
+                key={country.id}
+                country={country}
+                regionId={region.id}
+                index={i}
+              />
+            )
+          )}
         </div>
       </div>
 

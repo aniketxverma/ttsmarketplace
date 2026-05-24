@@ -22,6 +22,8 @@ export interface Region {
   image: string
   accentColor: string
   countries: Country[]
+  /** Country id that is publicly accessible; others require registration */
+  freeCountryId?: string
 }
 
 const VISUAL_CATEGORIES: Record<string, VisualCategory> = {
@@ -85,8 +87,15 @@ const VISUAL_CATEGORIES: Record<string, VisualCategory> = {
     id: 'cleaning-household',
     name: 'Cleaning & Household',
     tagline: 'Professional-grade cleaning products & supplies',
-    image: 'https://images.unsplash.com/photo-1563453392212-326f5e854473?w=800&q=80',
+    image: 'https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=800&q=80',
     marketplaceUrl: '/marketplace?q=cleaning',
+  },
+  rozilBrand: {
+    id: 'rozil-brand',
+    name: 'Rozil — Cleaning Brand',
+    tagline: 'Discover Rozil detergents and household cleaners',
+    image: 'https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=800&q=80',
+    marketplaceUrl: '/brand/rozil',
   },
   luxuryLiving: {
     id: 'luxury-living',
@@ -203,7 +212,23 @@ export const REGIONS: Region[] = [
     tagline: 'Quality, precision and centuries of craftsmanship',
     image: 'https://images.unsplash.com/photo-1467269204594-9661b134dd2b?w=1200&q=80',
     accentColor: '#003399',
+    freeCountryId: 'spain',
     countries: [
+      {
+        id: 'spain',
+        name: 'Spain',
+        flag: '🇪🇸',
+        image: 'https://images.unsplash.com/photo-1539037116277-4db20889f2d4?w=900&q=80',
+        tagline: 'Mediterranean passion — home of Rozil and verified suppliers',
+        categories: [
+          VISUAL_CATEGORIES.cleaningHousehold,
+          VISUAL_CATEGORIES.foodHospitality,
+          VISUAL_CATEGORIES.healthWellness,
+          VISUAL_CATEGORIES.modernInteriors,
+          VISUAL_CATEGORIES.outdoorLiving,
+          VISUAL_CATEGORIES.industrialEssentials,
+        ],
+      },
       {
         id: 'germany',
         name: 'Germany',
