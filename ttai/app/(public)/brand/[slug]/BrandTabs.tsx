@@ -1,14 +1,14 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import {
   Package, Images, Award, Star, MapPin, MessageCircle, Info,
   Store, Warehouse, Truck, Building2, ShoppingBag, Briefcase, Anchor,
   Calendar, Globe, Share2, Check, Phone, Mail, Clock, Navigation,
-  ExternalLink, Download, Play, X, BadgeCheck, ChevronRight, Tag,
-  Reply, Users, Quote
+  ExternalLink, Download, Play, X, BadgeCheck, ChevronRight, ChevronLeft,
+  Reply, Users, Tag
 } from 'lucide-react'
 import { formatCents } from '@/lib/utils'
 
@@ -37,7 +37,7 @@ interface Props {
   pos: any[]; brandSlug: string; shareUrl?: string
 }
 
-// ── WhatsApp icon (no lucide equivalent) ─────────────────────────────────────
+// ── WhatsApp icon ─────────────────────────────────────────────────────────────
 function WaIcon({ className }: { className?: string }) {
   return (
     <svg className={className} fill="currentColor" viewBox="0 0 24 24">
@@ -103,10 +103,106 @@ function ShareButton({ url }: { url: string }) {
   )
 }
 
-// ── Section nav config ────────────────────────────────────────────────────────
+// ── Product card (compact, for sliders) ──────────────────────────────────────
+function ProductCard({ product, wa }: { product: Product; wa: string | null }) {
+  return (
+    <div className="group bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-lg transition-all duration-200 hover:-translate-y-1 flex flex-col h-full">
+      <div className="relative aspect-square bg-gray-50 overflow-hidden">
+        {product.thumb ? (
+          <Image
+            src={product.thumb} alt={product.name} fill
+            className="object-cover group-hover:scale-105 transition-transform duration-300"
+            sizes="(max-width:640px) 45vw, 220px"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <Images className="w-10 h-10 text-gray-200" />
+          </div>
+        )}
+        {/* MOQ badge */}
+        {product.min_order_qty && (
+          <div className="absolute bottom-2 left-2 bg-[#0B1F4D] text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+            MOQ {product.min_order_qty}
+          </div>
+        )}
+        {/* Hover inquiry overlay */}
+        {wa && (
+          <div className="absolute inset-0 bg-[#0B1F4D]/80 opacity-0 group-hover:opacity-100 transition-opacity duration-150 flex items-center justify-center gap-2 p-3">
+            <a href={`${wa}?text=Hi! I'd like to request a sample of: ${product.name}`}
+              target="_blank" rel="noopener noreferrer"
+              onClick={e => e.stopPropagation()}
+              className="flex-1 flex items-center justify-center py-2 bg-white text-[#0B1F4D] rounded-xl text-xs font-bold hover:bg-gray-100 transition-colors">
+              Sample
+            </a>
+            <a href={`${wa}?text=Hi! I'm interested in: ${product.name}`}
+              target="_blank" rel="noopener noreferrer"
+              onClick={e => e.stopPropagation()}
+              className="flex-1 flex items-center justify-center py-2 bg-[#F5A623] text-[#0B1F4D] rounded-xl text-xs font-bold hover:bg-amber-400 transition-colors">
+              Enquire
+            </a>
+          </div>
+        )}
+      </div>
+      <div className="p-3.5 flex-1 flex flex-col">
+        {product.category_name && (
+          <p className="text-[10px] text-[#F5A623] font-bold mb-0.5 uppercase tracking-wide">{product.category_name}</p>
+        )}
+        <h3 className="text-sm font-semibold text-gray-800 line-clamp-2 leading-snug flex-1 mb-2">{product.name}</h3>
+        <span className="font-extrabold text-[#0B1F4D] text-sm">
+          {product.price_cents > 0 ? formatCents(product.price_cents, product.currency_code) : <span className="text-gray-400 font-normal italic text-xs">Price on request</span>}
+        </span>
+      </div>
+    </div>
+  )
+}
+
+// ── Horizontal category slider ────────────────────────────────────────────────
+function CategorySlider({ name, products, wa }: { name: string; products: Product[]; wa: string | null }) {
+  const ref = useRef<HTMLDivElement>(null)
+  const scroll = (dir: 'left' | 'right') =>
+    ref.current?.scrollBy({ left: dir === 'right' ? 240 : -240, behavior: 'smooth' })
+
+  return (
+    <div>
+      {/* Row header */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2.5">
+          <span className="text-base font-extrabold text-[#0B1F4D]">{name}</span>
+          <span className="text-xs bg-gray-100 text-gray-500 font-bold px-2 py-0.5 rounded-full">{products.length}</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <button onClick={() => scroll('left')}
+            className="w-8 h-8 rounded-full border border-gray-200 bg-white flex items-center justify-center hover:border-[#0B1F4D] hover:bg-[#0B1F4D] hover:text-white transition-all text-gray-400">
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+          <button onClick={() => scroll('right')}
+            className="w-8 h-8 rounded-full border border-gray-200 bg-white flex items-center justify-center hover:border-[#0B1F4D] hover:bg-[#0B1F4D] hover:text-white transition-all text-gray-400">
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+
+      {/* Scrollable row */}
+      <div
+        ref={ref}
+        className="flex gap-3.5 overflow-x-auto pb-3"
+        style={{ scrollSnapType: 'x mandatory', scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' as any }}
+      >
+        {products.map(p => (
+          <div key={p.id} className="flex-shrink-0 w-[180px] sm:w-[210px]" style={{ scrollSnapAlign: 'start' }}>
+            <ProductCard product={p} wa={wa} />
+          </div>
+        ))}
+        <div className="flex-shrink-0 w-2" />
+      </div>
+    </div>
+  )
+}
+
+// ── Section nav config (products first) ──────────────────────────────────────
 const NAV_ITEMS = [
-  { id: 'about',          label: 'About',         Icon: Info },
   { id: 'products',       label: 'Products',       Icon: Package },
+  { id: 'about',          label: 'About',          Icon: Info },
   { id: 'gallery',        label: 'Gallery',        Icon: Images },
   { id: 'certifications', label: 'Certifications', Icon: Award },
   { id: 'reviews',        label: 'Reviews',        Icon: Star },
@@ -114,7 +210,7 @@ const NAV_ITEMS = [
   { id: 'contact',        label: 'Contact',        Icon: MessageCircle },
 ]
 
-// ── POS type config ────────────────────────────────────────────────────────────
+// ── POS type config ───────────────────────────────────────────────────────────
 const POS_TYPE_CONFIG: Record<string, { label: string; color: string; bg: string; Icon: React.ComponentType<{className?: string}> }> = {
   shop:         { label: 'Retail Shop',  color: 'text-blue-700',   bg: 'bg-blue-50',   Icon: Store },
   warehouse:    { label: 'Warehouse',    color: 'text-gray-700',   bg: 'bg-gray-100',  Icon: Warehouse },
@@ -131,14 +227,25 @@ export function BrandTabs({
   supplier, products, gallery, certifications, reviews, documents,
   avgRating, sectionVisibility, pos, brandSlug, shareUrl
 }: Props) {
-  const [activeSection, setActiveSection] = useState('about')
+  const [activeSection, setActiveSection] = useState('products')
   const [lightbox, setLightbox] = useState<GalleryItem | null>(null)
 
   const wa = supplier.whatsapp ? `https://wa.me/${supplier.whatsapp.replace(/\D/g,'')}` : null
   const country = supplier.countries as any as { name: string } | null
   const city    = supplier.cities   as any as { name: string } | null
 
-  // Determine which sections to show in the nav
+  // Group products by category for sliders
+  const productsByCategory = useMemo(() => {
+    const map = new Map<string, Product[]>()
+    products.forEach(p => {
+      const cat = p.category_name ?? 'Products'
+      if (!map.has(cat)) map.set(cat, [])
+      map.get(cat)!.push(p)
+    })
+    return Array.from(map.entries())
+  }, [products])
+
+  // Visible nav items
   const visibleNav = NAV_ITEMS.filter(item => {
     if (item.id === 'products'       && products.length === 0) return false
     if (item.id === 'gallery'        && (gallery.length === 0 || sectionVisibility.gallery === false)) return false
@@ -148,10 +255,10 @@ export function BrandTabs({
     return true
   })
 
-  // Scrollspy — listen to scroll and update active section
+  // Scrollspy
   useEffect(() => {
     const onScroll = () => {
-      const offset = 140 // sticky bars height
+      const offset = 140
       for (let i = visibleNav.length - 1; i >= 0; i--) {
         const el = document.getElementById(`sec-${visibleNav[i].id}`)
         if (el && el.getBoundingClientRect().top <= offset) {
@@ -159,7 +266,7 @@ export function BrandTabs({
           return
         }
       }
-      setActiveSection(visibleNav[0]?.id ?? 'about')
+      setActiveSection(visibleNav[0]?.id ?? 'products')
     }
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
@@ -168,27 +275,24 @@ export function BrandTabs({
   const scrollTo = (id: string) => {
     const el = document.getElementById(`sec-${id}`)
     if (!el) return
-    const top = el.getBoundingClientRect().top + window.scrollY - 120
-    window.scrollTo({ top, behavior: 'smooth' })
+    window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 120, behavior: 'smooth' })
   }
-
-  const avatarColors = ['bg-blue-500','bg-purple-500','bg-green-500','bg-amber-500','bg-pink-500','bg-teal-500']
 
   return (
     <>
       {/* ── STICKY SECTION NAV ─────────────────────────────────────────────── */}
       <div className="sticky top-[52px] z-20 bg-white/95 backdrop-blur-sm border-b border-gray-200 -mx-4 sm:-mx-8 mb-0">
         <div className="max-w-6xl mx-auto px-4 sm:px-8 flex items-center justify-between">
-          <div className="overflow-x-auto scrollbar-none flex-1">
+          <div className="overflow-x-auto flex-1" style={{ scrollbarWidth: 'none' }}>
             <div className="flex items-center min-w-max">
               {visibleNav.map(item => {
                 const isActive = activeSection === item.id
                 const NavIcon = item.Icon
                 const count =
-                  item.id === 'products' ? products.length :
-                  item.id === 'reviews'  ? reviews.length  :
-                  item.id === 'locations'? pos.length       :
-                  item.id === 'gallery'  ? gallery.length   : 0
+                  item.id === 'products'  ? products.length :
+                  item.id === 'reviews'   ? reviews.length  :
+                  item.id === 'locations' ? pos.length       :
+                  item.id === 'gallery'   ? gallery.length   : 0
                 return (
                   <button key={item.id} onClick={() => scrollTo(item.id)}
                     className={`flex items-center gap-1.5 px-4 py-3.5 text-sm font-semibold border-b-2 transition-all whitespace-nowrap ${
@@ -216,8 +320,106 @@ export function BrandTabs({
         </div>
       </div>
 
-      {/* ── PAGE SECTIONS ──────────────────────────────────────────────────── */}
-      <div className="mt-10 space-y-20 pb-28 sm:pb-14">
+      {/* ── PAGE CONTENT ───────────────────────────────────────────────────── */}
+      <div className="mt-8 space-y-20 pb-28 sm:pb-14">
+
+        {/* ── QUICK INFO STRIP ─────────────────────────────────────────────── */}
+        {(supplier.about_company || supplier.description || supplier.founded_year || city || country || supplier.website || supplier.working_hours) && (
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
+            {/* Short description */}
+            {(supplier.about_company || supplier.description) && (
+              <p className="text-gray-600 text-sm leading-relaxed flex-1 line-clamp-2">
+                {(supplier.about_company ?? supplier.description ?? '').slice(0, 160)}
+                {(supplier.about_company ?? supplier.description ?? '').length > 160 && '…'}
+              </p>
+            )}
+            {/* Stat chips */}
+            <div className="flex flex-wrap gap-2 flex-shrink-0">
+              {supplier.founded_year && (
+                <div className="flex items-center gap-1.5 bg-white border border-gray-200 rounded-full px-3 py-1.5 text-xs font-semibold text-gray-600 shadow-sm">
+                  <Calendar className="w-3.5 h-3.5 text-indigo-500" />Est. {supplier.founded_year}
+                </div>
+              )}
+              {(city || country) && (
+                <div className="flex items-center gap-1.5 bg-white border border-gray-200 rounded-full px-3 py-1.5 text-xs font-semibold text-gray-600 shadow-sm">
+                  <MapPin className="w-3.5 h-3.5 text-green-500" />
+                  {city ? `${(city as any).name}, ` : ''}{country ? (country as any).name : ''}
+                </div>
+              )}
+              {products.length > 0 && (
+                <div className="flex items-center gap-1.5 bg-white border border-gray-200 rounded-full px-3 py-1.5 text-xs font-semibold text-gray-600 shadow-sm">
+                  <Package className="w-3.5 h-3.5 text-blue-500" />{products.length} products
+                </div>
+              )}
+              {reviews.length > 0 && (
+                <div className="flex items-center gap-1.5 bg-white border border-gray-200 rounded-full px-3 py-1.5 text-xs font-semibold text-gray-600 shadow-sm">
+                  <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />{avgRating.toFixed(1)} ({reviews.length})
+                </div>
+              )}
+              {wa && (
+                <a href={`${wa}?text=Hi! I found your store on TTAI and I'd like to know more.`}
+                  target="_blank" rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 bg-green-500 hover:bg-green-400 text-white rounded-full px-3.5 py-1.5 text-xs font-bold transition-colors shadow-sm">
+                  <WaIcon className="w-3.5 h-3.5" />Chat on WhatsApp
+                </a>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ── PRODUCTS (sliders — two rows, then rest) ──────────────────────── */}
+        {products.length > 0 && (
+          <section id="sec-products">
+            <SectionHeading
+              icon={Package}
+              title="Our Products"
+              subtitle={`${products.length} wholesale products`}
+              action={wa ? (
+                <a href={`${wa}?text=Hi! I'd like to request your full catalogue.`}
+                  target="_blank" rel="noopener noreferrer"
+                  className="hidden sm:flex items-center gap-2 bg-green-500 hover:bg-green-400 text-white px-4 py-2 rounded-xl text-sm font-bold transition-colors shadow-sm">
+                  <WaIcon className="w-4 h-4" />Request Catalogue
+                </a>
+              ) : undefined}
+            />
+
+            {/* ── Category sliders: first 2 categories get slider rows ── */}
+            <div className="space-y-10">
+              {productsByCategory.slice(0, 2).map(([cat, prods]) => (
+                <CategorySlider key={cat} name={cat} products={prods} wa={wa} />
+              ))}
+            </div>
+
+            {/* ── Remaining categories (3+) in a regular grid ── */}
+            {productsByCategory.length > 2 && (
+              <div className="mt-10 space-y-10">
+                <div className="flex items-center gap-3">
+                  <div className="h-px flex-1 bg-gray-200" />
+                  <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">More Products</span>
+                  <div className="h-px flex-1 bg-gray-200" />
+                </div>
+                {productsByCategory.slice(2).map(([cat, prods]) => (
+                  <CategorySlider key={cat} name={cat} products={prods} wa={wa} />
+                ))}
+              </div>
+            )}
+
+            {/* ── CTA banner ── */}
+            {wa && (
+              <div className="mt-10 bg-gradient-to-br from-[#0B1F4D] to-[#1a3a7a] rounded-2xl p-8 flex flex-col sm:flex-row items-center justify-between gap-5">
+                <div>
+                  <p className="text-white font-extrabold text-xl">Need a custom quote?</p>
+                  <p className="text-white/60 text-sm mt-1">Contact us for bulk pricing, catalogues, or custom orders.</p>
+                </div>
+                <a href={`${wa}?text=Hi! I'd like to request a catalogue and pricing from your store.`}
+                  target="_blank" rel="noopener noreferrer"
+                  className="flex-shrink-0 flex items-center gap-2 bg-[#F5A623] hover:bg-amber-400 text-[#0B1F4D] px-6 py-3.5 rounded-xl font-extrabold transition-colors shadow-lg whitespace-nowrap">
+                  <WaIcon className="w-5 h-5" />Request Custom Quote
+                </a>
+              </div>
+            )}
+          </section>
+        )}
 
         {/* ── ABOUT ────────────────────────────────────────────────────────── */}
         <section id="sec-about">
@@ -309,8 +511,6 @@ export function BrandTabs({
                   </div>
                 </div>
               )}
-
-              {/* WhatsApp inquiry CTA in sidebar */}
               {wa && (
                 <a href={`${wa}?text=Hi! I found your store on TTAI and I'd like to know more.`}
                   target="_blank" rel="noopener noreferrer"
@@ -322,126 +522,11 @@ export function BrandTabs({
           </div>
         </section>
 
-        {/* ── PRODUCTS ─────────────────────────────────────────────────────── */}
-        {products.length > 0 && (
-          <section id="sec-products">
-            <SectionHeading
-              icon={Package}
-              title="Our Products"
-              subtitle={`${products.length} products available for wholesale`}
-              action={wa ? (
-                <a href={`${wa}?text=Hi! I'd like to request your full catalogue.`}
-                  target="_blank" rel="noopener noreferrer"
-                  className="hidden sm:flex items-center gap-2 bg-green-500 hover:bg-green-400 text-white px-4 py-2 rounded-xl text-sm font-bold transition-colors shadow-sm">
-                  <WaIcon className="w-4 h-4" />Request Catalogue
-                </a>
-              ) : undefined}
-            />
-
-            {/* Featured hero product */}
-            {products[0]?.thumb && (
-              <div className="mb-6 bg-gradient-to-br from-[#0B1F4D] to-[#1a3a7a] rounded-2xl overflow-hidden flex flex-col sm:flex-row shadow-xl">
-                <div className="relative sm:w-72 h-52 sm:h-auto flex-shrink-0">
-                  <Image src={products[0].thumb} alt={products[0].name} fill className="object-cover opacity-90" sizes="(max-width:640px) 100vw, 288px" />
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent to-[#0B1F4D]/60 hidden sm:block" />
-                </div>
-                <div className="p-7 flex flex-col justify-center gap-3">
-                  {products[0].category_name && (
-                    <span className="flex items-center gap-1.5 text-xs font-bold text-[#F5A623] uppercase tracking-widest">
-                      <Tag className="w-3.5 h-3.5" />{products[0].category_name}
-                    </span>
-                  )}
-                  <h3 className="text-2xl font-extrabold text-white leading-snug">{products[0].name}</h3>
-                  {products[0].description && (
-                    <p className="text-white/70 text-sm line-clamp-2 max-w-lg">{products[0].description}</p>
-                  )}
-                  <div className="flex items-center gap-4">
-                    <span className="text-3xl font-extrabold text-[#F5A623]">
-                      {formatCents(products[0].price_cents, products[0].currency_code)}
-                    </span>
-                    {products[0].min_order_qty && (
-                      <span className="text-sm text-white/60 bg-white/10 px-3 py-1 rounded-full">MOQ {products[0].min_order_qty}</span>
-                    )}
-                  </div>
-                  <div className="flex gap-3 mt-1">
-                    {wa && (
-                      <a href={`${wa}?text=Hi! I'm interested in: ${products[0].name}`}
-                        target="_blank" rel="noopener noreferrer"
-                        className="flex items-center gap-2 bg-green-500 hover:bg-green-400 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-colors shadow-sm">
-                        <WaIcon className="w-4 h-4" />Inquire Now
-                      </a>
-                    )}
-                    <Link href={`/marketplace/${products[0].id}`}
-                      className="flex items-center gap-1.5 bg-white/10 hover:bg-white/20 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-colors">
-                      View Details <ChevronRight className="w-4 h-4" />
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Product grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-              {products.slice(products[0]?.thumb ? 1 : 0).map(p => (
-                <div key={p.id} className="group bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-lg transition-all">
-                  <div className="relative aspect-square bg-gray-50 overflow-hidden">
-                    {p.thumb ? (
-                      <Image src={p.thumb} alt={p.name} fill className="object-cover group-hover:scale-105 transition-transform duration-300" sizes="(max-width:640px) 50vw, 25vw" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <Images className="w-10 h-10 text-gray-200" />
-                      </div>
-                    )}
-                    {wa && (
-                      <div className="absolute inset-0 bg-[#0B1F4D]/80 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <a href={`${wa}?text=Hi! I'm interested in: ${p.name}`}
-                          target="_blank" rel="noopener noreferrer"
-                          onClick={e => e.stopPropagation()}
-                          className="flex items-center gap-2 bg-green-500 text-white px-4 py-2.5 rounded-xl text-sm font-bold shadow-lg hover:bg-green-400 transition-colors">
-                          <WaIcon className="w-4 h-4" />Inquire
-                        </a>
-                      </div>
-                    )}
-                  </div>
-                  <div className="p-3.5">
-                    {p.category_name && (
-                      <p className="text-xs text-[#F5A623] font-bold mb-0.5 uppercase tracking-wide">{p.category_name}</p>
-                    )}
-                    <h3 className="text-sm font-semibold text-gray-800 line-clamp-2 leading-snug mb-2">{p.name}</h3>
-                    <div className="flex items-center justify-between">
-                      <span className="font-extrabold text-[#0B1F4D]">{formatCents(p.price_cents, p.currency_code)}</span>
-                      {p.min_order_qty && (
-                        <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full font-medium">MOQ {p.min_order_qty}</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Request quote CTA */}
-            {wa && (
-              <div className="mt-8 bg-gradient-to-br from-[#0B1F4D] to-[#1a3a7a] rounded-2xl p-8 flex flex-col sm:flex-row items-center justify-between gap-5">
-                <div>
-                  <p className="text-white font-extrabold text-xl">Need a custom quote?</p>
-                  <p className="text-white/60 text-sm mt-1">Contact us directly for bulk pricing, catalogues or custom orders.</p>
-                </div>
-                <a href={`${wa}?text=Hi! I'd like to request a catalogue and pricing from your store.`}
-                  target="_blank" rel="noopener noreferrer"
-                  className="flex-shrink-0 flex items-center gap-2 bg-[#F5A623] hover:bg-amber-400 text-[#0B1F4D] px-6 py-3.5 rounded-xl font-extrabold transition-colors shadow-lg whitespace-nowrap">
-                  <WaIcon className="w-5 h-5" />Request Custom Quote
-                </a>
-              </div>
-            )}
-          </section>
-        )}
-
         {/* ── GALLERY ──────────────────────────────────────────────────────── */}
         {gallery.length > 0 && sectionVisibility.gallery !== false && (
           <section id="sec-gallery">
             <SectionHeading icon={Images} title="Gallery" subtitle={`${gallery.length} photos & videos`} />
             <div className="grid grid-cols-3 gap-3">
-              {/* Featured large */}
               <button onClick={() => setLightbox(gallery[0])}
                 className="col-span-3 sm:col-span-2 row-span-2 group relative aspect-video sm:aspect-auto sm:h-80 rounded-2xl overflow-hidden bg-gray-100 hover:ring-4 hover:ring-[#F5A623] transition-all shadow-sm">
                 {gallery[0].type === 'video'
@@ -543,7 +628,6 @@ export function BrandTabs({
             />
             {reviews.length > 0 ? (
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Summary */}
                 <div className="lg:col-span-1">
                   <div className="bg-gradient-to-br from-[#0B1F4D] to-[#1a3a7a] rounded-2xl p-6 text-white sticky top-[110px]">
                     <p className="text-6xl font-black text-center">{avgRating.toFixed(1)}</p>
@@ -566,7 +650,6 @@ export function BrandTabs({
                     </div>
                   </div>
                 </div>
-                {/* Review cards */}
                 <div className="lg:col-span-2 space-y-4">
                   {reviews.map((r, i) => {
                     const name = (r.profiles as any)?.full_name ?? 'Anonymous Buyer'
@@ -681,7 +764,6 @@ export function BrandTabs({
         <section id="sec-contact">
           <SectionHeading icon={MessageCircle} title="Get In Touch" subtitle="Reach out for inquiries, quotes or partnerships" />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            {/* Contact methods */}
             <div className="bg-white rounded-2xl border border-gray-100 p-7 shadow-sm space-y-5">
               <h3 className="font-extrabold text-[#0B1F4D] text-base">Contact Details</h3>
               <div className="space-y-4">
@@ -723,7 +805,6 @@ export function BrandTabs({
               </div>
             </div>
 
-            {/* Address + map */}
             <div className="bg-white rounded-2xl border border-gray-100 p-7 shadow-sm space-y-5">
               <h3 className="font-extrabold text-[#0B1F4D] text-base">Address</h3>
               {(supplier.address_line1 || city || country) && (
