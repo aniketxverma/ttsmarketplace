@@ -62,7 +62,7 @@ const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY)
 // ── File map: local path → Supabase storage path ──────────────────────────
 const FILES = [
   // root brand files
-  ['logo.png',                                 'rozil/logo.png'],
+  ['logo.jpg',                                 'rozil/logo.jpg'],
   ['banner.jpg',                               'rozil/banner.jpg'],
   ['og-image.jpg',                             'rozil/og-image.jpg'],
 
