@@ -5,12 +5,22 @@ import type { Locale } from './lib/i18n/locales'
 
 const PROTECTED = ['/supplier', '/broker', '/buyer', '/admin']
 
+/** Pages that are always accessible regardless of approval status */
+const APPROVAL_EXEMPT = [
+  '/pending-approval',
+  '/login',
+  '/register',
+  '/reset-password',
+  '/auth-error',
+  '/auth',
+  '/_next',
+  '/favicon',
+]
+
 function detectLocale(request: NextRequest): Locale {
-  // 1. Already have a cookie? Respect user's manual choice
   const cookie = request.cookies.get('TTAI_LOCALE')?.value
   if (cookie && SUPPORTED_LOCALES.includes(cookie as Locale)) return cookie as Locale
 
-  // 2. Vercel / Cloudflare geo header (fastest — set by CDN)
   const country =
     request.headers.get('x-vercel-ip-country') ??
     request.headers.get('cf-ipcountry') ??
@@ -19,9 +29,7 @@ function detectLocale(request: NextRequest): Locale {
     return COUNTRY_TO_LOCALE[country.toUpperCase()]
   }
 
-  // 3. Accept-Language header fallback
-  const acceptLang = request.headers.get('accept-language')
-  const fromHeader = parseAcceptLanguage(acceptLang)
+  const fromHeader = parseAcceptLanguage(request.headers.get('accept-language'))
   if (fromHeader) return fromHeader
 
   return DEFAULT_LOCALE
@@ -30,26 +38,24 @@ function detectLocale(request: NextRequest): Locale {
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request })
 
-  // --- Locale detection ---
+  // ── Locale detection ─────────────────────────────────────────────────────
   const locale = detectLocale(request)
   const existing = request.cookies.get('TTAI_LOCALE')?.value
-  // Only write the cookie if it's missing or stale (don't overwrite manual choice)
   if (!existing || !SUPPORTED_LOCALES.includes(existing as Locale)) {
     response.cookies.set('TTAI_LOCALE', locale, {
       path: '/',
-      maxAge: 60 * 60 * 24 * 365, // 1 year
+      maxAge: 60 * 60 * 24 * 365,
       sameSite: 'lax',
     })
   }
 
+  // ── Supabase client ──────────────────────────────────────────────────────
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        getAll() {
-          return request.cookies.getAll()
-        },
+        getAll() { return request.cookies.getAll() },
         setAll(toSet: { name: string; value: string; options: CookieOptions }[]) {
           toSet.forEach(({ name, value }) => request.cookies.set(name, value))
           response = NextResponse.next({ request })
@@ -61,17 +67,41 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
+  const { data: { user } } = await supabase.auth.getUser()
   const path = request.nextUrl.pathname
 
+  // ── Auth gate (dashboard routes) ────────────────────────────────────────
   if (!user && PROTECTED.some((p) => path.startsWith(p))) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     url.searchParams.set('redirect', path)
     return NextResponse.redirect(url)
+  }
+
+  // ── Approval gate ────────────────────────────────────────────────────────
+  // Only check logged-in users who are not already on an exempt page
+  if (user && !APPROVAL_EXEMPT.some((p) => path.startsWith(p))) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('approval_status')
+      .eq('id', user.id)
+      .single()
+
+    const status = profile?.approval_status ?? 'pending'
+
+    if (status === 'pending') {
+      const url = request.nextUrl.clone()
+      url.pathname = '/pending-approval'
+      url.search = ''
+      return NextResponse.redirect(url)
+    }
+
+    if (status === 'rejected') {
+      const url = request.nextUrl.clone()
+      url.pathname = '/account-rejected'
+      url.search = ''
+      return NextResponse.redirect(url)
+    }
   }
 
   return response

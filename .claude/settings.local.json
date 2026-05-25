@@ -59,12 +59,27 @@
       "Bash(mkdir -p \"c:\\\\Users\\\\anike\\\\OneDrive\\\\Desktop\\\\tts.es\\\\ttai\\\\app\\\\\\(public\\)\\\\shop\\\\[slug]\")",
       "PowerShell(supabase --version 2>&1)",
       "PowerShell(npx supabase --version 2>&1)",
-      "PowerShell($tokenPath = \"$env:USERPROFILE\\\\.supabase\\\\access-token\"; if \\(Test-Path $tokenPath\\) { Write-Host \"Token exists\" } else { Write-Host \"No token found at $tokenPath\" })"
+      "PowerShell($tokenPath = \"$env:USERPROFILE\\\\.supabase\\\\access-token\"; if \\(Test-Path $tokenPath\\) { Write-Host \"Token exists\" } else { Write-Host \"No token found at $tokenPath\" })",
+      "Bash(node -e \"const pkg = require\\('./package.json'\\); console.log\\('next:', pkg.dependencies?.next, 'react:', pkg.dependencies?.react\\)\")",
+      "PowerShell(cd \"c:\\\\Users\\\\anike\\\\OneDrive\\\\Desktop\\\\tts.es\\\\ttai\"; git add lib/i18n/server.ts components/BrandLogo.tsx app/layout.tsx app/\\(public\\)/brand/[slug]/page.tsx app/\\(public\\)/product/[slug]/page.tsx; git status)",
+      "Bash(git commit -m 'fix: ISR-safe cookies, BrandLogo fallback, product slug-to-ID fallback *)",
+      "Bash(git filter-branch *)",
+      "Bash(git stash *)",
+      "Bash(FILTER_BRANCH_SQUELCH_WARNING=1 git filter-branch --force --index-filter 'git rm --cached --ignore-unmatch \"ttai/.env.hostinger\"' --prune-empty -- origin/main..HEAD)",
+      "Bash(git commit -m 'feat: Spain free access + gated regions on Europe page *)",
+      "Bash(git commit -m 'fix: extract createT/Messages to utils.ts — fix next/headers client bundle error *)",
+      "Bash(git commit -m 'fix: unify all product links to single /product/[slug] template *)",
+      "Bash(cp \"c:/Users/anike/OneDrive/Desktop/tts.es/ttai/app/\\(public\\)/marketplace/[productId]/CheckoutButton.tsx\" \"c:/Users/anike/OneDrive/Desktop/tts.es/ttai/app/\\(public\\)/product/[slug]/CheckoutButton.tsx\")",
+      "Bash(git commit -m 'fix: restore Add to Cart + Buy Now on product detail page *)",
+      "Bash(node scripts/upload-rozil-assets.mjs)",
+      "Bash(Get-ChildItem -Recurse -Filter \"*.tsx\" app)",
+      "Bash(Select-Object FullName)"
     ],
     "additionalDirectories": [
       "c:\\Users\\anike\\OneDrive\\Desktop\\tts.es\\ttai\\app\\(public)\\brand\\[slug]\\pos",
       "c:\\Users\\anike\\OneDrive\\Desktop\\tts.es\\ttai\\app\\(public)\\product",
-      "c:\\Users\\anike\\OneDrive\\Desktop\\tts.es\\ttai\\app\\(public)\\shop"
+      "c:\\Users\\anike\\OneDrive\\Desktop\\tts.es\\ttai\\app\\(public)\\shop",
+      "c:\\Users\\anike\\OneDrive\\Desktop\\tts.es\\ttai\\app\\(public)\\marketplace\\[productId]"
     ]
   }
 }

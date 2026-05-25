@@ -484,6 +484,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          approval_status: string
           city_id: string | null
           country_id: string | null
           created_at: string
@@ -495,6 +496,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          approval_status?: string
           city_id?: string | null
           country_id?: string | null
           created_at?: string
@@ -506,6 +508,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          approval_status?: string
           city_id?: string | null
           country_id?: string | null
           created_at?: string

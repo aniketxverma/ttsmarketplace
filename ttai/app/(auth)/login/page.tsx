@@ -43,24 +43,35 @@ function LoginContent() {
       return
     }
 
-    // Determine where to redirect based on role
-    let dest = '/buyer'
-    if (redirectTo) {
-      dest = redirectTo
-    } else if (data.user) {
+    // Check approval status before routing
+    if (data.user) {
       const { data: profile } = await supabase
         .from('profiles')
-        .select('role')
+        .select('role, approval_status')
         .eq('id', data.user.id)
         .single()
-        
+
+      const status = profile?.approval_status ?? 'pending'
+      if (status === 'pending') {
+        window.location.href = '/pending-approval'
+        return
+      }
+      if (status === 'rejected') {
+        window.location.href = '/account-rejected'
+        return
+      }
+
+      // Approved — route to role dashboard
       const role = profile?.role
-      if (role === 'admin') dest = '/admin'
+      let dest = '/buyer'
+      if (redirectTo) dest = redirectTo
+      else if (role === 'admin') dest = '/admin'
       else if (role === 'supplier') dest = '/supplier'
       else if (role === 'broker') dest = '/broker'
+      window.location.href = dest
+    } else {
+      window.location.href = redirectTo ?? '/buyer'
     }
-
-    window.location.href = dest
   }
 
   return (

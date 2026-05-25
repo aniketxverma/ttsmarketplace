@@ -1,8 +1,15 @@
 import { createClient } from '@/lib/supabase/server'
 import { requireRole } from '@/lib/auth/rbac'
 import { RoleChanger } from './RoleChanger'
+import { ApprovalChanger } from './ApprovalChanger'
 
 const ROLES = ['all', 'buyer', 'business_client', 'supplier', 'broker', 'admin']
+
+const APPROVAL_COLORS: Record<string, string> = {
+  approved: 'bg-green-100 text-green-700',
+  pending:  'bg-amber-100 text-amber-700',
+  rejected: 'bg-red-100 text-red-700',
+}
 
 const ROLE_COLORS: Record<string, string> = {
   admin:           'bg-red-100 text-red-700',
@@ -24,7 +31,7 @@ export default async function AdminUsersPage({
 
   let query = supabase
     .from('profiles')
-    .select('id, full_name, role, phone, created_at')
+    .select('id, full_name, role, phone, created_at, approval_status')
     .order('created_at', { ascending: false })
 
   if (selectedRole !== 'all') {
@@ -70,6 +77,19 @@ export default async function AdminUsersPage({
         })}
       </div>
 
+      {/* Pending approval count banner */}
+      {(() => {
+        const pendingCount = users?.filter(u => (u.approval_status ?? 'pending') === 'pending').length ?? 0
+        return pendingCount > 0 ? (
+          <div className="rounded-xl bg-amber-50 border border-amber-200 px-4 py-3 flex items-center gap-3">
+            <span className="text-amber-500 font-bold text-lg">{pendingCount}</span>
+            <span className="text-sm text-amber-800">
+              {pendingCount === 1 ? 'user is' : 'users are'} waiting for approval
+            </span>
+          </div>
+        ) : null
+      })()}
+
       <div className="rounded-xl border overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-muted/50">
@@ -78,33 +98,40 @@ export default async function AdminUsersPage({
               <th className="text-left px-4 py-3 font-medium hidden sm:table-cell">Phone</th>
               <th className="text-left px-4 py-3 font-medium">Role</th>
               <th className="text-left px-4 py-3 font-medium hidden md:table-cell">Joined</th>
-              <th className="px-4 py-3 text-right font-medium">Change Role</th>
+              <th className="px-4 py-3 text-right font-medium">Approval</th>
+              <th className="px-4 py-3 text-right font-medium hidden lg:table-cell">Change Role</th>
             </tr>
           </thead>
           <tbody className="divide-y">
-            {users?.map((u) => (
-              <tr key={u.id} className="hover:bg-muted/30">
-                <td className="px-4 py-3">
-                  <p className="font-medium">{u.full_name ?? '—'}</p>
-                  <p className="text-xs text-muted-foreground font-mono">{u.id.slice(0, 12)}…</p>
-                </td>
-                <td className="px-4 py-3 text-muted-foreground hidden sm:table-cell">{u.phone ?? '—'}</td>
-                <td className="px-4 py-3">
-                  <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-bold ${ROLE_COLORS[u.role] ?? 'bg-gray-100 text-gray-600'}`}>
-                    {u.role}
-                  </span>
-                </td>
-                <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">
-                  {new Date(u.created_at).toLocaleDateString()}
-                </td>
-                <td className="px-4 py-3 text-right">
-                  <RoleChanger userId={u.id} currentRole={u.role} />
-                </td>
-              </tr>
-            ))}
+            {users?.map((u) => {
+              const approvalStatus = (u.approval_status ?? 'pending') as 'pending' | 'approved' | 'rejected'
+              return (
+                <tr key={u.id} className={`hover:bg-muted/30 ${approvalStatus === 'pending' ? 'bg-amber-50/40' : ''}`}>
+                  <td className="px-4 py-3">
+                    <p className="font-medium">{u.full_name ?? '—'}</p>
+                    <p className="text-xs text-muted-foreground font-mono">{u.id.slice(0, 12)}…</p>
+                  </td>
+                  <td className="px-4 py-3 text-muted-foreground hidden sm:table-cell">{u.phone ?? '—'}</td>
+                  <td className="px-4 py-3">
+                    <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-bold ${ROLE_COLORS[u.role] ?? 'bg-gray-100 text-gray-600'}`}>
+                      {u.role}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">
+                    {new Date(u.created_at).toLocaleDateString()}
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <ApprovalChanger userId={u.id} currentStatus={approvalStatus} />
+                  </td>
+                  <td className="px-4 py-3 text-right hidden lg:table-cell">
+                    <RoleChanger userId={u.id} currentRole={u.role} />
+                  </td>
+                </tr>
+              )
+            })}
             {!users?.length && (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">No users found</td>
+                <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">No users found</td>
               </tr>
             )}
           </tbody>

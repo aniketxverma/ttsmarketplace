@@ -58,16 +58,8 @@ export default function RegisterPage() {
         .eq('id', data.user.id)
     }
 
-    // If email confirmation is disabled in Supabase, session exists immediately
-    if (data.session) {
-      const role = parsed.data.role
-      if (role === 'supplier') window.location.href = '/supplier/onboarding'
-      else if (role === 'broker') window.location.href = '/broker/register'
-      else window.location.href = '/buyer'
-    } else {
-      // Email confirmation still on — send to login
-      window.location.href = '/login'
-    }
+    // Always redirect to pending-approval — admin must approve before access
+    window.location.href = '/pending-approval'
   }
 
   return (
@@ -133,11 +125,9 @@ export default function RegisterPage() {
           </div>
         </div>
 
-        {(selectedRole === 'supplier' || selectedRole === 'broker') && (
-          <div className="rounded-xl bg-amber-50 border border-amber-200 px-4 py-3 text-xs text-amber-800">
-            <strong>Application required.</strong> After registering you'll complete an onboarding form. Your account will be reviewed within 48 hours.
-          </div>
-        )}
+        <div className="rounded-xl bg-amber-50 border border-amber-200 px-4 py-3 text-xs text-amber-800">
+          <strong>Account review required.</strong> All new accounts are reviewed by our team within 24–48 hours before access is granted.
+        </div>
 
         {error && (
           <div className="rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">

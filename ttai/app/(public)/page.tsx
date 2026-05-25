@@ -411,37 +411,105 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
             <div className="mt-4 mx-auto w-16 h-1 bg-[#F5A623] rounded-full" />
           </div>
 
+          {/* Cleaning = free/beacon card · all others = locked */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {PRODUCT_FAMILIES.map((cat, i) => (
-              <Link
-                key={cat.name}
-                href={`/marketplace?category=${cat.slug}`}
-                className="group rounded-2xl border border-gray-100 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 bg-white animate-fade-in-up"
-                style={{ animationDelay: `${i * 80}ms` }}
-              >
-                <div className="relative h-48 overflow-hidden">
-                  <Image
-                    src={cat.img}
-                    alt={cat.name}
-                    fill
-                    className="object-cover group-hover:scale-110 transition-transform duration-500"
-                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-                  <div className={`absolute bottom-3 left-3 w-10 h-10 rounded-xl ${cat.color} flex items-center justify-center shadow-lg`}>
-                    <cat.Icon />
+            {PRODUCT_FAMILIES.map((cat, i) => {
+              const isFree = cat.name === 'Cleaning & Household'
+
+              if (isFree) {
+                /* ── FREE / BEACON card ── */
+                return (
+                  <Link
+                    key={cat.name}
+                    href={`/marketplace?category=${cat.slug}`}
+                    className="group relative rounded-2xl border-2 border-[#F5A623] overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 bg-white animate-fade-in-up"
+                    style={{ animationDelay: `${i * 80}ms` }}
+                  >
+                    {/* Pulsing outer rings */}
+                    <span className="absolute -top-3 -right-3 z-20 pointer-events-none">
+                      <span className="relative flex h-6 w-6">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#F5A623] opacity-60" />
+                        <span className="relative inline-flex rounded-full h-6 w-6 bg-[#F5A623] items-center justify-center">
+                          <svg className="w-3.5 h-3.5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                          </svg>
+                        </span>
+                      </span>
+                    </span>
+
+                    {/* "Free Access" badge */}
+                    <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5 bg-[#F5A623] text-white text-[10px] font-extrabold px-2.5 py-1 rounded-full shadow-md">
+                      <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
+                      FREE ACCESS
+                    </div>
+
+                    <div className="relative h-48 overflow-hidden">
+                      <Image
+                        src={cat.img}
+                        alt={cat.name}
+                        fill
+                        className="object-cover group-hover:scale-110 transition-transform duration-500"
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                      <div className={`absolute bottom-3 left-3 w-10 h-10 rounded-xl ${cat.color} flex items-center justify-center shadow-lg`}>
+                        <cat.Icon />
+                      </div>
+                    </div>
+                    <div className="p-5">
+                      <h3 className="font-bold text-[#0B1F4D] text-base group-hover:text-blue-700 transition-colors">{cat.name}</h3>
+                      <p className="text-xs text-gray-500 mt-1.5 leading-relaxed">{cat.desc}</p>
+                      <div className="mt-4 flex items-center gap-1.5 text-xs font-bold text-[#F5A623] group-hover:gap-2.5 transition-all">
+                        {t('home.families_cta')}
+                        <IconArrowRight className="w-3.5 h-3.5" />
+                      </div>
+                    </div>
+                  </Link>
+                )
+              }
+
+              /* ── LOCKED card ── */
+              return (
+                <Link
+                  key={cat.name}
+                  href="/register"
+                  className="group relative rounded-2xl border border-gray-100 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 bg-white animate-fade-in-up"
+                  style={{ animationDelay: `${i * 80}ms` }}
+                >
+                  <div className="relative h-48 overflow-hidden">
+                    <Image
+                      src={cat.img}
+                      alt={cat.name}
+                      fill
+                      className="object-cover saturate-50 group-hover:scale-105 transition-transform duration-500"
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-black/20" />
+                    <div className={`absolute bottom-3 left-3 w-10 h-10 rounded-xl ${cat.color} flex items-center justify-center shadow-lg opacity-70`}>
+                      <cat.Icon />
+                    </div>
+                    {/* Lock icon overlay */}
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="w-14 h-14 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <IconLock className="w-7 h-7 text-white" />
+                      </div>
+                    </div>
+                    {/* Hover reveal */}
+                    <div className="absolute inset-x-0 bottom-0 py-2 bg-[#0B1F4D]/80 text-white text-xs font-bold text-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      Register Free to Unlock →
+                    </div>
                   </div>
-                </div>
-                <div className="p-5">
-                  <h3 className="font-bold text-[#0B1F4D] text-base group-hover:text-blue-700 transition-colors">{cat.name}</h3>
-                  <p className="text-xs text-gray-500 mt-1.5 leading-relaxed">{cat.desc}</p>
-                  <div className="mt-4 flex items-center gap-1.5 text-xs font-bold text-[#F5A623] group-hover:gap-2.5 transition-all">
-                    {t('home.families_cta')}
-                    <IconArrowRight className="w-3.5 h-3.5" />
+                  <div className="p-5">
+                    <h3 className="font-bold text-gray-400 text-base">{cat.name}</h3>
+                    <p className="text-xs text-gray-300 mt-1.5 leading-relaxed">{cat.desc}</p>
+                    <div className="mt-4 flex items-center gap-1.5 text-xs font-bold text-gray-300">
+                      <IconLock className="w-3.5 h-3.5" />
+                      Register to access
+                    </div>
                   </div>
-                </div>
-              </Link>
-            ))}
+                </Link>
+              )
+            })}
           </div>
         </div>
       </section>
