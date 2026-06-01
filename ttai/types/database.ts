@@ -486,6 +486,7 @@ export type Database = {
         Row: {
           annual_turnover: string | null
           approval_status: string
+          avatar_url: string | null
           bio: string | null
           business_type: string | null
           category: string | null
@@ -503,11 +504,13 @@ export type Database = {
           products_offered: string | null
           role: Database['public']['Enums']['user_role']
           updated_at: string
+          username: string | null
           website_url: string | null
         }
         Insert: {
           annual_turnover?: string | null
           approval_status?: string
+          avatar_url?: string | null
           bio?: string | null
           business_type?: string | null
           category?: string | null
@@ -525,11 +528,13 @@ export type Database = {
           products_offered?: string | null
           role?: Database['public']['Enums']['user_role']
           updated_at?: string
+          username?: string | null
           website_url?: string | null
         }
         Update: {
           annual_turnover?: string | null
           approval_status?: string
+          avatar_url?: string | null
           bio?: string | null
           business_type?: string | null
           category?: string | null
@@ -547,6 +552,7 @@ export type Database = {
           products_offered?: string | null
           role?: Database['public']['Enums']['user_role']
           updated_at?: string
+          username?: string | null
           website_url?: string | null
         }
       }

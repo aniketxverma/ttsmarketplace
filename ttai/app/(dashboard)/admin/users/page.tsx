@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { requireRole } from '@/lib/auth/rbac'
 import { RoleChanger } from './RoleChanger'
 import { ApprovalChanger } from './ApprovalChanger'
+import Image from 'next/image'
 
 const ROLES = ['all', 'buyer', 'business_client', 'supplier', 'broker', 'admin']
 
@@ -26,7 +27,7 @@ export default async function AdminUsersPage({
 
   let query = supabase
     .from('profiles')
-    .select('id,full_name,role,phone,created_at,approval_status,company_name,business_type,continent,country_name,city,category,annual_turnover,website_url,bio,products_offered')
+    .select('id,full_name,role,phone,created_at,approval_status,company_name,business_type,continent,country_name,city,category,annual_turnover,website_url,bio,products_offered,username,avatar_url')
     .order('approval_status', { ascending: true })
     .order('created_at',      { ascending: false })
 
@@ -130,18 +131,31 @@ export default async function AdminUsersPage({
               <div className="flex flex-wrap gap-4 px-5 py-5 bg-white">
 
                 {/* Avatar */}
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#0B1F4D] to-[#1a3580]
-                  flex items-center justify-center flex-shrink-0 shadow-sm">
-                  <span className="text-white font-extrabold text-lg">
-                    {(u.full_name ?? '?')[0].toUpperCase()}
-                  </span>
-                </div>
+                {u.avatar_url ? (
+                  <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 shadow-sm border border-gray-100">
+                    <Image
+                      src={u.avatar_url}
+                      alt={u.full_name ?? 'User'}
+                      width={48}
+                      height={48}
+                      className="object-cover w-full h-full"
+                    />
+                  </div>
+                ) : (
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#0B1F4D] to-[#1a3580]
+                    flex items-center justify-center flex-shrink-0 shadow-sm">
+                    <span className="text-white font-extrabold text-lg">
+                      {(u.full_name ?? '?')[0].toUpperCase()}
+                    </span>
+                  </div>
+                )}
 
                 {/* Info block */}
                 <div className="flex-1 min-w-0 space-y-1">
-                  {/* Name + company */}
+                  {/* Name + username + company */}
                   <div className="flex flex-wrap items-center gap-2">
                     <p className="font-extrabold text-gray-900">{u.full_name ?? '—'}</p>
+                    {u.username && <span className="text-gray-400 text-xs font-mono">@{u.username}</span>}
                     {u.company_name && <span className="text-gray-400 text-sm">· {u.company_name}</span>}
                   </div>
 
@@ -196,7 +210,7 @@ export default async function AdminUsersPage({
                   </div>
                   {status === 'approved' && (
                     <a
-                      href={`/profile/${u.id}`}
+                      href={`/profile/${u.username ?? u.id}`}
                       target="_blank"
                       className="text-[11px] text-[#0B1F4D] font-semibold hover:underline flex items-center gap-1"
                     >

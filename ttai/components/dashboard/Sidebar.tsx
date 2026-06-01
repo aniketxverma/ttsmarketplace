@@ -12,6 +12,7 @@ interface NavItem {
 }
 
 const SUPPLIER_NAV: NavItem[] = [
+  { label: 'My Profile',    href: '/account',                icon: <UserIcon /> },
   { label: 'Dashboard',     href: '/supplier',               icon: <GridIcon /> },
   { label: 'Products',      href: '/supplier/products',      icon: <BoxIcon /> },
   { label: 'Regions',       href: '/supplier/regions',       icon: <GlobeIcon /> },
@@ -25,6 +26,7 @@ const SUPPLIER_NAV: NavItem[] = [
 ]
 
 const BROKER_NAV: NavItem[] = [
+  { label: 'My Profile',  href: '/account',            icon: <UserIcon /> },
   { label: 'Dashboard',   href: '/broker',             icon: <GridIcon /> },
   { label: 'Suppliers',   href: '/broker/suppliers',   icon: <BoxIcon /> },
   { label: 'Promotions',  href: '/broker/promotions',  icon: <StarIcon /> },
@@ -34,6 +36,7 @@ const BROKER_NAV: NavItem[] = [
 ]
 
 const BUYER_NAV: NavItem[] = [
+  { label: 'My Profile', href: '/account',            icon: <UserIcon /> },
   { label: 'Dashboard',  href: '/buyer',              icon: <GridIcon /> },
   { label: 'Orders',     href: '/buyer/orders',       icon: <OrderIcon /> },
   { label: 'Canales',    href: '/buyer/channels',     icon: <RadioIcon /> },

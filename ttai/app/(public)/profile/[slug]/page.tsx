@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { createClient } from '@/lib/supabase/server'
 
 const ROLE_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
@@ -9,21 +10,38 @@ const ROLE_CONFIG: Record<string, { label: string; color: string; bg: string }> 
   broker:          { label: 'Broker',           color: 'text-purple-700', bg: 'bg-purple-100' },
 }
 
-export default async function PublicProfilePage({ params }: { params: { id: string } }) {
+export default async function PublicProfilePage({ params }: { params: { slug: string } }) {
   const supabase = createClient()
+  const { slug } = params
 
-  const { data: profile } = await supabase
+  // Try username first, then fall back to UUID id
+  let profile = null
+
+  // username lookup (exact match, case-insensitive via ilike)
+  const { data: byUsername } = await supabase
     .from('profiles')
-    .select('id,full_name,role,company_name,business_type,continent,country_name,city,category,website_url,bio,products_offered,approval_status,created_at')
-    .eq('id', params.id)
-    .single()
+    .select('id,full_name,role,company_name,business_type,continent,country_name,city,category,website_url,bio,products_offered,approval_status,created_at,username,avatar_url')
+    .ilike('username', slug)
+    .maybeSingle()
+
+  if (byUsername) {
+    profile = byUsername
+  } else {
+    // UUID fallback
+    const { data: byId } = await supabase
+      .from('profiles')
+      .select('id,full_name,role,company_name,business_type,continent,country_name,city,category,website_url,bio,products_offered,approval_status,created_at,username,avatar_url')
+      .eq('id', slug)
+      .maybeSingle()
+    profile = byId
+  }
 
   // Only show approved profiles
   if (!profile || profile.approval_status !== 'approved') notFound()
 
-  const roleCfg   = ROLE_CONFIG[profile.role] ?? { label: profile.role, color: 'text-gray-700', bg: 'bg-gray-100' }
-  const initial   = (profile.full_name ?? 'U')[0].toUpperCase()
-  const location  = [profile.city, profile.country_name, profile.continent].filter(Boolean).join(', ')
+  const roleCfg    = ROLE_CONFIG[profile.role] ?? { label: profile.role, color: 'text-gray-700', bg: 'bg-gray-100' }
+  const initial    = (profile.full_name ?? 'U')[0].toUpperCase()
+  const location   = [profile.city, profile.country_name, profile.continent].filter(Boolean).join(', ')
   const memberSince = new Date(profile.created_at).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })
 
   return (
@@ -47,10 +65,22 @@ export default async function PublicProfilePage({ params }: { params: { id: stri
           {/* Colour band */}
           <div className="h-24 bg-gradient-to-r from-[#0B1F4D] to-[#1a3580] relative">
             <div className="absolute -bottom-10 left-8">
-              <div className="w-20 h-20 rounded-2xl bg-[#0B1F4D] border-4 border-white shadow-lg
-                flex items-center justify-center">
-                <span className="text-white font-extrabold text-3xl">{initial}</span>
-              </div>
+              {profile.avatar_url ? (
+                <div className="w-20 h-20 rounded-2xl border-4 border-white shadow-lg overflow-hidden">
+                  <Image
+                    src={profile.avatar_url}
+                    alt={profile.full_name ?? 'Profile'}
+                    width={80}
+                    height={80}
+                    className="object-cover w-full h-full"
+                  />
+                </div>
+              ) : (
+                <div className="w-20 h-20 rounded-2xl bg-[#0B1F4D] border-4 border-white shadow-lg
+                  flex items-center justify-center">
+                  <span className="text-white font-extrabold text-3xl">{initial}</span>
+                </div>
+              )}
             </div>
           </div>
 
@@ -58,6 +88,9 @@ export default async function PublicProfilePage({ params }: { params: { id: stri
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
                 <h1 className="text-2xl font-extrabold text-[#0B1F4D]">{profile.full_name}</h1>
+                {profile.username && (
+                  <p className="text-gray-400 text-sm font-mono mt-0.5">@{profile.username}</p>
+                )}
                 {profile.company_name && (
                   <p className="text-gray-600 font-semibold text-base mt-0.5">{profile.company_name}</p>
                 )}
