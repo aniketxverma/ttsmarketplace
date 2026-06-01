@@ -115,7 +115,7 @@ export function LockedCountryCard({
   regionId: string
   index: number
 }) {
-  const registerHref = `/login?next=/regions/${regionId}/${country.id}`
+  const registerHref = `/register`
 
   return (
     <Link
