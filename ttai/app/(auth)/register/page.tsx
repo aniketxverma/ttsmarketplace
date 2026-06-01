@@ -245,7 +245,7 @@ export default function RegisterPage() {
       } catch { /* avatar upload is optional — silently skip */ }
     }
 
-    await supabase.from('profiles').update({
+    const { error: profileErr } = await supabase.from('profiles').update({
       full_name: form.fullName, phone: form.phone, role: form.role as any,
       username: form.username, avatar_url: avatarUrl,
       company_name: form.companyName, business_type: form.businessType, continent: form.continent,
@@ -253,6 +253,10 @@ export default function RegisterPage() {
       annual_turnover: form.annualTurnover || null, website_url: form.websiteUrl || null,
       bio: form.bio, products_offered: form.productsOffered || null,
     }).eq('id', userId)
+
+    // Profile update failure is non-fatal — metadata was saved in signUp options
+    // Log it but proceed; user can update via account settings after approval
+    if (profileErr) console.warn('Profile update error (non-fatal):', profileErr.message)
 
     window.location.href = '/pending-approval'
   }

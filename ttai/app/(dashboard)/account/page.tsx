@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { requireAuth } from '@/lib/auth/rbac'
 import Link from 'next/link'
-import Image from 'next/image'
+import { AvatarUploader } from './AvatarUploader'
 
 const ROLE_LABEL: Record<string, string> = {
   buyer:           'Buyer',
@@ -85,21 +85,11 @@ export default async function AccountProfilePage() {
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         <div className="h-20 bg-gradient-to-r from-[#0B1F4D] to-[#1a3580] relative">
           <div className="absolute -bottom-8 left-6">
-            {profile?.avatar_url ? (
-              <div className="w-16 h-16 rounded-2xl border-4 border-white shadow-md overflow-hidden">
-                <Image
-                  src={profile.avatar_url}
-                  alt={name}
-                  width={64}
-                  height={64}
-                  className="object-cover w-full h-full"
-                />
-              </div>
-            ) : (
-              <div className="w-16 h-16 rounded-2xl bg-[#0B1F4D] border-4 border-white shadow-md flex items-center justify-center">
-                <span className="text-white font-extrabold text-2xl">{initial}</span>
-              </div>
-            )}
+            <AvatarUploader
+              userId={user!.id}
+              currentUrl={profile?.avatar_url ?? null}
+              name={name}
+            />
           </div>
         </div>
 
