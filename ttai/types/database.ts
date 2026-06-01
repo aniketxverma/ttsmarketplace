@@ -484,10 +484,15 @@ export type Database = {
       }
       profiles: {
         Row: {
+          annual_turnover: string | null
           approval_status: string
           bio: string | null
+          business_type: string | null
+          category: string | null
+          city: string | null
           city_id: string | null
           company_name: string | null
+          continent: string | null
           country_id: string | null
           country_name: string | null
           created_at: string
@@ -495,14 +500,21 @@ export type Database = {
           id: string
           phone: string | null
           preferred_language: string | null
+          products_offered: string | null
           role: Database['public']['Enums']['user_role']
           updated_at: string
+          website_url: string | null
         }
         Insert: {
+          annual_turnover?: string | null
           approval_status?: string
           bio?: string | null
+          business_type?: string | null
+          category?: string | null
+          city?: string | null
           city_id?: string | null
           company_name?: string | null
+          continent?: string | null
           country_id?: string | null
           country_name?: string | null
           created_at?: string
@@ -510,14 +522,21 @@ export type Database = {
           id: string
           phone?: string | null
           preferred_language?: string | null
+          products_offered?: string | null
           role?: Database['public']['Enums']['user_role']
           updated_at?: string
+          website_url?: string | null
         }
         Update: {
+          annual_turnover?: string | null
           approval_status?: string
           bio?: string | null
+          business_type?: string | null
+          category?: string | null
+          city?: string | null
           city_id?: string | null
           company_name?: string | null
+          continent?: string | null
           country_id?: string | null
           country_name?: string | null
           created_at?: string
@@ -525,8 +544,10 @@ export type Database = {
           id?: string
           phone?: string | null
           preferred_language?: string | null
+          products_offered?: string | null
           role?: Database['public']['Enums']['user_role']
           updated_at?: string
+          website_url?: string | null
         }
       }
       supplier_documents: {

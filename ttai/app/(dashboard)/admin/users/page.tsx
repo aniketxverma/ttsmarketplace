@@ -6,11 +6,11 @@ import { ApprovalChanger } from './ApprovalChanger'
 const ROLES = ['all', 'buyer', 'business_client', 'supplier', 'broker', 'admin']
 
 const ROLE_COLORS: Record<string, string> = {
-  admin:           'bg-red-100 text-red-700',
-  supplier:        'bg-blue-100 text-blue-700',
+  admin:           'bg-red-100    text-red-700',
+  supplier:        'bg-orange-100 text-orange-700',
   broker:          'bg-purple-100 text-purple-700',
-  business_client: 'bg-amber-100 text-amber-700',
-  buyer:           'bg-green-100 text-green-700',
+  business_client: 'bg-blue-100   text-blue-700',
+  buyer:           'bg-green-100  text-green-700',
 }
 
 export default async function AdminUsersPage({
@@ -26,34 +26,32 @@ export default async function AdminUsersPage({
 
   let query = supabase
     .from('profiles')
-    .select('id, full_name, role, phone, created_at, approval_status, company_name, country_name, bio')
-    .order('approval_status', { ascending: true })   // pending first
+    .select('id,full_name,role,phone,created_at,approval_status,company_name,business_type,continent,country_name,city,category,annual_turnover,website_url,bio,products_offered')
+    .order('approval_status', { ascending: true })
     .order('created_at',      { ascending: false })
 
-  if (selectedRole !== 'all') query = query.eq('role', selectedRole)
+  if (selectedRole   !== 'all') query = query.eq('role',            selectedRole)
   if (selectedStatus !== 'all') query = query.eq('approval_status', selectedStatus)
 
   const { data: users } = await query
 
-  // Count per role
+  // Counts
   const counts: Record<string, number> = {}
   for (const r of ['buyer', 'business_client', 'supplier', 'broker', 'admin']) {
-    const { count } = await supabase
-      .from('profiles')
-      .select('id', { count: 'exact', head: true })
-      .eq('role', r)
+    const { count } = await supabase.from('profiles')
+      .select('id', { count: 'exact', head: true }).eq('role', r)
     counts[r] = count ?? 0
   }
   counts['all'] = Object.values(counts).reduce((a, b) => a + b, 0)
 
-  const { count: pendingTotal } = await supabase
-    .from('profiles')
-    .select('id', { count: 'exact', head: true })
-    .eq('approval_status', 'pending')
+  const { count: pendingTotal } = await supabase.from('profiles')
+    .select('id', { count: 'exact', head: true }).eq('approval_status', 'pending')
 
   return (
-    <div className="space-y-6 max-w-6xl">
-      <div className="flex items-start justify-between gap-4">
+    <div className="space-y-6 max-w-5xl">
+
+      {/* ── Header ── */}
+      <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold">Users</h1>
           <p className="text-muted-foreground text-sm mt-0.5">{counts['all']} registered accounts</p>
@@ -61,31 +59,29 @@ export default async function AdminUsersPage({
         {(pendingTotal ?? 0) > 0 && (
           <a
             href="/admin/users?status=pending"
-            className="flex items-center gap-2 rounded-xl bg-amber-50 border border-amber-200 px-4 py-2 text-sm font-semibold text-amber-800 hover:bg-amber-100 transition-colors"
+            className="flex items-center gap-2 rounded-xl bg-amber-50 border border-amber-200
+              px-4 py-2 text-sm font-semibold text-amber-800 hover:bg-amber-100 transition-colors"
           >
             <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
-            {pendingTotal} pending approval
+            {pendingTotal} pending review
           </a>
         )}
       </div>
 
-      {/* ── Filter bar ── */}
+      {/* ── Filters ── */}
       <div className="flex flex-wrap gap-4">
-        {/* Role tabs */}
+        {/* Role */}
         <div className="flex gap-1.5 flex-wrap">
           {ROLES.map((r) => {
             const isActive = r === selectedRole
-            const params = new URLSearchParams()
-            if (r !== 'all') params.set('role', r)
-            if (selectedStatus !== 'all') params.set('status', selectedStatus)
+            const p = new URLSearchParams()
+            if (r !== 'all') p.set('role', r)
+            if (selectedStatus !== 'all') p.set('status', selectedStatus)
             return (
-              <a
-                key={r}
-                href={`/admin/users${params.toString() ? `?${params}` : ''}`}
+              <a key={r} href={`/admin/users${p.toString() ? `?${p}` : ''}`}
                 className={`rounded-full px-3.5 py-1.5 text-xs font-semibold border transition-colors ${
                   isActive ? 'bg-[#0B1F4D] text-white border-[#0B1F4D]' : 'hover:bg-gray-50 border-gray-200 text-gray-600'
-                }`}
-              >
+                }`}>
                 {r === 'business_client' ? 'Business' : r.charAt(0).toUpperCase() + r.slice(1)}
                 <span className="ml-1 opacity-60">{counts[r] ?? 0}</span>
               </a>
@@ -93,31 +89,23 @@ export default async function AdminUsersPage({
           })}
         </div>
 
-        {/* Approval status filter */}
+        {/* Approval status */}
         <div className="flex gap-1.5">
           {[
-            { v: 'all',      label: 'All status' },
-            { v: 'pending',  label: 'Pending' },
-            { v: 'approved', label: 'Approved' },
-            { v: 'rejected', label: 'Rejected' },
-          ].map(({ v, label }) => {
+            { v: 'all',      label: 'All',      cls: 'bg-[#0B1F4D] text-white border-[#0B1F4D]' },
+            { v: 'pending',  label: 'Pending',  cls: 'bg-amber-500  text-white border-amber-500'  },
+            { v: 'approved', label: 'Approved', cls: 'bg-green-600  text-white border-green-600'  },
+            { v: 'rejected', label: 'Rejected', cls: 'bg-red-500    text-white border-red-500'    },
+          ].map(({ v, label, cls }) => {
             const isActive = v === selectedStatus
-            const params = new URLSearchParams()
-            if (selectedRole !== 'all') params.set('role', selectedRole)
-            if (v !== 'all') params.set('status', v)
+            const p = new URLSearchParams()
+            if (selectedRole !== 'all') p.set('role', selectedRole)
+            if (v !== 'all') p.set('status', v)
             return (
-              <a
-                key={v}
-                href={`/admin/users${params.toString() ? `?${params}` : ''}`}
+              <a key={v} href={`/admin/users${p.toString() ? `?${p}` : ''}`}
                 className={`rounded-full px-3.5 py-1.5 text-xs font-semibold border transition-colors ${
-                  isActive
-                    ? v === 'pending'  ? 'bg-amber-500  text-white border-amber-500'
-                    : v === 'approved' ? 'bg-green-600  text-white border-green-600'
-                    : v === 'rejected' ? 'bg-red-500    text-white border-red-500'
-                    :                    'bg-[#0B1F4D]  text-white border-[#0B1F4D]'
-                    : 'hover:bg-gray-50 border-gray-200 text-gray-600'
-                }`}
-              >
+                  isActive ? cls : 'hover:bg-gray-50 border-gray-200 text-gray-600'
+                }`}>
                 {label}
               </a>
             )
@@ -126,50 +114,75 @@ export default async function AdminUsersPage({
       </div>
 
       {/* ── User cards ── */}
-      <div className="space-y-3">
+      <div className="space-y-4">
         {users?.map((u) => {
-          const status = (u.approval_status ?? 'pending') as 'pending' | 'approved' | 'rejected'
+          const status    = (u.approval_status ?? 'pending') as 'pending' | 'approved' | 'rejected'
           const isPending = status === 'pending'
+          const location  = [u.city, u.country_name, u.continent].filter(Boolean).join(', ')
 
           return (
-            <div
-              key={u.id}
+            <div key={u.id}
               className={`rounded-2xl border overflow-hidden transition-all ${
-                isPending ? 'border-amber-200 bg-amber-50/30' : 'border-gray-100 bg-white'
+                isPending ? 'border-amber-200 shadow-amber-50 shadow-md' : 'border-gray-100 bg-white'
               }`}
             >
-              {/* Top row */}
-              <div className="flex flex-wrap items-start gap-3 px-5 py-4">
-                {/* Avatar initial */}
-                <div className="w-10 h-10 rounded-full bg-[#0B1F4D] flex items-center justify-center flex-shrink-0">
-                  <span className="text-white font-extrabold text-sm">
+              {/* ── Main row ── */}
+              <div className="flex flex-wrap gap-4 px-5 py-5 bg-white">
+
+                {/* Avatar */}
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#0B1F4D] to-[#1a3580]
+                  flex items-center justify-center flex-shrink-0 shadow-sm">
+                  <span className="text-white font-extrabold text-lg">
                     {(u.full_name ?? '?')[0].toUpperCase()}
                   </span>
                 </div>
 
-                {/* Info */}
-                <div className="flex-1 min-w-0">
+                {/* Info block */}
+                <div className="flex-1 min-w-0 space-y-1">
+                  {/* Name + company */}
                   <div className="flex flex-wrap items-center gap-2">
-                    <p className="font-bold text-gray-900 text-sm">{u.full_name ?? '—'}</p>
-                    {u.company_name && (
-                      <span className="text-gray-400 text-xs">· {u.company_name}</span>
-                    )}
-                    {u.country_name && (
-                      <span className="text-gray-400 text-xs">· {u.country_name}</span>
-                    )}
+                    <p className="font-extrabold text-gray-900">{u.full_name ?? '—'}</p>
+                    {u.company_name && <span className="text-gray-400 text-sm">· {u.company_name}</span>}
                   </div>
-                  <div className="flex flex-wrap items-center gap-2 mt-0.5">
+
+                  {/* Tags row */}
+                  <div className="flex flex-wrap gap-1.5">
                     <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold ${ROLE_COLORS[u.role] ?? 'bg-gray-100 text-gray-600'}`}>
                       {u.role}
                     </span>
-                    <span className="text-xs text-gray-400">{u.phone ?? ''}</span>
-                    <span className="text-xs text-gray-300">
-                      {new Date(u.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
-                    </span>
+                    {u.business_type && (
+                      <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold bg-gray-100 text-gray-500">
+                        {u.business_type}
+                      </span>
+                    )}
+                    {u.category && (
+                      <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-50 text-blue-600">
+                        {u.category}
+                      </span>
+                    )}
                   </div>
-                  {u.bio && (
-                    <p className="text-xs text-gray-500 mt-1.5 leading-relaxed line-clamp-2 max-w-xl">
-                      {u.bio}
+
+                  {/* Location + phone + date */}
+                  <div className="flex flex-wrap gap-3 text-xs text-gray-400">
+                    {location && <span>📍 {location}</span>}
+                    {u.phone && <span>📞 {u.phone}</span>}
+                    {u.website_url && (
+                      <a href={u.website_url} target="_blank" rel="noopener noreferrer"
+                        className="text-[#0B1F4D] hover:underline">
+                        🌐 {u.website_url.replace(/^https?:\/\//, '')}
+                      </a>
+                    )}
+                    <span>Joined {new Date(u.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                  </div>
+
+                  {/* Annual turnover (private) */}
+                  {u.annual_turnover && (
+                    <p className="text-xs text-gray-400 flex items-center gap-1">
+                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                      </svg>
+                      Turnover: <strong className="text-gray-600">{u.annual_turnover}</strong>
+                      <span className="text-gray-300">(private)</span>
                     </p>
                   )}
                 </div>
@@ -181,14 +194,47 @@ export default async function AdminUsersPage({
                     <span className="text-[10px] text-gray-400">Role:</span>
                     <RoleChanger userId={u.id} currentRole={u.role} />
                   </div>
+                  {status === 'approved' && (
+                    <a
+                      href={`/profile/${u.id}`}
+                      target="_blank"
+                      className="text-[11px] text-[#0B1F4D] font-semibold hover:underline flex items-center gap-1"
+                    >
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                          d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                      </svg>
+                      View profile
+                    </a>
+                  )}
                 </div>
               </div>
 
-              {/* Pending highlight bar */}
+              {/* ── About + products expand ── */}
+              {(u.bio || u.products_offered) && (
+                <div className="bg-gray-50 border-t border-gray-100 px-5 py-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {u.bio && (
+                    <div>
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-1">About</p>
+                      <p className="text-xs text-gray-600 leading-relaxed line-clamp-3">{u.bio}</p>
+                    </div>
+                  )}
+                  {u.products_offered && (
+                    <div>
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-1">Products / Services</p>
+                      <p className="text-xs text-gray-600 leading-relaxed line-clamp-3">{u.products_offered}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* ── Pending bar ── */}
               {isPending && (
-                <div className="bg-amber-50 border-t border-amber-100 px-5 py-2 flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-                  <span className="text-xs text-amber-700 font-medium">Waiting for your review — approve or reject to grant/deny access</span>
+                <div className="bg-amber-50 border-t border-amber-100 px-5 py-2.5 flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse flex-shrink-0" />
+                  <span className="text-xs text-amber-700 font-medium">
+                    Awaiting review — approve to grant access and publish profile
+                  </span>
                 </div>
               )}
             </div>
@@ -196,7 +242,7 @@ export default async function AdminUsersPage({
         })}
 
         {!users?.length && (
-          <div className="rounded-2xl border border-dashed border-gray-200 py-12 text-center text-gray-400 text-sm">
+          <div className="rounded-2xl border border-dashed border-gray-200 py-14 text-center text-gray-400 text-sm">
             No users found
           </div>
         )}
