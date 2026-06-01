@@ -1,17 +1,18 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 
 type Profile = {
-  full_name: string | null
-  phone: string | null
-  role: string | null
+  full_name:    string | null
+  phone:        string | null
+  role:         string | null
   company_name: string | null
   country_name: string | null
-  bio: string | null
+  bio:          string | null
+  approval_status: string | null
 }
 
 const ROLE_LABELS: Record<string, string> = {
@@ -21,12 +22,23 @@ const ROLE_LABELS: Record<string, string> = {
   broker:          'Broker',
 }
 
-export default function PendingApprovalPage() {
-  const router = useRouter()
-  const [profile, setProfile] = useState<Profile | null>(null)
-  const [email, setEmail]     = useState<string | null>(null)
-  const [loading, setLoading] = useState(true)
+const ROLE_DASHBOARD: Record<string, string> = {
+  buyer:           '/buyer',
+  business_client: '/buyer',
+  supplier:        '/supplier',
+  broker:          '/broker',
+  admin:           '/admin',
+}
 
+export default function PendingApprovalPage() {
+  const router  = useRouter()
+  const [profile, setProfile]   = useState<Profile | null>(null)
+  const [email, setEmail]       = useState<string | null>(null)
+  const [loading, setLoading]   = useState(true)
+  const [userId, setUserId]     = useState<string | null>(null)
+  const [checking, setChecking] = useState(false)
+
+  // Load profile on mount
   useEffect(() => {
     async function load() {
       const supabase = createClient()
@@ -34,27 +46,71 @@ export default function PendingApprovalPage() {
       if (!user) { router.push('/login'); return }
 
       setEmail(user.email ?? null)
+      setUserId(user.id)
 
       const { data } = await supabase
         .from('profiles')
-        .select('full_name, phone, role, company_name, country_name, bio')
+        .select('full_name, phone, role, company_name, country_name, bio, approval_status')
         .eq('id', user.id)
         .single()
 
-      // Fall back to auth metadata if profile fields not yet populated
       const meta = user.user_metadata ?? {}
+      const status = data?.approval_status ?? 'pending'
+
+      // Already approved or rejected — redirect immediately
+      if (status === 'approved') {
+        const dest = ROLE_DASHBOARD[data?.role ?? ''] ?? '/buyer'
+        router.replace(dest)
+        return
+      }
+      if (status === 'rejected') {
+        router.replace('/account-rejected')
+        return
+      }
+
       setProfile({
-        full_name:    data?.full_name    ?? meta.full_name    ?? null,
-        phone:        data?.phone        ?? meta.phone        ?? null,
-        role:         data?.role         ?? meta.role         ?? null,
-        company_name: data?.company_name ?? meta.company_name ?? null,
-        country_name: data?.country_name ?? meta.country_name ?? null,
-        bio:          data?.bio          ?? meta.bio          ?? null,
+        full_name:       data?.full_name    ?? meta.full_name    ?? null,
+        phone:           data?.phone        ?? meta.phone        ?? null,
+        role:            data?.role         ?? meta.role         ?? null,
+        company_name:    data?.company_name ?? meta.company_name ?? null,
+        country_name:    data?.country_name ?? meta.country_name ?? null,
+        bio:             data?.bio          ?? meta.bio          ?? null,
+        approval_status: status,
       })
       setLoading(false)
     }
     load()
   }, [router])
+
+  // Poll every 10 seconds for status change
+  const pollStatus = useCallback(async () => {
+    if (!userId) return
+    const supabase = createClient()
+    const { data } = await supabase
+      .from('profiles')
+      .select('approval_status, role')
+      .eq('id', userId)
+      .single()
+
+    if (data?.approval_status === 'approved') {
+      const dest = ROLE_DASHBOARD[data?.role ?? ''] ?? '/buyer'
+      router.replace(dest)
+    } else if (data?.approval_status === 'rejected') {
+      router.replace('/account-rejected')
+    }
+  }, [userId, router])
+
+  useEffect(() => {
+    if (!userId) return
+    const interval = setInterval(pollStatus, 10000)
+    return () => clearInterval(interval)
+  }, [userId, pollStatus])
+
+  async function handleManualCheck() {
+    setChecking(true)
+    await pollStatus()
+    setChecking(false)
+  }
 
   async function handleSignOut() {
     const supabase = createClient()
@@ -83,13 +139,13 @@ export default function PendingApprovalPage() {
                   d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            {/* Pulse ring */}
             <span className="absolute inset-0 rounded-full animate-ping bg-amber-400/20" />
           </div>
         </div>
         <h1 className="text-white font-extrabold text-xl">Application Received!</h1>
         <p className="text-blue-200 text-sm mt-1">
-          We&apos;re reviewing your profile and will get back to you within <strong className="text-amber-300">24–48 hours</strong>
+          We&apos;re reviewing your profile and will get back to you within{' '}
+          <strong className="text-amber-300">24–48 hours</strong>
         </p>
       </div>
 
@@ -106,12 +162,9 @@ export default function PendingApprovalPage() {
               <div className="flex items-center w-full">
                 {i > 0 && <div className={`flex-1 h-0.5 ${s.done || s.active ? 'bg-amber-400' : 'bg-gray-200'}`} />}
                 <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 border-2 transition-all
-                  ${s.done
-                    ? 'bg-[#F5A623] border-[#F5A623]'
-                    : s.active
-                    ? 'bg-white border-amber-400 shadow-md shadow-amber-100'
-                    : 'bg-gray-50 border-gray-200'}`}
-                >
+                  ${s.done   ? 'bg-[#F5A623] border-[#F5A623]'
+                  : s.active ? 'bg-white border-amber-400 shadow-md shadow-amber-100'
+                             : 'bg-gray-50 border-gray-200'}`}>
                   {s.done
                     ? <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
@@ -130,6 +183,21 @@ export default function PendingApprovalPage() {
           ))}
         </div>
 
+        {/* ── Auto-check notice ── */}
+        <div className="rounded-xl bg-green-50 border border-green-100 px-4 py-3 flex items-center gap-3">
+          <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse flex-shrink-0" />
+          <p className="text-xs text-green-700 flex-1">
+            Checking automatically every 10 seconds — you&apos;ll be redirected instantly when approved.
+          </p>
+          <button
+            onClick={handleManualCheck}
+            disabled={checking}
+            className="text-xs font-bold text-green-700 hover:text-green-900 disabled:opacity-50 transition-colors flex-shrink-0"
+          >
+            {checking ? 'Checking…' : 'Check now'}
+          </button>
+        </div>
+
         {/* ── Submitted profile summary ── */}
         {profile && (
           <div className="rounded-2xl border border-gray-100 overflow-hidden">
@@ -140,7 +208,6 @@ export default function PendingApprovalPage() {
               </svg>
               <span className="text-xs font-bold text-gray-500 uppercase tracking-wide">Your submitted profile</span>
             </div>
-
             <div className="divide-y divide-gray-50">
               {[
                 { label: 'Name',    value: profile.full_name },
@@ -162,14 +229,14 @@ export default function PendingApprovalPage() {
           </div>
         )}
 
-        {/* ── Info box ── */}
+        {/* ── Email notice ── */}
         <div className="rounded-xl bg-blue-50 border border-blue-100 px-4 py-3.5 flex gap-3">
           <svg className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
               d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
           </svg>
           <p className="text-xs text-blue-700 leading-relaxed">
-            A confirmation has been sent to <strong>{email}</strong>. You will receive another email once your account is approved.
+            A confirmation was sent to <strong>{email}</strong>. You will receive another email once approved.
             Check your spam folder if you don&apos;t see it.
           </p>
         </div>

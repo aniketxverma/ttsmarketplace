@@ -21,6 +21,37 @@ const ROLE_COLOR: Record<string, string> = {
 
 const WA_CHANNEL_URL = 'https://whatsapp.com/channel/0029Vb8OcEWAO7RL5qViD80e'
 
+type QuickLink = { label: string; href: string; icon: string; desc: string }
+
+const ROLE_QUICK_LINKS: Record<string, QuickLink[]> = {
+  buyer: [
+    { label: 'My Orders',    href: '/buyer/orders',    icon: '📦', desc: 'Track your purchases' },
+    { label: 'Marketplace',  href: '/marketplace',     icon: '🛒', desc: 'Browse products' },
+    { label: 'Messages',     href: '/buyer/messages',  icon: '💬', desc: 'Supplier chats' },
+    { label: 'Channels',     href: '/buyer/channels',  icon: '📢', desc: 'Trade channels' },
+  ],
+  business_client: [
+    { label: 'My Orders',    href: '/buyer/orders',    icon: '📦', desc: 'Track your purchases' },
+    { label: 'Marketplace',  href: '/marketplace',     icon: '🛒', desc: 'Browse products' },
+    { label: 'Messages',     href: '/buyer/messages',  icon: '💬', desc: 'Supplier chats' },
+    { label: 'Channels',     href: '/buyer/channels',  icon: '📢', desc: 'Trade channels' },
+  ],
+  supplier: [
+    { label: 'My Products',  href: '/supplier/products', icon: '📦', desc: 'Manage listings' },
+    { label: 'Brand Profile',href: '/supplier/brand',    icon: '🏷️', desc: 'Edit your brand page' },
+    { label: 'Orders',       href: '/supplier/orders',   icon: '🧾', desc: 'Incoming orders' },
+    { label: 'Points of Sale',href: '/supplier/pos',     icon: '📍', desc: 'Your POS locations' },
+    { label: 'Regions',      href: '/supplier/regions',  icon: '🌍', desc: 'Active regions' },
+    { label: 'Messages',     href: '/supplier/messages', icon: '💬', desc: 'Buyer messages' },
+  ],
+  broker: [
+    { label: 'My Suppliers', href: '/broker/suppliers',   icon: '🏭', desc: 'Assigned suppliers' },
+    { label: 'Promotions',   href: '/broker/promotions',  icon: '⭐', desc: 'Active deals' },
+    { label: 'Invoices',     href: '/broker/invoices',    icon: '🧾', desc: 'Commission invoices' },
+    { label: 'Payouts',      href: '/broker/payouts',     icon: '💰', desc: 'Earnings & payouts' },
+  ],
+}
+
 export default async function AccountProfilePage() {
   await requireAuth()
   const supabase = createClient()
@@ -148,6 +179,29 @@ export default async function AccountProfilePage() {
           )}
         </div>
       </div>
+
+      {/* ── Role quick links ── */}
+      {ROLE_QUICK_LINKS[profile?.role ?? ''] && (
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+          <p className="text-xs font-extrabold text-gray-400 uppercase tracking-widest mb-4">
+            {ROLE_LABEL[profile?.role ?? '']} Dashboard
+          </p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+            {ROLE_QUICK_LINKS[profile!.role!].map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="group flex flex-col items-center text-center rounded-xl border border-gray-100
+                  hover:border-[#0B1F4D] hover:bg-[#0B1F4D]/5 p-4 transition-all duration-200"
+              >
+                <span className="text-2xl mb-2 group-hover:scale-110 transition-transform">{item.icon}</span>
+                <span className="text-xs font-extrabold text-gray-800 group-hover:text-[#0B1F4D]">{item.label}</span>
+                <span className="text-[10px] text-gray-400 mt-0.5">{item.desc}</span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* ── Main grid ── */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
