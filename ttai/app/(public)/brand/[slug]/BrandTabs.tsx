@@ -766,75 +766,40 @@ export function BrandTabs({
               <SectionHeading icon={Images} title="Gallery" subtitle={`${gallery.length} photos & videos`} accent="#5B21B6" />
             </div>
 
-            {/* Hero feature image */}
-            <div data-reveal>
-              <button onClick={() => setLightbox(gallery[0])}
-                className="group relative w-full rounded-2xl overflow-hidden bg-gray-900 shadow-lg hover:shadow-2xl transition-all duration-500 block mb-3"
-                style={{ aspectRatio: '21/9' }}>
-                {gallery[0].type === 'video' ? (
-                  <div className="w-full h-full bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center">
-                    <div className="w-20 h-20 rounded-full bg-white/15 backdrop-blur-sm flex items-center justify-center group-hover:scale-110 group-hover:bg-white/25 transition-all duration-300 shadow-2xl">
-                      <Play className="w-10 h-10 text-white fill-white ml-1" />
-                    </div>
-                  </div>
-                ) : (
-                  <Image src={gallery[0].url} alt={gallery[0].caption ?? ''} fill
-                    className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
-                    sizes="100vw" priority />
-                )}
-                {/* Gradient overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                {/* Caption slide-up */}
-                {gallery[0].caption && (
-                  <div className="absolute bottom-0 inset-x-0 px-6 py-5 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out">
-                    <p className="text-white font-semibold text-sm drop-shadow-lg">{gallery[0].caption}</p>
-                  </div>
-                )}
-                {/* Count badge */}
-                <div className="absolute top-4 right-4 flex items-center gap-1.5 bg-black/50 backdrop-blur-sm text-white text-xs font-bold px-3 py-1.5 rounded-full">
-                  <Images className="w-3.5 h-3.5" />{gallery.length}
-                </div>
-              </button>
-
-              {/* Thumbnails grid */}
-              {gallery.length > 1 && (
-                <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-6 gap-2.5">
-                  {gallery.slice(1, 11).map((item, idx) => (
-                    <button key={item.id} onClick={() => setLightbox(item)}
-                      className="group relative aspect-square rounded-xl overflow-hidden bg-gray-900 shadow-sm transition-all duration-300 hover:shadow-lg hover:ring-2 hover:ring-purple-400 hover:-translate-y-0.5">
-                      {item.type === 'video' ? (
-                        <div className="w-full h-full bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center">
-                          <Play className="w-5 h-5 text-white fill-white group-hover:scale-110 transition-transform" />
+            {/* Compact uniform gallery grid — square tiles, contained height */}
+            <div data-reveal className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+              {gallery.slice(0, 12).map((item) => (
+                  <button key={item.id} onClick={() => setLightbox(item)}
+                    className="group relative aspect-square rounded-2xl overflow-hidden bg-gray-100 shadow-sm transition-all duration-300 hover:shadow-lg hover:ring-2 hover:ring-purple-400 hover:-translate-y-0.5">
+                    {item.type === 'video' ? (
+                      <div className="w-full h-full bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center">
+                        <div className="w-12 h-12 rounded-full bg-white/15 backdrop-blur-sm flex items-center justify-center group-hover:scale-110 transition-transform">
+                          <Play className="w-5 h-5 text-white fill-white ml-0.5" />
                         </div>
-                      ) : (
-                        <Image src={item.url} alt={item.caption ?? ''} fill
-                          className="object-cover group-hover:scale-110 transition-transform duration-500"
-                          sizes="(max-width:640px) 33vw, 16vw" />
-                      )}
-                      <div className="absolute inset-0 bg-purple-900/20 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
-                      {item.caption && (
-                        <div className="absolute bottom-0 inset-x-0 bg-black/70 text-white text-[9px] px-1.5 py-1 truncate opacity-0 group-hover:opacity-100 transition-opacity">
-                          {item.caption}
-                        </div>
-                      )}
-                    </button>
-                  ))}
-                  {/* "+N more" card */}
-                  {gallery.length > 11 && (
-                    <button onClick={() => setLightbox(gallery[11])}
-                      className="group relative aspect-square rounded-xl overflow-hidden bg-gray-900 shadow-sm hover:shadow-lg transition-all">
-                      {gallery[11].type !== 'video' && (
-                        <Image src={gallery[11].url} alt="" fill className="object-cover opacity-30" sizes="16vw" />
-                      )}
-                      <div className="absolute inset-0 bg-[#5B21B6]/80 flex flex-col items-center justify-center gap-1">
-                        <span className="text-white font-extrabold text-2xl">+{gallery.length - 11}</span>
-                        <span className="text-white/70 text-[10px] font-semibold">more</span>
                       </div>
-                    </button>
-                  )}
-                </div>
-              )}
+                    ) : (
+                      <Image src={item.url} alt={item.caption ?? ''} fill
+                        className="object-contain p-2 group-hover:scale-105 transition-transform duration-500"
+                        sizes="(max-width:640px) 50vw, 25vw" />
+                    )}
+                    {/* Hover overlay + caption */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+                    {item.caption && (
+                      <div className="absolute bottom-0 inset-x-0 px-3 py-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <p className="text-white text-[11px] font-semibold truncate drop-shadow">{item.caption}</p>
+                      </div>
+                    )}
+                  </button>
+              ))}
             </div>
+
+            {/* +N more */}
+            {gallery.length > 12 && (
+              <button data-reveal onClick={() => setLightbox(gallery[12])}
+                className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-[#5B21B6] hover:underline">
+                <Images className="w-4 h-4" />View all {gallery.length} photos &amp; videos
+              </button>
+            )}
           </section>
         )}
 
