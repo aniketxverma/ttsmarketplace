@@ -2,7 +2,6 @@
 
 import { useState, useRef } from 'react'
 import Image from 'next/image'
-import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 
 export function AvatarUploader({
@@ -14,9 +13,9 @@ export function AvatarUploader({
   currentUrl: string | null
   name: string
 }) {
-  const [preview, setPreview]   = useState<string | null>(currentUrl)
+  const [preview, setPreview]     = useState<string | null>(currentUrl)
   const [uploading, setUploading] = useState(false)
-  const [error, setError]       = useState<string | null>(null)
+  const [error, setError]         = useState<string | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
   const router  = useRouter()
   const initial = name[0]?.toUpperCase() ?? '?'
@@ -29,41 +28,25 @@ export function AvatarUploader({
     setError(null)
     setUploading(true)
 
-    // Local preview immediately
+    // Instant local preview
     const reader = new FileReader()
     reader.onload = ev => setPreview(ev.target?.result as string)
     reader.readAsDataURL(file)
 
     try {
-      const supabase = createClient()
-      const ext  = file.name.split('.').pop() ?? 'jpg'
-      const path = `avatars/${userId}.${ext}`
+      const fd = new FormData()
+      fd.append('file', file)
 
-      const { error: uploadErr } = await supabase.storage
-        .from('brand-assets')
-        .upload(path, file, { upsert: true, contentType: file.type })
+      const res  = await fetch('/api/account/avatar', { method: 'POST', body: fd })
+      const json = await res.json()
 
-      if (uploadErr) {
-        setError('Upload failed: ' + uploadErr.message)
-        setUploading(false)
-        return
-      }
-
-      const { data: urlData } = supabase.storage.from('brand-assets').getPublicUrl(path)
-      const publicUrl = urlData.publicUrl
-
-      const { error: dbErr } = await supabase
-        .from('profiles')
-        .update({ avatar_url: publicUrl })
-        .eq('id', userId)
-
-      if (dbErr) {
-        setError('Could not save photo: ' + dbErr.message)
+      if (!res.ok) {
+        setError(json.error ?? 'Upload failed')
       } else {
-        setPreview(publicUrl)
+        setPreview(json.url)
         router.refresh()
       }
-    } catch (err) {
+    } catch {
       setError('Something went wrong. Please try again.')
     } finally {
       setUploading(false)
@@ -72,7 +55,6 @@ export function AvatarUploader({
 
   return (
     <div className="relative group">
-      {/* Avatar display */}
       <button
         type="button"
         onClick={() => fileRef.current?.click()}
@@ -95,7 +77,7 @@ export function AvatarUploader({
           </div>
         )}
 
-        {/* Overlay on hover */}
+        {/* Hover overlay */}
         <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
           {uploading
             ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />

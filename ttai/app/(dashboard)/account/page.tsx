@@ -193,10 +193,10 @@ export default async function AccountProfilePage() {
         </div>
       )}
 
-      {/* ── Main grid ── */}
+      {/* ── Role-specific main section ── */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
 
-        {/* ── WhatsApp Canal ── */}
+        {/* ── WhatsApp Canal (all roles) ── */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
           {/* WA-style green header */}
           <div className="bg-[#128C7E] px-5 py-4 flex items-center gap-3">
@@ -248,94 +248,139 @@ export default async function AccountProfilePage() {
           </div>
         </div>
 
-        {/* ── Marketplace ── */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
-          {/* Header */}
-          <div className="bg-gradient-to-r from-[#0B1F4D] to-[#1a3580] px-5 py-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-white/15 flex items-center justify-center flex-shrink-0">
-              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-              </svg>
-            </div>
-            <div>
-              <p className="text-white font-bold text-sm">Global Marketplace</p>
-              <p className="text-white/70 text-xs">Trade without borders</p>
-            </div>
-          </div>
-
-          {/* Stats */}
-          <div className="grid grid-cols-3 divide-x divide-gray-100 border-b border-gray-100">
-            {[
-              { label: 'Suppliers', value: '200+' },
-              { label: 'Products',  value: '1K+'  },
-              { label: 'Regions',   value: '50+'  },
-            ].map(({ label, value }) => (
-              <div key={label} className="py-3 text-center">
-                <p className="text-lg font-extrabold text-[#0B1F4D]">{value}</p>
-                <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wide">{label}</p>
+        {/* ── Second card — role-specific ── */}
+        {(profile?.role === 'supplier') ? (
+          /* Supplier tools card */
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
+            <div className="bg-gradient-to-r from-orange-500 to-amber-600 px-5 py-4 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-white/15 flex items-center justify-center flex-shrink-0">
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                </svg>
               </div>
-            ))}
-          </div>
-
-          {/* Category quick-links */}
-          <div className="px-5 py-4 flex-1">
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-2.5">Browse by category</p>
-            <div className="flex flex-wrap gap-1.5">
-              {['Food & Agri', 'Electronics', 'Logistics', 'Fashion', 'Cleaning', 'Healthcare'].map((c) => (
-                <Link
-                  key={c}
-                  href={`/marketplace?category=${encodeURIComponent(c)}`}
-                  className="px-2.5 py-1 rounded-full bg-gray-50 hover:bg-[#0B1F4D]/10 text-xs text-gray-600 hover:text-[#0B1F4D] font-medium transition-colors border border-gray-100"
-                >
-                  {c}
+              <div>
+                <p className="text-white font-bold text-sm">Supplier Tools</p>
+                <p className="text-white/70 text-xs">Manage your business</p>
+              </div>
+            </div>
+            <div className="flex-1 px-5 py-4 space-y-2">
+              {[
+                { href: '/supplier/products', label: 'My Products',   icon: '📦', desc: 'Add & manage listings' },
+                { href: '/supplier/brand',    label: 'Brand Profile', icon: '🏷️', desc: 'Edit your public page' },
+                { href: '/supplier/orders',   label: 'Orders',        icon: '🧾', desc: 'Incoming orders' },
+                { href: '/supplier/pos',      label: 'Points of Sale',icon: '📍', desc: 'Manage POS locations' },
+                { href: '/supplier/regions',  label: 'Regions',       icon: '🌍', desc: 'Active distribution zones' },
+              ].map(item => (
+                <Link key={item.href} href={item.href}
+                  className="flex items-center gap-3 rounded-xl hover:bg-orange-50 px-3 py-2.5 transition-colors group">
+                  <span className="text-lg">{item.icon}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-bold text-gray-800 group-hover:text-orange-700">{item.label}</p>
+                    <p className="text-[10px] text-gray-400">{item.desc}</p>
+                  </div>
+                  <svg className="w-3.5 h-3.5 text-gray-300 group-hover:text-orange-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
                 </Link>
               ))}
             </div>
           </div>
-
-          <div className="px-5 pb-5">
-            <Link
-              href="/marketplace"
-              className="flex items-center justify-center gap-2 w-full rounded-xl bg-[#F5A623] text-[#0B1F4D]
-                py-2.5 text-sm font-extrabold hover:bg-[#fbb93a] transition-colors shadow-sm"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-              </svg>
-              Go to Marketplace
-            </Link>
+        ) : (profile?.role === 'broker') ? (
+          /* Broker network card */
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
+            <div className="bg-gradient-to-r from-purple-600 to-violet-700 px-5 py-4 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-white/15 flex items-center justify-center flex-shrink-0">
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-white font-bold text-sm">Broker Network</p>
+                <p className="text-white/70 text-xs">Manage deals & commissions</p>
+              </div>
+            </div>
+            <div className="flex-1 px-5 py-4 space-y-2">
+              {[
+                { href: '/broker/suppliers',  label: 'My Suppliers',  icon: '🏭', desc: 'Assigned suppliers' },
+                { href: '/broker/promotions', label: 'Promotions',    icon: '⭐', desc: 'Active deals' },
+                { href: '/broker/invoices',   label: 'Invoices',      icon: '🧾', desc: 'Commission invoices' },
+                { href: '/broker/payouts',    label: 'Payouts',       icon: '💰', desc: 'Earnings & payouts' },
+              ].map(item => (
+                <Link key={item.href} href={item.href}
+                  className="flex items-center gap-3 rounded-xl hover:bg-purple-50 px-3 py-2.5 transition-colors group">
+                  <span className="text-lg">{item.icon}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-bold text-gray-800 group-hover:text-purple-700">{item.label}</p>
+                    <p className="text-[10px] text-gray-400">{item.desc}</p>
+                  </div>
+                  <svg className="w-3.5 h-3.5 text-gray-300 group-hover:text-purple-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </Link>
+              ))}
+            </div>
           </div>
-        </div>
+        ) : (
+          /* Buyer / Business Client — Marketplace card */
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
+            <div className="bg-gradient-to-r from-[#0B1F4D] to-[#1a3580] px-5 py-4 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-white/15 flex items-center justify-center flex-shrink-0">
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-white font-bold text-sm">Global Marketplace</p>
+                <p className="text-white/70 text-xs">Trade without borders</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-3 divide-x divide-gray-100 border-b border-gray-100">
+              {[{ label: 'Suppliers', value: '200+' }, { label: 'Products', value: '1K+' }, { label: 'Regions', value: '50+' }].map(({ label, value }) => (
+                <div key={label} className="py-3 text-center">
+                  <p className="text-lg font-extrabold text-[#0B1F4D]">{value}</p>
+                  <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-wide">{label}</p>
+                </div>
+              ))}
+            </div>
+            <div className="px-5 py-4 flex-1">
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-2.5">Browse by category</p>
+              <div className="flex flex-wrap gap-1.5">
+                {['Food & Agri', 'Electronics', 'Logistics', 'Fashion', 'Cleaning', 'Healthcare'].map((c) => (
+                  <Link key={c} href={`/marketplace?category=${encodeURIComponent(c)}`}
+                    className="px-2.5 py-1 rounded-full bg-gray-50 hover:bg-[#0B1F4D]/10 text-xs text-gray-600 hover:text-[#0B1F4D] font-medium transition-colors border border-gray-100">
+                    {c}
+                  </Link>
+                ))}
+              </div>
+            </div>
+            <div className="px-5 pb-5">
+              <Link href="/marketplace"
+                className="flex items-center justify-center gap-2 w-full rounded-xl bg-[#F5A623] text-[#0B1F4D] py-2.5 text-sm font-extrabold hover:bg-[#fbb93a] transition-colors shadow-sm">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                </svg>
+                Go to Marketplace
+              </Link>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ── Coming Soon tiles ── */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-
-        {/* B2B Shop */}
         <ComingSoonTile
-          icon={
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-            </svg>
-          }
+          icon={<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>}
           title="B2B Shop"
           subtitle="Wholesale · Bulk Orders"
-          description="Create your own B2B storefront and take wholesale orders from verified buyers around the world."
+          description={profile?.role === 'supplier' ? 'Open a dedicated B2B storefront and accept bulk orders directly from verified buyers.' : 'Access exclusive B2B pricing and bulk-order options from verified suppliers.'}
           color="from-blue-600 to-blue-800"
         />
 
-        {/* Online Shop */}
         <ComingSoonTile
-          icon={
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-                d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-            </svg>
-          }
+          icon={<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>}
           title="Online Shop"
           subtitle="Retail · Direct to Consumer"
-          description="Launch a public online store to sell directly to end consumers — by piece or subscription."
+          description={profile?.role === 'supplier' ? 'Launch a public online store to sell directly to end consumers — by piece or subscription.' : 'Shop individual products from global suppliers delivered to your door.'}
           color="from-purple-600 to-purple-800"
         />
 
