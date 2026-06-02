@@ -67,6 +67,17 @@ export default async function AccountProfilePage() {
     .eq('id', user!.id)
     .single()
 
+  // For suppliers, fetch brand_slug so "Public Profile" goes to their brand/shop page
+  let supplierBrandSlug: string | null = null
+  if (profile?.role === 'supplier') {
+    const { data: sup } = await (supabase as any)
+      .from('suppliers')
+      .select('brand_slug')
+      .eq('owner_id', user!.id)
+      .maybeSingle()
+    supplierBrandSlug = sup?.brand_slug ?? null
+  }
+
   const name        = profile?.full_name ?? user?.email ?? 'User'
   const initial     = name[0].toUpperCase()
   const location    = [profile?.city, profile?.country_name, profile?.continent].filter(Boolean).join(', ')
@@ -78,6 +89,12 @@ export default async function AccountProfilePage() {
     profile?.role === 'supplier' ? '/supplier/settings' :
     profile?.role === 'broker'   ? '/broker/settings'   :
     '/buyer/settings'
+
+  // Suppliers → their brand/shop page; everyone else → generic public profile
+  const publicProfileHref =
+    profile?.role === 'supplier' && supplierBrandSlug
+      ? `/brand/${supplierBrandSlug}`
+      : `/profile/${profileSlug}`
   const memberSince = profile?.created_at
     ? new Date(profile.created_at).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })
     : ''
@@ -142,9 +159,9 @@ export default async function AccountProfilePage() {
             </div>
 
             <div className="flex gap-2">
-              {isApproved && profileSlug && (
+              {isApproved && (supplierBrandSlug || profileSlug) && (
                 <Link
-                  href={`/profile/${profileSlug}`}
+                  href={publicProfileHref}
                   target="_blank"
                   className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 text-gray-600 px-4 py-2 text-sm font-semibold hover:border-[#0B1F4D] hover:text-[#0B1F4D] transition-colors"
                 >
