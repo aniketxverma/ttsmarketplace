@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { ProductCard } from '@/components/marketplace/ProductCard'
 import { ProductGrid } from '@/components/marketplace/ProductGrid'
@@ -5,6 +6,7 @@ import { CategoryNav } from '@/components/marketplace/CategoryNav'
 import { SearchBar } from '@/components/marketplace/SearchBar'
 import { Pagination } from '@/components/marketplace/Pagination'
 import { PromotionBanner } from '@/components/marketplace/PromotionBanner'
+import { SupplierMiniCard, type MiniSupplier } from '@/components/marketplace/SupplierMiniCard'
 import type { Category } from '@/types/domain'
 
 const PAGE_SIZE = 24
@@ -68,6 +70,33 @@ export default async function MarketplacePage({
   const totalPages = Math.ceil((count ?? 0) / PAGE_SIZE)
   const promotions = (promotionsRes.data ?? []) as unknown as Parameters<typeof PromotionBanner>[0]['promotions']
 
+  // ── Suppliers active in the selected category (so buyers see profiles, not just products) ──
+  const activeCat = searchParams.category ? allCats.find((c) => c.slug === searchParams.category) : null
+  let categorySuppliers: MiniSupplier[] = []
+  if (activeCat) {
+    // Include the category itself + any child categories
+    const catIds = [activeCat.id, ...allCats.filter((c) => c.parent_id === activeCat.id).map((c) => c.id)]
+    const { data: supRows } = await supabase
+      .from('products')
+      .select('supplier_id, suppliers!inner(id, legal_name, trade_name, logo_url, reliability_tier, brand_slug, tagline, status)')
+      .eq('is_published', true)
+      .eq('suppliers.status', 'ACTIVE')
+      .in('category_id', catIds)
+
+    // Dedupe by supplier + count their products in this category
+    const map = new Map<string, MiniSupplier & { product_count: number }>()
+    for (const row of (supRows ?? []) as any[]) {
+      const s = row.suppliers
+      if (!s) continue
+      const existing = map.get(s.id)
+      if (existing) { existing.product_count += 1 }
+      else { map.set(s.id, { ...s, product_count: 1 }) }
+    }
+    categorySuppliers = Array.from(map.values())
+      .sort((a, b) => (b.product_count ?? 0) - (a.product_count ?? 0))
+      .slice(0, 9)
+  }
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-6">
@@ -89,6 +118,30 @@ export default async function MarketplacePage({
         </aside>
 
         <div className="flex-1 min-w-0">
+          {/* Suppliers active in this category — surfaces profiles, not just products */}
+          {activeCat && categorySuppliers.length > 0 && (
+            <div className="mb-8">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-sm font-extrabold text-[#0B1F4D] uppercase tracking-wide">
+                  Suppliers in {activeCat.name}
+                </h2>
+                <Link href="/suppliers" className="text-xs font-bold text-[#0B1F4D] hover:underline">
+                  View all →
+                </Link>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {categorySuppliers.map((s) => (
+                  <SupplierMiniCard key={s.id} supplier={s} />
+                ))}
+              </div>
+              <div className="mt-6 mb-2 flex items-center gap-3">
+                <span className="h-px flex-1 bg-gray-100" />
+                <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Products</span>
+                <span className="h-px flex-1 bg-gray-100" />
+              </div>
+            </div>
+          )}
+
           {products && products.length > 0 ? (
             <>
               <ProductGrid>

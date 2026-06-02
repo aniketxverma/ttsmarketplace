@@ -3,6 +3,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { getCountry, REGIONS } from '@/lib/regions-data'
 import { createClient } from '@/lib/supabase/server'
+import { SupplierMiniCard, type MiniSupplier } from '@/components/marketplace/SupplierMiniCard'
 
 export const revalidate = 60
 
@@ -36,15 +37,25 @@ export default async function CountryPage({ params }: { params: { region: string
   const supplierIds: string[] = (srRows ?? []).map((r: any) => r.supplier_id)
 
   let regionProducts: any[] = []
+  let regionSuppliers: MiniSupplier[] = []
   if (supplierIds.length > 0) {
-    const { data } = await supabase
-      .from('products')
-      .select('id, name, slug, price_cents, currency_code, product_images(url, sort_order)')
-      .in('supplier_id', supplierIds)
-      .eq('is_published', true)
-      .order('created_at', { ascending: false })
-      .limit(12)
-    regionProducts = data ?? []
+    const [productsRes, suppliersRes] = await Promise.all([
+      supabase
+        .from('products')
+        .select('id, name, slug, price_cents, currency_code, product_images(url, sort_order)')
+        .in('supplier_id', supplierIds)
+        .eq('is_published', true)
+        .order('created_at', { ascending: false })
+        .limit(12),
+      (supabase.from('suppliers') as any)
+        .select('id, legal_name, trade_name, logo_url, reliability_tier, brand_slug, tagline')
+        .in('id', supplierIds)
+        .eq('status', 'ACTIVE')
+        .order('reliability_tier', { ascending: true })
+        .limit(12),
+    ])
+    regionProducts   = productsRes.data ?? []
+    regionSuppliers  = (suppliersRes.data ?? []) as MiniSupplier[]
   }
 
   return (
@@ -88,59 +99,53 @@ export default async function CountryPage({ params }: { params: { region: string
         </div>
       </div>
 
-      {/* ── Category grid ────────────────────────────────────────────── */}
+      {/* ── Verified Suppliers in this country ───────────────────────── */}
+      {regionSuppliers.length > 0 && (
+        <div className="container mx-auto px-4 sm:px-8 pt-14">
+          <div className="flex items-end justify-between gap-4 mb-6">
+            <div>
+              <p className="text-[#F5A623] text-xs font-bold uppercase tracking-widest mb-2">Verified Suppliers</p>
+              <h2 className="text-xl sm:text-2xl font-extrabold text-[#0B1F4D]">
+                Brands & Suppliers in {country.name}
+              </h2>
+              <p className="text-gray-400 text-sm mt-1">Tap a supplier to view their full profile and catalogue</p>
+            </div>
+            <Link href="/suppliers" className="hidden sm:inline-flex items-center gap-1.5 text-sm font-bold text-[#0B1F4D] hover:underline flex-shrink-0">
+              All suppliers
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+              </svg>
+            </Link>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+            {regionSuppliers.map((s) => (
+              <SupplierMiniCard key={s.id} supplier={s} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Curated collections (compact) ────────────────────────────── */}
       <div className="container mx-auto px-4 sm:px-8 py-14">
-        <div className="mb-10">
+        <div className="mb-8">
           <p className="text-[#F5A623] text-xs font-bold uppercase tracking-widest mb-2">Curated Collections</p>
           <h2 className="text-xl sm:text-2xl font-extrabold text-[#0B1F4D]">
             What to Explore in {country.name}
           </h2>
           <p className="text-gray-400 text-sm mt-1">
-            Inspiration-first — tap a collection to discover products
+            Tap a collection to discover products by classification
           </p>
         </div>
 
-        {/* First two: large hero cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-5">
-          {country.categories.slice(0, 2).map((cat, i) => (
-            <Link
-              key={cat.id}
-              href={cat.marketplaceUrl}
-              className="group relative rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 bg-gray-100"
-            >
-              <div className="relative h-64 sm:h-72">
-                <Image
-                  src={cat.image}
-                  alt={cat.name}
-                  fill
-                  className="object-cover group-hover:scale-105 transition-transform duration-500"
-                  sizes="(max-width: 640px) 100vw, 50vw"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
-              </div>
-              <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-6">
-                <h3 className="text-white font-extrabold text-lg sm:text-xl">{cat.name}</h3>
-                <p className="text-white/70 text-xs mt-1 leading-snug max-w-xs">{cat.tagline}</p>
-                <div className="mt-3 inline-flex items-center gap-1.5 text-xs font-bold text-[#F5A623] bg-black/20 backdrop-blur-sm rounded-full px-3 py-1.5 border border-white/10">
-                  Browse collection
-                  <svg className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                  </svg>
-                </div>
-              </div>
-            </Link>
-          ))}
-        </div>
-
-        {/* Remaining: smaller cards in row of 2-4 */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {country.categories.slice(2).map((cat) => (
+        {/* Uniform compact card grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3.5">
+          {country.categories.map((cat) => (
             <Link
               key={cat.id}
               href={cat.marketplaceUrl}
               className="group relative rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5 bg-gray-100"
             >
-              <div className="relative h-40 sm:h-48">
+              <div className="relative h-32 sm:h-36">
                 <Image
                   src={cat.image}
                   alt={cat.name}
@@ -148,11 +153,11 @@ export default async function CountryPage({ params }: { params: { region: string
                   className="object-cover group-hover:scale-105 transition-transform duration-500"
                   sizes="(max-width: 640px) 50vw, 25vw"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-transparent" />
               </div>
-              <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4">
-                <h3 className="text-white font-bold text-sm leading-tight">{cat.name}</h3>
-                <div className="mt-1.5 flex items-center gap-1 text-[10px] font-bold text-[#F5A623]">
+              <div className="absolute bottom-0 left-0 right-0 p-3">
+                <h3 className="text-white font-bold text-xs sm:text-sm leading-tight line-clamp-1">{cat.name}</h3>
+                <div className="mt-1 flex items-center gap-1 text-[10px] font-bold text-[#F5A623]">
                   Explore
                   <svg className="w-2.5 h-2.5 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" />
