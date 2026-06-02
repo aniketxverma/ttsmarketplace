@@ -73,14 +73,24 @@
       "Bash(git commit -m 'fix: restore Add to Cart + Buy Now on product detail page *)",
       "Bash(node scripts/upload-rozil-assets.mjs)",
       "Bash(Get-ChildItem -Recurse -Filter \"*.tsx\" app)",
-      "Bash(Select-Object FullName)"
+      "Bash(Select-Object FullName)",
+      "Bash(Remove-Item -Recurse -Force \"C:\\\\Users\\\\anike\\\\OneDrive\\\\Desktop\\\\tts.es\\\\ttai\\\\app\\\\\\(public\\)\\\\profile\\\\[id]\")",
+      "Bash(Write-Output \"Done\")",
+      "Bash(rm -rf \"C:/Users/anike/OneDrive/Desktop/tts.es/ttai/app/\\(public\\)/profile/[id]\" && echo \"Done\")",
+      "Bash(npx next *)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\anike\\\\OneDrive\\\\Desktop\\\\tts.es\\\\ttai\" -Recurse -Directory)",
+      "Bash(Select-Object -ExpandProperty FullName)",
+      "Bash(New-Item -ItemType File -Path \"C:\\\\Users\\\\anike\\\\OneDrive\\\\Desktop\\\\tts.es\\\\ttai\\\\app\\\\\\(dashboard\\)\\\\broker\\\\settings\\\\page.tsx\" -Force)",
+      "Bash(Out-Null)",
+      "Bash(Write-Output \"created\")"
     ],
     "additionalDirectories": [
       "c:\\Users\\anike\\OneDrive\\Desktop\\tts.es\\ttai\\app\\(public)\\brand\\[slug]\\pos",
       "c:\\Users\\anike\\OneDrive\\Desktop\\tts.es\\ttai\\app\\(public)\\product",
       "c:\\Users\\anike\\OneDrive\\Desktop\\tts.es\\ttai\\app\\(public)\\shop",
       "c:\\Users\\anike\\OneDrive\\Desktop\\tts.es\\ttai\\app\\(public)\\marketplace\\[productId]",
-      "C:\\Users\\anike\\OneDrive\\Desktop\\tts.es\\ttai\\app\\(public)\\profile"
+      "C:\\Users\\anike\\OneDrive\\Desktop\\tts.es\\ttai\\app\\(public)\\profile",
+      "C:\\Users\\anike\\OneDrive\\Desktop\\tts.es\\ttai\\app\\(public)\\profile\\[id]"
     ]
   }
 }

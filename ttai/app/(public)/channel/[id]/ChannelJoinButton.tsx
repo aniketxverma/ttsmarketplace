@@ -16,9 +16,10 @@ function WaIcon({ className }: { className?: string }) {
 interface Props {
   channelId: string
   whatsapp:  string | null
+  compact?:  boolean
 }
 
-export function ChannelJoinButton({ channelId, whatsapp }: Props) {
+export function ChannelJoinButton({ channelId, whatsapp, compact = false }: Props) {
   const [user,     setUser]     = useState<{ id: string } | null>(null)
   const [isMember, setIsMember] = useState(false)
   const [loading,  setLoading]  = useState(true)
@@ -62,52 +63,52 @@ export function ChannelJoinButton({ channelId, whatsapp }: Props) {
     : null
 
   if (loading) return (
-    <div className="flex justify-center py-2">
-      <div className="w-5 h-5 border-2 border-[#0B1F4D]/30 border-t-[#0B1F4D] rounded-full animate-spin" />
-    </div>
+    compact
+      ? <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+      : <div className="flex justify-center py-2"><div className="w-5 h-5 border-2 border-[#0B1F4D]/30 border-t-[#0B1F4D] rounded-full animate-spin" /></div>
   )
 
+  /* ── Compact version — shown in the sticky header ── */
+  if (compact) {
+    return (
+      <button onClick={handleAction} disabled={busy}
+        className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-extrabold transition-all shadow-sm disabled:opacity-60 ${
+          isMember
+            ? 'bg-green-500/20 text-green-300 border border-green-400/30 hover:bg-red-500/20 hover:text-red-300 hover:border-red-400/30'
+            : 'bg-white text-[#0B1F4D] hover:bg-gray-100'
+        }`}>
+        {busy ? <Loader className="w-3 h-3 animate-spin" />
+               : isMember ? <BellOff className="w-3 h-3" /> : <Bell className="w-3 h-3" />}
+        {busy ? '…' : isMember ? 'Subscribed' : 'Subscribe'}
+      </button>
+    )
+  }
+
+  /* ── Full version — shown in the channel info card ── */
   return (
-    <div className="flex flex-col items-center gap-3">
-      <div className="flex items-center gap-3 flex-wrap justify-center">
-        {/* Main subscribe / unsubscribe button */}
+    <div className="flex flex-col items-start gap-3">
+      <div className="flex items-center gap-3 flex-wrap">
         <button onClick={handleAction} disabled={busy}
-          className={`flex items-center gap-2 px-7 py-2.5 rounded-xl font-bold text-sm transition-all shadow-sm disabled:opacity-60 ${
+          className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-sm transition-all shadow-sm disabled:opacity-60 ${
             isMember
               ? 'bg-gray-100 text-gray-600 hover:bg-red-50 hover:text-red-600 border border-gray-200 hover:border-red-200'
-              : user
-                ? 'bg-[#0B1F4D] text-white hover:bg-[#162d6e]'
-                : 'bg-[#0B1F4D] text-white hover:bg-[#162d6e]'
+              : 'bg-[#0B1F4D] text-white hover:bg-[#162d6e]'
           }`}>
-          {busy ? (
-            <Loader className="w-4 h-4 animate-spin" />
-          ) : isMember ? (
-            <BellOff className="w-4 h-4" />
-          ) : user ? (
-            <Bell className="w-4 h-4" />
-          ) : (
-            <LogIn className="w-4 h-4" />
-          )}
-          {busy
-            ? 'Please wait…'
-            : isMember
-              ? 'Subscribed · Unsubscribe'
-              : user
-                ? 'Subscribe'
-                : 'Login to Subscribe'}
+          {busy ? <Loader className="w-4 h-4 animate-spin" />
+                : isMember ? <BellOff className="w-4 h-4" /> : user ? <Bell className="w-4 h-4" /> : <LogIn className="w-4 h-4" />}
+          {busy ? 'Please wait…'
+                : isMember ? 'Subscribed'
+                : user ? 'Subscribe' : 'Login to Subscribe'}
         </button>
 
-        {/* WhatsApp contact — shown only when subscribed */}
         {isMember && waHref && (
           <a href={waHref} target="_blank" rel="noopener noreferrer"
             className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm bg-[#25D366] hover:bg-[#1ebe5d] text-white transition-colors shadow-sm">
-            <WaIcon className="w-4 h-4" />
-            WhatsApp
+            <WaIcon className="w-4 h-4" />WhatsApp
           </a>
         )}
       </div>
 
-      {/* Subscribed confirmation */}
       {isMember && (
         <p className="text-xs text-green-600 font-semibold flex items-center gap-1.5">
           <span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block" />
