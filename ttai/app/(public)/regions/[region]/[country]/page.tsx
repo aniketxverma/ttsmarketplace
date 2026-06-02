@@ -3,7 +3,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { getCountry, REGIONS } from '@/lib/regions-data'
 import { createClient } from '@/lib/supabase/server'
-import { SupplierMiniCard, type MiniSupplier } from '@/components/marketplace/SupplierMiniCard'
+import { SupplierShowcaseCard, type ShowcaseSupplier } from '@/components/marketplace/SupplierShowcaseCard'
 import { ShoppingChannels } from '@/components/marketplace/ShoppingChannels'
 
 export const revalidate = 60
@@ -37,26 +37,42 @@ export default async function CountryPage({ params }: { params: { region: string
 
   const supplierIds: string[] = (srRows ?? []).map((r: any) => r.supplier_id)
 
-  let regionProducts: any[] = []
-  let regionSuppliers: MiniSupplier[] = []
+  let regionSuppliers: ShowcaseSupplier[] = []
   if (supplierIds.length > 0) {
-    const [productsRes, suppliersRes] = await Promise.all([
+    const [suppliersRes, countRes] = await Promise.all([
+      (supabase.from('suppliers') as any)
+        .select('id, legal_name, trade_name, logo_url, banner_image, reliability_tier, brand_slug, tagline, years_experience, countries_served, cities(name), countries(name)')
+        .in('id', supplierIds)
+        .neq('status', 'SUSPENDED')
+        .order('reliability_tier', { ascending: true })
+        .limit(24),
       supabase
         .from('products')
-        .select('id, name, slug, price_cents, currency_code, product_images(url, sort_order), suppliers(trade_name, legal_name, brand_slug)')
+        .select('supplier_id')
         .in('supplier_id', supplierIds)
-        .eq('is_published', true)
-        .order('created_at', { ascending: false })
-        .limit(12),
-      (supabase.from('suppliers') as any)
-        .select('id, legal_name, trade_name, logo_url, reliability_tier, brand_slug, tagline')
-        .in('id', supplierIds)
-        .eq('status', 'ACTIVE')
-        .order('reliability_tier', { ascending: true })
-        .limit(12),
+        .eq('is_published', true),
     ])
-    regionProducts   = productsRes.data ?? []
-    regionSuppliers  = (suppliersRes.data ?? []) as MiniSupplier[]
+
+    // Count published products per supplier
+    const counts: Record<string, number> = {}
+    for (const row of (countRes.data ?? []) as any[]) {
+      counts[row.supplier_id] = (counts[row.supplier_id] ?? 0) + 1
+    }
+
+    regionSuppliers = ((suppliersRes.data ?? []) as any[]).map((s) => ({
+      id: s.id,
+      legal_name: s.legal_name,
+      trade_name: s.trade_name,
+      logo_url: s.logo_url,
+      banner_image: s.banner_image,
+      tagline: s.tagline,
+      reliability_tier: s.reliability_tier,
+      brand_slug: s.brand_slug,
+      years_experience: s.years_experience,
+      countries_served: s.countries_served,
+      location: [s.cities?.name, s.countries?.name].filter(Boolean).join(', ') || null,
+      product_count: counts[s.id] ?? 0,
+    }))
   }
 
   return (
@@ -99,32 +115,6 @@ export default async function CountryPage({ params }: { params: { region: string
           </div>
         </div>
       </div>
-
-      {/* ── Verified Suppliers in this country ───────────────────────── */}
-      {regionSuppliers.length > 0 && (
-        <div className="container mx-auto px-4 sm:px-8 pt-14">
-          <div className="flex items-end justify-between gap-4 mb-6">
-            <div>
-              <p className="text-[#F5A623] text-xs font-bold uppercase tracking-widest mb-2">Verified Suppliers</p>
-              <h2 className="text-xl sm:text-2xl font-extrabold text-[#0B1F4D]">
-                Brands & Suppliers in {country.name}
-              </h2>
-              <p className="text-gray-400 text-sm mt-1">Tap a supplier to view their full profile and catalogue</p>
-            </div>
-            <Link href="/suppliers" className="hidden sm:inline-flex items-center gap-1.5 text-sm font-bold text-[#0B1F4D] hover:underline flex-shrink-0">
-              All suppliers
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
-              </svg>
-            </Link>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
-            {regionSuppliers.map((s) => (
-              <SupplierMiniCard key={s.id} supplier={s} />
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* ── Curated collections (compact) ────────────────────────────── */}
       <div className="container mx-auto px-4 sm:px-8 py-14">
@@ -197,64 +187,36 @@ export default async function CountryPage({ params }: { params: { region: string
         </div>
       </div>
 
-      {/* ── Real products from suppliers in this region ─────────────── */}
-      {regionProducts.length > 0 && (
+      {/* ── Verified suppliers serving this market ───────────────────── */}
+      {regionSuppliers.length > 0 && (
         <div className="border-t py-14">
           <div className="container mx-auto px-4 sm:px-8">
-            <div className="mb-8">
-              <p className="text-[#F5A623] text-xs font-bold uppercase tracking-widest mb-1">Available Now</p>
-              <h2 className="text-xl sm:text-2xl font-extrabold text-[#0B1F4D]">
-                Products Shipped to {country.name}
-              </h2>
-              <p className="text-gray-400 text-sm mt-1">From verified suppliers who serve this market</p>
+            <div className="flex items-end justify-between gap-4 mb-8">
+              <div>
+                <p className="text-[#F5A623] text-xs font-bold uppercase tracking-widest mb-1">Available Now</p>
+                <h2 className="text-xl sm:text-2xl font-extrabold text-[#0B1F4D]">
+                  Suppliers Serving {country.name}
+                </h2>
+                <p className="text-gray-400 text-sm mt-1">Verified brands ready to ship — tap to view their store &amp; products</p>
+              </div>
+              <Link href="/suppliers" className="hidden sm:inline-flex items-center gap-1.5 text-sm font-bold text-[#0B1F4D] hover:underline flex-shrink-0">
+                All suppliers
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                </svg>
+              </Link>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-              {regionProducts.map((p) => {
-                const images = ((p.product_images ?? []) as { url: string; sort_order: number }[])
-                  .sort((a, b) => a.sort_order - b.sort_order)
-                const thumb = images[0]?.url
-                const sup   = p.suppliers as { trade_name: string | null; legal_name: string; brand_slug: string | null } | null
-                const supName = sup?.trade_name ?? sup?.legal_name ?? null
-                const price = new Intl.NumberFormat('en-EU', {
-                  style: 'currency',
-                  currency: p.currency_code ?? 'EUR',
-                }).format(p.price_cents / 100)
-                return (
-                  <Link
-                    key={p.id}
-                    href={`/product/${p.slug ?? p.id}`}
-                    className="group rounded-2xl border border-gray-100 bg-white overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5"
-                  >
-                    <div className="relative h-40 sm:h-48 bg-gray-100">
-                      {thumb ? (
-                        <Image
-                          src={thumb}
-                          alt={p.name}
-                          fill
-                          className="object-cover group-hover:scale-105 transition-transform duration-500"
-                          sizes="(max-width: 640px) 50vw, 25vw"
-                        />
-                      ) : (
-                        <div className="absolute inset-0 flex items-center justify-center text-gray-300 text-3xl">📦</div>
-                      )}
-                    </div>
-                    <div className="p-3 sm:p-4">
-                      {supName && (
-                        <p className="text-[10px] font-bold text-[#F5A623] uppercase tracking-wide mb-0.5 truncate">{supName}</p>
-                      )}
-                      <h3 className="font-semibold text-gray-900 text-sm leading-tight line-clamp-2">{p.name}</h3>
-                      <p className="text-[#0B1F4D] font-extrabold text-sm mt-1.5">{price}</p>
-                    </div>
-                  </Link>
-                )
-              })}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {regionSuppliers.map((s) => (
+                <SupplierShowcaseCard key={s.id} supplier={s} />
+              ))}
             </div>
             <div className="mt-8 text-center">
               <Link
                 href="/marketplace"
                 className="inline-flex items-center gap-2 text-sm font-bold text-[#0B1F4D] hover:underline"
               >
-                View all products in marketplace
+                Browse all products in marketplace
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                 </svg>
