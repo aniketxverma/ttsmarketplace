@@ -67,15 +67,17 @@ export default async function AccountProfilePage() {
     .eq('id', user!.id)
     .single()
 
-  // For suppliers, fetch brand_slug so "Public Profile" goes to their brand/shop page
+  // For suppliers, fetch brand_slug + id so "Public Profile" goes to their storefront
   let supplierBrandSlug: string | null = null
+  let supplierId: string | null = null
   if (profile?.role === 'supplier') {
     const { data: sup } = await (supabase as any)
       .from('suppliers')
-      .select('brand_slug')
+      .select('id, brand_slug')
       .eq('owner_id', user!.id)
       .maybeSingle()
     supplierBrandSlug = sup?.brand_slug ?? null
+    supplierId        = sup?.id ?? null
   }
 
   const name        = profile?.full_name ?? user?.email ?? 'User'
@@ -90,10 +92,11 @@ export default async function AccountProfilePage() {
     profile?.role === 'broker'   ? '/broker/settings'   :
     '/buyer/settings'
 
-  // Suppliers → their brand/shop page; everyone else → generic public profile
+  // Suppliers → branded storefront (full brand page, or premium supplier page);
+  // everyone else → generic public profile
   const publicProfileHref =
-    profile?.role === 'supplier' && supplierBrandSlug
-      ? `/brand/${supplierBrandSlug}`
+    profile?.role === 'supplier'
+      ? (supplierBrandSlug ? `/brand/${supplierBrandSlug}` : supplierId ? `/suppliers/${supplierId}` : `/profile/${profileSlug}`)
       : `/profile/${profileSlug}`
   const memberSince = profile?.created_at
     ? new Date(profile.created_at).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })
