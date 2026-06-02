@@ -383,23 +383,28 @@ export default async function AccountProfilePage() {
         )}
       </div>
 
-      {/* ── Coming Soon tiles ── */}
+      {/* ── Feature tiles ── */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        <ComingSoonTile
+        <FeatureTile
+          href="/b2b"
           icon={<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>}
           title="B2B Shop"
           subtitle="Wholesale · Bulk Orders"
-          description={profile?.role === 'supplier' ? 'Open a dedicated B2B storefront and accept bulk orders directly from verified buyers.' : 'Access exclusive B2B pricing and bulk-order options from verified suppliers.'}
+          description={profile?.role === 'supplier' ? 'List your products for bulk wholesale orders from verified buyers across Europe and Africa.' : 'Access bulk pricing and order direct from verified European suppliers.'}
           color="from-blue-600 to-blue-800"
+          cta={profile?.role === 'supplier' ? 'Go to B2B Shop' : 'Browse B2B Suppliers'}
         />
-        <ComingSoonTile
+        <FeatureTile
+          href="/store"
           icon={<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>}
           title="Online Shop"
           subtitle="Retail · Direct to Consumer"
-          description={profile?.role === 'supplier' ? 'Launch a public online store to sell directly to end consumers — by piece or subscription.' : 'Shop individual products from global suppliers delivered to your door.'}
+          description={profile?.role === 'supplier' ? 'Your products are live in the TTAI store — reachable by retail buyers worldwide.' : 'Browse and shop individual products direct from verified suppliers.'}
           color="from-purple-600 to-purple-800"
+          cta={profile?.role === 'supplier' ? 'View My Products in Store' : 'Browse Online Store'}
         />
-        <ComingSoonTile
+        <FeatureTile
+          href="/projects"
           icon={
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
@@ -410,23 +415,26 @@ export default async function AccountProfilePage() {
           subtitle="Invest · Partnership · Packs"
           description="Join exclusive trade projects, co-invest in distribution packs, or partner with TTAI EMA for joint ventures."
           color="from-[#0B1F4D] to-[#1a3580]"
+          cta="View Live Projects"
         />
       </div>
     </div>
   )
 }
 
-function ComingSoonTile({
-  icon, title, subtitle, description, color,
+function FeatureTile({
+  href, icon, title, subtitle, description, color, cta,
 }: {
+  href: string
   icon: React.ReactNode
   title: string
   subtitle: string
   description: string
   color: string
+  cta: string
 }) {
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
+    <Link href={href} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col hover:shadow-lg hover:-translate-y-0.5 transition-all group">
       <div className={`bg-gradient-to-br ${color} px-5 py-4 flex items-center gap-3`}>
         <div className="w-10 h-10 rounded-full bg-white/15 flex items-center justify-center text-white flex-shrink-0">
           {icon}
@@ -442,15 +450,13 @@ function ComingSoonTile({
       </div>
 
       <div className="px-5 pb-5">
-        <div className="flex items-center justify-center gap-2 w-full rounded-xl border-2 border-dashed border-gray-200
-          py-2.5 text-sm font-semibold text-gray-400 cursor-not-allowed select-none">
+        <div className={`flex items-center justify-center gap-2 w-full rounded-xl py-2.5 text-sm font-extrabold text-white transition-all bg-gradient-to-r ${color} group-hover:opacity-90`}>
+          {cta}
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-              d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
           </svg>
-          Coming Soon
         </div>
       </div>
-    </div>
+    </Link>
   )
 }

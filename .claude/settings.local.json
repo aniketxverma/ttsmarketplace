@@ -82,7 +82,9 @@
       "Bash(Select-Object -ExpandProperty FullName)",
       "Bash(New-Item -ItemType File -Path \"C:\\\\Users\\\\anike\\\\OneDrive\\\\Desktop\\\\tts.es\\\\ttai\\\\app\\\\\\(dashboard\\)\\\\broker\\\\settings\\\\page.tsx\" -Force)",
       "Bash(Out-Null)",
-      "Bash(Write-Output \"created\")"
+      "Bash(Write-Output \"created\")",
+      "Bash(mkdir -p \"C:\\\\Users\\\\anike\\\\OneDrive\\\\Desktop\\\\tts.es\\\\ttai\\\\app\\\\\\(public\\)\\\\b2b\" && mkdir -p \"C:\\\\Users\\\\anike\\\\OneDrive\\\\Desktop\\\\tts.es\\\\ttai\\\\app\\\\\\(public\\)\\\\store\" && mkdir -p \"C:\\\\Users\\\\anike\\\\OneDrive\\\\Desktop\\\\tts.es\\\\ttai\\\\app\\\\\\(public\\)\\\\projects\\\\[id]\")",
+      "Bash(echo \"\" > \"C:\\\\Users\\\\anike\\\\OneDrive\\\\Desktop\\\\tts.es\\\\ttai\\\\app\\\\\\(public\\)\\\\projects\\\\[id]\\\\page.tsx\")"
     ],
     "additionalDirectories": [
       "c:\\Users\\anike\\OneDrive\\Desktop\\tts.es\\ttai\\app\\(public)\\brand\\[slug]\\pos",
@@ -90,7 +92,9 @@
       "c:\\Users\\anike\\OneDrive\\Desktop\\tts.es\\ttai\\app\\(public)\\shop",
       "c:\\Users\\anike\\OneDrive\\Desktop\\tts.es\\ttai\\app\\(public)\\marketplace\\[productId]",
       "C:\\Users\\anike\\OneDrive\\Desktop\\tts.es\\ttai\\app\\(public)\\profile",
-      "C:\\Users\\anike\\OneDrive\\Desktop\\tts.es\\ttai\\app\\(public)\\profile\\[id]"
+      "C:\\Users\\anike\\OneDrive\\Desktop\\tts.es\\ttai\\app\\(public)\\profile\\[id]",
+      "C:\\Users\\anike\\OneDrive\\Desktop\\tts.es\\ttai\\app\\(public)\\projects",
+      "C:\\Users\\anike\\OneDrive\\Desktop\\tts.es\\ttai\\app\\(public)\\projects\\[id]"
     ]
   }
 }
