@@ -129,12 +129,21 @@ export default async function ProductPage({ params }: { params: { slug: string }
           </div>
 
           {/* Right: details */}
-          <div className="space-y-6">
+          <div className="space-y-5">
 
-            {/* Category + name */}
+            {/* Supplier link + category + product name */}
             <div>
+              {/* Supplier name — clickable link to brand page */}
+              {supplier && (
+                <Link
+                  href={supplier.brand_slug ? `/brand/${supplier.brand_slug}` : '#'}
+                  className="inline-flex items-center gap-1.5 text-sm font-semibold text-gray-400 hover:text-[#0B1F4D] transition-colors mb-1"
+                >
+                  {supplier.trade_name ?? supplier.legal_name}
+                </Link>
+              )}
               {product.categories?.name && (
-                <p className="text-xs font-bold text-[#F5A623] uppercase tracking-widest mb-1">
+                <p className="text-xs font-bold text-[#F5A623] uppercase tracking-widest mb-1.5">
                   {product.categories.name}
                 </p>
               )}
@@ -143,49 +152,46 @@ export default async function ProductPage({ params }: { params: { slug: string }
               </h1>
             </div>
 
-            {/* Price + MOQ */}
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
-              {/* Price row */}
-              <div className="flex items-baseline gap-2 flex-wrap">
-                <span className="text-4xl font-black text-[#0B1F4D]">
-                  {fmt(product.price_cents, product.currency_code)}
-                </span>
-                <span className="text-sm text-gray-400 font-medium">{t('product.per_unit')}</span>
-              </div>
+            {/* Price */}
+            <div className="flex items-baseline gap-2 flex-wrap">
+              <span className="text-4xl font-black text-[#0B1F4D]">
+                {fmt(product.price_cents, product.currency_code)}
+              </span>
+              <span className="text-sm text-gray-400 font-medium">{t('product.per_unit')}</span>
+            </div>
 
-              {/* Min Order + Stock — bordered two-column card */}
-              <div className="grid grid-cols-2 divide-x divide-gray-200 border border-gray-200 rounded-xl overflow-hidden">
-                <div className="p-4">
-                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
-                    {t('product.min_order')}
-                  </p>
+            {/* Min Order + Stock — bordered two-column card */}
+            <div className="grid grid-cols-2 divide-x divide-gray-200 border border-gray-200 rounded-xl overflow-hidden bg-white">
+              <div className="p-4">
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
+                  {t('product.min_order')}
+                </p>
+                <p className="text-xl font-extrabold text-[#0B1F4D]">
+                  {product.min_order_qty}
+                  <span className="text-sm font-semibold text-gray-500 ml-1">{t('product.min_order_uds')}</span>
+                </p>
+              </div>
+              <div className="p-4">
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
+                  {t('product.stock')}
+                </p>
+                <div className="flex items-center gap-1.5">
+                  <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${
+                    product.stock_qty > 100 ? 'bg-green-500' :
+                    product.stock_qty > 0   ? 'bg-amber-400' : 'bg-red-500'
+                  }`} />
                   <p className="text-xl font-extrabold text-[#0B1F4D]">
-                    {product.min_order_qty}
-                    <span className="text-sm font-semibold text-gray-500 ml-1">{t('product.min_order_uds')}</span>
+                    {product.stock_qty > 500 ? '+500' : product.stock_qty}
+                    <span className="text-sm font-semibold text-gray-500 ml-1">{t('product.in_stock')}</span>
                   </p>
-                </div>
-                <div className="p-4">
-                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
-                    {t('product.stock')}
-                  </p>
-                  <div className="flex items-center gap-1.5">
-                    <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${
-                      product.stock_qty > 100 ? 'bg-green-500' :
-                      product.stock_qty > 0   ? 'bg-amber-400' : 'bg-red-500'
-                    }`} />
-                    <p className="text-xl font-extrabold text-[#0B1F4D]">
-                      {product.stock_qty > 500 ? '+500' : product.stock_qty}
-                      <span className="text-sm font-semibold text-gray-500 ml-1">{t('product.in_stock')}</span>
-                    </p>
-                  </div>
                 </div>
               </div>
             </div>
 
             {/* Description */}
             {product.description && (
-              <div>
-                <h2 className="text-sm font-extrabold text-gray-700 uppercase tracking-wide mb-2">{t('product.description')}</h2>
+              <div className="border-t border-gray-100 pt-5">
+                <h2 className="text-xs font-extrabold text-gray-500 uppercase tracking-widest mb-2">{t('product.description')}</h2>
                 <p className="text-gray-600 leading-relaxed text-[15px]">{product.description}</p>
               </div>
             )}
