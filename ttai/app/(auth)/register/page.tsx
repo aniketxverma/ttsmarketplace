@@ -287,7 +287,13 @@ export default function RegisterPage() {
       // Profile update failure is non-fatal — metadata was saved in signUp options
       if (profileErr) console.warn('Profile update error (non-fatal):', profileErr.message)
 
-      window.location.href = '/pending-approval'
+      // New flow: land on the role dashboard immediately. Account stays "pending"
+      // (admin reviews details + approves) — marketplace unlocks after approval.
+      const dash =
+        form.role === 'supplier' ? '/supplier' :
+        form.role === 'broker'   ? '/broker'   :
+        '/buyer'
+      window.location.href = dash
     } finally {
       submittingRef.current = false
       setLoading(false)

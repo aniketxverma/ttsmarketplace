@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 
 type ApprovalStatus = 'pending' | 'approved' | 'rejected'
@@ -20,11 +19,17 @@ export function ApprovalChanger({
   async function handleChange(newStatus: ApprovalStatus) {
     if (newStatus === status) return
     startTransition(async () => {
-      const supabase = createClient()
-      await supabase
-        .from('profiles')
-        .update({ approval_status: newStatus })
-        .eq('id', userId)
+      // Route through the admin API (admin client) so the update always persists
+      const res = await fetch('/api/admin/approve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, status: newStatus }),
+      })
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}))
+        alert(j.error ?? 'Failed to update approval status')
+        return
+      }
       setStatus(newStatus)
       router.refresh()
     })

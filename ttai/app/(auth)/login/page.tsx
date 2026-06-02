@@ -53,12 +53,15 @@ function LoginContent() {
         .single()
 
       const status = profile?.approval_status ?? 'pending'
-      if (status === 'pending')  { window.location.href = '/pending-approval';  return }
+      const role   = profile?.role
+
+      // Rejected users still hit the rejection wall
       if (status === 'rejected') { window.location.href = '/account-rejected'; return }
 
-      const role = profile?.role
+      // Pending OR approved → land on the role dashboard.
+      // (Pending users can use their dashboard; marketplace stays locked until approved.)
       let dest = '/buyer'
-      if (redirectTo)              dest = redirectTo
+      if (status === 'approved' && redirectTo) dest = redirectTo
       else if (role === 'admin')    dest = '/admin'
       else if (role === 'supplier') dest = '/supplier'
       else if (role === 'broker')   dest = '/broker'

@@ -3,11 +3,12 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { COUNTRY_TO_LOCALE, DEFAULT_LOCALE, SUPPORTED_LOCALES, parseAcceptLanguage } from './lib/i18n/locales'
 import type { Locale } from './lib/i18n/locales'
 
-const PROTECTED = ['/supplier', '/broker', '/buyer', '/admin']
+const PROTECTED = ['/supplier', '/broker', '/buyer', '/admin', '/account']
 
 /** Pages that are always accessible regardless of approval status */
 const APPROVAL_EXEMPT = [
   '/pending-approval',
+  '/account-rejected',
   '/login',
   '/register',
   '/reset-password',
@@ -16,6 +17,21 @@ const APPROVAL_EXEMPT = [
   '/_next',
   '/favicon',
 ]
+
+/** Dashboard routes a PENDING (unapproved) user is still allowed to use */
+const PENDING_ALLOWED = ['/buyer', '/supplier', '/broker', '/admin', '/account']
+
+/** Commerce / browse routes that require an APPROVED account when logged in */
+const COMMERCE = ['/marketplace', '/product', '/b2b', '/store', '/suppliers', '/brand', '/regions', '/projects', '/cart', '/checkout']
+
+/** Where each role lands after login / while pending */
+const ROLE_DASH: Record<string, string> = {
+  buyer:           '/buyer',
+  business_client: '/buyer',
+  supplier:        '/supplier',
+  broker:          '/broker',
+  admin:           '/admin',
+}
 
 function detectLocale(request: NextRequest): Locale {
   const cookie = request.cookies.get('TTAI_LOCALE')?.value
@@ -79,28 +95,41 @@ export async function middleware(request: NextRequest) {
   }
 
   // ── Approval gate ────────────────────────────────────────────────────────
-  // Only check logged-in users who are not already on an exempt page
+  // New flow: a newly-registered user can reach their DASHBOARD immediately
+  // (so admins receive their details for review). Marketplace / commerce stays
+  // locked until an admin approves the account.
   if (user && !APPROVAL_EXEMPT.some((p) => path.startsWith(p))) {
     const { data: profile } = await supabase
       .from('profiles')
-      .select('approval_status')
+      .select('approval_status, role')
       .eq('id', user.id)
       .single()
 
     const status = profile?.approval_status ?? 'pending'
+    const role   = profile?.role ?? 'buyer'
+    const dash   = ROLE_DASH[role] ?? '/buyer'
 
-    if (status === 'pending') {
-      const url = request.nextUrl.clone()
-      url.pathname = '/pending-approval'
-      url.search = ''
-      return NextResponse.redirect(url)
-    }
+    // Admins are never gated
+    if (role !== 'admin') {
+      if (status === 'rejected') {
+        const url = request.nextUrl.clone()
+        url.pathname = '/account-rejected'
+        url.search = ''
+        return NextResponse.redirect(url)
+      }
 
-    if (status === 'rejected') {
-      const url = request.nextUrl.clone()
-      url.pathname = '/account-rejected'
-      url.search = ''
-      return NextResponse.redirect(url)
+      if (status === 'pending') {
+        // Pending users keep dashboard access but cannot enter commerce routes.
+        const inCommerce = COMMERCE.some((p) => path.startsWith(p))
+        const inDashboard = PENDING_ALLOWED.some((p) => path.startsWith(p))
+        if (inCommerce || (!inDashboard && PROTECTED.some((p) => path.startsWith(p)))) {
+          const url = request.nextUrl.clone()
+          url.pathname = dash
+          url.search = ''
+          return NextResponse.redirect(url)
+        }
+        // dashboard / account / home / other public info pages → allowed
+      }
     }
   }
 
