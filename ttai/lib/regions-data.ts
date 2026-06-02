@@ -88,7 +88,7 @@ const VISUAL_CATEGORIES: Record<string, VisualCategory> = {
     name: 'Cleaning & Household',
     tagline: 'Professional-grade cleaning products & supplies',
     image: 'https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=800&q=80',
-    marketplaceUrl: '/marketplace?q=cleaning',
+    marketplaceUrl: '/marketplace?category=cleaning-products',
   },
   rozilBrand: {
     id: 'rozil-brand',

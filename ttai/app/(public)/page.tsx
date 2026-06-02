@@ -194,7 +194,7 @@ const PRODUCT_FAMILIES = [
   // Branded drinks & canned goods — Pepsi, Coca-Cola, snacks on shelf
   { name: 'Food & Beverages',      desc: 'Branded drinks, canned goods, snacks, dairy, oils and more.',        img: 'https://images.unsplash.com/photo-1553456558-aff63285bdd1?w=600&q=80', Icon: FoodIcon,        color: 'bg-green-500',   slug: 'agriculture-food' },
   // Branded cleaning products shelf — Rozil, detergents, sprays
-  { name: 'Cleaning & Household',  desc: 'Branded detergents, sprays, disinfectants, household cleaners.',     img: 'https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=600&q=80', Icon: CleanIcon,       color: 'bg-blue-500',    slug: 'health-beauty' },
+  { name: 'Cleaning & Household',  desc: 'Branded detergents, sprays, disinfectants, household cleaners.',     img: 'https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=600&q=80', Icon: CleanIcon,       color: 'bg-blue-500',    slug: 'cleaning-products' },
   // Perfume & cosmetics — Nivea, Axe, Arabic oud, skincare
   { name: 'Personal Care',         desc: 'Perfumes, Nivea, Axe, shampoos, creams and cosmetics.',              img: 'https://images.unsplash.com/photo-1541643600914-78b084683702?w=600&q=80', Icon: CareIcon,        color: 'bg-purple-500',  slug: 'health-beauty' },
   // White goods & home appliances — fridges, washing machines, ovens
