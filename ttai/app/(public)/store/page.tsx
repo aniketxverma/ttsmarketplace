@@ -18,7 +18,7 @@ export const metadata = {
 export default async function StorePage({
   searchParams,
 }: {
-  searchParams: { category?: string; q?: string; page?: string }
+  searchParams: { category?: string; q?: string; page?: string; supplier?: string }
 }) {
   const supabase = createClient()
   const page = parseInt(searchParams.page ?? '1')
@@ -57,6 +57,10 @@ export default async function StorePage({
 
   if (searchParams.q) {
     productQuery = productQuery.ilike('name', `%${searchParams.q}%`)
+  }
+
+  if (searchParams.supplier) {
+    productQuery = productQuery.eq('supplier_id', searchParams.supplier)
   }
 
   const from = (page - 1) * PAGE_SIZE

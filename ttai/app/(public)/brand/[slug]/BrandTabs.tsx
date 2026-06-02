@@ -8,7 +8,7 @@ import {
   Store, Warehouse, Truck, Building2, ShoppingBag, Briefcase, Anchor,
   Calendar, Globe, Share2, Check, Phone, Mail, Clock, Navigation,
   ExternalLink, Download, Play, X, BadgeCheck, ChevronRight, ChevronLeft, Reply,
-  Radio, Users, FileText, Bell, Tag, Megaphone, LogIn, Loader, UserMinus,
+  Radio, Users, FileText, Bell, Tag, Megaphone, LogIn, Loader, UserMinus, ArrowRight,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { formatCents } from '@/lib/utils'
@@ -468,18 +468,80 @@ export function BrandTabs({
           <section id="sec-products">
             <div data-reveal>
               <SectionHeading
-                icon={Package}
-                title={t('brand.products_title')}
-                subtitle={`${products.length} ${t('brand.products_subtitle_suffix')} ${productsByCategory.length} ${t('brand.products_categories')}`}
+                icon={ShoppingBag}
+                title={`Shop ${supplier.trade_name ?? supplier.legal_name ?? ''}`}
+                subtitle="Choose how you’d like to buy — wholesale or retail"
                 accent="#0B1F4D"
-                action={wa ? (
-                  <a href={`${wa}?text=Hi! I'd like to request your full catalogue.`}
-                    target="_blank" rel="noopener noreferrer"
-                    className="hidden sm:flex items-center gap-2 bg-green-500 hover:bg-green-400 text-white px-4 py-2 rounded-xl text-sm font-bold transition-colors shadow-sm">
-                    <WaIcon className="w-4 h-4" />{t('brand.request_catalogue')}
-                  </a>
-                ) : undefined}
               />
+            </div>
+
+            {/* ── Two shops: B2B (wholesale) + Online (retail) ── */}
+            <div data-reveal className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-14">
+              {/* Shop B2B */}
+              <Link href={`/b2b?supplier=${supplier.id}`}
+                className="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-0.5 transition-all overflow-hidden flex flex-col">
+                <div className="bg-gradient-to-br from-[#0B1F4D] to-[#1a3a7a] px-5 py-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-11 h-11 rounded-xl bg-white/15 flex items-center justify-center">
+                      <Building2 className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-white font-extrabold text-base leading-tight">Shop B2B</p>
+                      <p className="text-white/60 text-xs">Wholesale</p>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-extrabold text-white/80 bg-white/10 border border-white/20 px-2 py-0.5 rounded-full uppercase tracking-wide">Bulk</span>
+                </div>
+                <div className="px-5 py-4 flex-1 flex flex-col">
+                  <p className="text-sm text-gray-500 leading-relaxed flex-1">
+                    Order by <strong className="text-gray-700">box, pallet or full truck</strong>. Wholesale pricing for distributors &amp; retailers.
+                  </p>
+                  <span className="mt-3 inline-flex items-center gap-1.5 text-sm font-extrabold text-[#0B1F4D] group-hover:gap-2.5 transition-all">
+                    Enter B2B Shop <ArrowRight className="w-4 h-4" />
+                  </span>
+                </div>
+              </Link>
+
+              {/* Online Shop */}
+              <Link href={`/store?supplier=${supplier.id}`}
+                className="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-0.5 transition-all overflow-hidden flex flex-col">
+                <div className="bg-gradient-to-br from-purple-600 to-violet-800 px-5 py-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-11 h-11 rounded-xl bg-white/15 flex items-center justify-center">
+                      <ShoppingBag className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-white font-extrabold text-base leading-tight">Online Shop</p>
+                      <p className="text-white/60 text-xs">Retail · By piece</p>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-extrabold text-white/80 bg-white/10 border border-white/20 px-2 py-0.5 rounded-full uppercase tracking-wide">Retail</span>
+                </div>
+                <div className="px-5 py-4 flex-1 flex flex-col">
+                  <p className="text-sm text-gray-500 leading-relaxed flex-1">
+                    Buy <strong className="text-gray-700">individual pieces</strong> shipped directly to you — no minimum order.
+                  </p>
+                  <span className="mt-3 inline-flex items-center gap-1.5 text-sm font-extrabold text-purple-700 group-hover:gap-2.5 transition-all">
+                    Enter Online Shop <ArrowRight className="w-4 h-4" />
+                  </span>
+                </div>
+              </Link>
+            </div>
+
+            {/* ── Catalogue preview ── */}
+            <div data-reveal className="flex items-center justify-between mb-5">
+              <div className="flex items-center gap-2.5">
+                <Package className="w-5 h-5 text-[#0B1F4D]" />
+                <h3 className="text-lg font-extrabold text-[#0B1F4D]">Product Catalogue</h3>
+                <span className="text-sm text-gray-400">· {products.length} products</span>
+              </div>
+              {wa && (
+                <a href={`${wa}?text=Hi! I'd like to request your full catalogue.`}
+                  target="_blank" rel="noopener noreferrer"
+                  className="hidden sm:flex items-center gap-2 bg-green-500 hover:bg-green-400 text-white px-4 py-2 rounded-xl text-sm font-bold transition-colors shadow-sm">
+                  <WaIcon className="w-4 h-4" />{t('brand.request_catalogue')}
+                </a>
+              )}
             </div>
 
             <div className="space-y-12">

@@ -25,7 +25,7 @@ const TIER: Record<string, { label: string; Icon: typeof Crown; bg: string; text
 export default async function B2BPage({
   searchParams,
 }: {
-  searchParams: { category?: string; q?: string; page?: string }
+  searchParams: { category?: string; q?: string; page?: string; supplier?: string }
 }) {
   const supabase = createClient()
   const page = parseInt(searchParams.page ?? '1')
@@ -89,6 +89,9 @@ export default async function B2BPage({
   }
   if (searchParams.q) {
     productQuery = productQuery.ilike('name', `%${searchParams.q}%`)
+  }
+  if (searchParams.supplier) {
+    productQuery = productQuery.eq('supplier_id', searchParams.supplier)
   }
 
   const from = (page - 1) * PAGE_SIZE
