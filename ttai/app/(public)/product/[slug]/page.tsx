@@ -144,25 +144,38 @@ export default async function ProductPage({ params }: { params: { slug: string }
             </div>
 
             {/* Price + MOQ */}
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-              <div className="flex items-baseline gap-3 flex-wrap mb-4">
-                <span className="text-3xl font-black text-[#0B1F4D]">
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-4">
+              {/* Price row */}
+              <div className="flex items-baseline gap-2 flex-wrap">
+                <span className="text-4xl font-black text-[#0B1F4D]">
                   {fmt(product.price_cents, product.currency_code)}
                 </span>
                 <span className="text-sm text-gray-400 font-medium">{t('product.per_unit')}</span>
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="bg-[#F7F8FA] rounded-xl p-3">
-                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-0.5">{t('product.min_order')}</p>
-                  <p className="text-lg font-extrabold text-[#0B1F4D]">{product.min_order_qty} <span className="text-sm font-semibold text-gray-500">{t('product.min_order_uds')}</span></p>
+
+              {/* Min Order + Stock — bordered two-column card */}
+              <div className="grid grid-cols-2 divide-x divide-gray-200 border border-gray-200 rounded-xl overflow-hidden">
+                <div className="p-4">
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
+                    {t('product.min_order')}
+                  </p>
+                  <p className="text-xl font-extrabold text-[#0B1F4D]">
+                    {product.min_order_qty}
+                    <span className="text-sm font-semibold text-gray-500 ml-1">{t('product.min_order_uds')}</span>
+                  </p>
                 </div>
-                <div className="bg-[#F7F8FA] rounded-xl p-3">
-                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-0.5">{t('product.stock')}</p>
+                <div className="p-4">
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
+                    {t('product.stock')}
+                  </p>
                   <div className="flex items-center gap-1.5">
-                    <span className={`w-2 h-2 rounded-full flex-shrink-0 ${product.stock_qty > 100 ? 'bg-green-500' : product.stock_qty > 0 ? 'bg-amber-400' : 'bg-red-500'}`} />
-                    <p className="text-lg font-extrabold text-[#0B1F4D]">
+                    <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${
+                      product.stock_qty > 100 ? 'bg-green-500' :
+                      product.stock_qty > 0   ? 'bg-amber-400' : 'bg-red-500'
+                    }`} />
+                    <p className="text-xl font-extrabold text-[#0B1F4D]">
                       {product.stock_qty > 500 ? '+500' : product.stock_qty}
-                      <span className="text-sm font-semibold text-gray-500"> {t('product.in_stock')}</span>
+                      <span className="text-sm font-semibold text-gray-500 ml-1">{t('product.in_stock')}</span>
                     </p>
                   </div>
                 </div>
