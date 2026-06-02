@@ -96,22 +96,29 @@ export default async function PublicProfilePage({ params }: { params: { slug: st
       </div>
 
       {/* ── Cover banner ────────────────────────────────────────────────── */}
-      <div className="relative h-48 sm:h-56 overflow-hidden"
+      {/* NOTE: no overflow-hidden here — avatar must extend below this div */}
+      <div className="relative h-48 sm:h-56"
         style={{ background: 'linear-gradient(135deg, #0B1F4D 0%, #0d2660 50%, #1a3a8a 100%)' }}>
-        {/* Decorative circles */}
-        <div className="absolute -top-16 -right-16 w-72 h-72 rounded-full bg-white/[0.03] pointer-events-none" />
-        <div className="absolute -bottom-8 -left-8 w-48 h-48 rounded-full bg-white/[0.04] pointer-events-none" />
-        <div className="absolute top-8 right-1/4 w-36 h-36 rounded-full bg-[#F5A623]/[0.07] pointer-events-none" />
-        {/* Grid */}
+        {/* Decorative circles — clipped inside their own overflow-hidden layer */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute -top-16 -right-16 w-72 h-72 rounded-full bg-white/[0.03]" />
+          <div className="absolute -bottom-8 -left-8 w-48 h-48 rounded-full bg-white/[0.04]" />
+          <div className="absolute top-8 right-1/4 w-36 h-36 rounded-full bg-[#F5A623]/[0.07]" />
+        </div>
+        {/* Grid pattern */}
         <div className="absolute inset-0 opacity-[0.04] pointer-events-none"
           style={{ backgroundImage: 'linear-gradient(#fff 1px,transparent 1px),linear-gradient(90deg,#fff 1px,transparent 1px)', backgroundSize: '36px 36px' }} />
+      </div>
 
-        {/* Avatar — positioned at bottom of banner, halfway out */}
-        <div className="absolute bottom-0 left-5 sm:left-8 translate-y-1/2 z-20">
-          <div className="relative">
+      {/* ── Profile content — avatar floats between banner and card ─────── */}
+      <div className="max-w-5xl mx-auto px-3 sm:px-6">
+
+        {/* Avatar — negative margin pulls it up into the banner */}
+        <div className="-mt-12 sm:-mt-14 pl-3 sm:pl-4 mb-0">
+          <div className="relative inline-block">
             <div
               className="w-24 h-24 sm:w-28 sm:h-28 rounded-full border-4 border-white shadow-2xl overflow-hidden bg-[#0B1F4D] flex items-center justify-center"
-              style={{ boxShadow: `0 0 0 4px ${role.accent}40, 0 8px 32px rgba(0,0,0,0.35)` }}
+              style={{ boxShadow: `0 0 0 4px ${role.accent}55, 0 8px 32px rgba(0,0,0,0.35)` }}
             >
               {profile.avatar_url ? (
                 <Image src={profile.avatar_url} alt={profile.full_name ?? 'Profile'} width={112} height={112}
@@ -120,22 +127,19 @@ export default async function PublicProfilePage({ params }: { params: { slug: st
                 <span className="text-white font-extrabold text-4xl sm:text-5xl">{initial}</span>
               )}
             </div>
-            {/* Verified dot */}
             <div className="absolute bottom-1 right-1 w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-green-500 border-2 border-white flex items-center justify-center shadow-sm">
               <CheckCircle2 className="w-3 h-3 text-white" />
             </div>
           </div>
         </div>
-      </div>
 
       {/* ── Profile header card ─────────────────────────────────────────── */}
-      <div className="max-w-5xl mx-auto px-3 sm:px-6">
-        <div className="bg-white rounded-b-3xl sm:rounded-3xl shadow-lg border border-gray-100/50 overflow-hidden">
-          {/* Role accent bar at top */}
-          <div className="h-1 w-full" style={{ background: `linear-gradient(90deg, ${role.accent}, ${role.accent}99)` }} />
+        <div className="bg-white rounded-3xl shadow-lg border border-gray-100/50 overflow-hidden mt-3">
+          {/* Role accent bar */}
+          <div className="h-1 w-full" style={{ background: `linear-gradient(90deg, ${role.accent}, ${role.accent}88)` }} />
 
-          {/* Content — pt large to clear the avatar */}
-          <div className="px-4 sm:px-8 pt-14 sm:pt-16 pb-6 sm:pb-8">
+          {/* Content */}
+          <div className="px-4 sm:px-8 pt-4 sm:pt-5 pb-6 sm:pb-8">
             <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
 
               {/* Left: name + meta */}
