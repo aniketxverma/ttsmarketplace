@@ -1,11 +1,12 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import {
   Radio, Users, FileText, Send, Settings, Copy, Check,
   Megaphone, Tag, Package, Bell, ExternalLink, Trash2,
-  Eye, EyeOff, ChevronRight, Loader, Plus,
+  Eye, EyeOff, ChevronRight, Loader, Plus, ImagePlus, X,
 } from 'lucide-react'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -20,35 +21,38 @@ type Post = {
 
 // ── Post type config ──────────────────────────────────────────────────────────
 const POST_TYPES = {
-  update:       { label: 'Update',       Icon: Bell,      badge: 'bg-blue-100 text-blue-700',   bg: 'bg-blue-50',   text: 'text-blue-600'   },
-  offer:        { label: 'Offer',        Icon: Tag,       badge: 'bg-amber-100 text-amber-700', bg: 'bg-amber-50',  text: 'text-amber-600'  },
-  product:      { label: 'Product',      Icon: Package,   badge: 'bg-purple-100 text-purple-700',bg: 'bg-purple-50',text: 'text-purple-600' },
-  announcement: { label: 'Announcement', Icon: Megaphone, badge: 'bg-green-100 text-green-700', bg: 'bg-green-50',  text: 'text-green-600'  },
+  update:       { label: 'Update',       Icon: Bell,      badge: 'bg-blue-100 text-blue-700',    bg: 'bg-blue-50',    text: 'text-blue-600'   },
+  offer:        { label: 'Offer',        Icon: Tag,       badge: 'bg-amber-100 text-amber-700',  bg: 'bg-amber-50',   text: 'text-amber-600'  },
+  product:      { label: 'Product',      Icon: Package,   badge: 'bg-purple-100 text-purple-700',bg: 'bg-purple-50',  text: 'text-purple-600' },
+  announcement: { label: 'Announcement', Icon: Megaphone, badge: 'bg-green-100 text-green-700',  bg: 'bg-green-50',   text: 'text-green-600'  },
 } as const
 
 type PostType = keyof typeof POST_TYPES
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
 function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString('en', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
 }
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function SupplierChannelPage() {
-  const [channel, setChannel]           = useState<Channel | null>(null)
-  const [posts,   setPosts]             = useState<Post[]>([])
-  const [loading, setLoading]           = useState(true)
-  const [creating, setCreating]         = useState(false)
-  const [posting,  setPosting]          = useState(false)
-  const [settings, setSettings]         = useState(false)
-  const [copied,   setCopied]           = useState(false)
-  const [error,    setError]            = useState('')
+  const [channel, setChannel]   = useState<Channel | null>(null)
+  const [posts,   setPosts]     = useState<Post[]>([])
+  const [loading, setLoading]   = useState(true)
+  const [creating, setCreating] = useState(false)
+  const [posting,  setPosting]  = useState(false)
+  const [settings, setSettings] = useState(false)
+  const [copied,   setCopied]   = useState(false)
+  const [error,    setError]    = useState('')
 
-  // Create form
+  // Image upload state
+  const [imageFile,    setImageFile]    = useState<File | null>(null)
+  const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [uploadingImg, setUploadingImg] = useState(false)
+  const imgRef = useRef<HTMLInputElement>(null)
+
+  // Forms
   const [cForm, setCForm] = useState({ name: '', description: '', whatsapp: '' })
-  // Post form
-  const [pForm, setPForm] = useState({ content: '', image_url: '', post_type: 'update' as PostType })
-  // Settings form
+  const [pForm, setPForm] = useState({ content: '', post_type: 'update' as PostType })
   const [sForm, setSForm] = useState({ name: '', description: '', whatsapp: '' })
 
   // ── Fetch channel ────────────────────────────────────────────────────────
@@ -72,6 +76,24 @@ export default function SupplierChannelPage() {
 
   useEffect(() => { loadChannel() }, [loadChannel])
 
+  // ── Image handlers ───────────────────────────────────────────────────────
+  function handleImageSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (file.size > 10 * 1024 * 1024) { setError('Image must be under 10 MB'); return }
+    setError('')
+    setImageFile(file)
+    const reader = new FileReader()
+    reader.onload = ev => setImagePreview(ev.target?.result as string)
+    reader.readAsDataURL(file)
+  }
+
+  function clearImage() {
+    setImageFile(null)
+    setImagePreview(null)
+    if (imgRef.current) imgRef.current.value = ''
+  }
+
   // ── Create channel ───────────────────────────────────────────────────────
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -93,17 +115,35 @@ export default function SupplierChannelPage() {
   const handlePost = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!channel || !pForm.content.trim()) return
-    setPosting(true)
+    setPosting(true); setError('')
+
+    let imageUrl: string | null = null
+
+    // Upload image first if one was selected
+    if (imageFile) {
+      setUploadingImg(true)
+      const fd = new FormData()
+      fd.append('file', imageFile)
+      const uploadRes = await fetch('/api/channels/upload-image', { method: 'POST', body: fd })
+      const uploadData = await uploadRes.json()
+      setUploadingImg(false)
+      if (!uploadRes.ok) { setError(uploadData.error ?? 'Image upload failed'); setPosting(false); return }
+      imageUrl = uploadData.url
+    }
+
     const res = await fetch(`/api/channels/${channel.id}/posts`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(pForm),
+      body: JSON.stringify({ content: pForm.content, post_type: pForm.post_type, image_url: imageUrl }),
     })
     const data = await res.json()
     if (res.ok) {
       setPosts(prev => [data.post, ...prev])
-      setPForm({ content: '', image_url: '', post_type: 'update' })
+      setPForm({ content: '', post_type: 'update' })
+      clearImage()
       setChannel(prev => prev ? { ...prev, post_count: prev.post_count + 1 } : prev)
+    } else {
+      setError(data.error ?? 'Failed to post')
     }
     setPosting(false)
   }
@@ -141,7 +181,7 @@ export default function SupplierChannelPage() {
     setChannel(prev => prev ? { ...prev, post_count: Math.max(prev.post_count - 1, 0) } : prev)
   }
 
-  // ── Copy channel link ────────────────────────────────────────────────────
+  // ── Copy link ────────────────────────────────────────────────────────────
   const copyLink = async () => {
     if (!channel) return
     await navigator.clipboard.writeText(`${window.location.origin}/channel/${channel.id}`).catch(() => {})
@@ -157,7 +197,7 @@ export default function SupplierChannelPage() {
   )
 
   // ════════════════════════════════════════════════════════════════════════
-  // CREATE FORM — shown when supplier has no channel yet
+  // CREATE FORM
   // ════════════════════════════════════════════════════════════════════════
   if (!channel) return (
     <div className="max-w-xl mx-auto mt-6">
@@ -170,7 +210,6 @@ export default function SupplierChannelPage() {
           <h1 className="text-2xl font-extrabold text-[#0B1F4D] mb-1">Create Your Canal</h1>
           <p className="text-sm text-gray-400 mb-7 leading-relaxed">
             Broadcast product updates, exclusive offers and announcements directly to buyers who follow your brand.
-            TTAI manages the platform — you manage your canal.
           </p>
 
           {error && (
@@ -180,63 +219,42 @@ export default function SupplierChannelPage() {
           <form onSubmit={handleCreate} className="space-y-4">
             <div>
               <label className="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-1.5">Canal Name *</label>
-              <input
-                type="text"
-                value={cForm.name}
-                onChange={e => setCForm(f => ({ ...f, name: e.target.value }))}
-                placeholder="e.g. Rosil &amp; Gomis Official"
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B1F4D] focus:border-transparent"
-                required
-              />
+              <input type="text" value={cForm.name} onChange={e => setCForm(f => ({ ...f, name: e.target.value }))}
+                placeholder="e.g. Rozil Official Canal"
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B1F4D] focus:border-transparent" required />
             </div>
             <div>
               <label className="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-1.5">Description</label>
-              <textarea
-                value={cForm.description}
-                onChange={e => setCForm(f => ({ ...f, description: e.target.value }))}
+              <textarea value={cForm.description} onChange={e => setCForm(f => ({ ...f, description: e.target.value }))}
                 placeholder="What will you share in this canal?"
-                rows={3}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B1F4D] resize-none"
-              />
+                rows={3} className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B1F4D] resize-none" />
             </div>
             <div>
               <label className="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-1.5">
                 WhatsApp Number <span className="text-gray-400 font-normal normal-case">(optional)</span>
               </label>
-              <input
-                type="tel"
-                value={cForm.whatsapp}
-                onChange={e => setCForm(f => ({ ...f, whatsapp: e.target.value }))}
+              <input type="tel" value={cForm.whatsapp} onChange={e => setCForm(f => ({ ...f, whatsapp: e.target.value }))}
                 placeholder="+34 600 000 000"
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B1F4D]"
-              />
-              <p className="text-[11px] text-gray-400 mt-1.5">Members can contact you directly through this number.</p>
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B1F4D]" />
             </div>
-
-            <button
-              type="submit"
-              disabled={creating || !cForm.name.trim()}
-              className="w-full py-3.5 bg-[#0B1F4D] hover:bg-[#162d6e] text-white rounded-xl font-bold text-sm transition-colors disabled:opacity-50 flex items-center justify-center gap-2 shadow-sm"
-            >
-              {creating
-                ? <Loader className="w-4 h-4 animate-spin" />
-                : <Radio className="w-4 h-4" />}
+            <button type="submit" disabled={creating || !cForm.name.trim()}
+              className="w-full py-3.5 bg-[#0B1F4D] hover:bg-[#162d6e] text-white rounded-xl font-bold text-sm transition-colors disabled:opacity-50 flex items-center justify-center gap-2 shadow-sm">
+              {creating ? <Loader className="w-4 h-4 animate-spin" /> : <Radio className="w-4 h-4" />}
               {creating ? 'Creating…' : 'Launch Canal'}
             </button>
           </form>
         </div>
       </div>
 
-      {/* Info cards */}
       <div className="grid grid-cols-3 gap-3 mt-5">
         {[
-          { icon: Radio,  title: 'Broadcast',  desc: 'Post updates to all members at once' },
-          { icon: Users,  title: 'Grow',        desc: 'Buyers follow from your brand page' },
-          { icon: Tag,    title: 'Sell More',   desc: 'Share exclusive offers & new products' },
+          { icon: Radio, title: 'Broadcast', desc: 'Post updates to all members at once' },
+          { icon: Users, title: 'Grow',      desc: 'Buyers follow from your brand page' },
+          { icon: Tag,   title: 'Sell More', desc: 'Share exclusive offers & new products' },
         ].map(({ icon: Icon, title, desc }) => (
           <div key={title} className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm text-center">
             <div className="w-9 h-9 rounded-xl bg-[#0B1F4D]/8 flex items-center justify-center mx-auto mb-2">
-              <Icon className="w-4.5 h-4.5 text-[#0B1F4D]" />
+              <Icon className="w-4 h-4 text-[#0B1F4D]" />
             </div>
             <p className="text-xs font-extrabold text-gray-800 mb-0.5">{title}</p>
             <p className="text-[11px] text-gray-400 leading-tight">{desc}</p>
@@ -247,12 +265,12 @@ export default function SupplierChannelPage() {
   )
 
   // ════════════════════════════════════════════════════════════════════════
-  // MANAGEMENT DASHBOARD — shown when channel exists
+  // MANAGEMENT DASHBOARD
   // ════════════════════════════════════════════════════════════════════════
   return (
     <div className="max-w-3xl mx-auto space-y-5">
 
-      {/* ── Channel header card ──────────────────────────────────────────── */}
+      {/* ── Channel header ───────────────────────────────────────────── */}
       <div className="rounded-2xl overflow-hidden shadow-lg"
         style={{ background: 'linear-gradient(135deg, #0B1F4D 0%, #1a3a7a 60%, #0d3060 100%)' }}>
         <div className="px-7 py-6">
@@ -264,7 +282,7 @@ export default function SupplierChannelPage() {
                 <span className={`text-[10px] font-extrabold px-2.5 py-1 rounded-full flex-shrink-0 ${
                   channel.is_active ? 'bg-green-400/20 text-green-300' : 'bg-red-400/20 text-red-300'
                 }`}>
-                  {channel.is_active ? '● Active' : '● Paused'}
+                  {channel.is_active ? '● Live' : '● Paused'}
                 </span>
               </div>
               {channel.description && (
@@ -277,7 +295,7 @@ export default function SupplierChannelPage() {
                   copied ? 'bg-green-500 text-white' : 'bg-white/10 hover:bg-white/20 text-white border border-white/20'
                 }`}>
                 {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                {copied ? 'Copied!' : 'Share'}
+                {copied ? 'Copied!' : 'Share Link'}
               </button>
               <Link href={`/channel/${channel.id}`} target="_blank"
                 className="flex items-center gap-1.5 text-xs font-bold px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/20 transition-colors">
@@ -286,11 +304,10 @@ export default function SupplierChannelPage() {
             </div>
           </div>
 
-          {/* Stats */}
           <div className="flex items-center gap-6">
             <div>
               <p className="text-2xl font-extrabold text-white">{channel.member_count.toLocaleString()}</p>
-              <p className="text-xs text-white/45 mt-0.5 flex items-center gap-1"><Users className="w-3 h-3" />Members</p>
+              <p className="text-xs text-white/45 mt-0.5 flex items-center gap-1"><Users className="w-3 h-3" />Subscribers</p>
             </div>
             <div className="w-px h-10 bg-white/15" />
             <div>
@@ -310,12 +327,14 @@ export default function SupplierChannelPage() {
         </div>
       </div>
 
-      {/* ── Post Composer ────────────────────────────────────────────────── */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-        <h2 className="text-sm font-extrabold text-[#0B1F4D] mb-4 flex items-center gap-2 uppercase tracking-wide">
-          <Plus className="w-4 h-4" />New Post
-        </h2>
-        <form onSubmit={handlePost} className="space-y-3">
+      {/* ── Post Composer ────────────────────────────────────────────── */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="px-6 py-4 border-b border-gray-50 flex items-center gap-2">
+          <Plus className="w-4 h-4 text-[#0B1F4D]" />
+          <h2 className="text-sm font-extrabold text-[#0B1F4D] uppercase tracking-wide">New Post</h2>
+        </div>
+
+        <form onSubmit={handlePost} className="p-6 space-y-4">
           {/* Type chips */}
           <div className="flex gap-2 flex-wrap">
             {(Object.entries(POST_TYPES) as [PostType, typeof POST_TYPES[PostType]][]).map(([value, cfg]) => (
@@ -330,48 +349,72 @@ export default function SupplierChannelPage() {
               </button>
             ))}
           </div>
+
+          {/* Textarea */}
           <textarea
             value={pForm.content}
             onChange={e => setPForm(f => ({ ...f, content: e.target.value }))}
-            placeholder="Write your update, offer, or announcement for your members…"
+            placeholder="Write your update, offer, or announcement for your subscribers…"
             rows={4}
             className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B1F4D] resize-none"
             required
           />
-          <input
-            type="url"
-            value={pForm.image_url}
-            onChange={e => setPForm(f => ({ ...f, image_url: e.target.value }))}
-            placeholder="Image URL (optional)"
-            className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B1F4D]"
-          />
+
+          {/* Image section */}
+          {imagePreview ? (
+            <div className="relative rounded-xl overflow-hidden border border-gray-200">
+              <img src={imagePreview} alt="Preview" className="w-full object-cover max-h-64" />
+              <button type="button" onClick={clearImage}
+                className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/60 hover:bg-black/80 text-white flex items-center justify-center transition-colors">
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          ) : (
+            <button type="button" onClick={() => imgRef.current?.click()}
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-dashed border-gray-200 text-gray-400 hover:border-[#0B1F4D]/40 hover:text-[#0B1F4D] transition-colors text-sm font-semibold">
+              <ImagePlus className="w-4 h-4" />
+              Attach Image
+            </button>
+          )}
+          <input ref={imgRef} type="file" accept="image/*" onChange={handleImageSelect} className="hidden" />
+
+          {error && (
+            <p className="text-sm text-red-600 bg-red-50 rounded-xl px-4 py-3 border border-red-100">{error}</p>
+          )}
+
           <div className="flex items-center justify-between pt-1">
-            <p className="text-xs text-gray-400">{channel.member_count > 0 ? `Visible to ${channel.member_count} member${channel.member_count !== 1 ? 's' : ''}` : 'Visible to all members once they join'}</p>
+            <p className="text-xs text-gray-400">
+              {channel.member_count > 0
+                ? `Broadcast to ${channel.member_count} subscriber${channel.member_count !== 1 ? 's' : ''}`
+                : 'Visible to all subscribers once they join'}
+            </p>
             <button type="submit" disabled={posting || !pForm.content.trim()}
               className="flex items-center gap-2 px-5 py-2.5 bg-[#0B1F4D] hover:bg-[#162d6e] text-white rounded-xl text-sm font-bold transition-colors disabled:opacity-50 shadow-sm">
-              {posting ? <Loader className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-              {posting ? 'Posting…' : 'Post to Canal'}
+              {posting
+                ? <><Loader className="w-4 h-4 animate-spin" />{uploadingImg ? 'Uploading…' : 'Posting…'}</>
+                : <><Send className="w-4 h-4" />Post to Canal</>}
             </button>
           </div>
         </form>
       </div>
 
-      {/* ── Posts feed ───────────────────────────────────────────────────── */}
+      {/* ── Posts feed ───────────────────────────────────────────────── */}
       {posts.length > 0 ? (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-          <h2 className="text-sm font-extrabold text-[#0B1F4D] mb-4 flex items-center gap-2 uppercase tracking-wide">
-            <FileText className="w-4 h-4" />Recent Posts
-          </h2>
-          <div className="space-y-3">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-50 flex items-center gap-2">
+            <FileText className="w-4 h-4 text-[#0B1F4D]" />
+            <h2 className="text-sm font-extrabold text-[#0B1F4D] uppercase tracking-wide">Recent Posts</h2>
+          </div>
+          <div className="divide-y divide-gray-50">
             {posts.map(post => {
               const cfg = POST_TYPES[post.post_type as PostType] ?? POST_TYPES.update
               return (
-                <div key={post.id} className="flex gap-3 p-4 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors group">
+                <div key={post.id} className="flex gap-3 p-5 hover:bg-gray-50/60 transition-colors group">
                   <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${cfg.bg}`}>
                     <cfg.Icon className={`w-4 h-4 ${cfg.text}`} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                    <div className="flex items-center gap-2 mb-1.5 flex-wrap">
                       <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wide ${cfg.badge}`}>
                         {cfg.label}
                       </span>
@@ -379,11 +422,10 @@ export default function SupplierChannelPage() {
                     </div>
                     <p className="text-sm text-gray-700 leading-relaxed">{post.content}</p>
                     {post.image_url && (
-                      <img src={post.image_url} alt="" className="mt-2 rounded-lg max-h-36 object-cover" />
+                      <img src={post.image_url} alt="" className="mt-2.5 rounded-xl max-h-48 object-cover border border-gray-100" />
                     )}
                   </div>
-                  <button onClick={() => handleDeletePost(post.id)}
-                    title="Delete post"
+                  <button onClick={() => handleDeletePost(post.id)} title="Delete"
                     className="opacity-0 group-hover:opacity-100 flex-shrink-0 w-7 h-7 rounded-lg text-red-400 hover:bg-red-50 hover:text-red-500 flex items-center justify-center transition-all">
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
@@ -401,7 +443,7 @@ export default function SupplierChannelPage() {
         </div>
       )}
 
-      {/* ── Channel Settings ─────────────────────────────────────────────── */}
+      {/* ── Canal Settings ───────────────────────────────────────────── */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         <button onClick={() => setSettings(!settings)}
           className="w-full flex items-center justify-between px-6 py-4 hover:bg-gray-50 transition-colors">
@@ -441,7 +483,7 @@ export default function SupplierChannelPage() {
         )}
       </div>
 
-      {/* ── Danger zone ──────────────────────────────────────────────────── */}
+      {/* ── Danger zone ──────────────────────────────────────────────── */}
       <div className="bg-white rounded-2xl border border-red-100 shadow-sm p-6">
         <h3 className="text-sm font-extrabold text-red-600 mb-4 uppercase tracking-wide">Danger Zone</h3>
         <div className="flex items-center justify-between gap-4">

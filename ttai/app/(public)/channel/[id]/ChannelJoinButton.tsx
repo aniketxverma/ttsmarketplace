@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Radio, LogIn, Check, Loader, UserMinus } from 'lucide-react'
+import { Bell, BellOff, Loader, LogIn } from 'lucide-react'
 
 function WaIcon({ className }: { className?: string }) {
   return (
@@ -23,7 +23,7 @@ export function ChannelJoinButton({ channelId, whatsapp }: Props) {
   const [isMember, setIsMember] = useState(false)
   const [loading,  setLoading]  = useState(true)
   const [busy,     setBusy]     = useState(false)
-  const router = useRouter()
+  const router  = useRouter()
   const supabase = createClient()
 
   useEffect(() => {
@@ -58,48 +58,61 @@ export function ChannelJoinButton({ channelId, whatsapp }: Props) {
   }
 
   const waHref = whatsapp
-    ? `https://wa.me/${whatsapp.replace(/\D/g, '')}?text=Hi! I joined your TTAI canal.`
+    ? `https://wa.me/${whatsapp.replace(/\D/g, '')}?text=Hi! I subscribed to your TTAI canal.`
     : null
 
   if (loading) return (
-    <div className="flex items-center gap-2 text-white/50 text-sm">
-      <Loader className="w-4 h-4 animate-spin" />Loading…
+    <div className="flex justify-center py-2">
+      <div className="w-5 h-5 border-2 border-[#0B1F4D]/30 border-t-[#0B1F4D] rounded-full animate-spin" />
     </div>
   )
 
   return (
-    <div className="flex items-center gap-3 flex-wrap">
-      <button onClick={handleAction} disabled={busy}
-        className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm transition-all shadow-lg disabled:opacity-60 ${
-          isMember
-            ? 'bg-green-500 hover:bg-red-500 text-white group'
-            : user
-              ? 'bg-[#F5A623] hover:bg-amber-400 text-[#0B1F4D]'
-              : 'bg-white hover:bg-gray-100 text-[#0B1F4D]'
-        }`}>
-        {busy
-          ? <Loader className="w-4 h-4 animate-spin" />
-          : isMember
-            ? <><Check className="w-4 h-4 group-hover:hidden" /><UserMinus className="w-4 h-4 hidden group-hover:block" /></>
-            : user
-              ? <Radio className="w-4 h-4" />
-              : <LogIn className="w-4 h-4" />
-        }
-        {busy
-          ? 'Please wait…'
-          : isMember
-            ? <><span className="group-hover:hidden">Joined</span><span className="hidden group-hover:inline">Leave Canal</span></>
-            : user
-              ? 'Join Canal'
-              : 'Login to Join'
-        }
-      </button>
+    <div className="flex flex-col items-center gap-3">
+      <div className="flex items-center gap-3 flex-wrap justify-center">
+        {/* Main subscribe / unsubscribe button */}
+        <button onClick={handleAction} disabled={busy}
+          className={`flex items-center gap-2 px-7 py-2.5 rounded-xl font-bold text-sm transition-all shadow-sm disabled:opacity-60 ${
+            isMember
+              ? 'bg-gray-100 text-gray-600 hover:bg-red-50 hover:text-red-600 border border-gray-200 hover:border-red-200'
+              : user
+                ? 'bg-[#0B1F4D] text-white hover:bg-[#162d6e]'
+                : 'bg-[#0B1F4D] text-white hover:bg-[#162d6e]'
+          }`}>
+          {busy ? (
+            <Loader className="w-4 h-4 animate-spin" />
+          ) : isMember ? (
+            <BellOff className="w-4 h-4" />
+          ) : user ? (
+            <Bell className="w-4 h-4" />
+          ) : (
+            <LogIn className="w-4 h-4" />
+          )}
+          {busy
+            ? 'Please wait…'
+            : isMember
+              ? 'Subscribed · Unsubscribe'
+              : user
+                ? 'Subscribe'
+                : 'Login to Subscribe'}
+        </button>
 
-      {waHref && (
-        <a href={waHref} target="_blank" rel="noopener noreferrer"
-          className="flex items-center gap-2 px-5 py-3 rounded-xl font-bold text-sm bg-green-500 hover:bg-green-400 text-white transition-colors shadow-lg">
-          <WaIcon className="w-4 h-4" />WhatsApp
-        </a>
+        {/* WhatsApp contact — shown only when subscribed */}
+        {isMember && waHref && (
+          <a href={waHref} target="_blank" rel="noopener noreferrer"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm bg-[#25D366] hover:bg-[#1ebe5d] text-white transition-colors shadow-sm">
+            <WaIcon className="w-4 h-4" />
+            WhatsApp
+          </a>
+        )}
+      </div>
+
+      {/* Subscribed confirmation */}
+      {isMember && (
+        <p className="text-xs text-green-600 font-semibold flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block" />
+          You are subscribed to this canal
+        </p>
       )}
     </div>
   )
