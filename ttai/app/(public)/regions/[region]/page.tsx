@@ -107,23 +107,44 @@ export default function RegionPage({ params }: { params: { region: string } }) {
         </div>
       </div>
 
-      {/* ── Other regions ───────────────────────────────────────────── */}
+      {/* ── Other regions — all locked except Europe ─────────────────── */}
       <div className="border-t bg-gray-50 py-12">
         <div className="container mx-auto px-4 sm:px-8">
           <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-6">Explore Other Regions</h3>
           <div className="flex flex-wrap gap-3">
-            {REGIONS.filter((r) => r.id !== region.id).map((r) => (
-              <Link
-                key={r.id}
-                href={`/regions/${r.id}`}
-                className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 hover:border-[#0B1F4D] hover:text-[#0B1F4D] transition-colors"
-              >
-                {r.name}
-                <svg className="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
-                </svg>
-              </Link>
-            ))}
+            {REGIONS.filter((r) => r.id !== region.id).map((r) => {
+              const isLive = r.id === 'europe'
+
+              if (isLive) {
+                return (
+                  <Link
+                    key={r.id}
+                    href={`/regions/${r.id}`}
+                    className="inline-flex items-center gap-2 rounded-xl border-2 border-[#F5A623] bg-amber-50 px-4 py-2.5 text-sm font-bold text-[#0B1F4D] hover:bg-amber-100 transition-colors relative"
+                  >
+                    <span className="flex h-2 w-2">
+                      <span className="animate-ping absolute h-2 w-2 rounded-full bg-[#F5A623] opacity-75" />
+                      <span className="relative h-2 w-2 rounded-full bg-[#F5A623]" />
+                    </span>
+                    {r.name}
+                    <span className="text-[10px] font-extrabold bg-[#F5A623] text-[#0B1F4D] px-1.5 py-0.5 rounded-full">LIVE</span>
+                  </Link>
+                )
+              }
+
+              return (
+                <span
+                  key={r.id}
+                  className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-gray-100 px-4 py-2.5 text-sm font-semibold text-gray-400 cursor-not-allowed select-none"
+                >
+                  <svg className="w-3.5 h-3.5 text-gray-300" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                  </svg>
+                  {r.name}
+                  <span className="text-[10px] font-bold text-gray-400">Soon</span>
+                </span>
+              )
+            })}
           </div>
         </div>
       </div>
