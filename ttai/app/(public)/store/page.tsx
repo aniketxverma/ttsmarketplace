@@ -37,7 +37,9 @@ export default async function StorePage({
   })
   const categoryTree = roots.map((r) => ({ ...r, children: childMap[r.id] ?? [] }))
 
-  // Products — retail context (retail OR both)
+  // Products. When scoped to a single supplier (their own online shop), show ALL their
+  // published products — the "online shop" sells the same catalogue by piece, so we don't
+  // restrict by marketplace_context. Global browse keeps the retail/both filter.
   let productQuery = supabase
     .from('products')
     .select(
@@ -47,8 +49,16 @@ export default async function StorePage({
       { count: 'exact' }
     )
     .eq('is_published', true)
-    .eq('suppliers.status', 'ACTIVE')
-    .in('marketplace_context', ['retail', 'both'])
+
+  if (searchParams.supplier) {
+    productQuery = productQuery
+      .eq('supplier_id', searchParams.supplier)
+      .neq('suppliers.status', 'SUSPENDED')
+  } else {
+    productQuery = productQuery
+      .eq('suppliers.status', 'ACTIVE')
+      .in('marketplace_context', ['retail', 'both'])
+  }
 
   if (searchParams.category) {
     const cat = allCats.find((c) => c.slug === searchParams.category)
@@ -57,10 +67,6 @@ export default async function StorePage({
 
   if (searchParams.q) {
     productQuery = productQuery.ilike('name', `%${searchParams.q}%`)
-  }
-
-  if (searchParams.supplier) {
-    productQuery = productQuery.eq('supplier_id', searchParams.supplier)
   }
 
   const from = (page - 1) * PAGE_SIZE

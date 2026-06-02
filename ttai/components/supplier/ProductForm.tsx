@@ -180,12 +180,13 @@ export function ProductForm({ supplierId, mode, productId, initialData }: Produc
             </select>
           </div>
           <div className="space-y-1.5">
-            <label className={labelCls}>Marketplace</label>
+            <label className={labelCls}>Sell in which shop?</label>
             <select className={inputCls} value={form.marketplaceContext} onChange={(e) => update('marketplaceContext', e.target.value as FormState['marketplaceContext'])}>
-              <option value="wholesale">Wholesale (B2B)</option>
-              <option value="retail">Retail (B2C)</option>
-              <option value="both">Both</option>
+              <option value="wholesale">Shop B2B only — wholesale (box / pallet / truck)</option>
+              <option value="retail">Online Shop only — retail (by piece)</option>
+              <option value="both">Both shops — B2B &amp; Online</option>
             </select>
+            <p className="text-[11px] text-gray-400">Controls where this product appears: your B2B (wholesale) shop, your Online (retail) shop, or both.</p>
           </div>
           {needsCity && (
             <div className="space-y-1.5">

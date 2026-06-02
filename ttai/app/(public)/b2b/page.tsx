@@ -70,7 +70,8 @@ export default async function B2BPage({
     productCounts[row.supplier_id] = (productCounts[row.supplier_id] ?? 0) + 1
   }
 
-  // Wholesale products using existing ProductCard
+  // Wholesale products. When scoped to one supplier (their own B2B shop), show ALL their
+  // published products; global browse keeps the wholesale/both filter.
   let productQuery = supabase
     .from('products')
     .select(
@@ -80,8 +81,16 @@ export default async function B2BPage({
       { count: 'exact' }
     )
     .eq('is_published', true)
-    .eq('suppliers.status', 'ACTIVE')
-    .in('marketplace_context', ['wholesale', 'both'])
+
+  if (searchParams.supplier) {
+    productQuery = productQuery
+      .eq('supplier_id', searchParams.supplier)
+      .neq('suppliers.status', 'SUSPENDED')
+  } else {
+    productQuery = productQuery
+      .eq('suppliers.status', 'ACTIVE')
+      .in('marketplace_context', ['wholesale', 'both'])
+  }
 
   if (searchParams.category) {
     const cat = allCats.find((c: any) => c.slug === searchParams.category)
@@ -89,9 +98,6 @@ export default async function B2BPage({
   }
   if (searchParams.q) {
     productQuery = productQuery.ilike('name', `%${searchParams.q}%`)
-  }
-  if (searchParams.supplier) {
-    productQuery = productQuery.eq('supplier_id', searchParams.supplier)
   }
 
   const from = (page - 1) * PAGE_SIZE
