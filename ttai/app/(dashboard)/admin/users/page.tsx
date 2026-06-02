@@ -242,15 +242,6 @@ export default async function AdminUsersPage({
                 </div>
               )}
 
-              {/* ── Pending bar ── */}
-              {isPending && (
-                <div className="bg-amber-50 border-t border-amber-100 px-5 py-2.5 flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse flex-shrink-0" />
-                  <span className="text-xs text-amber-700 font-medium">
-                    Awaiting review — approve to grant access and publish profile
-                  </span>
-                </div>
-              )}
             </div>
           )
         })}
