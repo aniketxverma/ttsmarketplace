@@ -6,6 +6,12 @@ import {
   Crown, ShieldCheck, Award, Store, Package, Users, CheckCircle2,
   Zap, BarChart3, Handshake,
 } from 'lucide-react'
+import { ProductCard } from '@/components/marketplace/ProductCard'
+import { ProductGrid } from '@/components/marketplace/ProductGrid'
+import { SearchBar } from '@/components/marketplace/SearchBar'
+import { CategoryNav } from '@/components/marketplace/CategoryNav'
+import { Pagination } from '@/components/marketplace/Pagination'
+import type { Category } from '@/types/domain'
 
 export const revalidate = 60
 
@@ -16,20 +22,42 @@ const TIER: Record<string, { label: string; Icon: typeof Crown; bg: string; text
   UNVERIFIED: { label: 'Supplier',          Icon: Store,       bg: 'bg-gray-50',    text: 'text-gray-500'  },
 }
 
-export default async function B2BPage() {
+export default async function B2BPage({
+  searchParams,
+}: {
+  searchParams: { category?: string; q?: string; page?: string }
+}) {
   const supabase = createClient()
+  const page = parseInt(searchParams.page ?? '1')
+  const PAGE_SIZE = 24
 
-  const { data: suppliersRaw } = await (supabase as any)
-    .from('suppliers')
-    .select('id, trade_name, legal_name, brand_slug, logo_url, tagline, reliability_tier, years_experience, countries_served')
-    .not('brand_slug', 'is', null)
-    .eq('status', 'active')
-    .order('reliability_tier', { ascending: true })
-    .limit(24)
+  // Fetch suppliers + categories in parallel
+  const [suppliersRes, categoriesRes] = await Promise.all([
+    (supabase as any)
+      .from('suppliers')
+      .select('id, trade_name, legal_name, brand_slug, logo_url, tagline, reliability_tier, years_experience, countries_served')
+      .not('brand_slug', 'is', null)
+      .eq('status', 'active')
+      .order('reliability_tier', { ascending: true })
+      .limit(12),
+    supabase.from('categories').select('*').order('sort_order'),
+  ])
 
-  const suppliers = suppliersRaw ?? []
+  const suppliers = suppliersRes.data ?? []
+  const allCats   = categoriesRes.data ?? []
 
-  // Get product counts per supplier
+  // Category tree for sidebar
+  const roots = allCats.filter((c: any) => c.parent_id === null) as Category[]
+  const childMap: Record<string, Category[]> = {}
+  allCats.forEach((c: any) => {
+    if (c.parent_id) {
+      if (!childMap[c.parent_id]) childMap[c.parent_id] = []
+      childMap[c.parent_id].push(c as Category)
+    }
+  })
+  const categoryTree = roots.map((r) => ({ ...r, children: childMap[r.id] ?? [] }))
+
+  // Product counts per supplier
   const supplierIds = suppliers.map((s: any) => s.id)
   const { data: countRows } = await supabase
     .from('products')
@@ -41,6 +69,34 @@ export default async function B2BPage() {
   for (const row of (countRows ?? [])) {
     productCounts[row.supplier_id] = (productCounts[row.supplier_id] ?? 0) + 1
   }
+
+  // Wholesale products using existing ProductCard
+  let productQuery = supabase
+    .from('products')
+    .select(
+      `id, name, slug, price_cents, currency_code, min_order_qty, marketplace_context, vat_rate,
+      suppliers!inner(legal_name, trade_name, reliability_tier, status),
+      product_images(url, sort_order)`,
+      { count: 'exact' }
+    )
+    .eq('is_published', true)
+    .eq('suppliers.status', 'ACTIVE')
+    .in('marketplace_context', ['wholesale', 'both'])
+
+  if (searchParams.category) {
+    const cat = allCats.find((c: any) => c.slug === searchParams.category)
+    if (cat) productQuery = productQuery.eq('category_id', (cat as any).id)
+  }
+  if (searchParams.q) {
+    productQuery = productQuery.ilike('name', `%${searchParams.q}%`)
+  }
+
+  const from = (page - 1) * PAGE_SIZE
+  const { data: products, count } = await productQuery
+    .order('created_at', { ascending: false })
+    .range(from, from + PAGE_SIZE - 1)
+
+  const totalPages = Math.ceil((count ?? 0) / PAGE_SIZE)
 
   return (
     <div className="min-h-screen bg-white">
@@ -212,6 +268,68 @@ export default async function B2BPage() {
             })}
           </div>
         )}
+      </div>
+
+      {/* ── Wholesale product catalogue ─────────────────────────────────── */}
+      <div className="bg-[#F4F6FB] py-14">
+        <div className="max-w-6xl mx-auto px-4 sm:px-8">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-2xl font-extrabold text-[#0B1F4D]">Wholesale Product Catalogue</h2>
+              <p className="text-gray-400 text-sm mt-1">{count ?? 0} products available for bulk ordering</p>
+            </div>
+            <Link href="/marketplace" className="text-sm font-bold text-[#0B1F4D] hover:underline flex items-center gap-1">
+              Full marketplace <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+
+          {/* Search */}
+          <div className="mb-6">
+            <SearchBar defaultValue={searchParams.q} />
+          </div>
+
+          <div className="flex gap-8">
+            {/* Category sidebar */}
+            <aside className="hidden md:block w-48 flex-shrink-0">
+              <CategoryNav categories={categoryTree} />
+            </aside>
+
+            {/* Grid */}
+            <div className="flex-1 min-w-0">
+              {(products?.length ?? 0) > 0 ? (
+                <>
+                  <ProductGrid>
+                    {products!.map((p) => {
+                      const supplier = p.suppliers as unknown as {
+                        legal_name: string; trade_name: string | null; reliability_tier: import('@/types/domain').ReliabilityTier
+                      }
+                      const images = p.product_images as { url: string; sort_order: number }[]
+                      const mainImg = images?.sort((a, b) => a.sort_order - b.sort_order)[0]?.url
+                      return (
+                        <ProductCard
+                          key={p.id}
+                          product={p as Parameters<typeof ProductCard>[0]['product']}
+                          supplier={supplier}
+                          mainImageUrl={mainImg}
+                          href={`/product/${p.slug ?? p.id}`}
+                        />
+                      )
+                    })}
+                  </ProductGrid>
+                  <Pagination page={page} totalPages={totalPages} />
+                </>
+              ) : (
+                <div className="text-center py-16 bg-white rounded-2xl border border-gray-100">
+                  <Package className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                  <p className="text-gray-500 font-semibold">No wholesale products found.</p>
+                  {(searchParams.q || searchParams.category) && (
+                    <Link href="/b2b" className="mt-3 inline-block text-sm font-bold text-[#0B1F4D] hover:underline">Clear filters</Link>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* ── CTA ────────────────────────────────────────────────────────── */}
