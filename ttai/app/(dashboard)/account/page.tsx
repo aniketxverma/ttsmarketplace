@@ -2,6 +2,10 @@ import { createClient } from '@/lib/supabase/server'
 import { requireAuth } from '@/lib/auth/rbac'
 import Link from 'next/link'
 import { AvatarUploader } from './AvatarUploader'
+import {
+  Package, ShoppingCart, MessageSquare, Megaphone,
+  Tag, FileText, MapPin, Globe, Building2, Star, DollarSign,
+} from 'lucide-react'
 
 const ROLE_LABEL: Record<string, string> = {
   buyer:           'Buyer',
@@ -21,34 +25,34 @@ const ROLE_COLOR: Record<string, string> = {
 
 const WA_CHANNEL_URL = 'https://whatsapp.com/channel/0029Vb8OcEWAO7RL5qViD80e'
 
-type QuickLink = { label: string; href: string; icon: string; desc: string }
+type QuickLink = { label: string; href: string; icon: React.ReactNode; desc: string }
 
 const ROLE_QUICK_LINKS: Record<string, QuickLink[]> = {
   buyer: [
-    { label: 'My Orders',    href: '/buyer/orders',    icon: '📦', desc: 'Track your purchases' },
-    { label: 'Marketplace',  href: '/marketplace',     icon: '🛒', desc: 'Browse products' },
-    { label: 'Messages',     href: '/buyer/messages',  icon: '💬', desc: 'Supplier chats' },
-    { label: 'Channels',     href: '/buyer/channels',  icon: '📢', desc: 'Trade channels' },
+    { label: 'My Orders',   href: '/buyer/orders',   icon: <Package className="w-5 h-5" />,      desc: 'Track your purchases' },
+    { label: 'Marketplace', href: '/marketplace',    icon: <ShoppingCart className="w-5 h-5" />, desc: 'Browse products' },
+    { label: 'Messages',    href: '/buyer/messages', icon: <MessageSquare className="w-5 h-5" />,desc: 'Supplier chats' },
+    { label: 'Channels',    href: '/buyer/channels', icon: <Megaphone className="w-5 h-5" />,   desc: 'Trade channels' },
   ],
   business_client: [
-    { label: 'My Orders',    href: '/buyer/orders',    icon: '📦', desc: 'Track your purchases' },
-    { label: 'Marketplace',  href: '/marketplace',     icon: '🛒', desc: 'Browse products' },
-    { label: 'Messages',     href: '/buyer/messages',  icon: '💬', desc: 'Supplier chats' },
-    { label: 'Channels',     href: '/buyer/channels',  icon: '📢', desc: 'Trade channels' },
+    { label: 'My Orders',   href: '/buyer/orders',   icon: <Package className="w-5 h-5" />,      desc: 'Track your purchases' },
+    { label: 'Marketplace', href: '/marketplace',    icon: <ShoppingCart className="w-5 h-5" />, desc: 'Browse products' },
+    { label: 'Messages',    href: '/buyer/messages', icon: <MessageSquare className="w-5 h-5" />,desc: 'Supplier chats' },
+    { label: 'Channels',    href: '/buyer/channels', icon: <Megaphone className="w-5 h-5" />,   desc: 'Trade channels' },
   ],
   supplier: [
-    { label: 'My Products',  href: '/supplier/products', icon: '📦', desc: 'Manage listings' },
-    { label: 'Brand Profile',href: '/supplier/brand',    icon: '🏷️', desc: 'Edit your brand page' },
-    { label: 'Orders',       href: '/supplier/orders',   icon: '🧾', desc: 'Incoming orders' },
-    { label: 'Points of Sale',href: '/supplier/pos',     icon: '📍', desc: 'Your POS locations' },
-    { label: 'Regions',      href: '/supplier/regions',  icon: '🌍', desc: 'Active regions' },
-    { label: 'Messages',     href: '/supplier/messages', icon: '💬', desc: 'Buyer messages' },
+    { label: 'My Products',   href: '/supplier/products', icon: <Package className="w-5 h-5" />,      desc: 'Manage listings' },
+    { label: 'Brand Profile', href: '/supplier/brand',    icon: <Tag className="w-5 h-5" />,           desc: 'Edit your brand page' },
+    { label: 'Orders',        href: '/supplier/orders',   icon: <FileText className="w-5 h-5" />,      desc: 'Incoming orders' },
+    { label: 'Points of Sale',href: '/supplier/pos',      icon: <MapPin className="w-5 h-5" />,        desc: 'Your POS locations' },
+    { label: 'Regions',       href: '/supplier/regions',  icon: <Globe className="w-5 h-5" />,         desc: 'Active regions' },
+    { label: 'Messages',      href: '/supplier/messages', icon: <MessageSquare className="w-5 h-5" />, desc: 'Buyer messages' },
   ],
   broker: [
-    { label: 'My Suppliers', href: '/broker/suppliers',   icon: '🏭', desc: 'Assigned suppliers' },
-    { label: 'Promotions',   href: '/broker/promotions',  icon: '⭐', desc: 'Active deals' },
-    { label: 'Invoices',     href: '/broker/invoices',    icon: '🧾', desc: 'Commission invoices' },
-    { label: 'Payouts',      href: '/broker/payouts',     icon: '💰', desc: 'Earnings & payouts' },
+    { label: 'My Suppliers', href: '/broker/suppliers',  icon: <Building2 className="w-5 h-5" />,    desc: 'Assigned suppliers' },
+    { label: 'Promotions',   href: '/broker/promotions', icon: <Star className="w-5 h-5" />,          desc: 'Active deals' },
+    { label: 'Invoices',     href: '/broker/invoices',   icon: <FileText className="w-5 h-5" />,      desc: 'Commission invoices' },
+    { label: 'Payouts',      href: '/broker/payouts',    icon: <DollarSign className="w-5 h-5" />,    desc: 'Earnings & payouts' },
   ],
 }
 
@@ -184,7 +188,9 @@ export default async function AccountProfilePage() {
                 className="group flex flex-col items-center text-center rounded-xl border border-gray-100
                   hover:border-[#0B1F4D] hover:bg-[#0B1F4D]/5 p-4 transition-all duration-200"
               >
-                <span className="text-2xl mb-2 group-hover:scale-110 transition-transform">{item.icon}</span>
+                <span className="mb-2 text-gray-500 group-hover:text-[#0B1F4D] group-hover:scale-110 transition-all">
+                  {item.icon}
+                </span>
                 <span className="text-xs font-extrabold text-gray-800 group-hover:text-[#0B1F4D]">{item.label}</span>
                 <span className="text-[10px] text-gray-400 mt-0.5">{item.desc}</span>
               </Link>
@@ -198,7 +204,6 @@ export default async function AccountProfilePage() {
 
         {/* ── WhatsApp Canal (all roles) ── */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-          {/* WA-style green header */}
           <div className="bg-[#128C7E] px-5 py-4 flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
               <svg className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="currentColor">
@@ -214,12 +219,11 @@ export default async function AccountProfilePage() {
             </span>
           </div>
 
-          {/* Channel preview — mimics recent posts */}
           <div className="px-5 py-4 space-y-3 bg-[#ECE5DD] min-h-[120px]">
             {[
-              { time: '10:30', text: '🌍 New trade opportunities in the Mediterranean region — join now!' },
-              { time: '09:15', text: '📦 Featured suppliers this week: Electronics, Food & Agri, Logistics' },
-              { time: 'Yesterday', text: '✅ Platform update: profile approval system now live' },
+              { time: '10:30',     text: 'New trade opportunities in the Mediterranean region — join now!' },
+              { time: '09:15',     text: 'Featured suppliers this week: Electronics, Food & Agri, Logistics' },
+              { time: 'Yesterday', text: 'Platform update: profile approval system now live' },
             ].map((msg) => (
               <div key={msg.time} className="bg-white rounded-xl px-3 py-2 shadow-sm max-w-[90%]">
                 <p className="text-xs text-gray-700 leading-snug">{msg.text}</p>
@@ -228,7 +232,6 @@ export default async function AccountProfilePage() {
             ))}
           </div>
 
-          {/* Join CTA */}
           <div className="px-5 py-4 border-t border-gray-100 bg-white">
             <p className="text-xs text-gray-500 mb-3">
               Join our official WhatsApp channel for trade updates, new suppliers, and platform news.
@@ -250,7 +253,6 @@ export default async function AccountProfilePage() {
 
         {/* ── Second card — role-specific ── */}
         {(profile?.role === 'supplier') ? (
-          /* Supplier tools card */
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
             <div className="bg-gradient-to-r from-orange-500 to-amber-600 px-5 py-4 flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-white/15 flex items-center justify-center flex-shrink-0">
@@ -264,18 +266,18 @@ export default async function AccountProfilePage() {
               </div>
             </div>
             <div className="flex-1 px-5 py-4 space-y-2">
-              {[
-                { href: '/supplier/products', label: 'My Products',   icon: '📦', desc: 'Add & manage listings' },
-                { href: '/supplier/brand',    label: 'Brand Profile', icon: '🏷️', desc: 'Edit your public page' },
-                { href: '/supplier/orders',   label: 'Orders',        icon: '🧾', desc: 'Incoming orders' },
-                { href: '/supplier/pos',      label: 'Points of Sale',icon: '📍', desc: 'Manage POS locations' },
-                { href: '/supplier/regions',  label: 'Regions',       icon: '🌍', desc: 'Active distribution zones' },
-              ].map(item => (
+              {([
+                { href: '/supplier/products', label: 'My Products',    icon: <Package className="w-4 h-4" />,     desc: 'Add & manage listings',      color: 'group-hover:text-orange-700', bg: 'group-hover:bg-orange-50' },
+                { href: '/supplier/brand',    label: 'Brand Profile',  icon: <Tag className="w-4 h-4" />,          desc: 'Edit your public page',      color: 'group-hover:text-orange-700', bg: 'group-hover:bg-orange-50' },
+                { href: '/supplier/orders',   label: 'Orders',         icon: <FileText className="w-4 h-4" />,     desc: 'Incoming orders',            color: 'group-hover:text-orange-700', bg: 'group-hover:bg-orange-50' },
+                { href: '/supplier/pos',      label: 'Points of Sale', icon: <MapPin className="w-4 h-4" />,       desc: 'Manage POS locations',       color: 'group-hover:text-orange-700', bg: 'group-hover:bg-orange-50' },
+                { href: '/supplier/regions',  label: 'Regions',        icon: <Globe className="w-4 h-4" />,        desc: 'Active distribution zones',  color: 'group-hover:text-orange-700', bg: 'group-hover:bg-orange-50' },
+              ] as const).map(item => (
                 <Link key={item.href} href={item.href}
-                  className="flex items-center gap-3 rounded-xl hover:bg-orange-50 px-3 py-2.5 transition-colors group">
-                  <span className="text-lg">{item.icon}</span>
+                  className={`flex items-center gap-3 rounded-xl ${item.bg} px-3 py-2.5 transition-colors group`}>
+                  <span className={`text-gray-400 ${item.color} flex-shrink-0`}>{item.icon}</span>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-bold text-gray-800 group-hover:text-orange-700">{item.label}</p>
+                    <p className={`text-xs font-bold text-gray-800 ${item.color}`}>{item.label}</p>
                     <p className="text-[10px] text-gray-400">{item.desc}</p>
                   </div>
                   <svg className="w-3.5 h-3.5 text-gray-300 group-hover:text-orange-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -286,7 +288,6 @@ export default async function AccountProfilePage() {
             </div>
           </div>
         ) : (profile?.role === 'broker') ? (
-          /* Broker network card */
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
             <div className="bg-gradient-to-r from-purple-600 to-violet-700 px-5 py-4 flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-white/15 flex items-center justify-center flex-shrink-0">
@@ -300,15 +301,15 @@ export default async function AccountProfilePage() {
               </div>
             </div>
             <div className="flex-1 px-5 py-4 space-y-2">
-              {[
-                { href: '/broker/suppliers',  label: 'My Suppliers',  icon: '🏭', desc: 'Assigned suppliers' },
-                { href: '/broker/promotions', label: 'Promotions',    icon: '⭐', desc: 'Active deals' },
-                { href: '/broker/invoices',   label: 'Invoices',      icon: '🧾', desc: 'Commission invoices' },
-                { href: '/broker/payouts',    label: 'Payouts',       icon: '💰', desc: 'Earnings & payouts' },
-              ].map(item => (
+              {([
+                { href: '/broker/suppliers',  label: 'My Suppliers', icon: <Building2 className="w-4 h-4" />,    desc: 'Assigned suppliers' },
+                { href: '/broker/promotions', label: 'Promotions',   icon: <Star className="w-4 h-4" />,          desc: 'Active deals' },
+                { href: '/broker/invoices',   label: 'Invoices',     icon: <FileText className="w-4 h-4" />,      desc: 'Commission invoices' },
+                { href: '/broker/payouts',    label: 'Payouts',      icon: <DollarSign className="w-4 h-4" />,    desc: 'Earnings & payouts' },
+              ] as const).map(item => (
                 <Link key={item.href} href={item.href}
                   className="flex items-center gap-3 rounded-xl hover:bg-purple-50 px-3 py-2.5 transition-colors group">
-                  <span className="text-lg">{item.icon}</span>
+                  <span className="text-gray-400 group-hover:text-purple-600 flex-shrink-0">{item.icon}</span>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-bold text-gray-800 group-hover:text-purple-700">{item.label}</p>
                     <p className="text-[10px] text-gray-400">{item.desc}</p>
@@ -321,7 +322,6 @@ export default async function AccountProfilePage() {
             </div>
           </div>
         ) : (
-          /* Buyer / Business Client — Marketplace card */
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
             <div className="bg-gradient-to-r from-[#0B1F4D] to-[#1a3580] px-5 py-4 flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-white/15 flex items-center justify-center flex-shrink-0">
@@ -375,7 +375,6 @@ export default async function AccountProfilePage() {
           description={profile?.role === 'supplier' ? 'Open a dedicated B2B storefront and accept bulk orders directly from verified buyers.' : 'Access exclusive B2B pricing and bulk-order options from verified suppliers.'}
           color="from-blue-600 to-blue-800"
         />
-
         <ComingSoonTile
           icon={<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>}
           title="Online Shop"
@@ -383,8 +382,6 @@ export default async function AccountProfilePage() {
           description={profile?.role === 'supplier' ? 'Launch a public online store to sell directly to end consumers — by piece or subscription.' : 'Shop individual products from global suppliers delivered to your door.'}
           color="from-purple-600 to-purple-800"
         />
-
-        {/* Projects with TTAI */}
         <ComingSoonTile
           icon={
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
