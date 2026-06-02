@@ -337,28 +337,79 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
                   <p className="text-sm text-blue-200 ml-10">{t('home.find_subtitle')}</p>
                 </div>
 
+                {/* Guide label */}
+                <div className="px-6 pt-3 pb-2 flex items-center gap-2">
+                  <span className="text-[10px] font-extrabold text-[#F5A623] uppercase tracking-widest">
+                    🇪🇸 Spain is Live — Start here
+                  </span>
+                  <span className="flex-1 h-px bg-gray-100" />
+                </div>
+
                 <div className="divide-y divide-gray-100">
-                  {REGIONS.map((r, i) => (
-                    <Link
-                      key={r.label}
-                      href={r.href}
-                      className="flex items-center justify-between px-6 py-4 hover:bg-blue-50 transition-colors group"
-                      style={{ animationDelay: `${300 + i * 80}ms` }}
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="w-11 h-11 rounded-xl overflow-hidden flex-shrink-0 shadow-sm">
-                          <r.Icon />
+                  {REGIONS.map((r) => {
+                    const isActive = r.label === 'Europe'
+
+                    if (!isActive) {
+                      return (
+                        <div key={r.label}
+                          className="relative flex items-center justify-between px-6 py-4 bg-gray-50/80 select-none cursor-not-allowed">
+                          <div className="flex items-center gap-4 opacity-40 grayscale">
+                            <div className="w-11 h-11 rounded-xl overflow-hidden flex-shrink-0"><r.Icon /></div>
+                            <div>
+                              <p className="font-semibold text-sm text-gray-700">{r.label}</p>
+                              <p className="text-xs text-gray-400 mt-0.5">{r.desc}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-1.5 text-xs text-gray-400 font-semibold">
+                            <IconLock className="w-3.5 h-3.5" />
+                            <span>Soon</span>
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-semibold text-sm text-gray-900 group-hover:text-[#0B1F4D]">{r.label}</p>
-                          <p className="text-xs text-gray-400 mt-0.5">{r.desc}</p>
+                      )
+                    }
+
+                    /* ── Active: Europe / Spain ── */
+                    return (
+                      <Link key={r.label} href={r.href}
+                        className="relative flex items-center justify-between px-6 py-4 hover:bg-amber-50/80 transition-colors group border-l-[3px] border-[#F5A623] bg-amber-50/40 overflow-hidden">
+                        {/* Subtle pulse bg */}
+                        <div className="absolute inset-0 bg-[#F5A623]/[0.06] animate-pulse pointer-events-none" />
+
+                        <div className="relative flex items-center gap-4">
+                          {/* Icon with pulsing ring */}
+                          <div className="relative flex-shrink-0">
+                            <div className="w-11 h-11 rounded-xl overflow-hidden shadow-sm ring-2 ring-[#F5A623] ring-offset-1">
+                              <r.Icon />
+                            </div>
+                            {/* Live dot */}
+                            <span className="absolute -top-1.5 -right-1.5 flex h-4 w-4">
+                              <span className="animate-ping absolute h-full w-full rounded-full bg-[#F5A623] opacity-75" />
+                              <span className="relative flex h-4 w-4 rounded-full bg-[#F5A623] border-2 border-white items-center justify-center shadow-sm">
+                                <span className="w-1.5 h-1.5 rounded-full bg-white" />
+                              </span>
+                            </span>
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <p className="font-bold text-sm text-[#0B1F4D]">{r.label}</p>
+                              <span className="inline-flex items-center gap-1 text-[10px] font-extrabold bg-[#F5A623] text-[#0B1F4D] px-2 py-0.5 rounded-full shadow-sm">
+                                <span className="w-1 h-1 rounded-full bg-[#0B1F4D] animate-pulse" />
+                                LIVE · SPAIN
+                              </span>
+                            </div>
+                            <p className="text-xs text-gray-500 mt-0.5">🇪🇸 Spain · Málaga · Mediterranean</p>
+                          </div>
                         </div>
-                      </div>
-                      <div className="w-8 h-8 rounded-full bg-gray-100 group-hover:bg-[#0B1F4D] flex items-center justify-center transition-colors flex-shrink-0">
-                        <IconChevronRight className="w-4 h-4 text-gray-400 group-hover:text-white transition-colors" />
-                      </div>
-                    </Link>
-                  ))}
+
+                        <div className="relative flex items-center gap-2 flex-shrink-0">
+                          <span className="hidden sm:block text-xs font-extrabold text-[#F5A623] animate-pulse">Start here</span>
+                          <div className="w-8 h-8 rounded-full bg-[#0B1F4D] group-hover:bg-[#F5A623] flex items-center justify-center transition-colors shadow-sm">
+                            <IconChevronRight className="w-4 h-4 text-white" />
+                          </div>
+                        </div>
+                      </Link>
+                    )
+                  })}
                 </div>
 
                 <div className="px-6 py-4 bg-gray-50 border-t">
@@ -544,81 +595,111 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
             </Link>
           </div>
 
+          {/* Guide callout */}
+          <div className="flex items-center gap-3 mb-6 bg-[#F5A623]/10 border border-[#F5A623]/30 rounded-2xl px-5 py-3">
+            <span className="flex h-3 w-3 flex-shrink-0">
+              <span className="animate-ping absolute h-3 w-3 rounded-full bg-[#F5A623] opacity-75" />
+              <span className="relative h-3 w-3 rounded-full bg-[#F5A623]" />
+            </span>
+            <p className="text-sm font-bold text-[#F5A623]">
+              🇪🇸 Spain · Europe is now live — <span className="font-extrabold underline">Start exploring →</span>
+            </p>
+            <span className="ml-auto text-xs text-[#F5A623]/60 font-semibold whitespace-nowrap">More regions coming soon</span>
+          </div>
+
           {/* Region cards grid — 2 large + 3 small */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {/* Large cards: first 2 */}
+            {/* Large cards: Middle East (locked) + Europe (active) */}
             {[
-              { id: 'middle-east', name: 'Middle East', tagline: 'From historic souks to gleaming skylines', img: 'https://images.unsplash.com/photo-1518684079-3c830dcef090?w=900&q=80', countries: 6, span: true },
-              { id: 'europe',      name: 'Europe',      tagline: 'Quality, precision and centuries of craftsmanship', img: 'https://images.unsplash.com/photo-1467269204594-9661b134dd2b?w=900&q=80', countries: 5, span: true },
-            ].map((r, i) => (
-              <Link
-                key={r.id}
-                href={`/regions/${r.id}`}
-                className="group relative rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 bg-gray-800 sm:col-span-1"
-                style={{ animationDelay: `${i * 80}ms` }}
-              >
-                <div className="relative h-56 sm:h-64 lg:h-72">
-                  <Image
-                    src={r.img}
-                    alt={r.name}
-                    fill
-                    className="object-cover group-hover:scale-105 transition-transform duration-600"
-                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                </div>
-                <div className="absolute bottom-0 left-0 right-0 p-5">
-                  <div className="flex items-end justify-between">
-                    <div>
-                      <h3 className="text-white font-extrabold text-xl">{r.name}</h3>
-                      <p className="text-white/60 text-xs mt-1 leading-snug max-w-[200px]">{r.tagline}</p>
-                      <p className="text-[#F5A623] text-xs font-bold mt-2">{r.countries} {t('home.region_finder_cta')}</p>
+              { id: 'middle-east', name: 'Middle East', tagline: 'From historic souks to gleaming skylines', img: 'https://images.unsplash.com/photo-1518684079-3c830dcef090?w=900&q=80', countries: 6, active: false },
+              { id: 'europe',      name: 'Europe',      tagline: '🇪🇸 Spain · Málaga · Mediterranean trade hub', img: 'https://images.unsplash.com/photo-1467269204594-9661b134dd2b?w=900&q=80', countries: 5, active: true  },
+            ].map((r) => {
+              if (!r.active) {
+                return (
+                  <div key={r.id}
+                    className="group relative rounded-2xl overflow-hidden shadow-xl bg-gray-800 cursor-not-allowed sm:col-span-1">
+                    <div className="relative h-56 sm:h-64 lg:h-72">
+                      <Image src={r.img} alt={r.name} fill
+                        className="object-cover grayscale saturate-0 opacity-60"
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" />
+                      <div className="absolute inset-0 bg-black/60" />
                     </div>
-                    <div className="w-10 h-10 rounded-full bg-white/15 backdrop-blur-sm border border-white/20 flex items-center justify-center group-hover:bg-[#F5A623] group-hover:border-[#F5A623] transition-all flex-shrink-0">
-                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
-                      </svg>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
+                      <div className="w-14 h-14 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center">
+                        <IconLock className="w-7 h-7 text-white/80" />
+                      </div>
+                      <div className="text-center">
+                        <p className="text-white font-extrabold text-lg">{r.name}</p>
+                        <span className="inline-block mt-1 text-[11px] font-bold text-white/60 bg-white/10 px-3 py-1 rounded-full border border-white/20">
+                          Coming Soon
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </Link>
-            ))}
+                )
+              }
 
-            {/* Small cards: Asia, Africa, Americas stacked */}
-            <div className="flex flex-col gap-4">
-              {[
-                { id: 'asia',     name: 'Asia',     tagline: 'The engine of global manufacturing', img: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=700&q=80', countries: 4 },
-                { id: 'africa',   name: 'Africa',   tagline: 'A continent of rising markets',       img: 'https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?w=700&q=80', countries: 3 },
-                { id: 'americas', name: 'Americas', tagline: 'Vast markets coast to coast',         img: 'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=700&q=80', countries: 3 },
-              ].map((r, i) => (
-                <Link
-                  key={r.id}
-                  href={`/regions/${r.id}`}
-                  className="group relative rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5 bg-gray-800 flex-1"
-                  style={{ animationDelay: `${(i + 2) * 80}ms` }}
-                >
-                  <div className="relative h-32 sm:h-36">
-                    <Image
-                      src={r.img}
-                      alt={r.name}
-                      fill
+              /* ── Active: Europe ── */
+              return (
+                <Link key={r.id} href={`/regions/${r.id}`}
+                  className="group relative rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 bg-gray-800 sm:col-span-1 ring-2 ring-[#F5A623] ring-offset-2 ring-offset-[#0B1F4D]">
+                  <div className="relative h-56 sm:h-64 lg:h-72">
+                    <Image src={r.img} alt={r.name} fill
                       className="object-cover group-hover:scale-105 transition-transform duration-500"
-                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/30 to-transparent" />
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                   </div>
-                  <div className="absolute inset-0 flex items-center px-5">
-                    <div className="flex-1">
-                      <h3 className="text-white font-extrabold text-base">{r.name}</h3>
-                      <p className="text-white/60 text-[11px] mt-0.5 leading-snug max-w-[180px]">{r.tagline}</p>
-                    </div>
-                    <div className="w-8 h-8 rounded-full bg-white/15 backdrop-blur-sm border border-white/20 flex items-center justify-center group-hover:bg-[#F5A623] group-hover:border-[#F5A623] transition-all flex-shrink-0">
-                      <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
-                      </svg>
+                  {/* Pulsing "Start Here" badge */}
+                  <div className="absolute top-3 left-3 flex items-center gap-1.5 bg-[#F5A623] text-[#0B1F4D] text-[11px] font-extrabold px-3 py-1.5 rounded-full shadow-lg">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#0B1F4D] animate-ping" />
+                    START HERE · SPAIN
+                  </div>
+                  <div className="absolute bottom-0 left-0 right-0 p-5">
+                    <div className="flex items-end justify-between">
+                      <div>
+                        <h3 className="text-white font-extrabold text-xl">{r.name}</h3>
+                        <p className="text-white/70 text-xs mt-1 leading-snug max-w-[220px]">{r.tagline}</p>
+                        <p className="text-[#F5A623] text-xs font-bold mt-2">{r.countries} countries · Open now</p>
+                      </div>
+                      <div className="w-10 h-10 rounded-full bg-[#F5A623] flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform flex-shrink-0">
+                        <svg className="w-4 h-4 text-[#0B1F4D]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </div>
                     </div>
                   </div>
                 </Link>
+              )
+            })}
+
+            {/* Small cards: Asia, Africa, Americas — all locked */}
+            <div className="flex flex-col gap-4">
+              {[
+                { id: 'asia',     name: 'Asia',     tagline: 'The engine of global manufacturing', img: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=700&q=80' },
+                { id: 'africa',   name: 'Africa',   tagline: 'A continent of rising markets',       img: 'https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?w=700&q=80' },
+                { id: 'americas', name: 'Americas', tagline: 'Vast markets coast to coast',         img: 'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=700&q=80' },
+              ].map((r) => (
+                <div key={r.id}
+                  className="relative rounded-2xl overflow-hidden shadow-lg flex-1 cursor-not-allowed bg-gray-800">
+                  <div className="relative h-32 sm:h-36">
+                    <Image src={r.img} alt={r.name} fill
+                      className="object-cover grayscale saturate-0 opacity-50"
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" />
+                    <div className="absolute inset-0 bg-black/55" />
+                  </div>
+                  <div className="absolute inset-0 flex items-center px-5">
+                    <div className="flex-1">
+                      <h3 className="text-white/70 font-extrabold text-base">{r.name}</h3>
+                      <p className="text-white/40 text-[11px] mt-0.5">{r.tagline}</p>
+                    </div>
+                    <div className="w-8 h-8 rounded-full bg-white/10 border border-white/20 flex items-center justify-center flex-shrink-0">
+                      <IconLock className="w-3.5 h-3.5 text-white/60" />
+                    </div>
+                  </div>
+                  <div className="absolute top-2 right-2 text-[10px] font-bold text-white/50 bg-white/10 px-2 py-0.5 rounded-full border border-white/10">
+                    Soon
+                  </div>
+                </div>
               ))}
             </div>
           </div>
