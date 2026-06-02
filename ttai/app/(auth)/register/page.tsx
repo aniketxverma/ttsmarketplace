@@ -169,6 +169,10 @@ export default function RegisterPage() {
   const [usernameStatus, setUsernameStatus] = useState<'idle' | 'checking' | 'ok' | 'taken' | 'invalid'>('idle')
   const usernameTimer = useRef<ReturnType<typeof setTimeout>>()
 
+  // Existing-email handling
+  const [existingEmail, setExistingEmail] = useState(false)
+  const submittingRef = useRef(false)
+
   function set(k: keyof FormData, v: string) { setForm(p => ({ ...p, [k]: v })) }
 
   function onAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -211,54 +215,83 @@ export default function RegisterPage() {
   const step3Valid = form.bio.trim().length >= 30
 
   async function submit() {
+    // Guard against double-submit (disabled prop is async — can be raced on fast clicks)
+    if (submittingRef.current) return
+    submittingRef.current = true
+
     setError(null)
+    setExistingEmail(false)
     setLoading(true)
     const supabase = createClient()
 
-    const { data, error: signUpError } = await supabase.auth.signUp({
-      email: form.email.trim(), password: form.password,
-      options: { data: { full_name: form.fullName, phone: form.phone, role: form.role, username: form.username,
+    try {
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email: form.email.trim().toLowerCase(), password: form.password,
+        options: { data: { full_name: form.fullName, phone: form.phone, role: form.role, username: form.username,
+          company_name: form.companyName, business_type: form.businessType, continent: form.continent,
+          country_name: form.countryName, city: form.city, category: form.category,
+          annual_turnover: form.annualTurnover, website_url: form.websiteUrl,
+          bio: form.bio, products_offered: form.productsOffered } },
+      })
+
+      if (signUpError) {
+        const m = signUpError.message.toLowerCase()
+        if (m.includes('already') || m.includes('registered') || m.includes('exists')) {
+          setExistingEmail(true)
+          setError('An account with this email already exists.')
+        } else {
+          setError(signUpError.message)
+        }
+        return
+      }
+
+      // Email-confirmation ON + existing email: Supabase returns an obfuscated user
+      // with an empty identities array and NO error. Detect it so we don't falsely
+      // redirect to pending-approval as if a new account was created.
+      const identities = (data.user as any)?.identities
+      if (data.user && Array.isArray(identities) && identities.length === 0) {
+        setExistingEmail(true)
+        setError('An account with this email already exists.')
+        return
+      }
+
+      if (!data.user) { setError('Account creation failed. Please try again.'); return }
+
+      const userId = data.user.id
+      let avatarUrl: string | null = null
+
+      // Upload avatar if provided (requires authenticated session)
+      if (avatarFile && data.session) {
+        try {
+          const ext  = avatarFile.name.split('.').pop() ?? 'jpg'
+          const path = `avatars/${userId}.${ext}`
+          const { error: uploadErr } = await supabase.storage
+            .from('brand-assets')
+            .upload(path, avatarFile, { upsert: true, contentType: avatarFile.type })
+          if (!uploadErr) {
+            const { data: urlData } = supabase.storage.from('brand-assets').getPublicUrl(path)
+            avatarUrl = urlData.publicUrl
+          }
+        } catch { /* avatar upload is optional — silently skip */ }
+      }
+
+      const { error: profileErr } = await supabase.from('profiles').update({
+        full_name: form.fullName, phone: form.phone, role: form.role as any,
+        username: form.username, avatar_url: avatarUrl,
         company_name: form.companyName, business_type: form.businessType, continent: form.continent,
         country_name: form.countryName, city: form.city, category: form.category,
-        annual_turnover: form.annualTurnover, website_url: form.websiteUrl,
-        bio: form.bio, products_offered: form.productsOffered } },
-    })
+        annual_turnover: form.annualTurnover || null, website_url: form.websiteUrl || null,
+        bio: form.bio, products_offered: form.productsOffered || null,
+      }).eq('id', userId)
 
-    if (signUpError) { setError(signUpError.message); setLoading(false); return }
-    if (!data.user) { setError('Account creation failed. Please try again.'); setLoading(false); return }
+      // Profile update failure is non-fatal — metadata was saved in signUp options
+      if (profileErr) console.warn('Profile update error (non-fatal):', profileErr.message)
 
-    const userId = data.user.id
-    let avatarUrl: string | null = null
-
-    // Upload avatar if provided (requires authenticated session)
-    if (avatarFile && data.session) {
-      try {
-        const ext  = avatarFile.name.split('.').pop() ?? 'jpg'
-        const path = `avatars/${userId}.${ext}`
-        const { error: uploadErr } = await supabase.storage
-          .from('brand-assets')
-          .upload(path, avatarFile, { upsert: true, contentType: avatarFile.type })
-        if (!uploadErr) {
-          const { data: urlData } = supabase.storage.from('brand-assets').getPublicUrl(path)
-          avatarUrl = urlData.publicUrl
-        }
-      } catch { /* avatar upload is optional — silently skip */ }
+      window.location.href = '/pending-approval'
+    } finally {
+      submittingRef.current = false
+      setLoading(false)
     }
-
-    const { error: profileErr } = await supabase.from('profiles').update({
-      full_name: form.fullName, phone: form.phone, role: form.role as any,
-      username: form.username, avatar_url: avatarUrl,
-      company_name: form.companyName, business_type: form.businessType, continent: form.continent,
-      country_name: form.countryName, city: form.city, category: form.category,
-      annual_turnover: form.annualTurnover || null, website_url: form.websiteUrl || null,
-      bio: form.bio, products_offered: form.productsOffered || null,
-    }).eq('id', userId)
-
-    // Profile update failure is non-fatal — metadata was saved in signUp options
-    // Log it but proceed; user can update via account settings after approval
-    if (profileErr) console.warn('Profile update error (non-fatal):', profileErr.message)
-
-    window.location.href = '/pending-approval'
   }
 
   /* ── Role picker (step 0) ─────────────────────────────── */
@@ -557,6 +590,14 @@ export default function RegisterPage() {
             </div>
 
             {error && <Err msg={error} />}
+
+            {existingEmail && (
+              <div className="rounded-xl bg-blue-50 border border-blue-100 px-4 py-3 flex flex-wrap items-center gap-x-4 gap-y-2 -mt-1">
+                <p className="text-xs text-blue-800 font-medium w-full sm:w-auto">Already have an account with this email?</p>
+                <Link href="/login" className="text-xs font-extrabold text-[#0B1F4D] underline hover:text-[#162d6e]">Log in →</Link>
+                <Link href="/reset-password" className="text-xs font-extrabold text-[#0B1F4D] underline hover:text-[#162d6e]">Reset password</Link>
+              </div>
+            )}
 
             <div className="flex gap-3">
               <button type="button" onClick={() => setStep(3)} className="flex-1 rounded-xl border border-gray-200 text-gray-500 py-3 text-sm font-semibold hover:bg-gray-50 transition-colors">← Edit</button>
