@@ -7,6 +7,7 @@ import { SearchBar } from '@/components/marketplace/SearchBar'
 import { Pagination } from '@/components/marketplace/Pagination'
 import { PromotionBanner } from '@/components/marketplace/PromotionBanner'
 import { SupplierMiniCard, type MiniSupplier } from '@/components/marketplace/SupplierMiniCard'
+import { ShoppingChannels } from '@/components/marketplace/ShoppingChannels'
 import type { Category } from '@/types/domain'
 
 const PAGE_SIZE = 24
@@ -118,6 +119,19 @@ export default async function MarketplacePage({
         </aside>
 
         <div className="flex-1 min-w-0">
+          {/* Three ways to shop this collection */}
+          {activeCat && (
+            <div className="mb-8">
+              <div className="flex items-center gap-3 mb-3">
+                <h2 className="text-sm font-extrabold text-[#0B1F4D] uppercase tracking-wide">
+                  Shop {activeCat.name} via
+                </h2>
+                <span className="h-px flex-1 bg-gray-100" />
+              </div>
+              <ShoppingChannels categorySlug={activeCat.slug} compact />
+            </div>
+          )}
+
           {/* Suppliers active in this category — surfaces profiles, not just products */}
           {activeCat && categorySuppliers.length > 0 && (
             <div className="mb-8">

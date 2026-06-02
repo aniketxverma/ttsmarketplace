@@ -2,7 +2,6 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { EcosystemChain } from './EcosystemChain'
 import { useServerTranslations } from '@/lib/i18n/server'
 
 /* ─── SVG icon components ───────────────────────────────────────────────── */
@@ -868,12 +867,6 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
           </div>
         </div>
       </section>
-
-      {/* ══════════════════════════════════════════════════════════════════
-          ECOSYSTEM CHAIN — Europe → Spain → Málaga → Cleaning → Rozil
-          Cinematic breathing animation — scoped ONLY to this chain
-      ══════════════════════════════════════════════════════════════════ */}
-      <EcosystemChain />
 
       {/* ══════════════════════════════════════════════════════════════════
           CTA BANNER

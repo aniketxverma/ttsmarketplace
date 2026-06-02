@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { getCountry, REGIONS } from '@/lib/regions-data'
 import { createClient } from '@/lib/supabase/server'
 import { SupplierMiniCard, type MiniSupplier } from '@/components/marketplace/SupplierMiniCard'
+import { ShoppingChannels } from '@/components/marketplace/ShoppingChannels'
 
 export const revalidate = 60
 
@@ -179,6 +180,20 @@ export default async function CountryPage({ params }: { params: { region: string
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 8l4 4m0 0l-4 4m4-4H3" />
             </svg>
           </Link>
+        </div>
+      </div>
+
+      {/* ── Three ways to shop this market ───────────────────────────── */}
+      <div className="border-t bg-gray-50 py-14">
+        <div className="container mx-auto px-4 sm:px-8">
+          <div className="text-center mb-8">
+            <p className="text-[#F5A623] text-xs font-bold uppercase tracking-widest mb-2">Choose Your Channel</p>
+            <h2 className="text-xl sm:text-2xl font-extrabold text-[#0B1F4D]">Three Ways to Shop {country.name}</h2>
+            <p className="text-gray-400 text-sm mt-1 max-w-lg mx-auto">
+              Buy direct from a supplier’s retail or wholesale store, or let TTAI EMA handle everything.
+            </p>
+          </div>
+          <ShoppingChannels />
         </div>
       </div>
 
