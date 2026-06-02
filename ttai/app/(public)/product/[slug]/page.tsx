@@ -235,7 +235,7 @@ export default async function ProductPage({ params }: { params: { slug: string }
 
             {/* Supplier card */}
             {supplier && (
-              <Link href={`/brand/${supplier.brand_slug}`}
+              <Link href={`/brand/${supplier.brand_slug ?? supplier.id}`}
                 className="flex items-center gap-4 bg-white rounded-2xl border border-gray-100 shadow-sm p-4 hover:shadow-md hover:border-[#0B1F4D]/20 transition-all group">
                 {/* Logo */}
                 <div className="w-14 h-14 rounded-xl overflow-hidden border border-gray-100 flex-shrink-0 bg-white">

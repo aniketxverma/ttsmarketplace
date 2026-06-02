@@ -92,11 +92,11 @@ export default async function AccountProfilePage() {
     profile?.role === 'broker'   ? '/broker/settings'   :
     '/buyer/settings'
 
-  // Suppliers → branded storefront (full brand page, or premium supplier page);
+  // Suppliers → full branded storefront (/brand, by slug or id);
   // everyone else → generic public profile
   const publicProfileHref =
-    profile?.role === 'supplier'
-      ? (supplierBrandSlug ? `/brand/${supplierBrandSlug}` : supplierId ? `/suppliers/${supplierId}` : `/profile/${profileSlug}`)
+    profile?.role === 'supplier' && (supplierBrandSlug || supplierId)
+      ? `/brand/${supplierBrandSlug ?? supplierId}`
       : `/profile/${profileSlug}`
   const memberSince = profile?.created_at
     ? new Date(profile.created_at).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })

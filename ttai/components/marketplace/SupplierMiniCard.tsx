@@ -21,7 +21,7 @@ const TIER: Record<string, { label: string; cls: string; dot: string }> = {
 
 export function SupplierMiniCard({ supplier }: { supplier: MiniSupplier }) {
   const name     = supplier.trade_name ?? supplier.legal_name
-  const href     = supplier.brand_slug ? `/brand/${supplier.brand_slug}` : `/suppliers/${supplier.id}`
+  const href     = `/brand/${supplier.brand_slug ?? supplier.id}`
   const tier     = TIER[supplier.reliability_tier ?? 'UNVERIFIED'] ?? TIER.UNVERIFIED
   const initials = name.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase()
 

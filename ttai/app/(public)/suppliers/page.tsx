@@ -118,7 +118,7 @@ export default async function SuppliersPage({
               const city    = s.cities   as { name: string } | null
               const tier    = TIER_CONFIG[s.reliability_tier] ?? TIER_CONFIG.UNVERIFIED
               const name    = s.trade_name ?? s.legal_name
-              const href    = s.brand_slug ? `/brand/${s.brand_slug}` : `/suppliers/${s.id}`
+              const href    = `/brand/${s.brand_slug ?? s.id}`
               const initials = name.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase()
 
               return (

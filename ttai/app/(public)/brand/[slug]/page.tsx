@@ -8,13 +8,21 @@ import { BrandLogo } from '@/components/BrandLogo'
 
 export const revalidate = 60
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+/** Look up a supplier by brand_slug, or by id when the param is a UUID. Excludes suspended. */
+function supplierQuery(supabase: ReturnType<typeof createClient>, slug: string, columns: string) {
+  let q = (supabase.from('suppliers') as any).select(columns).neq('status', 'SUSPENDED')
+  q = UUID_RE.test(slug) ? q.or(`brand_slug.eq.${slug},id.eq.${slug}`) : q.eq('brand_slug', slug)
+  return q.limit(1).maybeSingle()
+}
+
 export async function generateMetadata({ params }: { params: { slug: string } }) {
   const supabase = createClient()
-  const { data: s } = await (supabase.from('suppliers') as any)
-    .select('trade_name, tagline, seo_title, seo_description, seo_keywords, og_image, logo_url')
-    .eq('brand_slug', params.slug)
-    .eq('status', 'ACTIVE')
-    .single() as { data: any }
+  const { data: s } = await supplierQuery(
+    supabase, params.slug,
+    'trade_name, tagline, seo_title, seo_description, seo_keywords, og_image, logo_url'
+  ) as { data: any }
 
   if (!s) return {}
   return {
@@ -58,8 +66,7 @@ function StarRating({ rating, count }: { rating: number; count: number }) {
 export default async function BrandPage({ params }: { params: { slug: string } }) {
   const supabase = createClient()
 
-  const { data: supplier } = await (supabase.from('suppliers') as any)
-    .select(`
+  const { data: supplier } = await supplierQuery(supabase, params.slug, `
       id, trade_name, legal_name, brand_slug, tagline, logo_url, banner_image,
       description, about_company, founded_year, employee_count, years_experience,
       countries_served, website, phone, whatsapp, business_email, working_hours,
@@ -67,10 +74,7 @@ export default async function BrandPage({ params }: { params: { slug: string } }
       reliability_tier, status, is_featured, badges, section_visibility,
       address_line1, address_line2, postal_code,
       countries(name, iso_code), cities(name)
-    `)
-    .eq('brand_slug', params.slug)
-    .eq('status', 'ACTIVE')
-    .single() as { data: any }
+    `) as { data: any }
 
   if (!supplier) notFound()
 
