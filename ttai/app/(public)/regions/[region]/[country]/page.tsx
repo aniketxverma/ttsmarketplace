@@ -43,7 +43,7 @@ export default async function CountryPage({ params }: { params: { region: string
     const [productsRes, suppliersRes] = await Promise.all([
       supabase
         .from('products')
-        .select('id, name, slug, price_cents, currency_code, product_images(url, sort_order)')
+        .select('id, name, slug, price_cents, currency_code, product_images(url, sort_order), suppliers(trade_name, legal_name, brand_slug)')
         .in('supplier_id', supplierIds)
         .eq('is_published', true)
         .order('created_at', { ascending: false })
@@ -213,6 +213,8 @@ export default async function CountryPage({ params }: { params: { region: string
                 const images = ((p.product_images ?? []) as { url: string; sort_order: number }[])
                   .sort((a, b) => a.sort_order - b.sort_order)
                 const thumb = images[0]?.url
+                const sup   = p.suppliers as { trade_name: string | null; legal_name: string; brand_slug: string | null } | null
+                const supName = sup?.trade_name ?? sup?.legal_name ?? null
                 const price = new Intl.NumberFormat('en-EU', {
                   style: 'currency',
                   currency: p.currency_code ?? 'EUR',
@@ -237,6 +239,9 @@ export default async function CountryPage({ params }: { params: { region: string
                       )}
                     </div>
                     <div className="p-3 sm:p-4">
+                      {supName && (
+                        <p className="text-[10px] font-bold text-[#F5A623] uppercase tracking-wide mb-0.5 truncate">{supName}</p>
+                      )}
                       <h3 className="font-semibold text-gray-900 text-sm leading-tight line-clamp-2">{p.name}</h3>
                       <p className="text-[#0B1F4D] font-extrabold text-sm mt-1.5">{price}</p>
                     </div>
