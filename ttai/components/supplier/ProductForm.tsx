@@ -83,7 +83,7 @@ export function ProductForm({ supplierId, mode, productId, initialData }: Produc
       sku:                 form.sku.trim() || null,
       price_cents:         priceCents,
       currency_code:       form.currencyCode,
-      min_order_qty:       parseInt(form.minOrderQty) || 1,
+      min_order_qty:       form.marketplaceContext === 'retail' ? 1 : (parseInt(form.minOrderQty) || 1),
       stock_qty:           parseInt(form.stockQty) || 0,
       vat_rate:            form.vatRate ? parseFloat(form.vatRate) : null,
       weight_grams:        form.weightGrams ? parseInt(form.weightGrams) : null,
@@ -235,10 +235,19 @@ export function ProductForm({ supplierId, mode, productId, initialData }: Produc
             <label className={labelCls}>VAT Rate %</label>
             <input className={inputCls} type="number" step="0.01" min="0" max="100" value={form.vatRate} onChange={(e) => update('vatRate', e.target.value)} placeholder="e.g. 21" />
           </div>
-          <div className="space-y-1.5">
-            <label className={labelCls}>Min Order Qty</label>
-            <input className={inputCls} type="number" min="1" value={form.minOrderQty} onChange={(e) => update('minOrderQty', e.target.value)} />
-          </div>
+          {form.marketplaceContext === 'retail' ? (
+            <div className="space-y-1.5">
+              <label className={labelCls}>Min Order Qty</label>
+              <div className={`${inputCls} flex items-center text-gray-400 bg-gray-50 cursor-not-allowed`}>
+                Sold by piece — no minimum
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-1.5">
+              <label className={labelCls}>Min Order Qty {form.marketplaceContext === 'both' && <span className="text-gray-400 normal-case font-normal">(wholesale)</span>}</label>
+              <input className={inputCls} type="number" min="1" value={form.minOrderQty} onChange={(e) => update('minOrderQty', e.target.value)} />
+            </div>
+          )}
           <div className="space-y-1.5">
             <label className={labelCls}>Stock Qty</label>
             <input className={inputCls} type="number" min="0" value={form.stockQty} onChange={(e) => update('stockQty', e.target.value)} />
