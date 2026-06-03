@@ -1,4 +1,4 @@
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/server'
@@ -57,14 +57,19 @@ export default async function PublicProfilePage({ params }: { params: { slug: st
 
   if (!profile || profile.approval_status !== 'approved') notFound()
 
-  // Fetch supplier brand slug using admin client (bypasses RLS)
+  // Suppliers always use their premium brand storefront (/brand). If they have a
+  // supplier record (store set up), redirect there so the brand template is used.
   let brandSlug: string | null = null
   if (profile.role === 'supplier') {
     const { data: sup } = await (admin as any)
       .from('suppliers')
-      .select('brand_slug')
+      .select('id, brand_slug, status')
       .eq('owner_id', profile.id)
+      .neq('status', 'SUSPENDED')
       .maybeSingle()
+    if (sup) {
+      redirect(`/brand/${sup.brand_slug ?? sup.id}`)
+    }
     brandSlug = sup?.brand_slug ?? null
   }
 
