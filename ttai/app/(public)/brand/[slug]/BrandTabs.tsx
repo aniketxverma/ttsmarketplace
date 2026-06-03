@@ -262,13 +262,13 @@ const CANAL_POST_TYPES: Record<string, { label: string; badge: string; Icon: Rea
 // ── Nav config (static IDs — labels translated inside component) ──────────────
 const NAV_ITEM_IDS = [
   { id: 'products',       msgKey: 'brand.tab_products', Icon: Package,        accent: '#0B1F4D' },
-  { id: 'canal',          msgKey: 'brand.tab_canal',    Icon: Radio,          accent: '#7C3AED' },
   { id: 'about',          msgKey: 'brand.tab_about',    Icon: Info,           accent: '#1D4ED8' },
   { id: 'gallery',        msgKey: 'brand.tab_gallery',  Icon: Images,         accent: '#5B21B6' },
   { id: 'certifications', msgKey: 'brand.tab_certs',    Icon: Award,          accent: '#B45309' },
   { id: 'reviews',        msgKey: 'brand.tab_reviews',  Icon: Star,           accent: '#B45309' },
   { id: 'locations',      msgKey: 'brand.tab_locations',Icon: MapPin,         accent: '#065F46' },
   { id: 'contact',        msgKey: 'brand.tab_contact',  Icon: MessageCircle,  accent: '#0E7490' },
+  { id: 'canal',          msgKey: 'brand.tab_canal',    Icon: Radio,          accent: '#7C3AED' },
 ]
 
 // ── POS type config ───────────────────────────────────────────────────────────
@@ -475,7 +475,7 @@ export function BrandTabs({
       </div>
 
       {/* ── PAGE CONTENT ───────────────────────────────────────────────────── */}
-      <div className="mt-8 space-y-16 sm:space-y-20 pb-28 sm:pb-14">
+      <div className="mt-8 flex flex-col gap-16 sm:gap-20 pb-28 sm:pb-14">
 
         {/* ══════════════ PRODUCTS ════════════════════════════════════════════ */}
         {products.length > 0 && (
@@ -638,9 +638,9 @@ export function BrandTabs({
           </section>
         )}
 
-        {/* ══════════════ CANAL ═══════════════════════════════════════════════ */}
+        {/* ══════════════ CANAL ═══ (ordered near the bottom) ═════════════════ */}
         {channel && (
-          <section id="sec-canal">
+          <section id="sec-canal" className="order-[40]">
             <div data-reveal>
               <SectionHeading
                 icon={Radio}

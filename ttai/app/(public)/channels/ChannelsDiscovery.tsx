@@ -128,38 +128,44 @@ export function ChannelsDiscovery({ channels }: { channels: DiscoveryChannel[] }
               return (
                 <Reveal key={ch.id} delay={(i % 3) * 80}>
                   <Link href={`/channel/${ch.id}`}
-                    className="group block bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden h-full">
-                    {/* Top accent */}
-                    <div className="h-1 bg-gradient-to-r from-[#7C3AED] to-[#4C1D95]" />
-                    <div className="p-5">
-                      <div className="flex items-start gap-3 mb-3">
-                        <div className="w-12 h-12 rounded-2xl overflow-hidden flex-shrink-0 bg-[#0B1F4D] flex items-center justify-center border-2 border-white shadow-sm">
-                          {sup?.logo_url
-                            ? <Image src={sup.logo_url} alt={name} width={48} height={48} className="object-cover w-full h-full" />
-                            : <span className="text-white font-extrabold text-lg">{initial}</span>}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-1.5">
-                            <h3 className="font-extrabold text-[#0B1F4D] text-sm truncate group-hover:text-[#7C3AED] transition-colors">{ch.name}</h3>
-                            {isGold && <Crown className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />}
-                          </div>
-                          <p className="text-[11px] text-gray-400 truncate">by {name}</p>
-                          <span className="inline-block mt-1 text-[10px] font-bold text-[#7C3AED] bg-purple-50 px-2 py-0.5 rounded-full">{ch.category}</span>
-                        </div>
+                    className="group block bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-300 overflow-hidden h-full">
+                    {/* Gradient cover */}
+                    <div className="relative h-20 bg-gradient-to-br from-[#7C3AED] via-[#6d28d9] to-[#4C1D95] overflow-hidden">
+                      <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)', backgroundSize: '14px 14px' }} />
+                      <Radio className="absolute -bottom-3 -right-2 w-20 h-20 text-white/10" />
+                      <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-[900ms] ease-out bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+                      <span className="absolute top-3 right-3 text-[10px] font-extrabold text-white bg-white/15 border border-white/20 backdrop-blur-sm px-2.5 py-1 rounded-full">{ch.category}</span>
+                      <span className="absolute top-3 left-3 inline-flex items-center gap-1 text-[10px] font-extrabold text-white/90 uppercase tracking-widest">
+                        <Radio className="w-3 h-3" />Canal
+                      </span>
+                    </div>
+
+                    {/* Logo overlapping */}
+                    <div className="px-5 -mt-8">
+                      <div className="w-16 h-16 rounded-2xl overflow-hidden bg-[#0B1F4D] flex items-center justify-center border-4 border-white shadow-md">
+                        {sup?.logo_url
+                          ? <Image src={sup.logo_url} alt={name} width={64} height={64} className="object-cover w-full h-full" />
+                          : <span className="text-white font-extrabold text-2xl">{initial}</span>}
                       </div>
+                    </div>
+
+                    <div className="px-5 pt-3 pb-5">
+                      <div className="flex items-center gap-1.5">
+                        <h3 className="font-extrabold text-[#0B1F4D] text-base truncate group-hover:text-[#7C3AED] transition-colors">{ch.name}</h3>
+                        {isGold && <Crown className="w-4 h-4 text-amber-500 flex-shrink-0" />}
+                      </div>
+                      <p className="text-xs text-gray-400 truncate mb-3">by {name}</p>
 
                       {/* Latest post preview */}
                       {ch.latest ? (
-                        <div className="rounded-xl bg-gray-50 border border-gray-100 p-3 mb-3">
-                          <div className="flex items-center gap-1.5 mb-1">
-                            {t && <span className={`flex items-center gap-1 text-[9px] font-extrabold px-1.5 py-0.5 rounded-full ${t.badge}`}><t.Icon className="w-2.5 h-2.5" />{t.label}</span>}
-                          </div>
+                        <div className="rounded-xl bg-gray-50 border border-gray-100 p-3 mb-4">
+                          {t && <span className={`inline-flex items-center gap-1 text-[9px] font-extrabold px-1.5 py-0.5 rounded-full mb-1.5 ${t.badge}`}><t.Icon className="w-2.5 h-2.5" />{t.label}</span>}
                           <p className="text-xs text-gray-600 line-clamp-2 leading-relaxed">{ch.latest.content || '📷 Photo'}</p>
                         </div>
                       ) : ch.description ? (
-                        <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed mb-3">{ch.description}</p>
+                        <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed mb-4">{ch.description}</p>
                       ) : (
-                        <p className="text-xs text-gray-300 italic mb-3">No posts yet</p>
+                        <p className="text-xs text-gray-300 italic mb-4">No posts yet — be the first to follow</p>
                       )}
 
                       {/* Footer */}
@@ -168,8 +174,8 @@ export function ChannelsDiscovery({ channels }: { channels: DiscoveryChannel[] }
                           <span className="flex items-center gap-1"><Users className="w-3 h-3" />{ch.member_count.toLocaleString()}</span>
                           <span className="flex items-center gap-1"><FileText className="w-3 h-3" />{ch.post_count}</span>
                         </div>
-                        <span className="inline-flex items-center gap-1.5 text-xs font-extrabold text-[#7C3AED] group-hover:gap-2.5 transition-all">
-                          <Radio className="w-3.5 h-3.5" />Join <ArrowRight className="w-3.5 h-3.5" />
+                        <span className="inline-flex items-center gap-1.5 bg-[#7C3AED] text-white px-3.5 py-1.5 rounded-xl text-xs font-extrabold group-hover:gap-2.5 transition-all shadow-sm">
+                          <Radio className="w-3.5 h-3.5" />Join
                         </span>
                       </div>
                     </div>
