@@ -271,19 +271,26 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
             {/* ── Left column ────────────────────────────────────────── */}
             <div className="space-y-8">
               {/* Badge */}
-              <div className="animate-fade-in-up inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-4 py-1.5 text-sm font-medium text-blue-100">
-                <span className="w-2 h-2 rounded-full bg-[#F5A623] animate-blink" />
+              <div className="animate-fade-in-up inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full pl-2 pr-4 py-1.5 text-sm font-medium text-blue-100 shadow-lg shadow-black/10">
+                <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-[#F5A623]/20">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#F5A623] animate-blink" />
+                </span>
                 {t('home.badge')}
               </div>
 
               {/* Headline */}
-              <div className="space-y-3 animate-fade-in-up delay-150">
-                <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-[1.1] tracking-tight">
+              <div className="space-y-4 animate-fade-in-up delay-150">
+                <h1 className="text-4xl sm:text-5xl lg:text-[68px] font-black leading-[1.05] tracking-[-0.02em] drop-shadow-sm">
                   {t('home.hero_title_1')}<br />
                   {t('home.hero_title_2')}{' '}
-                  <span className="text-gradient-gold">TTAI EMA</span>
+                  <span className="relative inline-block">
+                    <span className="bg-gradient-to-r from-[#F5A623] via-[#ffd27a] to-[#F5A623] bg-clip-text text-transparent"
+                      style={{ backgroundSize: '200% auto', animation: 'shimmer 4s linear infinite' }}>
+                      TTAI EMA
+                    </span>
+                  </span>
                 </h1>
-                <p className="text-lg text-blue-200 max-w-md leading-relaxed">
+                <p className="text-lg text-blue-200/90 max-w-md leading-relaxed">
                   {t('home.hero_subtitle')}
                 </p>
               </div>
