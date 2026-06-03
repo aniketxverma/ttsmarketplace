@@ -169,16 +169,24 @@ export default async function BrandPage({ params }: { params: { slug: string } }
     <div className="min-h-screen bg-[#F7F8FA]">
 
       {/* ══ HERO BANNER ══════════════════════════════════════════════════════ */}
+      <style>{`
+        @keyframes brandKenBurns { from { transform: scale(1) translateY(0); } to { transform: scale(1.09) translateY(-1.5%); } }
+        .brand-kenburns { animation: brandKenBurns 22s ease-in-out infinite alternate; will-change: transform; }
+        @keyframes brandHeroIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+        .brand-hero-in { animation: brandHeroIn 0.7s cubic-bezier(0.16,1,0.3,1) both; }
+      `}</style>
       <div className="relative h-80 sm:h-[440px] overflow-hidden">
         {supplier.banner_image ? (
-          <Image src={supplier.banner_image} alt="" fill className="object-cover" sizes="100vw" priority />
+          <Image src={supplier.banner_image} alt="" fill className="object-cover brand-kenburns" sizes="100vw" priority />
         ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-[#0B1F4D] via-[#1a3a7a] to-[#0d2d5e]" />
+          <div className="absolute inset-0 bg-gradient-to-br from-[#0B1F4D] via-[#1a3a7a] to-[#0d2d5e] brand-kenburns" />
         )}
         {/* Gradient — stronger at bottom for text, lighter at top */}
         <div className="absolute inset-0" style={{
           background: 'linear-gradient(to top, rgba(5,15,40,0.92) 0%, rgba(5,15,40,0.55) 45%, rgba(5,15,40,0.12) 100%)'
         }} />
+        {/* Subtle top sheen */}
+        <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-white/10 to-transparent pointer-events-none" />
 
         {/* Featured badge */}
         {supplier.is_featured && (
@@ -191,7 +199,7 @@ export default async function BrandPage({ params }: { params: { slug: string } }
         )}
 
         {/* Hero content — bottom of cover */}
-        <div className="absolute bottom-0 left-0 right-0 px-4 sm:px-8 pb-6">
+        <div className="absolute bottom-0 left-0 right-0 px-4 sm:px-8 pb-6 brand-hero-in">
           <div className="max-w-6xl mx-auto flex items-end justify-between gap-5">
 
             {/* Left: logo + name + tagline + badges */}

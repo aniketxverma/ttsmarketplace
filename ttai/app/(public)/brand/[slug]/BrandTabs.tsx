@@ -439,10 +439,8 @@ export function BrandTabs({
                           {count}
                         </span>
                       )}
-                      {isActive && (
-                        <span className="absolute bottom-0 left-2 right-2 h-[2px] rounded-full"
-                          style={{ background: item.accent }} />
-                      )}
+                      <span className={`absolute bottom-0 left-2 right-2 h-[2.5px] rounded-full origin-center transition-transform duration-300 ${isActive ? 'scale-x-100' : 'scale-x-0'}`}
+                        style={{ background: item.accent }} />
                     </button>
                   )
                 })}
@@ -479,8 +477,9 @@ export function BrandTabs({
             <div data-reveal className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-14">
               {/* Shop B2B */}
               <Link href={`/b2b?supplier=${supplier.id}`}
-                className="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-0.5 transition-all overflow-hidden flex flex-col">
-                <div className="bg-gradient-to-br from-[#0B1F4D] to-[#1a3a7a] px-5 py-4 flex items-center justify-between">
+                className="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col">
+                <div className="relative overflow-hidden bg-gradient-to-br from-[#0B1F4D] to-[#1a3a7a] px-5 py-4 flex items-center justify-between">
+                  <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-[900ms] ease-out bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
                   <div className="flex items-center gap-3">
                     <div className="w-11 h-11 rounded-xl bg-white/15 flex items-center justify-center">
                       <Building2 className="w-5 h-5 text-white" />
@@ -504,8 +503,9 @@ export function BrandTabs({
 
               {/* Online Shop */}
               <Link href={`/store?supplier=${supplier.id}`}
-                className="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-0.5 transition-all overflow-hidden flex flex-col">
-                <div className="bg-gradient-to-br from-purple-600 to-violet-800 px-5 py-4 flex items-center justify-between">
+                className="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col">
+                <div className="relative overflow-hidden bg-gradient-to-br from-purple-600 to-violet-800 px-5 py-4 flex items-center justify-between">
+                  <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-[900ms] ease-out bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
                   <div className="flex items-center gap-3">
                     <div className="w-11 h-11 rounded-xl bg-white/15 flex items-center justify-center">
                       <ShoppingBag className="w-5 h-5 text-white" />
