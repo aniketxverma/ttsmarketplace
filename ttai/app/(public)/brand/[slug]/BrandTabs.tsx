@@ -98,14 +98,17 @@ function SectionHeading({
   title: string; subtitle?: string; action?: React.ReactNode; accent?: string
 }) {
   return (
-    <div className="flex items-start justify-between gap-4 mb-8">
-      <div className="flex items-center gap-4">
-        <div className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-md flex-shrink-0" style={{ background: accent }}>
-          <Icon className="w-6 h-6 text-white" />
+    <div className="flex items-end justify-between gap-4 mb-7">
+      <div className="flex items-start gap-3.5">
+        <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center shadow-lg flex-shrink-0 relative overflow-hidden"
+          style={{ background: `linear-gradient(135deg, ${accent} 0%, ${accent}b3 100%)` }}>
+          <span className="absolute inset-0 bg-white/10" style={{ maskImage: 'linear-gradient(135deg, transparent 40%, white 100%)' }} />
+          <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-white relative" />
         </div>
         <div>
-          <h2 className="text-2xl font-extrabold leading-tight" style={{ color: accent }}>{title}</h2>
+          <h2 className="text-xl sm:text-2xl font-extrabold leading-tight text-[#0B1F4D]">{title}</h2>
           {subtitle && <p className="text-sm text-gray-400 mt-0.5">{subtitle}</p>}
+          <div className="mt-2 h-1 w-10 rounded-full" style={{ background: accent }} />
         </div>
       </div>
       {action}
@@ -472,7 +475,7 @@ export function BrandTabs({
       </div>
 
       {/* ── PAGE CONTENT ───────────────────────────────────────────────────── */}
-      <div className="mt-8 space-y-24 pb-28 sm:pb-14">
+      <div className="mt-8 space-y-16 sm:space-y-20 pb-28 sm:pb-14">
 
         {/* ══════════════ PRODUCTS ════════════════════════════════════════════ */}
         {products.length > 0 && (
