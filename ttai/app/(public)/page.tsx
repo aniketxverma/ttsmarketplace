@@ -3,6 +3,7 @@ import Image from 'next/image'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { useServerTranslations } from '@/lib/i18n/server'
+import { HomeFeatures } from './HomeFeatures'
 
 /* ─── SVG icon components ───────────────────────────────────────────────── */
 function IconGlobe({ className = 'w-6 h-6' }: { className?: string }) {
@@ -713,67 +714,9 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
       </section>
 
       {/* ══════════════════════════════════════════════════════════════════
-          HOW IT WORKS
+          HOW IT WORKS — modern animated feature showcase
       ══════════════════════════════════════════════════════════════════ */}
-      <section className="py-24 px-4 bg-gray-50 overflow-hidden">
-        <div className="container mx-auto">
-          <div className="text-center mb-16">
-            <p className="text-[#F5A623] font-semibold text-sm uppercase tracking-widest mb-2">{t('home.how_label')}</p>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-[#0B1F4D]">{t('home.how_title')}</h2>
-            <div className="mt-4 mx-auto w-16 h-1 bg-[#F5A623] rounded-full" />
-          </div>
-
-          {/* Desktop stepper */}
-          <div className="hidden md:flex items-start gap-0">
-            {HOW_STEPS.map((item, i) => (
-              <div key={i} className="flex items-start flex-1 animate-fade-in-up" style={{ animationDelay: `${i * 120}ms` }}>
-                <div className="flex flex-col items-center flex-1">
-                  {/* Connector + icon row */}
-                  <div className="flex items-center w-full mb-6">
-                    <div className="w-14 h-14 rounded-2xl bg-[#0B1F4D] text-white flex items-center justify-center shadow-lg flex-shrink-0 group hover:bg-[#F5A623] transition-colors duration-300 cursor-default relative">
-                      <StepIcons step={i + 1} />
-                      <div className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-[#F5A623] text-[#0B1F4D] text-[10px] font-extrabold flex items-center justify-center">
-                        {i + 1}
-                      </div>
-                    </div>
-                    {i < HOW_STEPS.length - 1 && (
-                      <div className="flex-1 h-0.5 bg-gradient-to-r from-[#0B1F4D]/40 to-gray-200 mx-3 animate-line-grow" style={{ animationDelay: `${i * 120 + 200}ms` }} />
-                    )}
-                  </div>
-                  {/* Text */}
-                  <div className="pr-6">
-                    <p className="font-bold text-sm text-[#0B1F4D] mb-1">{item.title}</p>
-                    <p className="text-xs text-gray-500 leading-relaxed">{item.desc}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Mobile stepper */}
-          <div className="flex flex-col gap-4 md:hidden">
-            {HOW_STEPS.map((item, i) => (
-              <div key={i} className="flex items-start gap-4 animate-fade-in-up" style={{ animationDelay: `${i * 100}ms` }}>
-                <div className="relative flex-shrink-0">
-                  <div className="w-12 h-12 rounded-xl bg-[#0B1F4D] text-white flex items-center justify-center shadow-md">
-                    <StepIcons step={i + 1} />
-                  </div>
-                  <div className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-[#F5A623] text-[#0B1F4D] text-[10px] font-extrabold flex items-center justify-center">
-                    {i + 1}
-                  </div>
-                  {i < HOW_STEPS.length - 1 && (
-                    <div className="absolute top-12 left-1/2 -translate-x-1/2 w-0.5 h-4 bg-gray-200" />
-                  )}
-                </div>
-                <div className="pb-4">
-                  <p className="font-bold text-sm text-[#0B1F4D]">{item.title}</p>
-                  <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">{item.desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <HomeFeatures />
 
       {/* ══════════════════════════════════════════════════════════════════
           FACTORIES & ZONES
