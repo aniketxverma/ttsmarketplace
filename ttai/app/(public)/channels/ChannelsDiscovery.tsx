@@ -140,8 +140,8 @@ export function ChannelsDiscovery({ channels }: { channels: DiscoveryChannel[] }
                       </span>
                     </div>
 
-                    {/* Logo overlapping */}
-                    <div className="px-5 -mt-8">
+                    {/* Logo overlapping (relative z-10 so it sits above the relative cover) */}
+                    <div className="px-5 -mt-9 relative z-10">
                       <div className="w-16 h-16 rounded-2xl overflow-hidden bg-[#0B1F4D] flex items-center justify-center border-4 border-white shadow-md">
                         {sup?.logo_url
                           ? <Image src={sup.logo_url} alt={name} width={64} height={64} className="object-cover w-full h-full" />
