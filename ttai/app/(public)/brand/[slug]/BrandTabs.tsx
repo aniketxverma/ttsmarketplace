@@ -313,6 +313,19 @@ export function BrandTabs({
     return Array.from(map.entries())
   }, [products])
 
+  // "Why choose us" — data-driven trust highlights (top 4 available)
+  const sup = supplier as any
+  const TIER_LABEL: Record<string, string> = { GOLD: 'Gold Verified', SILVER: 'Verified Supplier', BRONZE: 'Bronze Verified', UNVERIFIED: 'Supplier' }
+  const highlights = ([
+    sup.reliability_tier && sup.reliability_tier !== 'UNVERIFIED'
+      ? { Icon: BadgeCheck, value: TIER_LABEL[sup.reliability_tier] ?? 'Verified', label: 'Trusted & audited', color: '#16a34a', bg: 'bg-green-50' } : null,
+    sup.years_experience ? { Icon: Calendar, value: `${sup.years_experience}+ yrs`, label: 'In business', color: '#0B1F4D', bg: 'bg-blue-50' } : null,
+    sup.countries_served ? { Icon: Globe, value: `${sup.countries_served}+`, label: 'Countries served', color: '#2563eb', bg: 'bg-sky-50' } : null,
+    certifications.length > 0 ? { Icon: Award, value: `${certifications.length}`, label: 'Quality certifications', color: '#b45309', bg: 'bg-amber-50' } : null,
+    sup.whatsapp ? { Icon: MessageCircle, value: 'Fast reply', label: 'Responds in hours', color: '#16a34a', bg: 'bg-emerald-50' } : null,
+    products.length > 0 ? { Icon: Package, value: `${products.length}`, label: 'Products in catalogue', color: '#7c3aed', bg: 'bg-purple-50' } : null,
+  ].filter(Boolean) as { Icon: any; value: string; label: string; color: string; bg: string }[]).slice(0, 4)
+
   // Canal auth check — runs when channel prop is present
   useEffect(() => {
     if (!channel) return
@@ -568,6 +581,36 @@ export function BrandTabs({
                 </div>
               </div>
             )}
+          </section>
+        )}
+
+        {/* ══════════════ WHY CHOOSE US — trust highlights ════════════════════ */}
+        {highlights.length > 0 && (
+          <section id="sec-why" data-reveal>
+            <div className="rounded-3xl bg-gradient-to-br from-[#0B1F4D] to-[#16306b] p-6 sm:p-8 relative overflow-hidden">
+              {/* decorative */}
+              <div className="absolute -top-16 -right-16 w-56 h-56 rounded-full bg-white/[0.04] pointer-events-none" />
+              <div className="absolute inset-0 opacity-[0.04] pointer-events-none"
+                style={{ backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)', backgroundSize: '22px 22px' }} />
+              <div className="relative">
+                <p className="text-[#F5A623] text-xs font-extrabold uppercase tracking-widest mb-1">Why work with us</p>
+                <h2 className="text-white text-xl sm:text-2xl font-extrabold mb-6">
+                  {supplier.trade_name ?? supplier.legal_name} at a glance
+                </h2>
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                  {highlights.map((h, i) => (
+                    <div key={h.label} className="bg-white/[0.07] border border-white/10 rounded-2xl p-4 backdrop-blur-sm hover:bg-white/[0.11] transition-colors"
+                      style={{ animationDelay: `${i * 80}ms` }}>
+                      <div className={`w-10 h-10 rounded-xl ${h.bg} flex items-center justify-center mb-3`}>
+                        <h.Icon className="w-5 h-5" style={{ color: h.color }} />
+                      </div>
+                      <p className="text-white font-extrabold text-base leading-tight">{h.value}</p>
+                      <p className="text-white/55 text-xs mt-0.5">{h.label}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
           </section>
         )}
 
