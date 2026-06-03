@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { useServerTranslations } from '@/lib/i18n/server'
 import { HomeFeatures } from './HomeFeatures'
+import { Reveal } from '@/components/Reveal'
 
 /* ─── SVG icon components ───────────────────────────────────────────────── */
 function IconGlobe({ className = 'w-6 h-6' }: { className?: string }) {
@@ -460,14 +461,16 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
       {/* ══════════════════════════════════════════════════════════════════
           PRODUCT FAMILIES
       ══════════════════════════════════════════════════════════════════ */}
-      <section className="py-24 px-4 bg-white">
+      <section className="py-24 px-4 bg-white overflow-hidden">
         <div className="container mx-auto">
-          <div className="text-center mb-14">
-            <p className="text-[#F5A623] font-semibold text-sm uppercase tracking-widest mb-2">{t('home.what_we_offer')}</p>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-[#0B1F4D]">{t('home.families_title')}</h2>
-            <p className="text-gray-400 mt-3 max-w-xl mx-auto">{t('home.families_subtitle')}</p>
-            <div className="mt-4 mx-auto w-16 h-1 bg-[#F5A623] rounded-full" />
-          </div>
+          <Reveal>
+            <div className="text-center mb-14">
+              <p className="text-[#F5A623] font-semibold text-sm uppercase tracking-widest mb-2">{t('home.what_we_offer')}</p>
+              <h2 className="text-3xl sm:text-4xl font-extrabold text-[#0B1F4D]">{t('home.families_title')}</h2>
+              <p className="text-gray-400 mt-3 max-w-xl mx-auto">{t('home.families_subtitle')}</p>
+              <div className="mt-4 mx-auto w-16 h-1 bg-[#F5A623] rounded-full" />
+            </div>
+          </Reveal>
 
           {/* Cleaning = free/beacon card · all others = locked */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -477,12 +480,13 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
               if (isFree) {
                 /* ── FREE / BEACON card ── */
                 return (
+                  <Reveal key={cat.name} delay={(i % 3) * 100} from="up" className="h-full">
                   <Link
-                    key={cat.name}
                     href={`/marketplace?category=${cat.slug}`}
-                    className="group relative rounded-2xl border-2 border-[#F5A623] overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 bg-white animate-fade-in-up"
-                    style={{ animationDelay: `${i * 80}ms` }}
+                    className="group relative block h-full rounded-2xl border-2 border-[#F5A623] overflow-hidden hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-300 bg-white"
                   >
+                    {/* Shine sweep */}
+                    <span className="absolute inset-0 z-[15] -translate-x-full group-hover:translate-x-full transition-transform duration-[900ms] ease-out bg-gradient-to-r from-transparent via-white/25 to-transparent pointer-events-none" />
                     {/* Pulsing outer rings */}
                     <span className="absolute -top-3 -right-3 z-20 pointer-events-none">
                       <span className="relative flex h-6 w-6">
@@ -523,16 +527,16 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
                       </div>
                     </div>
                   </Link>
+                  </Reveal>
                 )
               }
 
               /* ── LOCKED card ── */
               return (
+                <Reveal key={cat.name} delay={(i % 3) * 100} from="up" className="h-full">
                 <Link
-                  key={cat.name}
                   href="/register"
-                  className="group relative rounded-2xl border border-gray-100 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 bg-white animate-fade-in-up"
-                  style={{ animationDelay: `${i * 80}ms` }}
+                  className="group relative block h-full rounded-2xl border border-gray-100 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 bg-white"
                 >
                   <div className="relative h-48 overflow-hidden">
                     <Image
@@ -566,6 +570,7 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
                     </div>
                   </div>
                 </Link>
+                </Reveal>
               )
             })}
           </div>
@@ -899,17 +904,15 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
               { Icon: IconLock,   color: 'bg-purple-50 text-purple-600' },
               { Icon: IconPhone,  color: 'bg-orange-50 text-orange-600' },
             ] as const).map(({ Icon, color }, i) => (
-              <div
-                key={i}
-                className="bg-white rounded-2xl border border-gray-100 p-6 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 animate-fade-in-up"
-                style={{ animationDelay: `${i * 80}ms` }}
-              >
-                <div className={`w-12 h-12 rounded-2xl ${color} flex items-center justify-center mb-4`}>
-                  <Icon className="w-6 h-6" />
+              <Reveal key={i} delay={i * 90} from="up">
+                <div className="group bg-white rounded-2xl border border-gray-100 p-6 hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 h-full">
+                  <div className={`w-12 h-12 rounded-2xl ${color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}>
+                    <Icon className="w-6 h-6" />
+                  </div>
+                  <h3 className="font-bold text-[#0B1F4D] text-sm mb-2">{TRUST_CARDS[i]?.label}</h3>
+                  <p className="text-xs text-gray-500 leading-relaxed">{TRUST_CARDS[i]?.desc}</p>
                 </div>
-                <h3 className="font-bold text-[#0B1F4D] text-sm mb-2">{TRUST_CARDS[i]?.label}</h3>
-                <p className="text-xs text-gray-500 leading-relaxed">{TRUST_CARDS[i]?.desc}</p>
-              </div>
+              </Reveal>
             ))}
           </div>
         </div>
