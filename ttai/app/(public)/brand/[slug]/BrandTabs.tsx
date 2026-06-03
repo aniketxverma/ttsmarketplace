@@ -541,6 +541,27 @@ export function BrandTabs({
               </Link>
             </div>
 
+            {/* ── Canal subscribe banner (when supplier has a channel) ── */}
+            {channel && (
+              <button data-reveal onClick={() => scrollTo('canal')}
+                className="group w-full mb-14 flex items-center gap-4 rounded-2xl px-5 sm:px-6 py-4 text-left shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all overflow-hidden relative"
+                style={{ background: 'linear-gradient(135deg, #4C1D95 0%, #7C3AED 60%, #6D28D9 100%)' }}>
+                <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-[900ms] ease-out bg-gradient-to-r from-transparent via-white/15 to-transparent pointer-events-none" />
+                <div className="relative w-12 h-12 rounded-2xl bg-white/15 flex items-center justify-center flex-shrink-0">
+                  <Radio className="w-6 h-6 text-white" />
+                </div>
+                <div className="relative flex-1 min-w-0">
+                  <p className="text-white font-extrabold text-base leading-tight">Follow {supplier.trade_name ?? supplier.legal_name} on Canal</p>
+                  <p className="text-white/70 text-sm">
+                    {channel.member_count.toLocaleString()} subscribers · Get exclusive offers &amp; new product drops
+                  </p>
+                </div>
+                <span className="relative flex-shrink-0 inline-flex items-center gap-1.5 bg-white text-[#7C3AED] px-4 py-2 rounded-xl text-sm font-extrabold group-hover:gap-2.5 transition-all">
+                  Subscribe <ArrowRight className="w-4 h-4" />
+                </span>
+              </button>
+            )}
+
             {/* ── Catalogue preview ── */}
             <div data-reveal className="flex items-center justify-between mb-5">
               <div className="flex items-center gap-2.5">
