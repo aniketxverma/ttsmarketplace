@@ -63,7 +63,7 @@ const FEATURES = [
     desc: 'Subscribe to a supplier’s Canal and get their updates, exclusive offers and new product drops in a clean WhatsApp-style inbox — all your followed brands in one place.',
     points: ['WhatsApp-style update feed', 'Exclusive offers & launch alerts', 'All your canales in one inbox'],
     img: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=900&q=80',
-    href: '/marketplace', cta: 'Discover Canales',
+    href: '/channels', cta: 'Discover Canales',
     accent: '#16a34a', stat: { value: 'Live', label: 'Real-time updates' },
   },
 ]

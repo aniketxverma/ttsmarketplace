@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { Header } from '@/components/shared/Header'
 import { DashboardShell } from '@/components/dashboard/DashboardShell'
+import { ChatWidget } from '@/components/ai/ChatWidget'
 import type { UserRole } from '@/types/domain'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -46,6 +47,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
         )}
         {children}
       </DashboardShell>
+      {/* Floating AI chat assistant */}
+      <ChatWidget />
     </div>
   )
 }

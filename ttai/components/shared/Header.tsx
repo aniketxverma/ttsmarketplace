@@ -27,6 +27,7 @@ export async function Header() {
     { label: 'Regions',                 href: '/#shop-by-region' },
     { label: 'Store',                   href: '/store' },
     { label: t('nav.suppliers'),        href: '/suppliers' },
+    { label: 'Canales',                 href: '/channels' },
   ]
 
   return (
