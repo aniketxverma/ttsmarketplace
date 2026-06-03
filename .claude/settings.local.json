@@ -84,7 +84,8 @@
       "Bash(Out-Null)",
       "Bash(Write-Output \"created\")",
       "Bash(mkdir -p \"C:\\\\Users\\\\anike\\\\OneDrive\\\\Desktop\\\\tts.es\\\\ttai\\\\app\\\\\\(public\\)\\\\b2b\" && mkdir -p \"C:\\\\Users\\\\anike\\\\OneDrive\\\\Desktop\\\\tts.es\\\\ttai\\\\app\\\\\\(public\\)\\\\store\" && mkdir -p \"C:\\\\Users\\\\anike\\\\OneDrive\\\\Desktop\\\\tts.es\\\\ttai\\\\app\\\\\\(public\\)\\\\projects\\\\[id]\")",
-      "Bash(echo \"\" > \"C:\\\\Users\\\\anike\\\\OneDrive\\\\Desktop\\\\tts.es\\\\ttai\\\\app\\\\\\(public\\)\\\\projects\\\\[id]\\\\page.tsx\")"
+      "Bash(echo \"\" > \"C:\\\\Users\\\\anike\\\\OneDrive\\\\Desktop\\\\tts.es\\\\ttai\\\\app\\\\\\(public\\)\\\\projects\\\\[id]\\\\page.tsx\")",
+      "Bash(node -e \"try{require\\('dotenv'\\);console.log\\('dotenv available'\\)}catch\\(e\\){console.log\\('no dotenv'\\)}\")"
     ],
     "additionalDirectories": [
       "c:\\Users\\anike\\OneDrive\\Desktop\\tts.es\\ttai\\app\\(public)\\brand\\[slug]\\pos",

@@ -303,20 +303,29 @@ export default function RegisterPage() {
   /* ── Role picker (step 0) ─────────────────────────────── */
   if (step === 0) {
     return (
-      <div className="space-y-5">
-        <div className="text-center space-y-1 pb-2">
-          <h1 className="text-2xl font-extrabold text-[#0B1F4D]">Join TTAI Global Trade</h1>
+      <div className="space-y-6">
+        {/* Animated header */}
+        <div className="text-center space-y-2 pb-1 animate-fade-in-up">
+          <div className="inline-flex items-center gap-2 bg-[#0B1F4D]/5 border border-[#0B1F4D]/10 rounded-full px-3.5 py-1.5 text-[11px] font-bold text-[#0B1F4D] uppercase tracking-widest mb-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#F5A623] animate-blink" />
+            Free to join · 24h approval
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0B1F4D] leading-tight">Join TTAI Global Trade</h1>
           <p className="text-gray-400 text-sm">Choose how you&apos;ll use the platform</p>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {ROLES.map(r => (
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          {ROLES.map((r, i) => (
             <button key={r.value} type="button" onClick={() => { set('role', r.value); set('businessType', ''); setStep(1) }}
-              className="group relative bg-white rounded-2xl border-2 border-gray-100 p-5 text-left hover:border-[#0B1F4D] hover:shadow-lg transition-all duration-200 overflow-hidden">
-              <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${r.color} opacity-0 group-hover:opacity-100 transition-opacity`} />
-              <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${r.color} flex items-center justify-center text-white mb-3 shadow-md group-hover:scale-105 transition-transform`}>{r.icon}</div>
+              style={{ animationDelay: `${i * 90}ms` }}
+              className="group relative bg-white rounded-2xl border-2 border-gray-100 p-5 text-left hover:border-[#0B1F4D] hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden animate-fade-in-up">
+              {/* Glow wash on hover */}
+              <div className={`absolute -inset-px rounded-2xl bg-gradient-to-br ${r.color} opacity-0 group-hover:opacity-[0.04] transition-opacity duration-300 pointer-events-none`} />
+              <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${r.color} scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-300`} />
+              <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${r.color} flex items-center justify-center text-white mb-3 shadow-md group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300`}>{r.icon}</div>
               <p className="font-extrabold text-[#0B1F4D] text-base">{r.label}</p>
               <p className="text-xs text-gray-500 mt-0.5 mb-3">{r.sub}</p>
-              <div className="space-y-1">
+              <div className="space-y-1.5">
                 {r.perks.map(p => (
                   <div key={p} className="flex items-center gap-1.5 text-xs text-gray-500">
                     <svg className="w-3 h-3 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
@@ -326,14 +335,14 @@ export default function RegisterPage() {
                   </div>
                 ))}
               </div>
-              <div className="mt-4 flex items-center gap-1 text-xs font-bold text-[#0B1F4D] group-hover:gap-2 transition-all">
+              <div className="mt-4 flex items-center gap-1 text-xs font-bold text-[#0B1F4D] group-hover:gap-2.5 transition-all">
                 Join as {r.label}
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
               </div>
             </button>
           ))}
         </div>
-        <p className="text-center text-sm text-gray-400">
+        <p className="text-center text-sm text-gray-400 animate-fade-in delay-400">
           Already have an account?{' '}
           <Link href="/login" className="text-[#0B1F4D] font-bold hover:underline">Sign in</Link>
         </p>
@@ -373,11 +382,11 @@ export default function RegisterPage() {
         </div>
       </div>
 
-      <div className="p-6 sm:p-8">
+      <div className="p-6 sm:p-8" key={step}>
 
         {/* ════ STEP 1 — Account ════ */}
         {step === 1 && (
-          <div className="space-y-5">
+          <div className="space-y-5 animate-fade-in-up">
             <div>
               <h2 className="text-xl font-extrabold text-[#0B1F4D]">Your account</h2>
               <p className="text-gray-400 text-sm mt-0.5">Login credentials and public profile identity</p>
@@ -472,7 +481,7 @@ export default function RegisterPage() {
 
         {/* ════ STEP 2 — Company ════ */}
         {step === 2 && (
-          <div className="space-y-5">
+          <div className="space-y-5 animate-fade-in-up">
             <div>
               <h2 className="text-xl font-extrabold text-[#0B1F4D]">Company details</h2>
               <p className="text-gray-400 text-sm mt-0.5">Tell us about your organisation</p>
@@ -511,7 +520,7 @@ export default function RegisterPage() {
 
         {/* ════ STEP 3 — About ════ */}
         {step === 3 && (
-          <div className="space-y-5">
+          <div className="space-y-5 animate-fade-in-up">
             <div>
               <h2 className="text-xl font-extrabold text-[#0B1F4D]">About your business</h2>
               <p className="text-gray-400 text-sm mt-0.5">This appears on your public profile once approved</p>
@@ -547,7 +556,7 @@ export default function RegisterPage() {
 
         {/* ════ STEP 4 — Review ════ */}
         {step === 4 && (
-          <div className="space-y-5">
+          <div className="space-y-5 animate-fade-in-up">
             <div>
               <h2 className="text-xl font-extrabold text-[#0B1F4D]">Review your application</h2>
               <p className="text-gray-400 text-sm mt-0.5">Confirm everything looks correct</p>
