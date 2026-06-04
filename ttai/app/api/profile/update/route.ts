@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { regionKeysFor } from '@/lib/regions-map'
 
 const ALLOWED_FIELDS = [
   'full_name', 'username', 'phone', 'bio',
@@ -49,5 +50,27 @@ export async function PATCH(request: NextRequest) {
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+
+  // ── Automatic placement ──
+  // For suppliers, derive region keys from continent + country and sync them into
+  // supplier_regions so their products surface automatically under that region/country.
+  try {
+    if (data?.role === 'supplier') {
+      const { data: sup } = await admin.from('suppliers').select('id').eq('owner_id', user.id).maybeSingle()
+      if (sup?.id) {
+        const keys = regionKeysFor(data.continent, data.country_name)
+        if (keys.length > 0) {
+          await (admin.from('supplier_regions') as any).upsert(
+            keys.map((region_key) => ({ supplier_id: sup.id, region_key })),
+            { onConflict: 'supplier_id,region_key' }
+          )
+        }
+      }
+    }
+  } catch (e) {
+    // Non-fatal — profile saved; region sync can be retried on next save
+    console.warn('Auto region placement failed:', (e as Error).message)
+  }
+
   return NextResponse.json({ profile: data })
 }
