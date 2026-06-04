@@ -1,10 +1,21 @@
 import Link from 'next/link'
 import { Check, ArrowRight, Sparkles } from 'lucide-react'
 import { PLANS, PRESENTED_BY_ROLE } from '@/lib/pricing'
+import { createClient } from '@/lib/supabase/server'
+import { SubscribeButton } from './SubscribeButton'
 
 export const metadata = { title: 'Membership Plans · TTAI EMA' }
 
-export default function PricingPage() {
+export default async function PricingPage() {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  let currentTier = 'free'
+  if (user) {
+    const { data } = await (supabase.from('profiles') as any).select('tier').eq('id', user.id).single()
+    currentTier = data?.tier ?? 'free'
+  }
+  const hasPlan = currentTier !== 'free'
+
   return (
     <div className="min-h-screen bg-white">
 
@@ -64,17 +75,33 @@ export default function PricingPage() {
                 ))}
               </ul>
 
-              <Link href="/register"
-                className={`inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-bold transition-all ${
+              {(() => {
+                const btnCls = `rounded-xl px-5 py-3 text-sm font-bold transition-all ${
                   p.highlight
                     ? 'bg-[#7c3aed] text-white hover:bg-[#6d28d9]'
                     : p.tier === 'free'
                       ? 'border-2 border-[#0B1F4D] text-[#0B1F4D] hover:bg-[#0B1F4D] hover:text-white'
                       : 'bg-[#0B1F4D] text-white hover:bg-[#162d6e]'
-                }`}>
-                {p.tier === 'free' ? 'Start free' : 'Get started'}
-                <ArrowRight className="w-4 h-4" />
-              </Link>
+                }`
+                // Free plan is just registration; paid plans go through Stripe.
+                if (p.tier === 'free' && !hasPlan) {
+                  return (
+                    <Link href={user ? '/dashboard' : '/register'} className={`inline-flex items-center justify-center gap-2 ${btnCls}`}>
+                      {user ? 'Current plan' : 'Start free'}<ArrowRight className="w-4 h-4" />
+                    </Link>
+                  )
+                }
+                return (
+                  <SubscribeButton
+                    tier={p.tier}
+                    label="Get started"
+                    loggedIn={!!user}
+                    isCurrent={currentTier === p.tier}
+                    hasPlan={hasPlan}
+                    className={btnCls}
+                  />
+                )
+              })()}
             </div>
           ))}
         </div>

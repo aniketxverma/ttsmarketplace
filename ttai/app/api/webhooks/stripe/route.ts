@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { constructWebhookEvent } from '@/lib/stripe/client'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { tierForPrice, isActiveStatus } from '@/lib/stripe/membership'
 import { calculateFeeSplit } from '@/lib/fees/engine'
 import { transferToConnectAccount } from '@/lib/stripe/connect'
 import { sendEmailFireAndForget } from '@/lib/email/send'
@@ -24,8 +25,59 @@ export async function POST(req: NextRequest) {
 
   const admin = createAdminClient()
 
+  // ── Membership subscription lifecycle → keep profiles.tier in sync ──────────
+  if (
+    event.type === 'customer.subscription.created' ||
+    event.type === 'customer.subscription.updated' ||
+    event.type === 'customer.subscription.deleted'
+  ) {
+    const sub = event.data.object as {
+      id: string; status: string; customer: string
+      items: { data: { price: { id: string } }[] }
+      metadata?: { user_id?: string }
+    }
+    const priceId = sub.items?.data?.[0]?.price?.id
+    const active  = event.type !== 'customer.subscription.deleted' && isActiveStatus(sub.status)
+    const tier    = active ? tierForPrice(priceId) : 'free'
+
+    // Resolve the profile by metadata user_id, else by stored customer id.
+    let userId = sub.metadata?.user_id ?? null
+    if (!userId) {
+      const { data: p } = await admin.from('profiles').select('id').eq('stripe_customer_id', sub.customer).single()
+      userId = (p as any)?.id ?? null
+    }
+    if (userId) {
+      await (admin.from('profiles') as any).update({
+        tier,
+        stripe_customer_id: sub.customer,
+        stripe_subscription_id: sub.id,
+        subscription_status: sub.status,
+      }).eq('id', userId)
+    }
+    return NextResponse.json({ received: true })
+  }
+
   if (event.type === 'checkout.session.completed') {
-    const session = event.data.object as { id: string; metadata?: { order_id?: string }; payment_intent?: string }
+    const session = event.data.object as {
+      id: string; metadata?: { order_id?: string; kind?: string; user_id?: string; tier?: string }
+      payment_intent?: string; customer?: string; subscription?: string
+    }
+
+    // Membership checkout — the subscription.* events do the tier sync, but set
+    // the customer/subscription ids immediately so the portal works right away.
+    if (session.metadata?.kind === 'membership') {
+      const userId = session.metadata.user_id
+      if (userId) {
+        await (admin.from('profiles') as any).update({
+          stripe_customer_id: session.customer,
+          stripe_subscription_id: session.subscription,
+          tier: session.metadata.tier ?? 'free',
+          subscription_status: 'active',
+        }).eq('id', userId)
+      }
+      return NextResponse.json({ received: true })
+    }
+
     const orderId = session.metadata?.order_id
     if (!orderId) return NextResponse.json({ received: true })
 
