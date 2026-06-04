@@ -103,17 +103,15 @@ export function ProductForm({ supplierId, mode, productId, initialData }: Produc
         .single()
       if (insertError || !newProduct) { setError(insertError?.message ?? 'Insert failed'); setLoading(false); return }
 
-      // Upload staged images
+      // Upload staged images via the server endpoint (admin → brand-assets bucket)
       for (let i = 0; i < pendingFiles.length; i++) {
-        const file = pendingFiles[i]
-        const ext = file.name.split('.').pop() ?? 'jpg'
-        const path = `${supplierId}/${newProduct.id}/${Date.now()}-${i}.${ext}`
-        const { error: upErr } = await supabase.storage
-          .from('product-images')
-          .upload(path, file, { upsert: false, contentType: file.type })
-        if (upErr) continue
-        const { data: { publicUrl } } = supabase.storage.from('product-images').getPublicUrl(path)
-        await supabase.from('product_images').insert({ product_id: newProduct.id, url: publicUrl, sort_order: i })
+        const fd = new FormData()
+        fd.append('file', pendingFiles[i])
+        fd.append('folder', 'products')
+        const upRes = await fetch('/api/upload', { method: 'POST', body: fd })
+        const upJson = await upRes.json().catch(() => ({}))
+        if (!upRes.ok || !upJson.url) continue
+        await supabase.from('product_images').insert({ product_id: newProduct.id, url: upJson.url, sort_order: i })
       }
     } else if (mode === 'edit' && productId) {
       const { error: updateError } = await supabase.from('products').update(payload).eq('id', productId)

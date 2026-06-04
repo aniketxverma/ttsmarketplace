@@ -41,23 +41,20 @@ export function ProductImageManager({ productId, supplierId, initialImages = [] 
       progress[i] = 'uploading'
       setUploadProgress([...progress])
 
-      const ext = file.name.split('.').pop() ?? 'jpg'
-      const path = `${supplierId}/${productId}/${Date.now()}-${i}.${ext}`
+      // Upload via the server endpoint (admin → brand-assets bucket).
+      const fd = new FormData()
+      fd.append('file', file)
+      fd.append('folder', 'products')
+      const upRes = await fetch('/api/upload', { method: 'POST', body: fd })
+      const upJson = await upRes.json().catch(() => ({}))
 
-      const { error: uploadErr } = await supabase.storage
-        .from('product-images')
-        .upload(path, file, { upsert: false, contentType: file.type })
-
-      if (uploadErr) {
+      if (!upRes.ok || !upJson.url) {
         progress[i] = 'error'
         setUploadProgress([...progress])
-        setError(`Failed to upload ${file.name}: ${uploadErr.message}`)
+        setError(`Failed to upload ${file.name}: ${upJson.error ?? 'upload error'}`)
         continue
       }
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('product-images')
-        .getPublicUrl(path)
+      const publicUrl = upJson.url as string
 
       const sortOrder = images.length + newImages.length
       const { data: imgRow, error: insertErr } = await supabase

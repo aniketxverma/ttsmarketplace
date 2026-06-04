@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { ImageUpload } from '@/components/ImageUpload'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface Supplier {
@@ -315,12 +316,14 @@ export function BrandProfileEditor({ supplier, gallery: initialGallery, certific
                 <input className={INPUT} type="number" value={form.countries_served} onChange={(e) => set('countries_served', e.target.value)} placeholder="10" min="0" />
               </Field>
             </div>
-            <Field label="Logo URL" hint="Direct link to your logo image (square, at least 200×200px)">
-              <input className={INPUT} value={form.logo_url} onChange={(e) => set('logo_url', e.target.value)} placeholder="https://..." />
-            </Field>
-            <Field label="Banner Image URL" hint="Wide banner for your brand page hero (at least 1200×300px)">
-              <input className={INPUT} value={form.banner_image} onChange={(e) => set('banner_image', e.target.value)} placeholder="https://..." />
-            </Field>
+            <div className="grid grid-cols-1 sm:grid-cols-[auto_1fr] gap-5 items-start">
+              <Field label="Logo" hint="Square, at least 200×200px">
+                <ImageUpload value={form.logo_url || null} onChange={(url) => set('logo_url', url)} folder="logos" aspect="square" label="Logo" />
+              </Field>
+              <Field label="Banner image" hint="Wide hero banner for your brand page (at least 1200×300px)">
+                <ImageUpload value={form.banner_image || null} onChange={(url) => set('banner_image', url)} folder="banners" aspect="wide" label="Banner" />
+              </Field>
+            </div>
           </div>
         )}
 

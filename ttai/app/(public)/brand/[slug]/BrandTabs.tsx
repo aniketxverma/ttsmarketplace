@@ -28,6 +28,7 @@ interface Supplier {
 interface Product {
   id: string; name: string; slug: string; price_cents: number; currency_code: string
   min_order_qty: number | null; thumb: string | null; category_name: string | null; description?: string | null
+  marketplace_context?: string | null
 }
 interface GalleryItem { id: string; url: string; type: 'image'|'video'; caption: string | null; sort_order: number }
 interface Certification { id: string; title: string; issuer: string | null; issued_date: string | null; expiry_date: string | null; image_url: string | null }
@@ -138,8 +139,8 @@ function ProductCard({ product, wa }: { product: Product; wa: string | null }) {
             <Images className="w-8 h-8 text-gray-200" />
           </div>
         )}
-        {/* MOQ */}
-        {product.min_order_qty && (
+        {/* MOQ — wholesale only; the online shop sells by the piece */}
+        {product.min_order_qty && product.marketplace_context !== 'retail' && (
           <div className="absolute bottom-2 left-2 bg-[#0B1F4D]/90 text-white text-[10px] font-bold px-2 py-0.5 rounded-full backdrop-blur-sm">
             MOQ {product.min_order_qty}
           </div>
