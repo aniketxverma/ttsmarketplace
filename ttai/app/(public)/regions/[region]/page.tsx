@@ -3,6 +3,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { getRegion, REGIONS } from '@/lib/regions-data'
 import { OpenCountryCard, LockedCountryCard } from './CountryCards'
+import { IndustryExplorer } from '@/app/(public)/IndustryExplorer'
 
 export function generateStaticParams() {
   return REGIONS.map((r) => ({ region: r.id }))
@@ -106,6 +107,9 @@ export default function RegionPage({ params }: { params: { region: string } }) {
           )}
         </div>
       </div>
+
+      {/* ── Explore by industry (within this region) ─────────────────── */}
+      <IndustryExplorer mode="industries" region={params.region} />
 
       {/* ── Other regions — all locked except Europe ─────────────────── */}
       <div className="border-t bg-gray-50 py-12">

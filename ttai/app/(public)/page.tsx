@@ -462,10 +462,9 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
       </section>
 
       {/* ══════════════════════════════════════════════════════════════════
-          INDUSTRY EXPLORER — 12 industries (accordion) + 3 shop cards
-          Flow: choose category → (inside) choose region → products
+          SHOP NAVIGATION — Online / B2B / Trade (industries live on region pages)
       ══════════════════════════════════════════════════════════════════ */}
-      <IndustryExplorer />
+      <IndustryExplorer mode="shops" />
 
       {/* ══════════════════════════════════════════════════════════════════
           SHOP BY REGION

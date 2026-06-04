@@ -66,14 +66,25 @@ const SHOPS = [
   { name: 'Shop Trade', desc: 'Import / export & international business opportunities.', href: '/marketplace', Icon: Globe, gradient: 'from-amber-500 to-orange-600', tag: 'Global' },
 ]
 
-export function IndustryExplorer() {
+export function IndustryExplorer({
+  mode = 'full', region = null,
+}: {
+  /** 'full' = shops + industries · 'shops' = shop cards only · 'industries' = industries only */
+  mode?: 'full' | 'shops' | 'industries'
+  /** When set, category links carry &region= so results stay scoped to the chosen region */
+  region?: string | null
+}) {
   const [open, setOpen] = useState<string | null>(null)
+  const catHref = (slug: string) => `/marketplace?category=${slug}${region ? `&region=${region}` : ''}`
+  const showShops = mode === 'full' || mode === 'shops'
+  const showIndustries = mode === 'full' || mode === 'industries'
 
   return (
     <section className="py-20 sm:py-24 px-4 bg-[#F7F8FA]">
       <div className="container mx-auto max-w-6xl">
 
         {/* ── Shop navigation ── */}
+        {showShops && (<>
         <div className="text-center mb-10">
           <p className="text-[#F5A623] font-semibold text-sm uppercase tracking-widest mb-2">How would you like to trade?</p>
           <h2 className="text-3xl sm:text-4xl font-extrabold text-[#0B1F4D]">Choose your marketplace</h2>
@@ -97,8 +108,10 @@ export function IndustryExplorer() {
             </Link>
           ))}
         </div>
+        </>)}
 
         {/* ── Industries ── */}
+        {showIndustries && (<>
         <div className="text-center mb-10">
           <p className="text-[#F5A623] font-semibold text-sm uppercase tracking-widest mb-2">Explore by industry</p>
           <h2 className="text-3xl sm:text-4xl font-extrabold text-[#0B1F4D]">12 industries, one ecosystem</h2>
@@ -126,7 +139,7 @@ export function IndustryExplorer() {
                   {hasSubs ? (
                     <ChevronDown className={`w-5 h-5 text-gray-400 flex-shrink-0 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
                   ) : (
-                    <Link href={`/marketplace?category=${ind.slug}`} onClick={(e) => e.stopPropagation()}
+                    <Link href={catHref(ind.slug)} onClick={(e) => e.stopPropagation()}
                       className="flex-shrink-0 w-8 h-8 rounded-full bg-gray-50 hover:bg-[#0B1F4D] flex items-center justify-center group transition-colors">
                       <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-white" />
                     </Link>
@@ -140,7 +153,7 @@ export function IndustryExplorer() {
                       <div className="px-5 pb-5 pt-1">
                         <div className="flex flex-wrap gap-2">
                           {ind.subs.map((sub) => (
-                            <Link key={sub.slug} href={`/marketplace?category=${sub.slug}`}
+                            <Link key={sub.slug} href={catHref(sub.slug)}
                               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-semibold bg-gray-50 text-gray-600 hover:text-white transition-colors"
                               style={{ ['--hover' as any]: ind.color }}
                               onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = ind.color; (e.currentTarget as HTMLElement).style.color = '#fff' }}
@@ -148,7 +161,7 @@ export function IndustryExplorer() {
                               {sub.name}
                             </Link>
                           ))}
-                          <Link href={`/marketplace?category=${ind.slug}`}
+                          <Link href={catHref(ind.slug)}
                             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-extrabold text-white"
                             style={{ background: ind.color }}>
                             View all <ArrowRight className="w-3.5 h-3.5" />
@@ -162,6 +175,7 @@ export function IndustryExplorer() {
             )
           })}
         </div>
+        </>)}
       </div>
     </section>
   )
