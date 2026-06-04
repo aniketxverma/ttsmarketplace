@@ -1,18 +1,18 @@
 'use client'
 
-import { useState } from 'react'
 import Link from 'next/link'
 import {
   UtensilsCrossed, SprayCan, Sparkles, Cpu, Recycle, HeartPulse,
   Building2, Car, Shirt, Truck, Factory, Briefcase,
-  ChevronDown, ArrowRight, Store, ShoppingBag, Globe,
+  ArrowRight, Store, ShoppingBag, Globe,
 } from 'lucide-react'
 
 type Sub = { name: string; slug: string }
-type Industry = { name: string; slug: string; Icon: typeof Factory; color: string; subs: Sub[] }
+type Industry = { name: string; slug: string; Icon: typeof Factory; color: string; image: string; subs: Sub[] }
 
 const INDUSTRIES: Industry[] = [
-  { name: 'Food & Beverage', slug: 'food-beverage', Icon: UtensilsCrossed, color: '#16a34a', subs: [
+  { name: 'Food & Beverage', slug: 'food-beverage', Icon: UtensilsCrossed, color: '#16a34a',
+    image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800&q=80', subs: [
     { name: 'Agriculture', slug: 'agriculture' }, { name: 'Livestock', slug: 'livestock' },
     { name: 'Fisheries & Aquaculture', slug: 'fisheries-aquaculture' }, { name: 'Food Manufacturers', slug: 'food-manufacturers' },
     { name: 'Beverage Manufacturers', slug: 'beverage-manufacturers' }, { name: 'Suppliers', slug: 'food-suppliers' },
@@ -20,40 +20,51 @@ const INDUSTRIES: Industry[] = [
     { name: 'Restaurants', slug: 'restaurants' }, { name: 'Hotels', slug: 'hotels' }, { name: 'Catering', slug: 'catering' },
     { name: 'Organic / Halal', slug: 'organic-food' }, { name: 'Cold Chain', slug: 'cold-chain-logistics' }, { name: 'Recycling', slug: 'food-recycling' },
   ]},
-  { name: 'Cleaning & Household', slug: 'cleaning-household', Icon: SprayCan, color: '#2563eb', subs: [
+  { name: 'Cleaning & Household', slug: 'cleaning-household', Icon: SprayCan, color: '#2563eb',
+    image: 'https://images.unsplash.com/photo-1583947215259-38e31be8751f?w=800&q=80', subs: [
     { name: 'Cleaning Products', slug: 'cleaning-products' }, { name: 'Industrial Cleaning', slug: 'industrial-cleaning' },
     { name: 'Household Cleaning', slug: 'household-cleaning' }, { name: 'Tissue & Paper', slug: 'tissue-paper-products' },
     { name: 'Disposable Products', slug: 'disposable-products' }, { name: 'Cleaning Equipment', slug: 'cleaning-equipment' },
     { name: 'Eco-Friendly', slug: 'eco-friendly-cleaning' }, { name: 'Suppliers', slug: 'cleaning-suppliers' },
     { name: 'Distributors', slug: 'cleaning-distributors' }, { name: 'Recycling', slug: 'cleaning-recycling' },
   ]},
-  { name: 'Personal Care', slug: 'personal-care', Icon: Sparkles, color: '#9333ea', subs: [
+  { name: 'Personal Care', slug: 'personal-care', Icon: Sparkles, color: '#9333ea',
+    image: 'https://images.unsplash.com/photo-1556228578-8c89e6adf883?w=800&q=80', subs: [
     { name: 'Cosmetics', slug: 'cosmetics' }, { name: 'Perfumes', slug: 'perfumes' }, { name: 'Hair Care', slug: 'hair-care' },
     { name: 'Skin Care', slug: 'skin-care' }, { name: 'Personal Hygiene', slug: 'personal-hygiene' }, { name: 'Baby Care', slug: 'baby-care' },
     { name: 'Professional Beauty', slug: 'professional-beauty' }, { name: 'Organic Cosmetics', slug: 'organic-cosmetics' },
     { name: 'Halal Cosmetics', slug: 'halal-cosmetics' }, { name: 'Suppliers', slug: 'personalcare-suppliers' },
   ]},
-  { name: 'Electronics & Tech', slug: 'electronics-tech', Icon: Cpu, color: '#475569', subs: [
+  { name: 'Electronics & Tech', slug: 'electronics-tech', Icon: Cpu, color: '#475569',
+    image: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=800&q=80', subs: [
     { name: 'Smartphones', slug: 'smartphones' }, { name: 'Computers', slug: 'computers' }, { name: 'Networking', slug: 'networking' },
     { name: 'Telecommunications', slug: 'telecommunications' }, { name: 'Software', slug: 'software' }, { name: 'AI Solutions', slug: 'ai-solutions' },
     { name: 'Components', slug: 'electronic-components' }, { name: 'Consumer Electronics', slug: 'consumer-electronics' },
     { name: 'Refrigerators', slug: 'refrigerators' }, { name: 'Washing Machines', slug: 'washing-machines' }, { name: 'Air Conditioners', slug: 'air-conditioners' },
   ]},
-  { name: 'Recycling & Sustainability', slug: 'recycling-sustainability', Icon: Recycle, color: '#059669', subs: [
+  { name: 'Recycling & Sustainability', slug: 'recycling-sustainability', Icon: Recycle, color: '#059669',
+    image: 'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?w=800&q=80', subs: [
     { name: 'Plastic Recycling', slug: 'plastic-recycling' }, { name: 'Metal Recycling', slug: 'metal-recycling' }, { name: 'Glass Recycling', slug: 'glass-recycling' },
     { name: 'Paper Recycling', slug: 'paper-recycling' }, { name: 'Waste Management', slug: 'waste-management' }, { name: 'Renewable Energy', slug: 'renewable-energy' },
     { name: 'Water Treatment', slug: 'water-treatment' }, { name: 'Circular Economy', slug: 'circular-economy' },
   ]},
-  { name: 'Healthcare & Medical', slug: 'healthcare-medical', Icon: HeartPulse, color: '#e11d48', subs: [
+  { name: 'Healthcare & Medical', slug: 'healthcare-medical', Icon: HeartPulse, color: '#e11d48',
+    image: 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=800&q=80', subs: [
     { name: 'Clinics', slug: 'clinics' }, { name: 'Hospitals', slug: 'hospitals' }, { name: 'Laboratories', slug: 'laboratories' },
     { name: 'Medical Devices', slug: 'medical-devices' }, { name: 'Rehabilitation', slug: 'rehabilitation' }, { name: 'Telemedicine', slug: 'telemedicine' },
   ]},
-  { name: 'Construction & Building', slug: 'construction-building', Icon: Building2, color: '#d97706', subs: [] },
-  { name: 'Automotive', slug: 'automotive', Icon: Car, color: '#52525b', subs: [] },
-  { name: 'Textile & Fashion', slug: 'textile-fashion', Icon: Shirt, color: '#db2777', subs: [] },
-  { name: 'Logistics & Supply Chain', slug: 'logistics-supply-chain', Icon: Truck, color: '#0891b2', subs: [] },
-  { name: 'Industrial & Manufacturing', slug: 'industrial-manufacturing', Icon: Factory, color: '#4f46e5', subs: [] },
-  { name: 'Consulting & Services', slug: 'consulting-services', Icon: Briefcase, color: '#0d9488', subs: [
+  { name: 'Construction & Building', slug: 'construction-building', Icon: Building2, color: '#d97706',
+    image: 'https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=800&q=80', subs: [] },
+  { name: 'Automotive', slug: 'automotive', Icon: Car, color: '#52525b',
+    image: 'https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=800&q=80', subs: [] },
+  { name: 'Textile & Fashion', slug: 'textile-fashion', Icon: Shirt, color: '#db2777',
+    image: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800&q=80', subs: [] },
+  { name: 'Logistics & Supply Chain', slug: 'logistics-supply-chain', Icon: Truck, color: '#0891b2',
+    image: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=800&q=80', subs: [] },
+  { name: 'Industrial & Manufacturing', slug: 'industrial-manufacturing', Icon: Factory, color: '#4f46e5',
+    image: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=800&q=80', subs: [] },
+  { name: 'Consulting & Services', slug: 'consulting-services', Icon: Briefcase, color: '#0d9488',
+    image: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=800&q=80', subs: [
     { name: 'Business Consulting', slug: 'business-consulting' }, { name: 'Financial Consulting', slug: 'financial-consulting' },
     { name: 'Marketing', slug: 'marketing-services' }, { name: 'Legal Services', slug: 'legal-services' },
     { name: 'HR Services', slug: 'hr-services' }, { name: 'Training', slug: 'training-services' },
@@ -74,7 +85,6 @@ export function IndustryExplorer({
   /** When set, category links carry &region= so results stay scoped to the chosen region */
   region?: string | null
 }) {
-  const [open, setOpen] = useState<string | null>(null)
   const catHref = (slug: string) => `/marketplace?category=${slug}${region ? `&region=${region}` : ''}`
   const showShops = mode === 'full' || mode === 'shops'
   const showIndustries = mode === 'full' || mode === 'industries'
@@ -118,62 +128,30 @@ export function IndustryExplorer({
           <p className="text-gray-400 mt-3 max-w-xl mx-auto">From production to distribution and recycling — discover suppliers, manufacturers and distributors in every sector.</p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {INDUSTRIES.map((ind) => {
-            const isOpen = open === ind.slug
-            const hasSubs = ind.subs.length > 0
-            return (
-              <div key={ind.slug}
-                className={`bg-white rounded-2xl border transition-all duration-300 ${isOpen ? 'border-[#0B1F4D]/20 shadow-xl sm:col-span-2 lg:col-span-3' : 'border-gray-100 shadow-sm hover:shadow-md'}`}>
-                {/* Header */}
-                <button onClick={() => hasSubs ? setOpen(isOpen ? null : ind.slug) : undefined}
-                  className="w-full flex items-center gap-4 p-4 sm:p-5 text-left">
-                  <div className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-sm"
-                    style={{ background: `linear-gradient(135deg, ${ind.color}, ${ind.color}cc)` }}>
-                    <ind.Icon className="w-6 h-6 text-white" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-extrabold text-[#0B1F4D] text-base leading-tight">{ind.name}</h3>
-                    <p className="text-xs text-gray-400 mt-0.5">{hasSubs ? `${ind.subs.length} subcategories` : 'Explore companies'}</p>
-                  </div>
-                  {hasSubs ? (
-                    <ChevronDown className={`w-5 h-5 text-gray-400 flex-shrink-0 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
-                  ) : (
-                    <Link href={catHref(ind.slug)} onClick={(e) => e.stopPropagation()}
-                      className="flex-shrink-0 w-8 h-8 rounded-full bg-gray-50 hover:bg-[#0B1F4D] flex items-center justify-center group transition-colors">
-                      <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-white" />
-                    </Link>
-                  )}
-                </button>
-
-                {/* Expandable subcategories — smooth grid-rows accordion */}
-                {hasSubs && (
-                  <div className={`grid transition-all duration-300 ease-out ${isOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
-                    <div className="overflow-hidden">
-                      <div className="px-5 pb-5 pt-1">
-                        <div className="flex flex-wrap gap-2">
-                          {ind.subs.map((sub) => (
-                            <Link key={sub.slug} href={catHref(sub.slug)}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-semibold bg-gray-50 text-gray-600 hover:text-white transition-colors"
-                              style={{ ['--hover' as any]: ind.color }}
-                              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = ind.color; (e.currentTarget as HTMLElement).style.color = '#fff' }}
-                              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = ''; (e.currentTarget as HTMLElement).style.color = '' }}>
-                              {sub.name}
-                            </Link>
-                          ))}
-                          <Link href={catHref(ind.slug)}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-extrabold text-white"
-                            style={{ background: ind.color }}>
-                            View all <ArrowRight className="w-3.5 h-3.5" />
-                          </Link>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3.5 sm:gap-4">
+          {INDUSTRIES.map((ind) => (
+            <Link key={ind.slug} href={catHref(ind.slug)}
+              className="group relative rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5">
+              <div className="relative h-36 sm:h-44">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={ind.image} alt={ind.name} loading="lazy"
+                  className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent" />
+                {/* Icon badge */}
+                <div className="absolute top-2.5 left-2.5 w-9 h-9 rounded-xl flex items-center justify-center shadow-md backdrop-blur-sm"
+                  style={{ background: `${ind.color}e6` }}>
+                  <ind.Icon className="w-5 h-5 text-white" />
+                </div>
               </div>
-            )
-          })}
+              <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-3.5">
+                <h3 className="text-white font-extrabold text-sm sm:text-base leading-tight">{ind.name}</h3>
+                <div className="mt-1 flex items-center gap-1 text-[11px] font-bold text-[#F5A623]">
+                  {ind.subs.length > 0 ? `${ind.subs.length} subcategories` : 'Explore'}
+                  <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+                </div>
+              </div>
+            </Link>
+          ))}
         </div>
         </>)}
       </div>

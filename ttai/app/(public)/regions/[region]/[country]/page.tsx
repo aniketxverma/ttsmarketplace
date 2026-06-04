@@ -120,61 +120,17 @@ export default async function CountryPage({ params }: { params: { region: string
       {/* ── Explore by industry (scoped to this country) ─────────────── */}
       <IndustryExplorer mode="industries" region={`${params.region}:${params.country}`} />
 
-      {/* ── Curated collections (compact) ────────────────────────────── */}
-      <div className="container mx-auto px-4 sm:px-8 py-14">
-        <div className="mb-8">
-          <p className="text-[#F5A623] text-xs font-bold uppercase tracking-widest mb-2">Curated Collections</p>
-          <h2 className="text-xl sm:text-2xl font-extrabold text-[#0B1F4D]">
-            What to Explore in {country.name}
-          </h2>
-          <p className="text-gray-400 text-sm mt-1">
-            Tap a collection to discover products by classification
-          </p>
-        </div>
-
-        {/* Uniform compact card grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3.5">
-          {country.categories.map((cat) => (
-            <Link
-              key={cat.id}
-              href={cat.marketplaceUrl}
-              className="group relative rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5 bg-gray-100"
-            >
-              <div className="relative h-32 sm:h-36">
-                <Image
-                  src={cat.image}
-                  alt={cat.name}
-                  fill
-                  className="object-cover group-hover:scale-105 transition-transform duration-500"
-                  sizes="(max-width: 640px) 50vw, 25vw"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-transparent" />
-              </div>
-              <div className="absolute bottom-0 left-0 right-0 p-3">
-                <h3 className="text-white font-bold text-xs sm:text-sm leading-tight line-clamp-1">{cat.name}</h3>
-                <div className="mt-1 flex items-center gap-1 text-[10px] font-bold text-[#F5A623]">
-                  Explore
-                  <svg className="w-2.5 h-2.5 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" />
-                  </svg>
-                </div>
-              </div>
-            </Link>
-          ))}
-        </div>
-
-        {/* View all marketplace CTA */}
-        <div className="mt-10 text-center">
-          <Link
-            href="/marketplace"
-            className="inline-flex items-center gap-2.5 rounded-xl border-2 border-[#0B1F4D] text-[#0B1F4D] px-8 py-3.5 text-sm font-bold hover:bg-[#0B1F4D] hover:text-white transition-all duration-200"
-          >
-            Browse All Products
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-            </svg>
-          </Link>
-        </div>
+      {/* View all marketplace CTA */}
+      <div className="text-center pb-14 -mt-6">
+        <Link
+          href={`/marketplace?region=${params.region}:${params.country}`}
+          className="inline-flex items-center gap-2.5 rounded-xl border-2 border-[#0B1F4D] text-[#0B1F4D] px-8 py-3.5 text-sm font-bold hover:bg-[#0B1F4D] hover:text-white transition-all duration-200"
+        >
+          Browse All Products in {country.name}
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+          </svg>
+        </Link>
       </div>
 
       {/* ── Three ways to shop this market ───────────────────────────── */}
