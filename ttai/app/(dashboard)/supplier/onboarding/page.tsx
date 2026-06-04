@@ -107,6 +107,8 @@ export default function SupplierOnboardingPage() {
     }
 
     await supabase.from('profiles').update({ role: 'supplier' }).eq('id', user.id)
+    // Auto-place the supplier into their region/country (from profile continent + country)
+    fetch('/api/supplier/sync-regions', { method: 'POST' }).catch(() => {})
     router.push('/supplier')
   }
 
