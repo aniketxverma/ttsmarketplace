@@ -11,6 +11,7 @@ export interface FamilyProduct {
   name: string
   slug: string
   price_cents: number
+  retail_price_cents?: number | null
   currency_code: string
   min_order_qty: number
   marketplace_context: string

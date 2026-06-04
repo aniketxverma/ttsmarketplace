@@ -62,6 +62,7 @@ export default async function EditProductPage({ params }: { params: { id: string
             description:        product.description ?? '',
             sku:                product.sku ?? '',
             priceDisplay:       (product.price_cents / 100).toFixed(2),
+            retailPriceDisplay: (product as any).retail_price_cents != null ? ((product as any).retail_price_cents / 100).toFixed(2) : '',
             currencyCode:       product.currency_code,
             minOrderQty:        product.min_order_qty.toString(),
             stockQty:           product.stock_qty.toString(),

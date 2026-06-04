@@ -9,6 +9,7 @@ interface ProductCardProps {
     name: string
     slug: string
     price_cents: number
+    retail_price_cents?: number | null
     currency_code: string
     min_order_qty: number
     marketplace_context: MarketplaceContext
@@ -39,14 +40,21 @@ function formatPrice(cents: number, currency: string) {
 export function ProductCard({ product, supplier, mainImageUrl, href, retail = false }: ProductCardProps) {
   // Retail surface (Online Store) OR a retail-only product → consumer presentation.
   const isRetail = retail || product.marketplace_context === 'retail'
-  const displayPrice = isRetail && product.vat_rate
-    ? product.price_cents + Math.round(product.price_cents * product.vat_rate / 100)
+  // Retail uses the dedicated online-shop price when set; otherwise the
+  // wholesale price (+VAT for display). Wholesale shows the bare price ex-VAT.
+  const displayPrice = isRetail
+    ? (product.retail_price_cents ?? (product.vat_rate
+        ? product.price_cents + Math.round(product.price_cents * product.vat_rate / 100)
+        : product.price_cents))
     : product.price_cents
+
+  // Retail surfaces carry shop=online so the product page renders the retail view.
+  const finalHref = isRetail && !href.includes('?') ? `${href}?shop=online` : href
 
   const displayName = supplier.trade_name ?? supplier.legal_name
 
   return (
-    <Link href={href} className="group block">
+    <Link href={finalHref} className="group block">
       <div className="bg-card rounded-xl border overflow-hidden hover:shadow-md transition-shadow">
         <div className="aspect-square relative bg-muted overflow-hidden">
           {mainImageUrl ? (

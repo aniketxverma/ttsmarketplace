@@ -45,7 +45,7 @@ export default async function StorePage({
   let productQuery = (supabase
     .from('products') as any)
     .select(
-      `id, name, slug, price_cents, currency_code, min_order_qty, marketplace_context, vat_rate,
+      `id, name, slug, price_cents, retail_price_cents, currency_code, min_order_qty, marketplace_context, vat_rate,
       supplier_id, category_id, product_line,
       suppliers!inner(legal_name, trade_name, reliability_tier, status),
       categories(name, slug),

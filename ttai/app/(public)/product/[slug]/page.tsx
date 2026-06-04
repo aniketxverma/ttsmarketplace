@@ -40,12 +40,12 @@ function fmt(cents: number, currency: string) {
   return new Intl.NumberFormat('es-ES', { style: 'currency', currency }).format(cents / 100)
 }
 
-export default async function ProductPage({ params }: { params: { slug: string } }) {
+export default async function ProductPage({ params, searchParams }: { params: { slug: string }; searchParams: { shop?: string } }) {
   const { t } = await useServerTranslations()
   const supabase = createClient()
 
   const PRODUCT_SELECT = `
-    id, name, slug, description, price_cents, currency_code,
+    id, name, slug, description, price_cents, retail_price_cents, currency_code,
     min_order_qty, stock_qty, is_published, marketplace_context,
     product_images(url, sort_order),
     categories(name, slug),
@@ -89,6 +89,15 @@ export default async function ProductPage({ params }: { params: { slug: string }
   const supplier = product.suppliers as any
   const images   = ((product.product_images ?? []) as any[]).sort((a: any, b: any) => a.sort_order - b.sort_order)
   const tier     = TIER[supplier?.reliability_tier ?? 'UNVERIFIED'] ?? TIER.UNVERIFIED
+
+  // Retail (Online Shop) view vs wholesale (B2B/marketplace). The shop=online
+  // param (carried from the store) forces retail; otherwise follow the product's
+  // own context. Retail = per-piece price, no MOQ.
+  const retailView = searchParams.shop === 'online'
+    || (searchParams.shop !== 'b2b' && product.marketplace_context === 'retail')
+  const unitPrice  = retailView ? (product.retail_price_cents ?? product.price_cents) : product.price_cents
+  const showMinOrder = viewerCanSeeB2B && !retailView
+  const checkoutMoq  = retailView ? 1 : product.min_order_qty
 
   // More products from same supplier (exclude current)
   const { data: moreRaw } = await supabase
@@ -164,14 +173,14 @@ export default async function ProductPage({ params }: { params: { slug: string }
             {/* Price */}
             <div className="flex items-baseline gap-2 flex-wrap">
               <span className="text-4xl font-black text-[#0B1F4D]">
-                {fmt(product.price_cents, product.currency_code)}
+                {fmt(unitPrice, product.currency_code)}
               </span>
               <span className="text-sm text-gray-400 font-medium">{t('product.per_unit')}</span>
             </div>
 
-            {/* Min Order + Stock — Min Order (wholesale) hidden from consumers */}
-            <div className={`grid ${viewerCanSeeB2B ? 'grid-cols-2' : 'grid-cols-1'} divide-x divide-gray-200 border border-gray-200 rounded-xl overflow-hidden bg-white`}>
-              {viewerCanSeeB2B && (
+            {/* Min Order + Stock — Min Order (wholesale) hidden in the online shop & from consumers */}
+            <div className={`grid ${showMinOrder ? 'grid-cols-2' : 'grid-cols-1'} divide-x divide-gray-200 border border-gray-200 rounded-xl overflow-hidden bg-white`}>
+              {showMinOrder && (
                 <div className="p-4">
                   <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
                     {t('product.min_order')}
@@ -211,11 +220,11 @@ export default async function ProductPage({ params }: { params: { slug: string }
             <CheckoutButton
               productId={product.id}
               name={product.name}
-              price_cents={product.price_cents}
+              price_cents={unitPrice}
               currency_code={product.currency_code}
               imageUrl={images[0]?.url}
               supplierName={supplier?.trade_name ?? supplier?.legal_name ?? ''}
-              min_order_qty={product.min_order_qty}
+              min_order_qty={checkoutMoq}
               disabled={product.stock_qty === 0}
             />
 

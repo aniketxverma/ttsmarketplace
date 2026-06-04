@@ -17,7 +17,8 @@ interface FormState {
   name: string; slug: string; categoryId: string; marketplaceContext: 'wholesale' | 'retail' | 'both'
   productLine: string
   cityId: string; description: string; sku: string
-  priceDisplay: string   // shown in euros/currency units, converted to cents on save
+  priceDisplay: string       // wholesale / B2B price, converted to cents on save
+  retailPriceDisplay: string // online-shop (retail) per-piece price
   currencyCode: string; minOrderQty: string; stockQty: string; vatRate: string; weightGrams: string
   isPublished: boolean
 }
@@ -26,7 +27,7 @@ const INITIAL: FormState = {
   name: '', slug: '', categoryId: '', marketplaceContext: 'wholesale',
   productLine: '',
   cityId: '', description: '', sku: '',
-  priceDisplay: '', currencyCode: 'EUR',
+  priceDisplay: '', retailPriceDisplay: '', currencyCode: 'EUR',
   minOrderQty: '1', stockQty: '0', vatRate: '10', weightGrams: '',
   isPublished: false,
 }
@@ -85,6 +86,8 @@ export function ProductForm({ supplierId, mode, productId, initialData }: Produc
       description:         form.description.trim() || null,
       sku:                 form.sku.trim() || null,
       price_cents:         priceCents,
+      retail_price_cents:  form.retailPriceDisplay && parseFloat(form.retailPriceDisplay) > 0
+                             ? Math.round(parseFloat(form.retailPriceDisplay) * 100) : null,
       currency_code:       form.currencyCode,
       min_order_qty:       form.marketplaceContext === 'retail' ? 1 : (parseInt(form.minOrderQty) || 1),
       stock_qty:           parseInt(form.stockQty) || 0,
@@ -217,7 +220,7 @@ export function ProductForm({ supplierId, mode, productId, initialData }: Produc
         <h3 className="font-bold text-[#0B1F4D] text-sm mb-4 pb-2 border-b">Pricing & Inventory</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <label className={labelCls}>Price *</label>
+            <label className={labelCls}>Wholesale price (B2B) *</label>
             <div className="flex gap-2">
               <select
                 className="rounded-xl border border-gray-200 px-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B1F4D] bg-white"
@@ -237,7 +240,20 @@ export function ProductForm({ supplierId, mode, productId, initialData }: Produc
                 placeholder="0.00"
               />
             </div>
-            <p className="text-xs text-gray-400">Enter the price in {form.currencyCode} (e.g. 24.99)</p>
+            <p className="text-xs text-gray-400">Per-unit wholesale price shown in the B2B marketplace</p>
+          </div>
+          <div className="space-y-1.5">
+            <label className={labelCls}>Online shop price (retail)</label>
+            <input
+              className={inputCls}
+              type="number"
+              step="0.01"
+              min="0.01"
+              value={form.retailPriceDisplay}
+              onChange={(e) => update('retailPriceDisplay', e.target.value)}
+              placeholder="0.00"
+            />
+            <p className="text-xs text-gray-400">Per-piece price in the Online Shop. Leave empty to use the wholesale price.</p>
           </div>
           <div className="space-y-1.5">
             <label className={labelCls}>VAT Rate %</label>

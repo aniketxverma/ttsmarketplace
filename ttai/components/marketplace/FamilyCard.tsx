@@ -22,10 +22,13 @@ export function FamilyCard({ family, retail = false }: { family: Family; retail?
   const displayName = supplier?.trade_name ?? supplier?.legal_name ?? ''
   const count = family.members.length
 
-  // Lowest price across the family → "from €x".
-  const minCents = Math.min(...family.members.map((m) => m.price_cents))
   const isRetail = retail || rep.marketplace_context === 'retail'
-  const price = isRetail && rep.vat_rate ? minCents + Math.round(minCents * rep.vat_rate / 100) : minCents
+  // Lowest price across the family → "from €x" (retail price in the online shop).
+  const priceOf = (m: typeof rep) => isRetail ? (m.retail_price_cents ?? m.price_cents) : m.price_cents
+  const minCents = Math.min(...family.members.map(priceOf))
+  const price = isRetail && !rep.retail_price_cents && rep.vat_rate
+    ? minCents + Math.round(minCents * rep.vat_rate / 100)
+    : minCents
 
   const href = retail ? `${family.href}&retail=1` : family.href
 
