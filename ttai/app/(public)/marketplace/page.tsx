@@ -73,11 +73,16 @@ export default async function MarketplacePage({
     productQuery = productQuery.ilike('name', `%${searchParams.q}%`)
   }
 
-  // Region filter — products from suppliers who serve the chosen region (automatic placement)
+  // Region filter — products from suppliers who serve the chosen region (automatic placement).
+  // A country key like "europe:spain" must ALSO match suppliers who serve the whole region
+  // ("europe") — serving all of Europe means serving Spain too.
   if (activeRegion) {
+    const parentRegion = activeRegion.includes(':') ? activeRegion.split(':')[0] : null
+    const ors = [`region_key.eq.${activeRegion}`, `region_key.like.${activeRegion}:%`]
+    if (parentRegion) ors.push(`region_key.eq.${parentRegion}`)
     const { data: srRows } = await (supabase.from('supplier_regions') as any)
       .select('supplier_id')
-      .or(`region_key.eq.${activeRegion},region_key.like.${activeRegion}:%`)
+      .or(ors.join(','))
     const ids = Array.from(new Set((srRows ?? []).map((r: any) => r.supplier_id)))
     productQuery = productQuery.in('supplier_id', ids.length ? ids : ['00000000-0000-0000-0000-000000000000'])
   }

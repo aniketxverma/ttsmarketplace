@@ -21,6 +21,8 @@ interface ProductCardProps {
   }
   mainImageUrl?: string
   href: string
+  /** Force retail presentation (no MOQ, VAT-inclusive) — used on the consumer Online Store. */
+  retail?: boolean
 }
 
 const TIER_STYLES: Record<ReliabilityTier, string> = {
@@ -34,8 +36,9 @@ function formatPrice(cents: number, currency: string) {
   return new Intl.NumberFormat('en-EU', { style: 'currency', currency, minimumFractionDigits: 2 }).format(cents / 100)
 }
 
-export function ProductCard({ product, supplier, mainImageUrl, href }: ProductCardProps) {
-  const isRetail = product.marketplace_context === 'retail'
+export function ProductCard({ product, supplier, mainImageUrl, href, retail = false }: ProductCardProps) {
+  // Retail surface (Online Store) OR a retail-only product → consumer presentation.
+  const isRetail = retail || product.marketplace_context === 'retail'
   const displayPrice = isRetail && product.vat_rate
     ? product.price_cents + Math.round(product.price_cents * product.vat_rate / 100)
     : product.price_cents

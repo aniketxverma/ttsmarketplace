@@ -157,6 +157,7 @@ export default async function StorePage({
                         supplier={supplier}
                         mainImageUrl={mainImg}
                         href={`/product/${p.slug ?? p.id}`}
+                        retail
                       />
                     )
                   })}
