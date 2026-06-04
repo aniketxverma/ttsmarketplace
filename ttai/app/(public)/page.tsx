@@ -5,7 +5,6 @@ import { createClient } from '@/lib/supabase/server'
 import { useServerTranslations } from '@/lib/i18n/server'
 import { HomeFeatures } from './HomeFeatures'
 import { IndustryExplorer } from './IndustryExplorer'
-import { RegionExplorer } from './RegionExplorer'
 import { Reveal } from '@/components/Reveal'
 
 /* ─── SVG icon components ───────────────────────────────────────────────── */
@@ -464,13 +463,9 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
 
       {/* ══════════════════════════════════════════════════════════════════
           INDUSTRY EXPLORER — 12 industries (accordion) + 3 shop cards
+          Flow: choose category → (inside) choose region → products
       ══════════════════════════════════════════════════════════════════ */}
       <IndustryExplorer />
-
-      {/* ══════════════════════════════════════════════════════════════════
-          REGION EXPLORER — regions (accordion) → countries
-      ══════════════════════════════════════════════════════════════════ */}
-      <RegionExplorer />
 
       {/* ══════════════════════════════════════════════════════════════════
           SHOP BY REGION

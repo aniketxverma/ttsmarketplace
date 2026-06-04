@@ -8,6 +8,7 @@ import { Pagination } from '@/components/marketplace/Pagination'
 import { PromotionBanner } from '@/components/marketplace/PromotionBanner'
 import { SupplierMiniCard, type MiniSupplier } from '@/components/marketplace/SupplierMiniCard'
 import { ShoppingChannels } from '@/components/marketplace/ShoppingChannels'
+import { REGIONS } from '@/lib/regions-data'
 import type { Category } from '@/types/domain'
 
 const PAGE_SIZE = 24
@@ -15,10 +16,11 @@ const PAGE_SIZE = 24
 export default async function MarketplacePage({
   searchParams,
 }: {
-  searchParams: { category?: string; q?: string; page?: string }
+  searchParams: { category?: string; q?: string; page?: string; region?: string }
 }) {
   const supabase = createClient()
   const page = parseInt(searchParams.page || '1')
+  const activeRegion = searchParams.region ?? null
 
   const [categoriesRes, promotionsRes] = await Promise.all([
     supabase.from('categories').select('*').order('sort_order'),
@@ -56,11 +58,24 @@ export default async function MarketplacePage({
 
   if (searchParams.category) {
     const cat = allCats.find((c) => c.slug === searchParams.category)
-    if (cat) productQuery = productQuery.eq('category_id', cat.id)
+    if (cat) {
+      // Include the category itself + its subcategories so a main industry shows all its products
+      const childIds = allCats.filter((c) => c.parent_id === cat.id).map((c) => c.id)
+      productQuery = productQuery.in('category_id', [cat.id, ...childIds])
+    }
   }
 
   if (searchParams.q) {
     productQuery = productQuery.ilike('name', `%${searchParams.q}%`)
+  }
+
+  // Region filter — products from suppliers who serve the chosen region (automatic placement)
+  if (activeRegion) {
+    const { data: srRows } = await (supabase.from('supplier_regions') as any)
+      .select('supplier_id')
+      .or(`region_key.eq.${activeRegion},region_key.like.${activeRegion}:%`)
+    const ids = Array.from(new Set((srRows ?? []).map((r: any) => r.supplier_id)))
+    productQuery = productQuery.in('supplier_id', ids.length ? ids : ['00000000-0000-0000-0000-000000000000'])
   }
 
   const from = (page - 1) * PAGE_SIZE
@@ -107,8 +122,32 @@ export default async function MarketplacePage({
         </p>
       </div>
 
-      <div className="mb-6">
+      <div className="mb-4">
         <SearchBar defaultValue={searchParams.q} />
+      </div>
+
+      {/* ── Region filter — pick a region after choosing your category ── */}
+      <div className="mb-6 flex items-center gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+        <span className="text-xs font-bold text-gray-400 uppercase tracking-wide flex-shrink-0 mr-1 flex items-center gap-1">
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+          Region:
+        </span>
+        {[{ id: '', name: 'All Regions' }, ...REGIONS.map((r) => ({ id: r.id, name: r.name }))].map((r) => {
+          const params = new URLSearchParams()
+          if (searchParams.category) params.set('category', searchParams.category)
+          if (searchParams.q) params.set('q', searchParams.q)
+          if (r.id) params.set('region', r.id)
+          const href = `/marketplace${params.toString() ? `?${params.toString()}` : ''}`
+          const isActive = (activeRegion ?? '') === r.id
+          return (
+            <Link key={r.id || 'all'} href={href}
+              className={`px-3.5 py-1.5 rounded-full text-sm font-semibold whitespace-nowrap transition-colors flex-shrink-0 ${
+                isActive ? 'bg-[#0B1F4D] text-white shadow-sm' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}>
+              {r.name}
+            </Link>
+          )
+        })}
       </div>
 
       <PromotionBanner promotions={promotions} />
