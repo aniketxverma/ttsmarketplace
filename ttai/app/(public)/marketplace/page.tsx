@@ -62,6 +62,10 @@ export default async function MarketplacePage({
       // Include the category itself + its subcategories so a main industry shows all its products
       const childIds = allCats.filter((c) => c.parent_id === cat.id).map((c) => c.id)
       productQuery = productQuery.in('category_id', [cat.id, ...childIds])
+    } else {
+      // Unknown category slug (e.g. taxonomy migration not yet run) → show no products
+      // rather than silently showing everything.
+      productQuery = productQuery.eq('category_id', '00000000-0000-0000-0000-000000000000')
     }
   }
 
