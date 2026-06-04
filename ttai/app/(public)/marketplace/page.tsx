@@ -147,7 +147,9 @@ export default async function MarketplacePage({
           if (searchParams.q) params.set('q', searchParams.q)
           if (r.id) params.set('region', r.id)
           const href = `/marketplace${params.toString() ? `?${params.toString()}` : ''}`
-          const isActive = (activeRegion ?? '') === r.id
+          // A country key (europe:spain) keeps its parent region pill (europe) highlighted,
+          // so an arriving buyer sees the region is already chosen — no need to pick again.
+          const isActive = (activeRegion ?? '') === r.id || (activeRegion ?? '').split(':')[0] === r.id
           return (
             <Link key={r.id || 'all'} href={href}
               className={`px-3.5 py-1.5 rounded-full text-sm font-semibold whitespace-nowrap transition-colors flex-shrink-0 ${
