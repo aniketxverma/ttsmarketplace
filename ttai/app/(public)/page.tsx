@@ -192,19 +192,21 @@ const REGIONS = [
   { label: 'Africa',      desc: 'Morocco, Egypt, South Africa & more', Icon: IconAfrica,     href: '/regions/africa' },
 ]
 
+// Industry ecosystem — 13 main categories. Subcategories live in the marketplace.
 const PRODUCT_FAMILIES = [
-  // Branded drinks & canned goods — Pepsi, Coca-Cola, snacks on shelf
-  { name: 'Food & Beverages',      desc: 'Branded drinks, canned goods, snacks, dairy, oils and more.',        img: 'https://images.unsplash.com/photo-1553456558-aff63285bdd1?w=600&q=80', Icon: FoodIcon,        color: 'bg-green-500',   slug: 'agriculture-food' },
-  // Branded cleaning products shelf — Rozil, detergents, sprays
-  { name: 'Cleaning & Household',  desc: 'Branded detergents, sprays, disinfectants, household cleaners.',     img: 'https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=600&q=80', Icon: CleanIcon,       color: 'bg-blue-500',    slug: 'cleaning-products' },
-  // Perfume & cosmetics — Nivea, Axe, Arabic oud, skincare
-  { name: 'Personal Care',         desc: 'Perfumes, Nivea, Axe, shampoos, creams and cosmetics.',              img: 'https://images.unsplash.com/photo-1541643600914-78b084683702?w=600&q=80', Icon: CareIcon,        color: 'bg-purple-500',  slug: 'health-beauty' },
-  // White goods & home appliances — fridges, washing machines, ovens
-  { name: 'Home Appliances',       desc: 'Fridges, washing machines, ovens, white goods and more.',            img: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80', Icon: IndustrialIcon,  color: 'bg-orange-500',  slug: 'industrial-machinery' },
-  // Consumer electronics — iPhone, MacBook, laptops, gadgets
-  { name: 'Electronics & Tech',    desc: 'Smartphones, laptops, iPhones, computers and accessories.',          img: 'https://images.unsplash.com/photo-1498049794561-7780e7231661?w=600&q=80', Icon: ElectronicsIcon, color: 'bg-slate-600',   slug: 'electronics-technology' },
-  // Eco / recycling — keep existing
-  { name: 'Recycling & Sustainable',desc: 'Eco-friendly, recycled and sustainable solutions.',                 img: 'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?w=600&q=80', Icon: RecycleIcon,     color: 'bg-emerald-600', slug: 'home-garden' },
+  { name: 'Food & Beverage',                  desc: 'Agriculture, manufacturing, suppliers, distribution & food recycling.',       img: 'https://images.unsplash.com/photo-1553456558-aff63285bdd1?w=600&q=80', Icon: FoodIcon,        color: 'bg-green-500',   slug: 'food-beverage' },
+  { name: 'Cleaning & Household',             desc: 'Cleaning products, tissue & paper, equipment, suppliers & recycling.',         img: 'https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=600&q=80', Icon: CleanIcon,       color: 'bg-blue-500',    slug: 'cleaning-household' },
+  { name: 'Personal Care',                    desc: 'Cosmetics, perfumes, hair & skin care, hygiene, suppliers & distributors.',   img: 'https://images.unsplash.com/photo-1541643600914-78b084683702?w=600&q=80', Icon: CareIcon,        color: 'bg-purple-500',  slug: 'personal-care' },
+  { name: 'Electronics & Tech',               desc: 'Smartphones, computers, networking, software, AI & components.',               img: 'https://images.unsplash.com/photo-1498049794561-7780e7231661?w=600&q=80', Icon: ElectronicsIcon, color: 'bg-slate-600',   slug: 'electronics-tech' },
+  { name: 'Home Appliances',                  desc: 'Refrigerators, washing machines, ovens, A/C & kitchen appliances.',            img: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80', Icon: IndustrialIcon,  color: 'bg-orange-500',  slug: 'home-appliances' },
+  { name: 'Recycling & Sustainability',       desc: 'Plastic, metal, glass & paper recycling, renewable energy & circular economy.',img: 'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?w=600&q=80', Icon: RecycleIcon,     color: 'bg-emerald-600', slug: 'recycling-sustainability' },
+  { name: 'Healthcare & Medical',             desc: 'Clinics, hospitals, laboratories, medical devices & telemedicine.',            img: 'https://images.unsplash.com/photo-1538108149393-fbbd81895907?w=600&q=80', Icon: CareIcon,        color: 'bg-rose-500',    slug: 'healthcare-medical' },
+  { name: 'Construction & Building',          desc: 'Building materials, structures & construction supply chain.',                  img: 'https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=600&q=80', Icon: IndustrialIcon,  color: 'bg-amber-600',   slug: 'construction-building' },
+  { name: 'Automotive',                       desc: 'Vehicles, parts, accessories and the automotive supply chain.',                img: 'https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=600&q=80', Icon: IndustrialIcon,  color: 'bg-zinc-600',    slug: 'automotive' },
+  { name: 'Textile & Fashion',                desc: 'Fabrics, apparel, fashion manufacturing and distribution.',                    img: 'https://images.unsplash.com/photo-1445205170230-053b83016050?w=600&q=80', Icon: CareIcon,        color: 'bg-pink-500',    slug: 'textile-fashion' },
+  { name: 'Logistics & Supply Chain',         desc: 'Freight, warehousing, distribution and end-to-end logistics.',                 img: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=600&q=80', Icon: IndustrialIcon,  color: 'bg-cyan-600',    slug: 'logistics-supply-chain' },
+  { name: 'Industrial & Manufacturing',       desc: 'Machinery, equipment, raw materials and industrial production.',                img: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=600&q=80', Icon: IndustrialIcon,  color: 'bg-indigo-600',  slug: 'industrial-manufacturing' },
+  { name: 'Consulting & Services',            desc: 'Business, financial, marketing, legal, HR & training services.',               img: 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=600&q=80', Icon: ElectronicsIcon, color: 'bg-teal-600',    slug: 'consulting-services' },
 ]
 
 const HOW_IT_WORKS = [
@@ -475,7 +477,8 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
           {/* Cleaning = free/beacon card · all others = locked */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {PRODUCT_FAMILIES.map((cat, i) => {
-              const isFree = cat.name === 'Cleaning & Household'
+              // All categories gated behind registration for now
+              const isFree = false
 
               if (isFree) {
                 /* ── FREE / BEACON card ── */
