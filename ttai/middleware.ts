@@ -22,7 +22,7 @@ const APPROVAL_EXEMPT = [
 const PENDING_ALLOWED = ['/buyer', '/supplier', '/broker', '/admin', '/account']
 
 /** Commerce / browse routes that require an APPROVED account when logged in */
-const COMMERCE = ['/marketplace', '/product', '/b2b', '/store', '/suppliers', '/brand', '/regions', '/projects', '/cart', '/checkout']
+const COMMERCE = ['/marketplace', '/product', '/b2b', '/store', '/suppliers', '/distributors', '/factories', '/brand', '/regions', '/projects', '/cart', '/checkout']
 
 /** Where each role lands after login / while pending */
 const ROLE_DASH: Record<string, string> = {
@@ -98,7 +98,7 @@ export async function middleware(request: NextRequest) {
   // End customers (anonymous) only see the consumer Online Shop. The B2B
   // marketplace, supplier directory and wholesale browse require a business
   // account. Carry category/region through so they land on the retail equivalent.
-  const B2B_ONLY = ['/b2b', '/suppliers', '/marketplace']
+  const B2B_ONLY = ['/b2b', '/suppliers', '/distributors', '/factories', '/marketplace']
   if (!user && B2B_ONLY.some((p) => path.startsWith(p))) {
     const url = request.nextUrl.clone()
     url.pathname = '/store'

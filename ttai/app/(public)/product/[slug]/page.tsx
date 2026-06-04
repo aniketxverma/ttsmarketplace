@@ -219,6 +219,20 @@ export default async function ProductPage({ params }: { params: { slug: string }
               disabled={product.stock_qty === 0}
             />
 
+            {/* ── Dropship fulfillment note ─────────────────────────── */}
+            {(supplier?.cities?.name || supplier?.countries?.name) && (
+              <div className="flex items-start gap-2.5 rounded-xl border border-gray-100 bg-gray-50 px-3.5 py-3">
+                <svg className="w-4 h-4 text-[#0B1F4D] mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M13 16V6a1 1 0 00-1-1H3m10 11V6m0 10h2m4 0h-2m0 0V9.5a1 1 0 011-1h1.586a1 1 0 01.707.293l1.914 1.914a1 1 0 01.293.707V16h-2" />
+                </svg>
+                <p className="text-xs text-gray-600 leading-relaxed">
+                  <span className="font-bold text-[#0B1F4D]">Ships directly from {[supplier?.cities?.name, supplier?.countries?.name].filter(Boolean).join(', ')}</span>
+                  {' '}— fulfilled by the verified supplier and sent straight to you. No extra leg through Spain.
+                </p>
+              </div>
+            )}
+
             {/* ── Secondary contact (WhatsApp / Call) ──────────────── */}
             {(waHref || supplier?.phone) && (
               <div className="flex items-center gap-2 pt-1">

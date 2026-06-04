@@ -11,9 +11,8 @@ import { ProductGrid } from '@/components/marketplace/ProductGrid'
 import { SearchBar } from '@/components/marketplace/SearchBar'
 import { CategoryNav } from '@/components/marketplace/CategoryNav'
 import { Pagination } from '@/components/marketplace/Pagination'
+import { tierRank } from '@/lib/business-chain'
 import type { Category } from '@/types/domain'
-
-export const revalidate = 60
 
 const TIER: Record<string, { label: string; Icon: typeof Crown; bg: string; text: string }> = {
   GOLD:       { label: 'Gold Verified',     Icon: Crown,       bg: 'bg-amber-100',  text: 'text-amber-700' },
@@ -30,6 +29,48 @@ export default async function B2BPage({
   const supabase = createClient()
   const page = parseInt(searchParams.page ?? '1')
   const PAGE_SIZE = 24
+
+  // ── Matchmaking gate ──────────────────────────────────────────────────
+  // Open wholesale browse requires a paid plan. A direct link to one supplier's
+  // own B2B shop (?supplier=…) passes through — that's governed by canSeeB2B.
+  const { data: { user } } = await supabase.auth.getUser()
+  let viewerTier = 'free'
+  let viewerRole: string | null = null
+  if (user) {
+    const { data } = await (supabase.from('profiles') as any)
+      .select('role, tier').eq('id', user.id).single()
+    viewerTier = data?.tier ?? 'free'
+    viewerRole = data?.role ?? null
+  }
+  const hasPaidPlan = tierRank(viewerTier) >= 1 || viewerRole === 'admin'
+
+  if (!searchParams.supplier && !hasPaidPlan) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="bg-gradient-to-br from-[#0B1F4D] to-[#1a3a7a] text-white py-20 px-4 text-center">
+          <div className="container mx-auto max-w-2xl">
+            <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-4 py-1.5 text-xs font-semibold text-white/80 mb-5">
+              <Package className="w-3.5 h-3.5" /> Wholesale marketplace
+            </div>
+            <h1 className="text-4xl sm:text-5xl font-extrabold mb-4">Wholesale is a member benefit</h1>
+            <p className="text-blue-200 text-lg">
+              Browsing wholesale catalogs, MOQs and bulk pricing is part of your matchmaking membership.
+              Activate a plan to unlock the B2B marketplace.
+            </p>
+          </div>
+        </div>
+        <div className="container mx-auto max-w-md px-4 py-16 text-center">
+          <Link href="/pricing"
+            className="inline-flex items-center gap-2 rounded-xl bg-[#0B1F4D] text-white px-8 py-3.5 text-sm font-bold hover:bg-[#162d6e] transition-colors">
+            View membership plans <ArrowRight className="w-4 h-4" />
+          </Link>
+          <p className="text-xs text-gray-400 mt-4">
+            Already paid? Your plan is activated by our team — it will appear here once enabled.
+          </p>
+        </div>
+      </div>
+    )
+  }
 
   // Fetch suppliers + categories in parallel
   const [suppliersRes, categoriesRes] = await Promise.all([

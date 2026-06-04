@@ -6,6 +6,7 @@ import { useServerTranslations } from '@/lib/i18n/server'
 import { HomeFeatures } from './HomeFeatures'
 import { IndustryExplorer } from './IndustryExplorer'
 import { Reveal } from '@/components/Reveal'
+import { PLANS } from '@/lib/pricing'
 
 /* ─── SVG icon components ───────────────────────────────────────────────── */
 function IconGlobe({ className = 'w-6 h-6' }: { className?: string }) {
@@ -776,6 +777,69 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
                 </span>
               ))}
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════════════════════════
+          PRICING / MEMBERSHIP
+      ══════════════════════════════════════════════════════════════════ */}
+      <section id="pricing" className="py-20 px-4 bg-white border-t border-gray-100">
+        <div className="container mx-auto max-w-6xl">
+          <div className="text-center mb-12">
+            <p className="text-[#F5A623] text-xs font-black uppercase tracking-widest mb-3">Membership</p>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-[#0B1F4D] mb-3">Pay for the chain you reach</h2>
+            <p className="text-gray-400 max-w-xl mx-auto">
+              Each plan unlocks a deeper link in the supply chain — from suppliers, to distributors, to factories.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+            {PLANS.map((p, i) => (
+              <Reveal key={p.tier} delay={i * 80} from="up">
+                <div className={`relative rounded-3xl bg-white p-6 h-full flex flex-col border transition-all duration-300 ${
+                  p.highlight ? 'border-transparent shadow-2xl ring-2 ring-[#7c3aed]' : 'border-gray-100 shadow-md hover:shadow-xl'
+                }`}>
+                  {p.highlight && (
+                    <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#7c3aed] text-white text-[10px] font-extrabold px-3 py-1 rounded-full uppercase tracking-wide">
+                      Most popular
+                    </span>
+                  )}
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="w-2.5 h-2.5 rounded-full" style={{ background: p.accent }} />
+                    <h3 className="text-lg font-extrabold text-[#0B1F4D]">{p.name}</h3>
+                  </div>
+                  <p className="text-xs text-gray-400 mb-4 min-h-[32px]">{p.tagline}</p>
+                  <div className="flex items-end gap-1 mb-5">
+                    <span className="text-3xl font-extrabold text-[#0B1F4D]">{p.price}</span>
+                    {p.period && <span className="text-gray-400 text-xs mb-1">{p.period}</span>}
+                  </div>
+                  <ul className="space-y-2 flex-1">
+                    {p.features.slice(0, 3).map((f) => (
+                      <li key={f} className="flex items-start gap-2 text-xs text-gray-600">
+                        <span className="mt-0.5 w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0"
+                          style={{ background: `${p.accent}1a`, color: p.accent }}>
+                          <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" strokeWidth={3.5} viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                          </svg>
+                        </span>
+                        {f}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+
+          <div className="mt-10 text-center">
+            <Link href="/pricing"
+              className="inline-flex items-center gap-2 rounded-xl bg-[#0B1F4D] text-white px-8 py-3.5 text-sm font-bold hover:bg-[#162d6e] transition-colors">
+              See full pricing &amp; what each role unlocks
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+              </svg>
+            </Link>
           </div>
         </div>
       </section>
