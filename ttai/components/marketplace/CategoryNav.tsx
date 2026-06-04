@@ -33,31 +33,44 @@ export function CategoryNav({ categories }: CategoryNavProps) {
       >
         All Products
       </Link>
-      {categories.map((cat) => (
-        <div key={cat.id}>
-          <Link
-            href={buildHref(cat.slug)}
-            className={cn(
-              'block rounded-md px-2 py-1.5 text-sm hover:bg-accent',
-              active === cat.slug && 'bg-accent font-medium'
-            )}
-          >
-            {cat.name}
-          </Link>
-          {cat.children?.map((sub) => (
+      {categories.map((cat) => {
+        const hasChildren = (cat.children?.length ?? 0) > 0
+        // Only the entered category shows its family; every other category is just a title.
+        const isOpen = active === cat.slug || (cat.children?.some((s) => s.slug === active) ?? false)
+        return (
+          <div key={cat.id}>
             <Link
-              key={sub.id}
-              href={buildHref(sub.slug)}
+              href={buildHref(cat.slug)}
               className={cn(
-                'block rounded-md pl-5 pr-2 py-1 text-sm text-muted-foreground hover:bg-accent hover:text-foreground',
-                active === sub.slug && 'bg-accent text-foreground font-medium'
+                'flex items-center justify-between gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-accent',
+                (active === cat.slug || isOpen) && 'bg-accent font-medium'
               )}
             >
-              {sub.name}
+              <span>{cat.name}</span>
+              {hasChildren && (
+                <svg
+                  className={cn('w-3.5 h-3.5 flex-shrink-0 text-muted-foreground transition-transform', isOpen && 'rotate-90')}
+                  fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              )}
             </Link>
-          ))}
-        </div>
-      ))}
+            {isOpen && cat.children?.map((sub) => (
+              <Link
+                key={sub.id}
+                href={buildHref(sub.slug)}
+                className={cn(
+                  'block rounded-md pl-5 pr-2 py-1 text-sm text-muted-foreground hover:bg-accent hover:text-foreground',
+                  active === sub.slug && 'bg-accent text-foreground font-medium'
+                )}
+              >
+                {sub.name}
+              </Link>
+            ))}
+          </div>
+        )
+      })}
     </div>
   )
 }
