@@ -203,9 +203,16 @@ export function BrandProfileEditor({ supplier, gallery: initialGallery, certific
       section_visibility: sectionVisibility,
     }
 
-    const { error: err } = await (supabase.from('suppliers') as any).update(payload).eq('id', supplier.id)
+    // Save via the server endpoint — RLS blocks an ACTIVE supplier from updating
+    // its own row client-side, so this would otherwise silently no-op.
+    const res = await fetch('/api/supplier/brand', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+    const json = await res.json().catch(() => ({}))
     setSaving(false)
-    if (err) { setError(err.message); return }
+    if (!res.ok) { setError(json.error ?? 'Save failed'); return }
     setSaved(true)
     setTimeout(() => setSaved(false), 3000)
   }
