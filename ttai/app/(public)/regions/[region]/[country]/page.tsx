@@ -5,6 +5,7 @@ import { getCountry, REGIONS } from '@/lib/regions-data'
 import { createClient } from '@/lib/supabase/server'
 import { SupplierShowcaseCard, type ShowcaseSupplier } from '@/components/marketplace/SupplierShowcaseCard'
 import { ShoppingChannels } from '@/components/marketplace/ShoppingChannels'
+import { IndustryExplorer } from '@/app/(public)/IndustryExplorer'
 
 export const revalidate = 60
 
@@ -115,6 +116,9 @@ export default async function CountryPage({ params }: { params: { region: string
           </div>
         </div>
       </div>
+
+      {/* ── Explore by industry (scoped to this country) ─────────────── */}
+      <IndustryExplorer mode="industries" region={`${params.region}:${params.country}`} />
 
       {/* ── Curated collections (compact) ────────────────────────────── */}
       <div className="container mx-auto px-4 sm:px-8 py-14">
