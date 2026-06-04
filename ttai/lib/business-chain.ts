@@ -64,3 +64,81 @@ export function visibilityFor(level: ChainLevel): Visibility {
 export function canSeeB2B(role?: string | null, businessType?: string | null): boolean {
   return visibilityFor(chainLevel(role, businessType)).b2b
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Membership tier — gates the MATCHMAKING directory (who you are presented).
+//
+// The marketplace presents each client its counterpart in the chain, and how
+// far it can reach is decided by what it pays (admin-granted `profiles.tier`):
+//
+//   • Shop / retail          standard → Suppliers · pro → +Distributors · full → +Factories
+//   • Supplier / Distributor any paid → Factories  (their counterpart)
+//   • Factory                any paid → Suppliers & Distributors (their counterpart)
+//
+//   `canSeeB2B` (above) stays the consumer↔business privacy line; the tier logic
+//   below governs *directory discovery* only.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type Tier = 'free' | 'standard' | 'pro' | 'full'
+const TIER_RANK: Record<Tier, number> = { free: 0, standard: 1, pro: 2, full: 3 }
+
+/** Numeric rank of a tier (free = 0 … full = 3). Unknown → 0. */
+export function tierRank(tier?: string | null): number {
+  return TIER_RANK[(tier as Tier)] ?? 0
+}
+
+/** Which directory bucket a *business/listing* belongs to, for presentation. */
+export type EntityKind = 'factory' | 'distributor' | 'supplier'
+
+const DISTRIBUTOR_ONLY = ['Distributor', 'Importer', 'Export Agent']
+const SUPPLIER_TYPES   = ['Wholesaler', 'Trader / Wholesaler', 'Supplier']
+
+/** Classify a business into factory / distributor / supplier for the directory. */
+export function entityKind(role?: string | null, businessType?: string | null): EntityKind {
+  if (businessType && FACTORY_TYPES.includes(businessType)) return 'factory'
+  if (businessType && DISTRIBUTOR_ONLY.includes(businessType)) return 'distributor'
+  if (businessType && SUPPLIER_TYPES.includes(businessType)) return 'supplier'
+  if (role === 'broker') return 'distributor'
+  if (role === 'supplier') return 'factory' // manufacturers / brand owners by default
+  return 'supplier'
+}
+
+export interface DirectoryAccess {
+  suppliers: boolean     // may browse the Suppliers directory
+  distributors: boolean  // may browse the Distributors directory
+  factories: boolean     // may browse the Factories directory
+}
+
+/** What counterpart directories a viewer may browse, by chain level + paid tier. */
+export function directoryAccess(level: ChainLevel, tier?: string | null): DirectoryAccess {
+  const r = tierRank(tier)
+  switch (level) {
+    case 'admin':
+      return { suppliers: true, distributors: true, factories: true }
+    case 'consumer':
+      return { suppliers: false, distributors: false, factories: false }
+    case 'retail':
+      // Shops climb the chain as they pay more.
+      return { suppliers: r >= 1, distributors: r >= 2, factories: r >= 3 }
+    case 'distributor':
+      // Suppliers & distributors are presented Factories (any paid tier).
+      return { suppliers: false, distributors: false, factories: r >= 1 }
+    case 'factory':
+      // Factories are presented Suppliers & Distributors (any paid tier).
+      return { suppliers: r >= 1, distributors: r >= 1, factories: false }
+  }
+}
+
+/** Convenience: directory access straight from a viewer's profile fields. */
+export function accessFor(
+  role?: string | null, businessType?: string | null, tier?: string | null,
+): DirectoryAccess {
+  return directoryAccess(chainLevel(role, businessType), tier)
+}
+
+/** Can this viewer browse a listing of the given kind, at their tier? */
+export function canBrowseEntity(
+  kind: EntityKind, role?: string | null, businessType?: string | null, tier?: string | null,
+): boolean {
+  return accessFor(role, businessType, tier)[`${kind === 'factory' ? 'factories' : kind + 's'}` as keyof DirectoryAccess]
+}

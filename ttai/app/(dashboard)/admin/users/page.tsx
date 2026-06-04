@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { requireRole } from '@/lib/auth/rbac'
 import { RoleChanger } from './RoleChanger'
 import { ApprovalChanger } from './ApprovalChanger'
+import { TierChanger } from './TierChanger'
 import Image from 'next/image'
 
 const ROLES = ['all', 'buyer', 'business_client', 'supplier', 'broker', 'admin']
@@ -25,9 +26,8 @@ export default async function AdminUsersPage({
   const selectedRole   = searchParams.role   ?? 'all'
   const selectedStatus = searchParams.status ?? 'all'
 
-  let query = supabase
-    .from('profiles')
-    .select('id,full_name,role,phone,created_at,approval_status,company_name,business_type,continent,country_name,city,category,annual_turnover,website_url,bio,products_offered,username,avatar_url')
+  let query = (supabase.from('profiles') as any)
+    .select('id,full_name,role,phone,created_at,approval_status,company_name,business_type,continent,country_name,city,category,annual_turnover,website_url,bio,products_offered,username,avatar_url,tier')
     .order('approval_status', { ascending: true })
     .order('created_at',      { ascending: false })
 
@@ -116,7 +116,7 @@ export default async function AdminUsersPage({
 
       {/* ── User cards ── */}
       <div className="space-y-4">
-        {users?.map((u) => {
+        {users?.map((u: any) => {
           const status    = (u.approval_status ?? 'pending') as 'pending' | 'approved' | 'rejected'
           const isPending = status === 'pending'
           const location  = [u.city, u.country_name, u.continent].filter(Boolean).join(', ')
@@ -208,6 +208,12 @@ export default async function AdminUsersPage({
                     <span className="text-[10px] text-gray-400">Role:</span>
                     <RoleChanger userId={u.id} currentRole={u.role} />
                   </div>
+                  {u.role !== 'admin' && (
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[10px] text-gray-400">Plan:</span>
+                      <TierChanger userId={u.id} currentTier={(u as any).tier ?? 'free'} />
+                    </div>
+                  )}
                   {status === 'approved' && (
                     <a
                       href={`/profile/${u.username ?? u.id}`}

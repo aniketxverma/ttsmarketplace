@@ -1,8 +1,37 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import Image from 'next/image'
+import { accessFor, chainLevel, type ChainLevel } from '@/lib/business-chain'
 
-export const revalidate = 60
+/** Contextual upsell shown when the viewer's plan doesn't grant supplier access. */
+function supplierGate(level: ChainLevel): { title: string; body: string; cta: string; href: string } {
+  switch (level) {
+    case 'consumer':
+      return {
+        title: 'Supplier discovery is a business membership',
+        body: 'The supplier network is a private B2B matchmaking service. Register your business and choose a plan to be presented verified suppliers.',
+        cta: 'Register your business', href: '/register',
+      }
+    case 'distributor':
+      return {
+        title: 'Your membership presents you Factories',
+        body: 'As a supplier / distributor, your matchmaking is with manufacturers — not other suppliers. Browse the factories that can produce for you.',
+        cta: 'View factories', href: '/b2b',
+      }
+    case 'retail':
+      return {
+        title: 'Unlock the Suppliers network',
+        body: 'Your shop plan does not yet include supplier discovery. Upgrade to Standard to be presented suppliers — and to Pro / Full pack to reach distributors and factories.',
+        cta: 'Upgrade my plan', href: '/dashboard',
+      }
+    default: // factory on free
+      return {
+        title: 'Activate your matchmaking plan',
+        body: 'Upgrade to a paid membership to be presented the suppliers and distributors that move your products through the market.',
+        cta: 'Upgrade my plan', href: '/dashboard',
+      }
+  }
+}
 
 const TIER_CONFIG: Record<string, { label: string; cls: string; dot: string }> = {
   GOLD:       { label: 'Gold Supplier',     cls: 'bg-amber-50 text-amber-700 border-amber-200',   dot: 'bg-amber-400' },
@@ -17,6 +46,18 @@ export default async function SuppliersPage({
   searchParams: { q?: string; tier?: string }
 }) {
   const supabase = createClient()
+
+  // Matchmaking gate — who is presented suppliers depends on role + paid tier.
+  const { data: { user } } = await supabase.auth.getUser()
+  let viewer: any = null
+  if (user) {
+    const { data } = await (supabase.from('profiles') as any)
+      .select('role, business_type, tier').eq('id', user.id).single()
+    viewer = data
+  }
+  const level  = chainLevel(viewer?.role, (viewer as any)?.business_type)
+  const access = accessFor(viewer?.role, (viewer as any)?.business_type, (viewer as any)?.tier)
+  const gate   = supplierGate(level)
 
   let query = (supabase.from('suppliers') as any)
     .select(`
@@ -84,6 +125,7 @@ export default async function SuppliersPage({
 
       {/* ── Filters + results ─────────────────────────────────────────────── */}
       <div className="container mx-auto max-w-6xl px-4 py-8">
+        {access.suppliers && (
         <div className="flex flex-wrap items-center gap-3 mb-6">
           {/* Tier filter chips */}
           {[
@@ -109,9 +151,39 @@ export default async function SuppliersPage({
             </Link>
           )}
         </div>
+        )}
 
-        {/* ── Supplier grid ────────────────────────────────────────────────── */}
-        {total > 0 ? (
+        {/* ── Matchmaking gate — plan doesn't grant supplier access ────────── */}
+        {!access.suppliers ? (
+          <div className="max-w-xl mx-auto text-center py-16">
+            <div className="w-16 h-16 rounded-2xl bg-[#0B1F4D]/5 flex items-center justify-center mx-auto mb-5">
+              <svg className="w-8 h-8 text-[#0B1F4D]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+            </div>
+            <h2 className="text-2xl font-extrabold text-[#0B1F4D] mb-2">{gate.title}</h2>
+            <p className="text-gray-500 leading-relaxed mb-7">{gate.body}</p>
+            <Link href={gate.href}
+              className="inline-flex items-center gap-2 rounded-xl bg-[#0B1F4D] text-white px-7 py-3.5 text-sm font-bold hover:bg-[#162d6e] transition-colors">
+              {gate.cta}
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+              </svg>
+            </Link>
+            <div className="mt-8 grid grid-cols-3 gap-2 text-left max-w-md mx-auto">
+              {[
+                { t: 'Standard', d: 'Suppliers' },
+                { t: 'Pro', d: '+ Distributors' },
+                { t: 'Full pack', d: '+ Factories' },
+              ].map((p) => (
+                <div key={p.t} className="rounded-xl border border-gray-100 bg-white px-3 py-2.5">
+                  <p className="text-[11px] font-extrabold text-[#0B1F4D]">{p.t}</p>
+                  <p className="text-[11px] text-gray-400">{p.d}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : total > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
             {(suppliers ?? []).map((s: any) => {
               const country = s.countries as { name: string; iso_code: string } | null
