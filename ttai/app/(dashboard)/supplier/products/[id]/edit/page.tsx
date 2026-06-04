@@ -55,6 +55,7 @@ export default async function EditProductPage({ params }: { params: { id: string
           initialData={{
             name:               product.name,
             slug:               product.slug,
+            productLine:        (product as any).product_line ?? '',
             categoryId:         product.category_id,
             marketplaceContext: product.marketplace_context as 'wholesale' | 'retail' | 'both',
             cityId:             product.city_id ?? '',

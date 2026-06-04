@@ -15,6 +15,7 @@ interface ProductFormProps {
 
 interface FormState {
   name: string; slug: string; categoryId: string; marketplaceContext: 'wholesale' | 'retail' | 'both'
+  productLine: string
   cityId: string; description: string; sku: string
   priceDisplay: string   // shown in euros/currency units, converted to cents on save
   currencyCode: string; minOrderQty: string; stockQty: string; vatRate: string; weightGrams: string
@@ -23,6 +24,7 @@ interface FormState {
 
 const INITIAL: FormState = {
   name: '', slug: '', categoryId: '', marketplaceContext: 'wholesale',
+  productLine: '',
   cityId: '', description: '', sku: '',
   priceDisplay: '', currencyCode: 'EUR',
   minOrderQty: '1', stockQty: '0', vatRate: '10', weightGrams: '',
@@ -79,6 +81,7 @@ export function ProductForm({ supplierId, mode, productId, initialData }: Produc
       city_id:             form.cityId || null,
       name:                form.name.trim(),
       slug:                form.slug.trim(),
+      product_line:        form.productLine.trim() || null,
       description:         form.description.trim() || null,
       sku:                 form.sku.trim() || null,
       price_cents:         priceCents,
@@ -178,6 +181,13 @@ export function ProductForm({ supplierId, mode, productId, initialData }: Produc
               <option value="">Select category...</option>
               {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
+          </div>
+          <div className="space-y-1.5 sm:col-span-2">
+            <label className={labelCls}>Product line / family</label>
+            <input className={inputCls} value={form.productLine} onChange={(e) => update('productLine', e.target.value)} placeholder="e.g. Rozil Detergents" />
+            <p className="text-xs text-gray-400">
+              Optional. Products sharing the same line show as one card in the marketplace; buyers open it to pick a variant. Leave blank to group by category.
+            </p>
           </div>
           <div className="space-y-1.5">
             <label className={labelCls}>Sell in which shop?</label>

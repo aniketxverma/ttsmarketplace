@@ -1,5 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { ProductCard } from '@/components/marketplace/ProductCard'
+import { FamilyCard } from '@/components/marketplace/FamilyCard'
+import { groupIntoFamilies } from '@/lib/product-family'
 import { ProductGrid } from '@/components/marketplace/ProductGrid'
 import { CategoryNav } from '@/components/marketplace/CategoryNav'
 import { SearchBar } from '@/components/marketplace/SearchBar'
@@ -40,13 +42,14 @@ export default async function StorePage({
   // Products. When scoped to a single supplier (their own online shop), show ALL their
   // published products — the "online shop" sells the same catalogue by piece, so we don't
   // restrict by marketplace_context. Global browse keeps the retail/both filter.
-  let productQuery = supabase
-    .from('products')
+  let productQuery = (supabase
+    .from('products') as any)
     .select(
       `id, name, slug, price_cents, currency_code, min_order_qty, marketplace_context, vat_rate,
+      supplier_id, category_id, product_line,
       suppliers!inner(legal_name, trade_name, reliability_tier, status),
-      product_images(url, sort_order)`,
-      { count: 'exact' }
+      categories(name, slug),
+      product_images(url, sort_order)`
     )
     .eq('is_published', true)
 
@@ -69,12 +72,15 @@ export default async function StorePage({
     productQuery = productQuery.ilike('name', `%${searchParams.q}%`)
   }
 
-  const from = (page - 1) * PAGE_SIZE
-  const { data: products, count } = await productQuery
+  const { data: allProducts } = await productQuery
     .order('created_at', { ascending: false })
-    .range(from, from + PAGE_SIZE - 1)
+    .limit(500)
 
-  const totalPages = Math.ceil((count ?? 0) / PAGE_SIZE)
+  const families = groupIntoFamilies((allProducts ?? []) as any[])
+  const count = (allProducts ?? []).length
+  const totalPages = Math.ceil(families.length / PAGE_SIZE)
+  const from = (page - 1) * PAGE_SIZE
+  const pageFamilies = families.slice(from, from + PAGE_SIZE)
 
   return (
     <div className="min-h-screen bg-background">
@@ -133,7 +139,7 @@ export default async function StorePage({
 
           {/* Product grid */}
           <div className="flex-1 min-w-0">
-            {(products?.length ?? 0) > 0 ? (
+            {pageFamilies.length > 0 ? (
               <>
                 <p className="text-sm text-muted-foreground mb-4">
                   {count} product{count !== 1 ? 's' : ''}
@@ -144,8 +150,12 @@ export default async function StorePage({
                   })()}
                 </p>
                 <ProductGrid>
-                  {products!.map((p) => {
-                    const supplier = p.suppliers as unknown as {
+                  {pageFamilies.map((fam) => {
+                    if (fam.members.length > 1) {
+                      return <FamilyCard key={fam.key} family={fam} retail />
+                    }
+                    const p = fam.representative as any
+                    const supplier = p.suppliers as {
                       legal_name: string; trade_name: string | null; reliability_tier: import('@/types/domain').ReliabilityTier
                     }
                     const images = p.product_images as { url: string; sort_order: number }[]
