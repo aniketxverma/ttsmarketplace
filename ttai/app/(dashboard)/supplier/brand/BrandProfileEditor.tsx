@@ -345,12 +345,9 @@ export function BrandProfileEditor({ supplier, gallery: initialGallery, certific
             {/* Add form */}
             <div className="rounded-xl border border-dashed border-gray-200 p-4 bg-gray-50 space-y-3">
               <h3 className="text-sm font-semibold text-gray-700">Add Media</h3>
-              <Field label="URL">
-                <input className={INPUT} value={newGalleryUrl} onChange={(e) => setNewGalleryUrl(e.target.value)} placeholder="https://example.com/image.jpg" />
-              </Field>
               <div className="grid grid-cols-2 gap-3">
                 <Field label="Type">
-                  <select className={INPUT} value={newGalleryType} onChange={(e) => setNewGalleryType(e.target.value as 'image' | 'video')}>
+                  <select className={INPUT} value={newGalleryType} onChange={(e) => { setNewGalleryType(e.target.value as 'image' | 'video'); setNewGalleryUrl('') }}>
                     <option value="image">Image</option>
                     <option value="video">Video</option>
                   </select>
@@ -359,6 +356,15 @@ export function BrandProfileEditor({ supplier, gallery: initialGallery, certific
                   <input className={INPUT} value={newGalleryCaption} onChange={(e) => setNewGalleryCaption(e.target.value)} placeholder="Product in use" />
                 </Field>
               </div>
+              {newGalleryType === 'image' ? (
+                <Field label="Image">
+                  <ImageUpload value={newGalleryUrl || null} onChange={(url) => setNewGalleryUrl(url)} folder="gallery" aspect="wide" label="Gallery image" />
+                </Field>
+              ) : (
+                <Field label="Video URL" hint="YouTube / Vimeo / direct video link">
+                  <input className={INPUT} value={newGalleryUrl} onChange={(e) => setNewGalleryUrl(e.target.value)} placeholder="https://youtube.com/watch?v=..." />
+                </Field>
+              )}
               <button onClick={addGalleryItem} className="px-4 py-2 rounded-xl bg-[#0B1F4D] text-white text-sm font-bold hover:bg-[#162d6e] transition-colors">
                 Add to Gallery
               </button>
@@ -420,8 +426,8 @@ export function BrandProfileEditor({ supplier, gallery: initialGallery, certific
                   <input className={INPUT} type="date" value={newCert.expiry_date} onChange={(e) => setNewCert((c) => ({ ...c, expiry_date: e.target.value }))} />
                 </Field>
               </div>
-              <Field label="Certificate Image URL">
-                <input className={INPUT} value={newCert.image_url} onChange={(e) => setNewCert((c) => ({ ...c, image_url: e.target.value }))} placeholder="https://..." />
+              <Field label="Certificate Image">
+                <ImageUpload value={newCert.image_url || null} onChange={(url) => setNewCert((c) => ({ ...c, image_url: url }))} folder="gallery" aspect="wide" label="Certificate" />
               </Field>
               <button onClick={addCert} className="px-4 py-2 rounded-xl bg-[#0B1F4D] text-white text-sm font-bold hover:bg-[#162d6e] transition-colors">
                 Add Certification
@@ -508,8 +514,8 @@ export function BrandProfileEditor({ supplier, gallery: initialGallery, certific
             <Field label="Keywords" hint="Comma-separated keywords for search engines">
               <input className={INPUT} value={form.seo_keywords} onChange={(e) => set('seo_keywords', e.target.value)} placeholder="wholesale, bulk, manufacturer, ..." />
             </Field>
-            <Field label="Open Graph Image URL" hint="Image shown when sharing your brand page on social media (1200×630px)">
-              <input className={INPUT} value={form.og_image} onChange={(e) => set('og_image', e.target.value)} placeholder="https://..." />
+            <Field label="Open Graph Image" hint="Shown when sharing your brand page on social media (1200×630px)">
+              <ImageUpload value={form.og_image || null} onChange={(url) => set('og_image', url)} folder="banners" aspect="wide" label="Share image" />
             </Field>
           </div>
         )}
