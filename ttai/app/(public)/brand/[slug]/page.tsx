@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import Image from 'next/image'
 import { Crown, ShieldCheck, Award, Store } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { BrandTabs } from './BrandTabs'
 import { StatsBar } from './StatsBar'
 import { BrandLogo } from '@/components/BrandLogo'
@@ -68,7 +69,7 @@ export default async function BrandPage({ params }: { params: { slug: string } }
   const supabase = createClient()
 
   const { data: supplier } = await supplierQuery(supabase, params.slug, `
-      id, trade_name, legal_name, brand_slug, tagline, logo_url, banner_image,
+      id, owner_id, trade_name, legal_name, brand_slug, tagline, logo_url, banner_image,
       description, about_company, founded_year, employee_count, years_experience,
       countries_served, website, phone, whatsapp, business_email, working_hours,
       google_map_link, instagram, facebook, linkedin, twitter, youtube,
@@ -160,6 +161,21 @@ export default async function BrandPage({ params }: { params: { slug: string } }
   const tier    = TIER_CONFIG[supplier.reliability_tier] ?? TIER_CONFIG.UNVERIFIED
   const sv      = (supplier.section_visibility ?? {}) as Record<string, boolean>
   const badges  = (supplier.badges ?? []) as string[]
+
+  // Fall back to the owner's account profile so an uploaded avatar / real name
+  // still shows when the brand logo or trade name haven't been set yet.
+  const { data: owner } = await (createAdminClient().from('profiles') as any)
+    .select('avatar_url, full_name, company_name')
+    .eq('id', supplier.owner_id)
+    .maybeSingle()
+
+  const looksLikeEmail = (s?: string | null) => !!s && s.includes('@')
+  supplier.trade_name =
+    (!looksLikeEmail(supplier.trade_name) && supplier.trade_name) ||
+    (!looksLikeEmail(supplier.legal_name) && supplier.legal_name) ||
+    owner?.company_name || owner?.full_name ||
+    supplier.trade_name || supplier.legal_name || 'Supplier'
+  if (!supplier.logo_url && owner?.avatar_url) supplier.logo_url = owner.avatar_url
 
   const products = (productsRes.data ?? []).map((p: any) => {
     const imgs = ((p.product_images ?? []) as { url: string; sort_order: number }[]).sort((a, b) => a.sort_order - b.sort_order)
