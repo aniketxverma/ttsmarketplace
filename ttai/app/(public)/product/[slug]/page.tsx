@@ -7,6 +7,7 @@ import { ProductImageGallery } from './ProductImageGallery'
 import { CheckoutButton } from './CheckoutButton'
 import { useServerTranslations } from '@/lib/i18n/server'
 import { BrandLogo } from '@/components/BrandLogo'
+import { canSeeB2B } from '@/lib/business-chain'
 
 export const revalidate = 60
 
@@ -76,6 +77,14 @@ export default async function ProductPage({ params }: { params: { slug: string }
   }
 
   if (!product) notFound()
+
+  // Business-chain visibility: consumers (anonymous) don't see wholesale pricing / MOQ
+  const { data: { user } } = await supabase.auth.getUser()
+  let viewerCanSeeB2B = false
+  if (user) {
+    const { data: viewer } = await supabase.from('profiles').select('role, business_type').eq('id', user.id).single()
+    viewerCanSeeB2B = canSeeB2B(viewer?.role, (viewer as any)?.business_type)
+  }
 
   const supplier = product.suppliers as any
   const images   = ((product.product_images ?? []) as any[]).sort((a: any, b: any) => a.sort_order - b.sort_order)
@@ -160,17 +169,19 @@ export default async function ProductPage({ params }: { params: { slug: string }
               <span className="text-sm text-gray-400 font-medium">{t('product.per_unit')}</span>
             </div>
 
-            {/* Min Order + Stock — bordered two-column card */}
-            <div className="grid grid-cols-2 divide-x divide-gray-200 border border-gray-200 rounded-xl overflow-hidden bg-white">
-              <div className="p-4">
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
-                  {t('product.min_order')}
-                </p>
-                <p className="text-xl font-extrabold text-[#0B1F4D]">
-                  {product.min_order_qty}
-                  <span className="text-sm font-semibold text-gray-500 ml-1">{t('product.min_order_uds')}</span>
-                </p>
-              </div>
+            {/* Min Order + Stock — Min Order (wholesale) hidden from consumers */}
+            <div className={`grid ${viewerCanSeeB2B ? 'grid-cols-2' : 'grid-cols-1'} divide-x divide-gray-200 border border-gray-200 rounded-xl overflow-hidden bg-white`}>
+              {viewerCanSeeB2B && (
+                <div className="p-4">
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
+                    {t('product.min_order')}
+                  </p>
+                  <p className="text-xl font-extrabold text-[#0B1F4D]">
+                    {product.min_order_qty}
+                    <span className="text-sm font-semibold text-gray-500 ml-1">{t('product.min_order_uds')}</span>
+                  </p>
+                </div>
+              )}
               <div className="p-4">
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
                   {t('product.stock')}

@@ -94,6 +94,17 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
+  // ── Business-only gate (private ecosystem) ───────────────────────────────
+  // End customers (anonymous) only see the consumer Online Shop. The B2B
+  // marketplace, supplier directory and wholesale browse require a business
+  // account. Carry category/region through so they land on the retail equivalent.
+  const B2B_ONLY = ['/b2b', '/suppliers', '/marketplace']
+  if (!user && B2B_ONLY.some((p) => path.startsWith(p))) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/store'
+    return NextResponse.redirect(url)
+  }
+
   // ── Approval gate ────────────────────────────────────────────────────────
   // New flow: a newly-registered user can reach their DASHBOARD immediately
   // (so admins receive their details for review). Marketplace / commerce stays
