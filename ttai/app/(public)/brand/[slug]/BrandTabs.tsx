@@ -46,6 +46,7 @@ interface Props {
   pos: any[]; brandSlug: string; shareUrl?: string
   channel?: Channel | null; channelPosts?: ChannelPost[]
   isAuthenticated?: boolean
+  canSeeB2B?: boolean
 }
 
 // ── WhatsApp icon ─────────────────────────────────────────────────────────────
@@ -287,7 +288,7 @@ const POS_TYPE_CONFIG: Record<string, { label: string; color: string; bg: string
 export function BrandTabs({
   supplier, products, gallery, certifications, reviews, documents,
   avgRating, sectionVisibility, pos, brandSlug, shareUrl,
-  channel, channelPosts = [], isAuthenticated = false,
+  channel, channelPosts = [], isAuthenticated = false, canSeeB2B = false,
 }: Props) {
   const t = useT()
   const NAV_ITEMS = NAV_ITEM_IDS.map(item => ({ ...item, label: t(item.msgKey) }))
@@ -489,9 +490,10 @@ export function BrandTabs({
               />
             </div>
 
-            {/* ── Two shops: B2B (wholesale) + Online (retail) ── */}
-            <div data-reveal className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-14">
-              {/* Shop B2B */}
+            {/* ── Shops: Online always; B2B only for business viewers (privacy) ── */}
+            <div data-reveal className={`grid grid-cols-1 ${canSeeB2B ? 'sm:grid-cols-2' : ''} gap-4 mb-14`}>
+              {/* Shop B2B — hidden from end customers / consumers */}
+              {canSeeB2B && (
               <Link href={`/b2b?supplier=${supplier.id}`}
                 className="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col">
                 <div className="relative overflow-hidden bg-gradient-to-br from-[#0B1F4D] to-[#1a3a7a] px-5 py-4 flex items-center justify-between">
@@ -516,6 +518,7 @@ export function BrandTabs({
                   </span>
                 </div>
               </Link>
+              )}
 
               {/* Online Shop */}
               <Link href={`/store?supplier=${supplier.id}`}

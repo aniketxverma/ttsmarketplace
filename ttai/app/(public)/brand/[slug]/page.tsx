@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { BrandTabs } from './BrandTabs'
 import { StatsBar } from './StatsBar'
 import { BrandLogo } from '@/components/BrandLogo'
+import { canSeeB2B } from '@/lib/business-chain'
 
 export const revalidate = 60
 
@@ -81,6 +82,13 @@ export default async function BrandPage({ params }: { params: { slug: string } }
   // Check auth state — authenticated users see wholesale-only POS contacts
   const { data: { user } } = await supabase.auth.getUser()
   const isAuthenticated = !!user
+
+  // Business-chain visibility: consumers (anonymous) don't see B2B/wholesale
+  let viewerCanSeeB2B = false
+  if (user) {
+    const { data: viewer } = await supabase.from('profiles').select('role, business_type').eq('id', user.id).single()
+    viewerCanSeeB2B = canSeeB2B(viewer?.role, (viewer as any)?.business_type)
+  }
 
   const [productsRes, galleryRes, certsRes, reviewsRes, docsRes, posRes, channelRes] = await Promise.all([
     supabase
@@ -345,6 +353,7 @@ export default async function BrandPage({ params }: { params: { slug: string } }
           channel={channel}
           channelPosts={(channelPostsRes.data ?? []) as any[]}
           isAuthenticated={isAuthenticated}
+          canSeeB2B={viewerCanSeeB2B}
         />
       </div>
 
