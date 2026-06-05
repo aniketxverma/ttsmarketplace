@@ -20,6 +20,14 @@ interface FormState {
   priceDisplay: string       // wholesale / B2B price, converted to cents on save
   retailPriceDisplay: string // online-shop (retail) per-piece price
   currencyCode: string; minOrderQty: string; stockQty: string; vatRate: string; weightGrams: string
+  // Packaging & multi-unit purchasing
+  modelName: string; referenceNumber: string; ean: string; countryOfOrigin: string; leadTime: string
+  netContent: string; unitWeightKg: string; unitDimensions: string
+  unitsPerCarton: string; cartonWeightKg: string; cartonDimensions: string
+  cartonsPerPallet: string; palletWeightKg: string; palletDimensions: string
+  palletsPerTruck: string; truckCapacity: string
+  pricePerBox: string; pricePerPallet: string; pricePerTruck: string
+  sellPiece: boolean; sellBox: boolean; sellPallet: boolean; sellTruck: boolean
   isPublished: boolean
 }
 
@@ -29,6 +37,13 @@ const INITIAL: FormState = {
   cityId: '', description: '', sku: '',
   priceDisplay: '', retailPriceDisplay: '', currencyCode: 'EUR',
   minOrderQty: '1', stockQty: '0', vatRate: '10', weightGrams: '',
+  modelName: '', referenceNumber: '', ean: '', countryOfOrigin: '', leadTime: '',
+  netContent: '', unitWeightKg: '', unitDimensions: '',
+  unitsPerCarton: '', cartonWeightKg: '', cartonDimensions: '',
+  cartonsPerPallet: '', palletWeightKg: '', palletDimensions: '',
+  palletsPerTruck: '', truckCapacity: '',
+  pricePerBox: '', pricePerPallet: '', pricePerTruck: '',
+  sellPiece: true, sellBox: false, sellPallet: false, sellTruck: false,
   isPublished: false,
 }
 
@@ -93,6 +108,30 @@ export function ProductForm({ supplierId, mode, productId, initialData }: Produc
       stock_qty:           parseInt(form.stockQty) || 0,
       vat_rate:            form.vatRate ? parseFloat(form.vatRate) : null,
       weight_grams:        form.weightGrams ? parseInt(form.weightGrams) : null,
+      // Packaging & multi-unit
+      model_name:          form.modelName.trim() || null,
+      reference_number:    form.referenceNumber.trim() || null,
+      ean:                 form.ean.trim() || null,
+      country_of_origin:   form.countryOfOrigin.trim() || null,
+      lead_time:           form.leadTime.trim() || null,
+      net_content:         form.netContent.trim() || null,
+      unit_weight_kg:      form.unitWeightKg ? parseFloat(form.unitWeightKg) : null,
+      unit_dimensions:     form.unitDimensions.trim() || null,
+      units_per_carton:    form.unitsPerCarton ? parseInt(form.unitsPerCarton) : null,
+      carton_weight_kg:    form.cartonWeightKg ? parseFloat(form.cartonWeightKg) : null,
+      carton_dimensions:   form.cartonDimensions.trim() || null,
+      cartons_per_pallet:  form.cartonsPerPallet ? parseInt(form.cartonsPerPallet) : null,
+      pallet_weight_kg:    form.palletWeightKg ? parseFloat(form.palletWeightKg) : null,
+      pallet_dimensions:   form.palletDimensions.trim() || null,
+      pallets_per_truck:   form.palletsPerTruck ? parseInt(form.palletsPerTruck) : null,
+      truck_capacity:      form.truckCapacity.trim() || null,
+      price_per_box_cents:    form.pricePerBox && parseFloat(form.pricePerBox) > 0 ? Math.round(parseFloat(form.pricePerBox) * 100) : null,
+      price_per_pallet_cents: form.pricePerPallet && parseFloat(form.pricePerPallet) > 0 ? Math.round(parseFloat(form.pricePerPallet) * 100) : null,
+      price_per_truck_cents:  form.pricePerTruck && parseFloat(form.pricePerTruck) > 0 ? Math.round(parseFloat(form.pricePerTruck) * 100) : null,
+      sell_piece:          form.sellPiece,
+      sell_box:            form.sellBox,
+      sell_pallet:         form.sellPallet,
+      sell_truck:          form.sellTruck,
       is_published:        form.isPublished,
     }
 
@@ -347,6 +386,67 @@ export function ProductForm({ supplierId, mode, productId, initialData }: Produc
           />
         </div>
       )}
+
+      {/* Packaging & wholesale units */}
+      <div>
+        <h3 className="font-bold text-[#0B1F4D] text-sm mb-1 pb-2 border-b">Packaging &amp; wholesale units</h3>
+        <p className="text-xs text-gray-400 mt-2 mb-4">
+          One product, sold by piece / box / pallet / truck. Pallet &amp; truck totals are calculated automatically from these numbers — never put specs inside images.
+        </p>
+
+        {/* Sell-in toggles */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-5">
+          {([
+            ['sellPiece', 'Piece'], ['sellBox', 'Box'], ['sellPallet', 'Pallet'], ['sellTruck', 'Truck'],
+          ] as const).map(([key, label]) => (
+            <button key={key} type="button" onClick={() => update(key, !form[key])}
+              className={`rounded-xl border px-3 py-2.5 text-sm font-bold transition-all ${
+                form[key] ? 'border-[#0B1F4D] bg-[#0B1F4D] text-white' : 'border-gray-200 text-gray-500 hover:border-gray-300'
+              }`}>
+              Sell by {label}
+            </button>
+          ))}
+        </div>
+
+        {/* Unit + commercial */}
+        <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Unit (1 piece)</p>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
+          <div className="space-y-1.5"><label className={labelCls}>Net content</label><input className={inputCls} value={form.netContent} onChange={(e) => update('netContent', e.target.value)} placeholder="5 L" /></div>
+          <div className="space-y-1.5"><label className={labelCls}>Unit weight (kg)</label><input className={inputCls} type="number" step="0.01" value={form.unitWeightKg} onChange={(e) => update('unitWeightKg', e.target.value)} placeholder="5.25" /></div>
+          <div className="space-y-1.5"><label className={labelCls}>Unit dimensions</label><input className={inputCls} value={form.unitDimensions} onChange={(e) => update('unitDimensions', e.target.value)} placeholder="18.5 x 11.5 x 29.5 cm" /></div>
+          <div className="space-y-1.5"><label className={labelCls}>EAN / barcode</label><input className={inputCls} value={form.ean} onChange={(e) => update('ean', e.target.value)} placeholder="8421234567890" /></div>
+          <div className="space-y-1.5"><label className={labelCls}>Model</label><input className={inputCls} value={form.modelName} onChange={(e) => update('modelName', e.target.value)} placeholder="Rozil Max Power" /></div>
+          <div className="space-y-1.5"><label className={labelCls}>Reference</label><input className={inputCls} value={form.referenceNumber} onChange={(e) => update('referenceNumber', e.target.value)} placeholder="REF-001" /></div>
+          <div className="space-y-1.5"><label className={labelCls}>Country of origin</label><input className={inputCls} value={form.countryOfOrigin} onChange={(e) => update('countryOfOrigin', e.target.value)} placeholder="Spain" /></div>
+          <div className="space-y-1.5"><label className={labelCls}>Lead time</label><input className={inputCls} value={form.leadTime} onChange={(e) => update('leadTime', e.target.value)} placeholder="7–14 days" /></div>
+        </div>
+
+        {/* Box */}
+        <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Box (carton)</p>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
+          <div className="space-y-1.5"><label className={labelCls}>Units per box</label><input className={inputCls} type="number" min="1" value={form.unitsPerCarton} onChange={(e) => update('unitsPerCarton', e.target.value)} placeholder="4" /></div>
+          <div className="space-y-1.5"><label className={labelCls}>Box weight (kg)</label><input className={inputCls} type="number" step="0.01" value={form.cartonWeightKg} onChange={(e) => update('cartonWeightKg', e.target.value)} placeholder="22" /></div>
+          <div className="space-y-1.5"><label className={labelCls}>Box dimensions</label><input className={inputCls} value={form.cartonDimensions} onChange={(e) => update('cartonDimensions', e.target.value)} placeholder="40 x 28 x 29 cm" /></div>
+          <div className="space-y-1.5"><label className={labelCls}>Price per box ({form.currencyCode})</label><input className={inputCls} type="number" step="0.01" value={form.pricePerBox} onChange={(e) => update('pricePerBox', e.target.value)} placeholder="auto" /></div>
+        </div>
+
+        {/* Pallet */}
+        <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Pallet</p>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
+          <div className="space-y-1.5"><label className={labelCls}>Boxes per pallet</label><input className={inputCls} type="number" min="1" value={form.cartonsPerPallet} onChange={(e) => update('cartonsPerPallet', e.target.value)} placeholder="105" /></div>
+          <div className="space-y-1.5"><label className={labelCls}>Pallet weight (kg)</label><input className={inputCls} type="number" step="0.01" value={form.palletWeightKg} onChange={(e) => update('palletWeightKg', e.target.value)} placeholder="1050" /></div>
+          <div className="space-y-1.5"><label className={labelCls}>Pallet dimensions</label><input className={inputCls} value={form.palletDimensions} onChange={(e) => update('palletDimensions', e.target.value)} placeholder="120 x 100 x 160 cm" /></div>
+          <div className="space-y-1.5"><label className={labelCls}>Price per pallet ({form.currencyCode})</label><input className={inputCls} type="number" step="0.01" value={form.pricePerPallet} onChange={(e) => update('pricePerPallet', e.target.value)} placeholder="auto" /></div>
+        </div>
+
+        {/* Truck */}
+        <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Truck (full load)</p>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="space-y-1.5"><label className={labelCls}>Pallets per truck</label><input className={inputCls} type="number" min="1" value={form.palletsPerTruck} onChange={(e) => update('palletsPerTruck', e.target.value)} placeholder="33" /></div>
+          <div className="space-y-1.5"><label className={labelCls}>Truck capacity</label><input className={inputCls} value={form.truckCapacity} onChange={(e) => update('truckCapacity', e.target.value)} placeholder="13.6 m / 33 pallets" /></div>
+          <div className="space-y-1.5"><label className={labelCls}>Price per truck ({form.currencyCode})</label><input className={inputCls} type="number" step="0.01" value={form.pricePerTruck} onChange={(e) => update('pricePerTruck', e.target.value)} placeholder="auto" /></div>
+        </div>
+      </div>
 
       {/* Publish toggle */}
       <div className="rounded-xl border border-gray-200 p-4 flex items-center justify-between">

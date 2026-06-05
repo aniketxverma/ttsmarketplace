@@ -4,7 +4,8 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Crown, ShieldCheck, Award, Store, ChevronLeft, Package, Users, ArrowRight } from 'lucide-react'
 import { ProductImageGallery } from './ProductImageGallery'
-import { CheckoutButton } from './CheckoutButton'
+import { PurchasePanel } from './PurchasePanel'
+import { unitsPerPallet, unitsPerTruck, cartonsPerTruck } from '@/lib/packaging'
 import { useServerTranslations } from '@/lib/i18n/server'
 import { BrandLogo } from '@/components/BrandLogo'
 import { canSeeB2B } from '@/lib/business-chain'
@@ -47,6 +48,13 @@ export default async function ProductPage({ params, searchParams }: { params: { 
   const PRODUCT_SELECT = `
     id, name, slug, description, price_cents, retail_price_cents, currency_code,
     min_order_qty, stock_qty, is_published, marketplace_context,
+    model_name, reference_number, ean, country_of_origin, lead_time,
+    net_content, unit_weight_kg, unit_dimensions,
+    units_per_carton, carton_weight_kg, carton_dimensions,
+    cartons_per_pallet, pallet_weight_kg, pallet_dimensions,
+    pallets_per_truck, truck_capacity,
+    price_per_box_cents, price_per_pallet_cents, price_per_truck_cents,
+    sell_piece, sell_box, sell_pallet, sell_truck,
     product_images(url, sort_order),
     categories(name, slug),
     suppliers(
@@ -58,8 +66,8 @@ export default async function ProductPage({ params, searchParams }: { params: { 
   `
 
   // Try slug lookup first
-  let { data: product } = await supabase
-    .from('products')
+  let { data: product } = await (supabase
+    .from('products') as any)
     .select(PRODUCT_SELECT)
     .eq('slug', params.slug)
     .eq('is_published', true)
@@ -67,8 +75,8 @@ export default async function ProductPage({ params, searchParams }: { params: { 
 
   // Fallback: treat the param as a UUID (id) — handles old links or brand-page ID links
   if (!product) {
-    const { data: byId } = await supabase
-      .from('products')
+    const { data: byId } = await (supabase
+      .from('products') as any)
       .select(PRODUCT_SELECT)
       .eq('id', params.slug)
       .eq('is_published', true)
@@ -97,7 +105,6 @@ export default async function ProductPage({ params, searchParams }: { params: { 
     || (searchParams.shop !== 'b2b' && product.marketplace_context === 'retail')
   const unitPrice  = retailView ? (product.retail_price_cents ?? product.price_cents) : product.price_cents
   const showMinOrder = viewerCanSeeB2B && !retailView
-  const checkoutMoq  = retailView ? 1 : product.min_order_qty
 
   // More products from same supplier (exclude current)
   const { data: moreRaw } = await supabase
@@ -216,15 +223,13 @@ export default async function ProductPage({ params, searchParams }: { params: { 
               </div>
             )}
 
-            {/* ── Add to Cart + Buy Now ─────────────────────────────── */}
-            <CheckoutButton
-              productId={product.id}
-              name={product.name}
-              price_cents={unitPrice}
-              currency_code={product.currency_code}
-              imageUrl={images[0]?.url}
+            {/* ── Multi-unit purchase (piece / box / pallet / truck) ── */}
+            <PurchasePanel
+              product={product}
+              retail={retailView}
+              whatsapp={supplier?.whatsapp ?? null}
               supplierName={supplier?.trade_name ?? supplier?.legal_name ?? ''}
-              min_order_qty={checkoutMoq}
+              imageUrl={images[0]?.url}
               disabled={product.stock_qty === 0}
             />
 
@@ -308,6 +313,80 @@ export default async function ProductPage({ params, searchParams }: { params: { 
 
           </div>
         </div>
+
+        {/* ── Packaging & logistics (DB-driven, never baked into images) ───── */}
+        {(() => {
+          const hasUnit   = product.net_content || product.unit_weight_kg || product.unit_dimensions || product.ean
+          const hasCarton = product.units_per_carton || product.carton_weight_kg || product.carton_dimensions
+          const hasPallet = product.cartons_per_pallet || product.pallet_weight_kg || product.pallet_dimensions
+          const hasTruck  = product.pallets_per_truck || product.truck_capacity
+          const hasCommercial = product.model_name || product.reference_number || product.country_of_origin || product.lead_time
+          if (!hasUnit && !hasCarton && !hasPallet && !hasTruck && !hasCommercial) return null
+
+          const Row = ({ label, value }: { label: string; value: any }) =>
+            value ? (
+              <div className="flex justify-between gap-3 py-1.5 border-b border-gray-50 last:border-0">
+                <span className="text-xs text-gray-400">{label}</span>
+                <span className="text-xs font-bold text-[#0B1F4D] text-right">{value}</span>
+              </div>
+            ) : null
+
+          const Card = ({ title, accent, children }: { title: string; accent: string; children: React.ReactNode }) => (
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+              <h3 className="text-xs font-extrabold uppercase tracking-widest mb-3 flex items-center gap-2" style={{ color: accent }}>
+                <span className="w-1.5 h-4 rounded-full" style={{ background: accent }} />{title}
+              </h3>
+              <div>{children}</div>
+            </div>
+          )
+
+          return (
+            <div className="mt-14">
+              <h2 className="text-lg font-extrabold text-[#0B1F4D] mb-5">Packaging &amp; logistics</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {hasUnit && (
+                  <Card title="Unit (1 piece)" accent="#16a34a">
+                    <Row label="Net content"  value={product.net_content} />
+                    <Row label="Weight"        value={product.unit_weight_kg ? `${product.unit_weight_kg} kg` : null} />
+                    <Row label="Dimensions"    value={product.unit_dimensions} />
+                    <Row label="EAN"           value={product.ean} />
+                  </Card>
+                )}
+                {hasCarton && (
+                  <Card title="Box (carton)" accent="#0B1F4D">
+                    <Row label="Units per box" value={product.units_per_carton} />
+                    <Row label="Gross weight"  value={product.carton_weight_kg ? `${product.carton_weight_kg} kg` : null} />
+                    <Row label="Dimensions"    value={product.carton_dimensions} />
+                  </Card>
+                )}
+                {hasPallet && (
+                  <Card title="Pallet" accent="#7c3aed">
+                    <Row label="Boxes per pallet" value={product.cartons_per_pallet} />
+                    <Row label="Units per pallet" value={unitsPerPallet(product) || null} />
+                    <Row label="Gross weight"     value={product.pallet_weight_kg ? `${product.pallet_weight_kg} kg` : null} />
+                    <Row label="Dimensions"       value={product.pallet_dimensions} />
+                  </Card>
+                )}
+                {hasTruck && (
+                  <Card title="Truck (full load)" accent="#ea580c">
+                    <Row label="Pallets per truck" value={product.pallets_per_truck} />
+                    <Row label="Boxes per truck"   value={cartonsPerTruck(product) || null} />
+                    <Row label="Units per truck"   value={unitsPerTruck(product) || null} />
+                    <Row label="Capacity"          value={product.truck_capacity} />
+                  </Card>
+                )}
+              </div>
+              {hasCommercial && (
+                <div className="mt-4 bg-white rounded-2xl border border-gray-100 shadow-sm p-5 grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  <Row label="Model"          value={product.model_name} />
+                  <Row label="Reference"      value={product.reference_number} />
+                  <Row label="Country"        value={product.country_of_origin} />
+                  <Row label="Lead time"      value={product.lead_time} />
+                </div>
+              )}
+            </div>
+          )
+        })()}
 
         {/* ── More from this supplier ─────────────────────────────────────── */}
         {more.length > 0 && (
