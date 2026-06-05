@@ -67,7 +67,7 @@ export default async function FamilyPage({
         </p>
       </div>
 
-      <ProductGrid>
+      <ProductGrid className="xl:grid-cols-5 2xl:grid-cols-6">
         {products.map((p) => {
           const sup = p.suppliers as { legal_name: string; trade_name: string | null; reliability_tier: import('@/types/domain').ReliabilityTier }
           const img = (p.product_images as { url: string; sort_order: number }[])?.sort((a, b) => a.sort_order - b.sort_order)[0]?.url
