@@ -520,7 +520,10 @@ export function ProductForm({ supplierId, mode, productId, initialData, sellerTi
           <div className="space-y-1.5"><label className={labelCls}>Box gross weight (kg)</label><input className={inputCls} type="number" step="0.01" value={form.cartonWeightKg} onChange={(e) => update('cartonWeightKg', e.target.value)} placeholder="22" /></div>
           <div className="space-y-1.5"><label className={labelCls}>Box net weight (kg)</label><input className={inputCls} type="number" step="0.01" value={form.cartonNetWeightKg} onChange={(e) => update('cartonNetWeightKg', e.target.value)} placeholder="21" /></div>
           <div className="space-y-1.5"><label className={labelCls}>Box dimensions</label><input className={inputCls} value={form.cartonDimensions} onChange={(e) => update('cartonDimensions', e.target.value)} placeholder="40 x 28 x 29 cm" /></div>
-          <div className="space-y-1.5"><label className={labelCls}>Price per box ({form.currencyCode})</label><input className={inputCls} type="number" step="0.01" value={form.pricePerBox} onChange={(e) => update('pricePerBox', e.target.value)} placeholder="auto" /></div>
+          <div className="space-y-1.5"><label className={labelCls}>Price per box ({form.currencyCode})</label>{canSellUnit(sellerTier, 'box')
+            ? <input className={inputCls} type="number" step="0.01" value={form.pricePerBox} onChange={(e) => update('pricePerBox', e.target.value)} placeholder="auto" />
+            : <a href="/pricing" className="flex items-center gap-1.5 rounded-xl border border-dashed border-amber-300 bg-amber-50/60 px-3 py-2.5 text-xs font-bold text-amber-700 hover:bg-amber-50">🔒 Upgrade to {requiredPlanLabel('box')} →</a>}
+          </div>
         </div>
 
         {/* Pallet */}
@@ -530,7 +533,10 @@ export function ProductForm({ supplierId, mode, productId, initialData, sellerTi
           <div className="space-y-1.5"><label className={labelCls}>Pallet weight (kg)</label><input className={inputCls} type="number" step="0.01" value={form.palletWeightKg} onChange={(e) => update('palletWeightKg', e.target.value)} placeholder="1050" /></div>
           <div className="space-y-1.5"><label className={labelCls}>Pallet height (cm)</label><input className={inputCls} type="number" min="1" value={form.palletHeightCm} onChange={(e) => update('palletHeightCm', e.target.value)} placeholder="160" /></div>
           <div className="space-y-1.5"><label className={labelCls}>Pallet dimensions</label><input className={inputCls} value={form.palletDimensions} onChange={(e) => update('palletDimensions', e.target.value)} placeholder="120 x 100 x 160 cm" /></div>
-          <div className="space-y-1.5"><label className={labelCls}>Price per pallet ({form.currencyCode})</label><input className={inputCls} type="number" step="0.01" value={form.pricePerPallet} onChange={(e) => update('pricePerPallet', e.target.value)} placeholder="auto" /></div>
+          <div className="space-y-1.5"><label className={labelCls}>Price per pallet ({form.currencyCode})</label>{canSellUnit(sellerTier, 'pallet')
+            ? <input className={inputCls} type="number" step="0.01" value={form.pricePerPallet} onChange={(e) => update('pricePerPallet', e.target.value)} placeholder="auto" />
+            : <a href="/pricing" className="flex items-center gap-1.5 rounded-xl border border-dashed border-amber-300 bg-amber-50/60 px-3 py-2.5 text-xs font-bold text-amber-700 hover:bg-amber-50">🔒 Upgrade to {requiredPlanLabel('pallet')} →</a>}
+          </div>
         </div>
 
         {/* Truck */}
@@ -538,7 +544,10 @@ export function ProductForm({ supplierId, mode, productId, initialData, sellerTi
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <div className="space-y-1.5"><label className={labelCls}>Pallets per truck</label><input className={inputCls} type="number" min="1" value={form.palletsPerTruck} onChange={(e) => update('palletsPerTruck', e.target.value)} placeholder="33" /></div>
           <div className="space-y-1.5"><label className={labelCls}>Truck capacity</label><input className={inputCls} value={form.truckCapacity} onChange={(e) => update('truckCapacity', e.target.value)} placeholder="13.6 m / 33 pallets" /></div>
-          <div className="space-y-1.5"><label className={labelCls}>Price per truck ({form.currencyCode})</label><input className={inputCls} type="number" step="0.01" value={form.pricePerTruck} onChange={(e) => update('pricePerTruck', e.target.value)} placeholder="auto" /></div>
+          <div className="space-y-1.5"><label className={labelCls}>Price per truck ({form.currencyCode})</label>{canSellUnit(sellerTier, 'truck')
+            ? <input className={inputCls} type="number" step="0.01" value={form.pricePerTruck} onChange={(e) => update('pricePerTruck', e.target.value)} placeholder="auto" />
+            : <a href="/pricing" className="flex items-center gap-1.5 rounded-xl border border-dashed border-amber-300 bg-amber-50/60 px-3 py-2.5 text-xs font-bold text-amber-700 hover:bg-amber-50">🔒 Upgrade to {requiredPlanLabel('truck')} →</a>}
+          </div>
         </div>
       </div>
 
