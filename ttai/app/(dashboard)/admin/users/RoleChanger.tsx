@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 
 const ROLES = ['buyer', 'business_client', 'supplier', 'broker', 'admin']
@@ -14,8 +13,12 @@ export function RoleChanger({ userId, currentRole }: { userId: string; currentRo
   async function handleChange(newRole: string) {
     if (newRole === role) return
     startTransition(async () => {
-      const supabase = createClient()
-      await supabase.from('profiles').update({ role: newRole as any }).eq('id', userId)
+      // Server route — RLS blocks an admin from updating another user's profile client-side.
+      const res = await fetch('/api/admin/user-update', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, role: newRole }),
+      })
+      if (!res.ok) { alert((await res.json().catch(() => ({})))?.error ?? 'Failed to update role'); return }
       setRole(newRole)
       router.refresh()
     })

@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 
 const TIERS: { v: string; label: string }[] = [
@@ -26,8 +25,12 @@ export function TierChanger({ userId, currentTier }: { userId: string; currentTi
   function handleChange(newTier: string) {
     if (newTier === tier) return
     startTransition(async () => {
-      const supabase = createClient()
-      await (supabase.from('profiles') as any).update({ tier: newTier }).eq('id', userId)
+      // Server route — RLS blocks an admin from updating another user's profile client-side.
+      const res = await fetch('/api/admin/user-update', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, tier: newTier }),
+      })
+      if (!res.ok) { alert((await res.json().catch(() => ({})))?.error ?? 'Failed to update plan'); return }
       setTier(newTier)
       router.refresh()
     })
