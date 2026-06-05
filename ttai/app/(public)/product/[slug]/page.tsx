@@ -51,9 +51,9 @@ export default async function ProductPage({ params, searchParams }: { params: { 
     min_order_qty, stock_qty, is_published, marketplace_context, supplier_id, product_line,
     model_name, reference_number, ean, country_of_origin, lead_time,
     net_content, unit_weight_kg, unit_dimensions,
-    units_per_carton, carton_weight_kg, carton_dimensions,
-    cartons_per_pallet, pallet_weight_kg, pallet_dimensions,
-    pallets_per_truck, truck_capacity,
+    units_per_carton, carton_weight_kg, carton_net_weight_kg, carton_dimensions,
+    cartons_per_pallet, pallet_weight_kg, pallet_dimensions, pallet_height_cm,
+    pallets_per_truck, truck_capacity, exw_price_cents,
     price_per_box_cents, price_per_pallet_cents, price_per_truck_cents,
     sell_piece, sell_box, sell_pallet, sell_truck,
     product_images(url, sort_order),
@@ -349,7 +349,7 @@ export default async function ProductPage({ params, searchParams }: { params: { 
           const hasCarton = product.units_per_carton || product.carton_weight_kg || product.carton_dimensions
           const hasPallet = product.cartons_per_pallet || product.pallet_weight_kg || product.pallet_dimensions
           const hasTruck  = product.pallets_per_truck || product.truck_capacity
-          const hasCommercial = product.model_name || product.reference_number || product.country_of_origin || product.lead_time
+          const hasCommercial = product.model_name || product.reference_number || product.country_of_origin || product.lead_time || product.exw_price_cents
           if (!hasUnit && !hasCarton && !hasPallet && !hasTruck && !hasCommercial) return null
 
           const Row = ({ label, value }: { label: string; value: any }) =>
@@ -385,6 +385,7 @@ export default async function ProductPage({ params, searchParams }: { params: { 
                   <Card title="Box (carton)" accent="#0B1F4D">
                     <Row label="Units per box" value={product.units_per_carton} />
                     <Row label="Gross weight"  value={product.carton_weight_kg ? `${product.carton_weight_kg} kg` : null} />
+                    <Row label="Net weight"    value={product.carton_net_weight_kg ? `${product.carton_net_weight_kg} kg` : null} />
                     <Row label="Dimensions"    value={product.carton_dimensions} />
                   </Card>
                 )}
@@ -393,6 +394,7 @@ export default async function ProductPage({ params, searchParams }: { params: { 
                     <Row label="Boxes per pallet" value={product.cartons_per_pallet} />
                     <Row label="Units per pallet" value={unitsPerPallet(product) || null} />
                     <Row label="Gross weight"     value={product.pallet_weight_kg ? `${product.pallet_weight_kg} kg` : null} />
+                    <Row label="Height"           value={product.pallet_height_cm ? `${product.pallet_height_cm} cm` : null} />
                     <Row label="Dimensions"       value={product.pallet_dimensions} />
                   </Card>
                 )}
@@ -411,6 +413,8 @@ export default async function ProductPage({ params, searchParams }: { params: { 
                   <Row label="Reference"      value={product.reference_number} />
                   <Row label="Country"        value={product.country_of_origin} />
                   <Row label="Lead time"      value={product.lead_time} />
+                  <Row label="EXW price"      value={product.exw_price_cents != null ? fmt(product.exw_price_cents, product.currency_code) : null} />
+                  <Row label="EAN"            value={product.ean} />
                 </div>
               )}
             </div>
