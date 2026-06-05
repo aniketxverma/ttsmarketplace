@@ -72,7 +72,7 @@ export function CartDrawer() {
           ) : (
             <div className="divide-y">
               {items.map((item) => (
-                <div key={item.productId} className="flex gap-3 p-4 hover:bg-gray-50 transition-colors">
+                <div key={item.id} className="flex gap-3 p-4 hover:bg-gray-50 transition-colors">
                   {/* Image */}
                   <div className="w-16 h-16 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0 relative">
                     {item.imageUrl ? (
@@ -89,13 +89,20 @@ export function CartDrawer() {
                   {/* Info */}
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-sm text-gray-900 leading-tight line-clamp-2">{item.name}</p>
-                    <p className="text-xs text-gray-400 mt-0.5">{item.supplierName}</p>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <p className="text-xs text-gray-400">{item.supplierName}</p>
+                      {item.unit !== 'piece' && (
+                        <span className="text-[10px] font-extrabold uppercase tracking-wide bg-[#0B1F4D]/8 text-[#0B1F4D] px-1.5 py-0.5 rounded">
+                          {item.unitLabel ?? item.unit}
+                        </span>
+                      )}
+                    </div>
 
                     <div className="flex items-center justify-between mt-2">
                       {/* Qty stepper */}
                       <div className="flex items-center border rounded-lg overflow-hidden">
                         <button
-                          onClick={() => setQty(item.productId, item.quantity - Math.max(1, item.min_order_qty))}
+                          onClick={() => setQty(item.id, item.quantity - 1)}
                           className="px-2.5 py-1.5 text-gray-600 hover:bg-gray-100 transition-colors text-sm font-bold"
                         >
                           −
@@ -104,7 +111,7 @@ export function CartDrawer() {
                           {item.quantity}
                         </span>
                         <button
-                          onClick={() => setQty(item.productId, item.quantity + Math.max(1, item.min_order_qty))}
+                          onClick={() => setQty(item.id, item.quantity + 1)}
                           className="px-2.5 py-1.5 text-gray-600 hover:bg-gray-100 transition-colors text-sm font-bold"
                         >
                           +
@@ -119,7 +126,7 @@ export function CartDrawer() {
 
                   {/* Remove */}
                   <button
-                    onClick={() => removeItem(item.productId)}
+                    onClick={() => removeItem(item.id)}
                     className="p-1 rounded hover:bg-red-50 text-gray-300 hover:text-red-400 transition-colors flex-shrink-0 h-fit"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -24,7 +24,7 @@ type Product = PackagingProduct & {
 }
 
 export function PurchasePanel({
-  product, retail = false, whatsapp, supplierName, imageUrl, disabled,
+  product, retail = false, whatsapp, supplierName, imageUrl, disabled, shopUnits,
 }: {
   product: Product
   retail?: boolean
@@ -32,9 +32,12 @@ export function PurchasePanel({
   supplierName: string
   imageUrl?: string
   disabled?: boolean
+  /** Restrict to the units this shop allows (Phase 3). Undefined = all available. */
+  shopUnits?: PurchaseUnit[]
 }) {
-  const units = availableUnits(product)
-  const { addItem, setQty } = useCart()
+  const allUnits = availableUnits(product)
+  const units = shopUnits ? allUnits.filter(u => shopUnits.includes(u)) : allUnits
+  const { addItem } = useCart()
   const router = useRouter()
   const [unit, setUnit] = useState<PurchaseUnit>(units[0] ?? 'piece')
   const [qty, setQty_] = useState(1)
@@ -53,16 +56,18 @@ export function PurchasePanel({
   const pallets = unit === 'truck' ? (product.pallets_per_truck ?? 0) * qty : unit === 'pallet' ? qty : 0
   const lineTotal = unitPrice(product, unit, retail) * qty
 
-  const isQuote = unit === 'pallet' || unit === 'truck'
+  const canQuote = unit === 'pallet' || unit === 'truck'
 
   function addToCart() {
-    const piecePrice = retail ? (product.retail_price_cents ?? product.price_cents) : product.price_cents
     addItem({
-      productId: product.id, name: product.name, slug: product.slug,
-      price_cents: piecePrice, currency_code: product.currency_code,
-      imageUrl, supplierName, min_order_qty: 1,
-    } as any)
-    setQty(product.id, pieces) // total pieces for the chosen unit × qty
+      productId: product.id,
+      unit,
+      unitLabel: UNIT_LABEL[unit],
+      name: product.name,
+      price_cents: unitPrice(product, unit, retail), // price for ONE of this unit
+      currency_code: product.currency_code,
+      imageUrl, supplierName, retail,
+    }, qty)
     setAdded(true)
     setTimeout(() => setAdded(false), 2000)
   }
@@ -127,17 +132,16 @@ export function PurchasePanel({
       </div>
 
       {/* ── Action ── */}
-      {isQuote ? (
+      <button type="button" onClick={addToCart} disabled={disabled}
+        className={`w-full flex items-center justify-center gap-2 rounded-xl px-4 py-3.5 text-sm font-bold transition-all disabled:opacity-50 ${
+          added ? 'bg-green-50 text-green-700 border-2 border-green-500' : 'bg-[#0B1F4D] text-white hover:bg-[#162d6e]'
+        }`}>
+        {added ? <><Check className="w-4 h-4" /> Added!</> : <><ShoppingCart className="w-4 h-4" /> Add to cart</>}
+      </button>
+      {canQuote && (
         <button type="button" onClick={requestQuote}
-          className="w-full flex items-center justify-center gap-2 rounded-xl bg-[#ea580c] text-white px-4 py-3.5 text-sm font-bold hover:bg-[#c2410c] transition-colors">
-          <FileText className="w-4 h-4" /> Request a quote
-        </button>
-      ) : (
-        <button type="button" onClick={addToCart} disabled={disabled}
-          className={`w-full flex items-center justify-center gap-2 rounded-xl px-4 py-3.5 text-sm font-bold transition-all disabled:opacity-50 ${
-            added ? 'bg-green-50 text-green-700 border-2 border-green-500' : 'bg-[#0B1F4D] text-white hover:bg-[#162d6e]'
-          }`}>
-          {added ? <><Check className="w-4 h-4" /> Added!</> : <><ShoppingCart className="w-4 h-4" /> Add to cart</>}
+          className="w-full flex items-center justify-center gap-1.5 text-xs font-bold text-[#ea580c] hover:underline">
+          <FileText className="w-3.5 h-3.5" /> Or request a custom quote
         </button>
       )}
       {disabled && <p className="text-sm text-red-500 text-center">Out of stock</p>}

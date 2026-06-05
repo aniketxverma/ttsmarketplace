@@ -38,7 +38,7 @@ export default function CheckoutPage() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        items: items.map(i => ({ productId: i.productId, quantity: i.quantity })),
+        items: items.map(i => ({ productId: i.productId, quantity: i.quantity, unit: i.unit })),
         shippingAddress: form,
       }),
     })
@@ -198,7 +198,7 @@ export default function CheckoutPage() {
                 {/* Items */}
                 <div className="p-5 space-y-4 max-h-72 overflow-y-auto">
                   {items.map((item) => (
-                    <div key={item.productId} className="flex items-center gap-3">
+                    <div key={item.id} className="flex items-center gap-3">
                       <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-100 relative flex-shrink-0">
                         {item.imageUrl ? (
                           <Image src={item.imageUrl} alt={item.name} fill className="object-cover" sizes="48px" />
@@ -208,7 +208,9 @@ export default function CheckoutPage() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-xs font-semibold text-gray-900 line-clamp-2 leading-tight">{item.name}</p>
-                        <p className="text-xs text-gray-400 mt-0.5">Qty: {item.quantity}</p>
+                        <p className="text-xs text-gray-400 mt-0.5">
+                          {item.quantity} {item.unit !== 'piece' ? `${item.unitLabel ?? item.unit}${item.quantity > 1 ? 's' : ''}` : `unit${item.quantity > 1 ? 's' : ''}`}
+                        </p>
                       </div>
                       <p className="text-sm font-bold text-[#0B1F4D] flex-shrink-0">
                         {fmt(item.price_cents * item.quantity, item.currency_code)}

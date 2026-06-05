@@ -5,7 +5,8 @@ import { createClient } from '@/lib/supabase/server'
 import { Crown, ShieldCheck, Award, Store, ChevronLeft, Package, Users, ArrowRight } from 'lucide-react'
 import { ProductImageGallery } from './ProductImageGallery'
 import { PurchasePanel } from './PurchasePanel'
-import { unitsPerPallet, unitsPerTruck, cartonsPerTruck } from '@/lib/packaging'
+import { ModelSelector } from './ModelSelector'
+import { unitsPerPallet, unitsPerTruck, cartonsPerTruck, type PurchaseUnit } from '@/lib/packaging'
 import { useServerTranslations } from '@/lib/i18n/server'
 import { BrandLogo } from '@/components/BrandLogo'
 import { canSeeB2B } from '@/lib/business-chain'
@@ -47,7 +48,7 @@ export default async function ProductPage({ params, searchParams }: { params: { 
 
   const PRODUCT_SELECT = `
     id, name, slug, description, price_cents, retail_price_cents, currency_code,
-    min_order_qty, stock_qty, is_published, marketplace_context,
+    min_order_qty, stock_qty, is_published, marketplace_context, supplier_id, product_line,
     model_name, reference_number, ean, country_of_origin, lead_time,
     net_content, unit_weight_kg, unit_dimensions,
     units_per_carton, carton_weight_kg, carton_dimensions,
@@ -105,6 +106,24 @@ export default async function ProductPage({ params, searchParams }: { params: { 
     || (searchParams.shop !== 'b2b' && product.marketplace_context === 'retail')
   const unitPrice  = retailView ? (product.retail_price_cents ?? product.price_cents) : product.price_cents
   const showMinOrder = viewerCanSeeB2B && !retailView
+
+  // Shop-based purchase permissions (Phase 3): b2b = box+pallet, trade = pallet+truck,
+  // online / default (TTAIEMA) = all available units.
+  const shopUnits: PurchaseUnit[] | undefined =
+    searchParams.shop === 'b2b'   ? ['box', 'pallet'] :
+    searchParams.shop === 'trade' ? ['pallet', 'truck'] : undefined
+
+  // Model selector (Phase 3): sibling products in the same product line.
+  let models: { id: string; slug: string; name: string; model_name: string | null }[] = []
+  if (product.product_line) {
+    const { data } = await (supabase.from('products') as any)
+      .select('id, slug, name, model_name')
+      .eq('supplier_id', product.supplier_id)
+      .eq('product_line', product.product_line)
+      .eq('is_published', true)
+      .order('name')
+    models = data ?? []
+  }
 
   // More products from same supplier (exclude current)
   const { data: moreRaw } = await supabase
@@ -223,10 +242,20 @@ export default async function ProductPage({ params, searchParams }: { params: { 
               </div>
             )}
 
+            {/* ── Model selector (sibling products in the same line) ── */}
+            {models.length > 1 && (
+              <ModelSelector
+                models={models}
+                currentId={product.id}
+                shop={searchParams.shop}
+              />
+            )}
+
             {/* ── Multi-unit purchase (piece / box / pallet / truck) ── */}
             <PurchasePanel
               product={product}
               retail={retailView}
+              shopUnits={shopUnits}
               whatsapp={supplier?.whatsapp ?? null}
               supplierName={supplier?.trade_name ?? supplier?.legal_name ?? ''}
               imageUrl={images[0]?.url}
