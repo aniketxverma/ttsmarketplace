@@ -9,7 +9,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
  * Uses the admin client so it works regardless of storage RLS, but only for a
  * logged-in user and only into a per-user path.
  */
-const FOLDERS = ['products', 'logos', 'banners', 'gallery', 'misc']
+const FOLDERS = ['products', 'logos', 'banners', 'gallery', 'docs', 'video', 'misc']
 
 export async function POST(req: NextRequest) {
   const supabase = createClient()
@@ -22,8 +22,14 @@ export async function POST(req: NextRequest) {
   const folder = FOLDERS.includes(folderRaw) ? folderRaw : 'misc'
 
   if (!file) return NextResponse.json({ error: 'No file provided' }, { status: 400 })
-  if (!file.type.startsWith('image/')) return NextResponse.json({ error: 'Only image files are allowed' }, { status: 400 })
-  if (file.size > 5 * 1024 * 1024) return NextResponse.json({ error: 'Image must be under 5 MB' }, { status: 400 })
+  const isImage = file.type.startsWith('image/')
+  const isPdf   = file.type === 'application/pdf'
+  const isVideo = file.type.startsWith('video/')
+  if (!isImage && !isPdf && !isVideo) {
+    return NextResponse.json({ error: 'Only images, PDF or video files are allowed' }, { status: 400 })
+  }
+  const maxMb = isVideo ? 100 : isPdf ? 20 : 5
+  if (file.size > maxMb * 1024 * 1024) return NextResponse.json({ error: `File must be under ${maxMb} MB` }, { status: 400 })
 
   const ext  = file.name.split('.').pop()?.toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg'
   const rand = Math.random().toString(36).slice(2, 8)

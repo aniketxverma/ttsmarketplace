@@ -3,13 +3,11 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Crown, ShieldCheck, Award, Store, ChevronLeft, Package, Users, ArrowRight } from 'lucide-react'
-import { ProductImageGallery } from './ProductImageGallery'
-import { PurchasePanel } from './PurchasePanel'
+import { ProductBuyArea } from './ProductBuyArea'
 import { ModelSelector } from './ModelSelector'
 import { unitsPerPallet, unitsPerTruck, cartonsPerTruck, type PurchaseUnit } from '@/lib/packaging'
 import { useServerTranslations } from '@/lib/i18n/server'
 import { BrandLogo } from '@/components/BrandLogo'
-import { canSeeB2B } from '@/lib/business-chain'
 
 export const revalidate = 60
 
@@ -55,8 +53,8 @@ export default async function ProductPage({ params, searchParams }: { params: { 
     cartons_per_pallet, pallet_weight_kg, pallet_dimensions, pallet_height_cm,
     pallets_per_truck, truck_capacity, exw_price_cents,
     price_per_box_cents, price_per_pallet_cents, price_per_truck_cents,
-    sell_piece, sell_box, sell_pallet, sell_truck,
-    product_images(url, sort_order),
+    sell_piece, sell_box, sell_pallet, sell_truck, hs_code, catalogue_url, video_url,
+    product_images(url, sort_order, image_role),
     categories(name, slug),
     suppliers(
       id, trade_name, legal_name, brand_slug, logo_url, tagline,
@@ -87,14 +85,6 @@ export default async function ProductPage({ params, searchParams }: { params: { 
 
   if (!product) notFound()
 
-  // Business-chain visibility: consumers (anonymous) don't see wholesale pricing / MOQ
-  const { data: { user } } = await supabase.auth.getUser()
-  let viewerCanSeeB2B = false
-  if (user) {
-    const { data: viewer } = await supabase.from('profiles').select('role, business_type').eq('id', user.id).single()
-    viewerCanSeeB2B = canSeeB2B(viewer?.role, (viewer as any)?.business_type)
-  }
-
   const supplier = product.suppliers as any
   const images   = ((product.product_images ?? []) as any[]).sort((a: any, b: any) => a.sort_order - b.sort_order)
   const tier     = TIER[supplier?.reliability_tier ?? 'UNVERIFIED'] ?? TIER.UNVERIFIED
@@ -104,8 +94,6 @@ export default async function ProductPage({ params, searchParams }: { params: { 
   // own context. Retail = per-piece price, no MOQ.
   const retailView = searchParams.shop === 'online'
     || (searchParams.shop !== 'b2b' && product.marketplace_context === 'retail')
-  const unitPrice  = retailView ? (product.retail_price_cents ?? product.price_cents) : product.price_cents
-  const showMinOrder = viewerCanSeeB2B && !retailView
 
   // Shop-based purchase permissions (Phase 3): b2b = box+pallet, trade = pallet+truck,
   // online / default (TTAIEMA) = all available units.
@@ -165,74 +153,20 @@ export default async function ProductPage({ params, searchParams }: { params: { 
 
       {/* ── Main grid ──────────────────────────────────────────────────────── */}
       <div className="max-w-6xl mx-auto px-4 sm:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-
-          {/* Left: image gallery */}
-          <div className="lg:sticky lg:top-20">
-            <ProductImageGallery images={images} name={product.name} />
-          </div>
-
-          {/* Right: details */}
-          <div className="space-y-5">
-
-            {/* Supplier link + category + product name */}
-            <div>
-              {/* Supplier name — clickable link to brand page */}
-              {supplier && (
-                <Link
-                  href={supplier.brand_slug ? `/brand/${supplier.brand_slug}` : '#'}
-                  className="inline-flex items-center gap-1.5 text-sm font-semibold text-gray-400 hover:text-[#0B1F4D] transition-colors mb-1"
-                >
-                  {supplier.trade_name ?? supplier.legal_name}
-                </Link>
-              )}
-              {product.categories?.name && (
-                <p className="text-xs font-bold text-[#F5A623] uppercase tracking-widest mb-1.5">
-                  {product.categories.name}
-                </p>
-              )}
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0B1F4D] leading-tight">
-                {product.name}
-              </h1>
-            </div>
-
-            {/* Price */}
-            <div className="flex items-baseline gap-2 flex-wrap">
-              <span className="text-4xl font-black text-[#0B1F4D]">
-                {fmt(unitPrice, product.currency_code)}
-              </span>
-              <span className="text-sm text-gray-400 font-medium">{t('product.per_unit')}</span>
-            </div>
-
-            {/* Min Order + Stock — Min Order (wholesale) hidden in the online shop & from consumers */}
-            <div className={`grid ${showMinOrder ? 'grid-cols-2' : 'grid-cols-1'} divide-x divide-gray-200 border border-gray-200 rounded-xl overflow-hidden bg-white`}>
-              {showMinOrder && (
-                <div className="p-4">
-                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
-                    {t('product.min_order')}
-                  </p>
-                  <p className="text-xl font-extrabold text-[#0B1F4D]">
-                    {product.min_order_qty}
-                    <span className="text-sm font-semibold text-gray-500 ml-1">{t('product.min_order_uds')}</span>
-                  </p>
-                </div>
-              )}
-              <div className="p-4">
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">
-                  {t('product.stock')}
-                </p>
-                <div className="flex items-center gap-1.5">
-                  <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${
-                    product.stock_qty > 100 ? 'bg-green-500' :
-                    product.stock_qty > 0   ? 'bg-amber-400' : 'bg-red-500'
-                  }`} />
-                  <p className="text-xl font-extrabold text-[#0B1F4D]">
-                    {product.stock_qty > 500 ? '+500' : product.stock_qty}
-                    <span className="text-sm font-semibold text-gray-500 ml-1">{t('product.in_stock')}</span>
-                  </p>
-                </div>
-              </div>
-            </div>
+        <ProductBuyArea
+          product={product}
+          images={images}
+          retail={retailView}
+          shopUnits={shopUnits}
+          whatsapp={supplier?.whatsapp ?? null}
+          supplierName={supplier?.trade_name ?? supplier?.legal_name ?? ''}
+          imageUrl={images[0]?.url}
+          categoryName={product.categories?.name ?? null}
+          supplierLabel={supplier?.trade_name ?? supplier?.legal_name ?? null}
+          supplierHref={supplier ? (supplier.brand_slug ? `/brand/${supplier.brand_slug}` : '#') : null}
+          shipsFrom={[supplier?.cities?.name, supplier?.countries?.name].filter(Boolean).join(', ') || null}
+          topSlot={models.length > 1 ? <ModelSelector models={models} currentId={product.id} shop={searchParams.shop} /> : null}
+        >
 
             {/* Description */}
             {product.description && (
@@ -242,37 +176,21 @@ export default async function ProductPage({ params, searchParams }: { params: { 
               </div>
             )}
 
-            {/* ── Model selector (sibling products in the same line) ── */}
-            {models.length > 1 && (
-              <ModelSelector
-                models={models}
-                currentId={product.id}
-                shop={searchParams.shop}
-              />
-            )}
-
-            {/* ── Multi-unit purchase (piece / box / pallet / truck) ── */}
-            <PurchasePanel
-              product={product}
-              retail={retailView}
-              shopUnits={shopUnits}
-              whatsapp={supplier?.whatsapp ?? null}
-              supplierName={supplier?.trade_name ?? supplier?.legal_name ?? ''}
-              imageUrl={images[0]?.url}
-              disabled={product.stock_qty === 0}
-            />
-
-            {/* ── Dropship fulfillment note ─────────────────────────── */}
-            {(supplier?.cities?.name || supplier?.countries?.name) && (
-              <div className="flex items-start gap-2.5 rounded-xl border border-gray-100 bg-gray-50 px-3.5 py-3">
-                <svg className="w-4 h-4 text-[#0B1F4D] mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M13 16V6a1 1 0 00-1-1H3m10 11V6m0 10h2m4 0h-2m0 0V9.5a1 1 0 011-1h1.586a1 1 0 01.707.293l1.914 1.914a1 1 0 01.293.707V16h-2" />
-                </svg>
-                <p className="text-xs text-gray-600 leading-relaxed">
-                  <span className="font-bold text-[#0B1F4D]">Ships directly from {[supplier?.cities?.name, supplier?.countries?.name].filter(Boolean).join(', ')}</span>
-                  {' '}— fulfilled by the verified supplier and sent straight to you. No extra leg through Spain.
-                </p>
+            {/* Downloads — catalogue PDF / product video */}
+            {(product.catalogue_url || product.video_url) && (
+              <div className="flex flex-wrap gap-2">
+                {product.catalogue_url && (
+                  <a href={product.catalogue_url} target="_blank" rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0B1F4D] border border-gray-200 hover:border-[#0B1F4D] bg-white px-3 py-2 rounded-lg transition-all">
+                    <Package className="w-3.5 h-3.5" /> Catalogue (PDF)
+                  </a>
+                )}
+                {product.video_url && (
+                  <a href={product.video_url} target="_blank" rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0B1F4D] border border-gray-200 hover:border-[#0B1F4D] bg-white px-3 py-2 rounded-lg transition-all">
+                    <ChevronLeft className="w-3.5 h-3.5 rotate-180" /> Watch video
+                  </a>
+                )}
               </div>
             )}
 
@@ -340,8 +258,7 @@ export default async function ProductPage({ params, searchParams }: { params: { 
               </Link>
             )}
 
-          </div>
-        </div>
+        </ProductBuyArea>
 
         {/* ── Packaging & logistics (DB-driven, never baked into images) ───── */}
         {(() => {
@@ -349,7 +266,7 @@ export default async function ProductPage({ params, searchParams }: { params: { 
           const hasCarton = product.units_per_carton || product.carton_weight_kg || product.carton_dimensions
           const hasPallet = product.cartons_per_pallet || product.pallet_weight_kg || product.pallet_dimensions
           const hasTruck  = product.pallets_per_truck || product.truck_capacity
-          const hasCommercial = product.model_name || product.reference_number || product.country_of_origin || product.lead_time || product.exw_price_cents
+          const hasCommercial = product.model_name || product.reference_number || product.country_of_origin || product.lead_time || product.exw_price_cents || product.hs_code
           if (!hasUnit && !hasCarton && !hasPallet && !hasTruck && !hasCommercial) return null
 
           const Row = ({ label, value }: { label: string; value: any }) =>
@@ -414,6 +331,7 @@ export default async function ProductPage({ params, searchParams }: { params: { 
                   <Row label="Country"        value={product.country_of_origin} />
                   <Row label="Lead time"      value={product.lead_time} />
                   <Row label="EXW price"      value={product.exw_price_cents != null ? fmt(product.exw_price_cents, product.currency_code) : null} />
+                  <Row label="HS code"        value={product.hs_code} />
                   <Row label="EAN"            value={product.ean} />
                 </div>
               )}

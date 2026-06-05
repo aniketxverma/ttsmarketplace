@@ -16,12 +16,12 @@ export default async function EditProductPage({ params }: { params: { id: string
 
   if (!supplier) redirect('/supplier/onboarding')
 
-  const { data: product } = await supabase
-    .from('products')
-    .select('*, product_images(id, url, sort_order)')
+  const { data: product } = await (supabase
+    .from('products') as any)
+    .select('*, product_images(id, url, sort_order, image_role)')
     .eq('id', params.id)
     .eq('supplier_id', supplier.id)
-    .single()
+    .single() as { data: any }
 
   if (!product) notFound()
 
@@ -87,6 +87,9 @@ export default async function EditProductPage({ params }: { params: { id: string
             palletsPerTruck:    (product as any).pallets_per_truck?.toString() ?? '',
             truckCapacity:      (product as any).truck_capacity ?? '',
             exwPrice:           (product as any).exw_price_cents != null ? ((product as any).exw_price_cents / 100).toFixed(2) : '',
+            hsCode:             (product as any).hs_code ?? '',
+            catalogueUrl:       (product as any).catalogue_url ?? '',
+            videoUrl:           (product as any).video_url ?? '',
             pricePerBox:        (product as any).price_per_box_cents != null ? ((product as any).price_per_box_cents / 100).toFixed(2) : '',
             pricePerPallet:     (product as any).price_per_pallet_cents != null ? ((product as any).price_per_pallet_cents / 100).toFixed(2) : '',
             pricePerTruck:      (product as any).price_per_truck_cents != null ? ((product as any).price_per_truck_cents / 100).toFixed(2) : '',

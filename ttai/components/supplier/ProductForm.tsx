@@ -27,6 +27,7 @@ interface FormState {
   cartonsPerPallet: string; palletWeightKg: string; palletDimensions: string; palletHeightCm: string
   palletsPerTruck: string; truckCapacity: string
   exwPrice: string; pricePerBox: string; pricePerPallet: string; pricePerTruck: string
+  hsCode: string; catalogueUrl: string; videoUrl: string
   sellPiece: boolean; sellBox: boolean; sellPallet: boolean; sellTruck: boolean
   isPublished: boolean
 }
@@ -43,6 +44,7 @@ const INITIAL: FormState = {
   cartonsPerPallet: '', palletWeightKg: '', palletDimensions: '', palletHeightCm: '',
   palletsPerTruck: '', truckCapacity: '',
   exwPrice: '', pricePerBox: '', pricePerPallet: '', pricePerTruck: '',
+  hsCode: '', catalogueUrl: '', videoUrl: '',
   sellPiece: true, sellBox: false, sellPallet: false, sellTruck: false,
   isPublished: false,
 }
@@ -127,6 +129,9 @@ export function ProductForm({ supplierId, mode, productId, initialData }: Produc
       pallet_height_cm:    form.palletHeightCm ? parseInt(form.palletHeightCm) : null,
       pallets_per_truck:   form.palletsPerTruck ? parseInt(form.palletsPerTruck) : null,
       truck_capacity:      form.truckCapacity.trim() || null,
+      hs_code:             form.hsCode.trim() || null,
+      catalogue_url:       form.catalogueUrl.trim() || null,
+      video_url:           form.videoUrl.trim() || null,
       exw_price_cents:        form.exwPrice && parseFloat(form.exwPrice) > 0 ? Math.round(parseFloat(form.exwPrice) * 100) : null,
       price_per_box_cents:    form.pricePerBox && parseFloat(form.pricePerBox) > 0 ? Math.round(parseFloat(form.pricePerBox) * 100) : null,
       price_per_pallet_cents: form.pricePerPallet && parseFloat(form.pricePerPallet) > 0 ? Math.round(parseFloat(form.pricePerPallet) * 100) : null,
@@ -165,6 +170,17 @@ export function ProductForm({ supplierId, mode, productId, initialData }: Produc
 
     setSuccess(true)
     setTimeout(() => router.push('/supplier/products'), 800)
+  }
+
+  async function uploadDoc(file: File, folder: 'docs' | 'video', field: 'catalogueUrl' | 'videoUrl') {
+    setError(null)
+    const fd = new FormData()
+    fd.append('file', file)
+    fd.append('folder', folder)
+    const res = await fetch('/api/upload', { method: 'POST', body: fd })
+    const json = await res.json().catch(() => ({}))
+    if (res.ok && json.url) update(field, json.url)
+    else setError(json.error ?? 'Upload failed')
   }
 
   function handlePendingFiles(fileList: FileList) {
@@ -423,6 +439,36 @@ export function ProductForm({ supplierId, mode, productId, initialData }: Produc
           <div className="space-y-1.5"><label className={labelCls}>Country of origin</label><input className={inputCls} value={form.countryOfOrigin} onChange={(e) => update('countryOfOrigin', e.target.value)} placeholder="Spain" /></div>
           <div className="space-y-1.5"><label className={labelCls}>Lead time</label><input className={inputCls} value={form.leadTime} onChange={(e) => update('leadTime', e.target.value)} placeholder="7–14 days" /></div>
           <div className="space-y-1.5"><label className={labelCls}>EXW price ({form.currencyCode})</label><input className={inputCls} type="number" step="0.01" value={form.exwPrice} onChange={(e) => update('exwPrice', e.target.value)} placeholder="Ex Works unit price" /></div>
+          <div className="space-y-1.5"><label className={labelCls}>HS code</label><input className={inputCls} value={form.hsCode} onChange={(e) => update('hsCode', e.target.value)} placeholder="3402.20" /></div>
+        </div>
+
+        {/* Marketing material */}
+        <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2 mt-5">Marketing material</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <label className={labelCls}>Product catalogue (PDF)</label>
+            {form.catalogueUrl ? (
+              <div className="flex items-center gap-2 text-xs">
+                <a href={form.catalogueUrl} target="_blank" rel="noopener noreferrer" className="text-[#0B1F4D] font-bold underline truncate">View catalogue</a>
+                <button type="button" onClick={() => update('catalogueUrl', '')} className="text-red-400 hover:text-red-600">remove</button>
+              </div>
+            ) : (
+              <input className="text-xs" type="file" accept="application/pdf"
+                onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadDoc(f, 'docs', 'catalogueUrl') }} />
+            )}
+          </div>
+          <div className="space-y-1.5">
+            <label className={labelCls}>Product video</label>
+            {form.videoUrl ? (
+              <div className="flex items-center gap-2 text-xs">
+                <a href={form.videoUrl} target="_blank" rel="noopener noreferrer" className="text-[#0B1F4D] font-bold underline truncate">View video</a>
+                <button type="button" onClick={() => update('videoUrl', '')} className="text-red-400 hover:text-red-600">remove</button>
+              </div>
+            ) : (
+              <input className="text-xs" type="file" accept="video/*"
+                onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadDoc(f, 'video', 'videoUrl') }} />
+            )}
+          </div>
         </div>
 
         {/* Box */}

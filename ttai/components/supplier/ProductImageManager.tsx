@@ -8,6 +8,7 @@ interface ProductImage {
   id: string
   url: string
   sort_order: number
+  image_role?: string | null  // 'retail' | 'b2b' | null (both)
 }
 
 interface Props {
@@ -57,10 +58,10 @@ export function ProductImageManager({ productId, supplierId, initialImages = [] 
       const publicUrl = upJson.url as string
 
       const sortOrder = images.length + newImages.length
-      const { data: imgRow, error: insertErr } = await supabase
-        .from('product_images')
+      const { data: imgRow, error: insertErr } = await (supabase
+        .from('product_images') as any)
         .insert({ product_id: productId, url: publicUrl, sort_order: sortOrder })
-        .select('id, url, sort_order')
+        .select('id, url, sort_order, image_role')
         .single()
 
       if (insertErr || !imgRow) {
@@ -101,6 +102,13 @@ export function ProductImageManager({ productId, supplierId, initialImages = [] 
     for (const im of reordered) {
       await supabase.from('product_images').update({ sort_order: im.sort_order }).eq('id', im.id)
     }
+  }
+
+  async function handleRole(img: ProductImage, role: string) {
+    const value = role === '' ? null : role
+    setImages(prev => prev.map(im => im.id === img.id ? { ...im, image_role: value } : im))
+    const supabase = createClient()
+    await (supabase.from('product_images') as any).update({ image_role: value }).eq('id', img.id)
   }
 
   async function handleMove(index: number, direction: 'up' | 'down') {
@@ -169,6 +177,14 @@ export function ProductImageManager({ productId, supplierId, initialImages = [] 
                   Delete
                 </button>
               </div>
+
+              {/* Shop tag — which gallery this photo appears in */}
+              <select value={img.image_role ?? ''} onChange={(e) => handleRole(img, e.target.value)}
+                className="absolute bottom-1.5 left-1.5 right-1.5 z-20 text-[10px] font-bold rounded-md border border-white/30 bg-black/60 text-white px-1.5 py-1 cursor-pointer backdrop-blur-sm">
+                <option value="">Both shops</option>
+                <option value="retail">Online shop only</option>
+                <option value="b2b">B2B / bulk only</option>
+              </select>
             </div>
           ))}
 
