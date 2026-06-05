@@ -3,16 +3,15 @@
 import Link from 'next/link'
 import {
   UtensilsCrossed, SprayCan, Sparkles, Cpu, Recycle, HeartPulse,
-  Building2, Car, Shirt, Truck, Factory, Briefcase,
+  Building2, Car, Shirt, Truck, Factory, Briefcase, Refrigerator, Smartphone,
   ArrowRight, Store, ShoppingBag, Globe,
 } from 'lucide-react'
 
 type Sub = { name: string; slug: string }
-type Industry = { name: string; slug: string; Icon: typeof Factory; color: string; image: string; subs: Sub[] }
+type Industry = { name: string; slug: string; Icon: typeof Factory; color: string; subs: Sub[] }
 
 const INDUSTRIES: Industry[] = [
-  { name: 'Food & Beverage', slug: 'food-beverage', Icon: UtensilsCrossed, color: '#16a34a',
-    image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800&q=80', subs: [
+  { name: 'Food & Beverage', slug: 'food-beverage', Icon: UtensilsCrossed, color: '#16a34a', subs: [
     { name: 'Agriculture', slug: 'agriculture' }, { name: 'Livestock', slug: 'livestock' },
     { name: 'Fisheries & Aquaculture', slug: 'fisheries-aquaculture' }, { name: 'Food Manufacturers', slug: 'food-manufacturers' },
     { name: 'Beverage Manufacturers', slug: 'beverage-manufacturers' }, { name: 'Suppliers', slug: 'food-suppliers' },
@@ -20,54 +19,83 @@ const INDUSTRIES: Industry[] = [
     { name: 'Restaurants', slug: 'restaurants' }, { name: 'Hotels', slug: 'hotels' }, { name: 'Catering', slug: 'catering' },
     { name: 'Organic / Halal', slug: 'organic-food' }, { name: 'Cold Chain', slug: 'cold-chain-logistics' }, { name: 'Recycling', slug: 'food-recycling' },
   ]},
-  { name: 'Cleaning & Household', slug: 'cleaning-household', Icon: SprayCan, color: '#2563eb',
-    image: 'https://images.unsplash.com/photo-1583947215259-38e31be8751f?w=800&q=80', subs: [
+  { name: 'Cleaning & Household', slug: 'cleaning-household', Icon: SprayCan, color: '#2563eb', subs: [
     { name: 'Cleaning Products', slug: 'cleaning-products' }, { name: 'Industrial Cleaning', slug: 'industrial-cleaning' },
     { name: 'Household Cleaning', slug: 'household-cleaning' }, { name: 'Tissue & Paper', slug: 'tissue-paper-products' },
     { name: 'Disposable Products', slug: 'disposable-products' }, { name: 'Cleaning Equipment', slug: 'cleaning-equipment' },
     { name: 'Eco-Friendly', slug: 'eco-friendly-cleaning' }, { name: 'Suppliers', slug: 'cleaning-suppliers' },
     { name: 'Distributors', slug: 'cleaning-distributors' }, { name: 'Recycling', slug: 'cleaning-recycling' },
   ]},
-  { name: 'Personal Care', slug: 'personal-care', Icon: Sparkles, color: '#9333ea',
-    image: 'https://images.unsplash.com/photo-1556228578-8c89e6adf883?w=800&q=80', subs: [
+  { name: 'Personal Care', slug: 'personal-care', Icon: Sparkles, color: '#9333ea', subs: [
     { name: 'Cosmetics', slug: 'cosmetics' }, { name: 'Perfumes', slug: 'perfumes' }, { name: 'Hair Care', slug: 'hair-care' },
     { name: 'Skin Care', slug: 'skin-care' }, { name: 'Personal Hygiene', slug: 'personal-hygiene' }, { name: 'Baby Care', slug: 'baby-care' },
     { name: 'Professional Beauty', slug: 'professional-beauty' }, { name: 'Organic Cosmetics', slug: 'organic-cosmetics' },
     { name: 'Halal Cosmetics', slug: 'halal-cosmetics' }, { name: 'Suppliers', slug: 'personalcare-suppliers' },
   ]},
-  { name: 'Electronics & Tech', slug: 'electronics-tech', Icon: Cpu, color: '#475569',
-    image: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=800&q=80', subs: [
+  { name: 'Electronics & Tech', slug: 'electronics-tech', Icon: Cpu, color: '#475569', subs: [
     { name: 'Smartphones', slug: 'smartphones' }, { name: 'Computers', slug: 'computers' }, { name: 'Networking', slug: 'networking' },
     { name: 'Telecommunications', slug: 'telecommunications' }, { name: 'Software', slug: 'software' }, { name: 'AI Solutions', slug: 'ai-solutions' },
     { name: 'Components', slug: 'electronic-components' }, { name: 'Consumer Electronics', slug: 'consumer-electronics' },
     { name: 'Refrigerators', slug: 'refrigerators' }, { name: 'Washing Machines', slug: 'washing-machines' }, { name: 'Air Conditioners', slug: 'air-conditioners' },
   ]},
-  { name: 'Recycling & Sustainability', slug: 'recycling-sustainability', Icon: Recycle, color: '#059669',
-    image: 'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?w=800&q=80', subs: [
+  { name: 'Recycling & Sustainability', slug: 'recycling-sustainability', Icon: Recycle, color: '#059669', subs: [
     { name: 'Plastic Recycling', slug: 'plastic-recycling' }, { name: 'Metal Recycling', slug: 'metal-recycling' }, { name: 'Glass Recycling', slug: 'glass-recycling' },
     { name: 'Paper Recycling', slug: 'paper-recycling' }, { name: 'Waste Management', slug: 'waste-management' }, { name: 'Renewable Energy', slug: 'renewable-energy' },
     { name: 'Water Treatment', slug: 'water-treatment' }, { name: 'Circular Economy', slug: 'circular-economy' },
   ]},
-  { name: 'Healthcare & Medical', slug: 'healthcare-medical', Icon: HeartPulse, color: '#e11d48',
-    image: 'https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=800&q=80', subs: [
+  { name: 'Healthcare & Medical', slug: 'healthcare-medical', Icon: HeartPulse, color: '#e11d48', subs: [
     { name: 'Clinics', slug: 'clinics' }, { name: 'Hospitals', slug: 'hospitals' }, { name: 'Laboratories', slug: 'laboratories' },
     { name: 'Medical Devices', slug: 'medical-devices' }, { name: 'Rehabilitation', slug: 'rehabilitation' }, { name: 'Telemedicine', slug: 'telemedicine' },
   ]},
-  { name: 'Construction & Building', slug: 'construction-building', Icon: Building2, color: '#d97706',
-    image: 'https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=800&q=80', subs: [] },
-  { name: 'Automotive', slug: 'automotive', Icon: Car, color: '#52525b',
-    image: 'https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=800&q=80', subs: [] },
-  { name: 'Textile & Fashion', slug: 'textile-fashion', Icon: Shirt, color: '#db2777',
-    image: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800&q=80', subs: [] },
-  { name: 'Logistics & Supply Chain', slug: 'logistics-supply-chain', Icon: Truck, color: '#0891b2',
-    image: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=800&q=80', subs: [] },
-  { name: 'Industrial & Manufacturing', slug: 'industrial-manufacturing', Icon: Factory, color: '#4f46e5',
-    image: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=800&q=80', subs: [] },
-  { name: 'Consulting & Services', slug: 'consulting-services', Icon: Briefcase, color: '#0d9488',
-    image: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=800&q=80', subs: [
-    { name: 'Business Consulting', slug: 'business-consulting' }, { name: 'Financial Consulting', slug: 'financial-consulting' },
-    { name: 'Marketing', slug: 'marketing-services' }, { name: 'Legal Services', slug: 'legal-services' },
-    { name: 'HR Services', slug: 'hr-services' }, { name: 'Training', slug: 'training-services' },
+  { name: 'Construction & Building', slug: 'construction-building', Icon: Building2, color: '#d97706', subs: [] },
+  { name: 'Automotive', slug: 'automotive', Icon: Car, color: '#52525b', subs: [] },
+  { name: 'Textile & Fashion', slug: 'textile-fashion', Icon: Shirt, color: '#db2777', subs: [
+    { name: 'Garment Manufacturing', slug: 'garment-manufacturing' }, { name: 'Fabrics & Materials', slug: 'fabrics-materials' },
+    { name: 'Fashion Accessories', slug: 'fashion-accessories' }, { name: 'Footwear', slug: 'footwear' },
+    { name: 'Sportswear', slug: 'sportswear' }, { name: 'Uniforms & Workwear', slug: 'uniforms-workwear' },
+    { name: 'Luxury Fashion', slug: 'luxury-fashion' }, { name: 'Textile Machinery', slug: 'textile-machinery' },
+    { name: 'Home Textiles', slug: 'home-textiles' }, { name: 'Sustainable Textiles', slug: 'sustainable-textiles' },
+  ]},
+  { name: 'Logistics & Supply Chain', slug: 'logistics-supply-chain', Icon: Truck, color: '#0891b2', subs: [
+    { name: 'Freight Forwarding', slug: 'freight-forwarding' }, { name: 'Warehousing', slug: 'warehousing' },
+    { name: 'Transportation', slug: 'transportation' }, { name: 'Shipping Services', slug: 'shipping-services' },
+    { name: 'Customs Clearance', slug: 'customs-clearance' }, { name: 'Cold Chain Logistics', slug: 'logistics-cold-chain' },
+    { name: 'Fulfillment Services', slug: 'fulfillment-services' }, { name: 'Supply Chain Management', slug: 'supply-chain-management' },
+    { name: 'Cargo Handling', slug: 'cargo-handling' }, { name: 'Last Mile Delivery', slug: 'last-mile-delivery' },
+  ]},
+  { name: 'Industrial & Manufacturing', slug: 'industrial-manufacturing', Icon: Factory, color: '#4f46e5', subs: [
+    { name: 'Industrial Machinery', slug: 'industrial-machinery' }, { name: 'CNC & Automation', slug: 'cnc-automation' },
+    { name: 'Robotics', slug: 'robotics' }, { name: 'Metal Fabrication', slug: 'metal-fabrication' },
+    { name: 'Plastic Manufacturing', slug: 'plastic-manufacturing' }, { name: 'Packaging Machinery', slug: 'packaging-machinery' },
+    { name: 'Production Equipment', slug: 'production-equipment' }, { name: 'Factory Solutions', slug: 'factory-solutions' },
+    { name: 'Industrial Components', slug: 'industrial-components' }, { name: 'Engineering Services', slug: 'engineering-services' },
+  ]},
+  { name: 'Consulting & Services', slug: 'consulting-services', Icon: Briefcase, color: '#0d9488', subs: [
+    { name: 'Business Consulting', slug: 'business-consulting' }, { name: 'Financial Services', slug: 'financial-services' },
+    { name: 'Legal Services', slug: 'legal-services' }, { name: 'Marketing Services', slug: 'marketing-services' },
+    { name: 'IT Services', slug: 'it-services' }, { name: 'HR & Recruitment', slug: 'hr-recruitment' },
+    { name: 'Project Management', slug: 'project-management' }, { name: 'Training & Education', slug: 'training-education' },
+    { name: 'Certification Services', slug: 'certification-services' }, { name: 'Business Development', slug: 'business-development' },
+  ]},
+  { name: 'Home Appliances & Consumer Goods', slug: 'home-appliances', Icon: Refrigerator, color: '#0ea5e9', subs: [
+    { name: 'Major Appliances', slug: 'major-appliances' }, { name: 'Small Appliances', slug: 'small-appliances' },
+    { name: 'Kitchen Appliances', slug: 'kitchen-appliances' }, { name: 'Coffee Machines', slug: 'coffee-machines' },
+    { name: 'Vacuum Cleaners', slug: 'vacuum-cleaners' }, { name: 'Air Fryers', slug: 'air-fryers' },
+    { name: 'Microwaves', slug: 'microwaves' }, { name: 'Refrigerators & Freezers', slug: 'refrigerators' },
+    { name: 'Washing Machines', slug: 'washing-machines' }, { name: 'Dishwashers', slug: 'dishwashers' },
+    { name: 'Air Conditioners', slug: 'air-conditioners' }, { name: 'Heaters', slug: 'heaters' },
+    { name: 'Fans & Air Treatment', slug: 'fans-air-treatment' }, { name: 'Smart Home Appliances', slug: 'smart-home-appliances' },
+    { name: 'Outlet Appliances', slug: 'outlet-appliances' }, { name: 'Refurbished Appliances', slug: 'refurbished-appliances' },
+  ]},
+  { name: 'Refurbished & Graded Electronics', slug: 'refurbished-electronics', Icon: Smartphone, color: '#84cc16', subs: [
+    { name: 'Grade A Devices', slug: 'refurb-grade-a' }, { name: 'Grade A+', slug: 'refurb-grade-a-plus' },
+    { name: 'Grade B Devices', slug: 'refurb-grade-b' }, { name: 'Grade C Devices', slug: 'refurb-grade-c' },
+    { name: 'Smartphones', slug: 'refurb-smartphones' }, { name: 'Laptops', slug: 'refurb-laptops' },
+    { name: 'Tablets', slug: 'refurb-tablets' }, { name: 'Desktop Computers', slug: 'refurb-desktops' },
+    { name: 'Monitors', slug: 'refurb-monitors' }, { name: 'Apple Products', slug: 'refurb-apple' },
+    { name: 'Samsung Products', slug: 'refurb-samsung' }, { name: 'Networking Equipment', slug: 'refurb-networking' },
+    { name: 'Accessories', slug: 'refurb-accessories' }, { name: 'Open Box Electronics', slug: 'open-box-electronics' },
+    { name: 'Certified Refurbished', slug: 'certified-refurbished' },
   ]},
 ]
 
@@ -124,7 +152,7 @@ export function IndustryExplorer({
         {showIndustries && (<>
         <div className="text-center mb-10">
           <p className="text-[#F5A623] font-semibold text-sm uppercase tracking-widest mb-2">Explore by industry</p>
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-[#0B1F4D]">12 industries, one ecosystem</h2>
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-[#0B1F4D]">{INDUSTRIES.length} industries, one ecosystem</h2>
           <p className="text-gray-400 mt-3 max-w-xl mx-auto">From production to distribution and recycling — discover suppliers, manufacturers and distributors in every sector.</p>
         </div>
 
@@ -134,7 +162,7 @@ export function IndustryExplorer({
               className="group relative rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5">
               <div className="relative h-36 sm:h-44">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={ind.image} alt={ind.name} loading="lazy"
+                <img src={`/categories/${ind.slug}.jpg`} alt={ind.name} loading="lazy"
                   className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent" />
                 {/* Icon badge */}

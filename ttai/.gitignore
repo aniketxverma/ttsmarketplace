@@ -45,3 +45,6 @@ supabase/.temp
 WhatsApp*/
 WhatsApp Image*
 WhatsApp Unknown*/
+
+# Raw category source images (served copies live in public/categories)
+category images/
