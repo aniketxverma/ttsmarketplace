@@ -3,7 +3,18 @@
 import { useState, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 import { Sidebar } from './Sidebar'
+import { useT } from '@/lib/i18n/client'
 import type { UserRole } from '@/types/domain'
+
+// Path segment → dnav translation key
+const SECTION_KEY: Record<string, string> = {
+  '': 'dashboard', products: 'products', orders: 'orders', messages: 'messages',
+  documents: 'documents', settings: 'settings', suppliers: 'suppliers', promotions: 'promotions',
+  invoices: 'invoices', payouts: 'payouts', channel: 'my_canal', channels: 'canales',
+  brand: 'brand_profile', pos: 'points_of_sale', regions: 'regions', plans: 'plans_access',
+  brokers: 'brokers', users: 'users', categories: 'categories', transactions: 'transactions',
+  disputes: 'disputes', 'ai-chats': 'ai_chats', 'audit-log': 'audit_log',
+}
 
 interface Props {
   role: UserRole
@@ -32,13 +43,17 @@ const PAGE_LABELS: Record<string, string> = {
 export function DashboardShell({ role, children }: Props) {
   const [open, setOpen] = useState(false)
   const pathname = usePathname()
+  const t = useT()
 
   useEffect(() => { setOpen(false) }, [pathname])
 
   // Derive a human label from the path  e.g. /supplier/orders/123 → "Orders"
   const segments = pathname.split('/').filter(Boolean)
   const section = segments[1] ?? ''
-  const pageLabel = PAGE_LABELS[section] ?? (section.charAt(0).toUpperCase() + section.slice(1))
+  const dnavKey = SECTION_KEY[section]
+  const pageLabel = dnavKey
+    ? t(`dnav.${dnavKey}`)
+    : (PAGE_LABELS[section] ?? (section.charAt(0).toUpperCase() + section.slice(1)))
 
   return (
     <div className="flex flex-1 min-h-0 overflow-hidden">

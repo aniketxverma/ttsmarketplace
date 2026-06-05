@@ -3,63 +3,64 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
+import { useT } from '@/lib/i18n/client'
 import type { UserRole } from '@/types/domain'
 
 interface NavItem {
-  label: string
+  key: string
   href: string
   icon: React.ReactNode
 }
 
 const SUPPLIER_NAV: NavItem[] = [
-  { label: 'My Profile',    href: '/account',                icon: <UserIcon /> },
-  { label: 'Dashboard',     href: '/supplier',               icon: <GridIcon /> },
-  { label: 'Products',      href: '/supplier/products',      icon: <BoxIcon /> },
-  { label: 'Regions',       href: '/supplier/regions',       icon: <GlobeIcon /> },
-  { label: 'Brand Profile', href: '/supplier/brand',         icon: <SparkIcon /> },
-  { label: 'My Canal',      href: '/supplier/channel',       icon: <RadioIcon /> },
-  { label: 'Subscriptions', href: '/buyer/channels',         icon: <RadioIcon /> },
-  { label: 'Points of Sale', href: '/supplier/pos',          icon: <PinIcon /> },
-  { label: 'Orders',        href: '/supplier/orders',        icon: <OrderIcon /> },
-  { label: 'Messages',      href: '/supplier/messages',      icon: <ChatIcon /> },
-  { label: 'Documents',     href: '/supplier/documents',     icon: <DocIcon /> },
-  { label: 'Settings',      href: '/supplier/settings',      icon: <SettingsIcon /> },
+  { key: 'my_profile',    href: '/account',                icon: <UserIcon /> },
+  { key: 'dashboard',     href: '/supplier',               icon: <GridIcon /> },
+  { key: 'products',      href: '/supplier/products',      icon: <BoxIcon /> },
+  { key: 'regions',       href: '/supplier/regions',       icon: <GlobeIcon /> },
+  { key: 'brand_profile', href: '/supplier/brand',         icon: <SparkIcon /> },
+  { key: 'my_canal',      href: '/supplier/channel',       icon: <RadioIcon /> },
+  { key: 'subscriptions', href: '/buyer/channels',         icon: <RadioIcon /> },
+  { key: 'points_of_sale', href: '/supplier/pos',          icon: <PinIcon /> },
+  { key: 'orders',        href: '/supplier/orders',        icon: <OrderIcon /> },
+  { key: 'messages',      href: '/supplier/messages',      icon: <ChatIcon /> },
+  { key: 'documents',     href: '/supplier/documents',     icon: <DocIcon /> },
+  { key: 'settings',      href: '/supplier/settings',      icon: <SettingsIcon /> },
 ]
 
 const BROKER_NAV: NavItem[] = [
-  { label: 'My Profile',  href: '/account',            icon: <UserIcon /> },
-  { label: 'Dashboard',   href: '/broker',             icon: <GridIcon /> },
-  { label: 'Suppliers',   href: '/broker/suppliers',   icon: <BoxIcon /> },
-  { label: 'Promotions',  href: '/broker/promotions',  icon: <StarIcon /> },
-  { label: 'Subscriptions', href: '/buyer/channels',   icon: <RadioIcon /> },
-  { label: 'Invoices',    href: '/broker/invoices',    icon: <DocIcon /> },
-  { label: 'Payouts',     href: '/broker/payouts',     icon: <MoneyIcon /> },
-  { label: 'Settings',    href: '/broker/settings',    icon: <SettingsIcon /> },
+  { key: 'my_profile',  href: '/account',            icon: <UserIcon /> },
+  { key: 'dashboard',   href: '/broker',             icon: <GridIcon /> },
+  { key: 'suppliers',   href: '/broker/suppliers',   icon: <BoxIcon /> },
+  { key: 'promotions',  href: '/broker/promotions',  icon: <StarIcon /> },
+  { key: 'subscriptions', href: '/buyer/channels',   icon: <RadioIcon /> },
+  { key: 'invoices',    href: '/broker/invoices',    icon: <DocIcon /> },
+  { key: 'payouts',     href: '/broker/payouts',     icon: <MoneyIcon /> },
+  { key: 'settings',    href: '/broker/settings',    icon: <SettingsIcon /> },
 ]
 
 const BUYER_NAV: NavItem[] = [
-  { label: 'My Profile', href: '/account',            icon: <UserIcon /> },
-  { label: 'Dashboard',  href: '/buyer',              icon: <GridIcon /> },
-  { label: 'Orders',     href: '/buyer/orders',       icon: <OrderIcon /> },
-  { label: 'Canales',    href: '/buyer/channels',     icon: <RadioIcon /> },
-  { label: 'Messages',   href: '/buyer/messages',     icon: <ChatIcon /> },
-  { label: 'Settings',   href: '/buyer/settings',     icon: <SettingsIcon /> },
+  { key: 'my_profile', href: '/account',            icon: <UserIcon /> },
+  { key: 'dashboard',  href: '/buyer',              icon: <GridIcon /> },
+  { key: 'orders',     href: '/buyer/orders',       icon: <OrderIcon /> },
+  { key: 'canales',    href: '/buyer/channels',     icon: <RadioIcon /> },
+  { key: 'messages',   href: '/buyer/messages',     icon: <ChatIcon /> },
+  { key: 'settings',   href: '/buyer/settings',     icon: <SettingsIcon /> },
 ]
 
 const ADMIN_NAV: NavItem[] = [
-  { label: 'Dashboard',    href: '/admin',              icon: <GridIcon /> },
-  { label: 'Suppliers',    href: '/admin/suppliers',    icon: <BoxIcon /> },
-  { label: 'Brokers',      href: '/admin/brokers',      icon: <StarIcon /> },
-  { label: 'Users',        href: '/admin/users',        icon: <UserIcon /> },
-  { label: 'Plans & Access', href: '/admin/plans',      icon: <StarIcon /> },
-  { label: 'Products',     href: '/admin/products',     icon: <ShopIcon /> },
-  { label: 'Categories',   href: '/admin/categories',   icon: <TagIcon /> },
-  { label: 'Orders',       href: '/admin/orders',       icon: <OrderIcon /> },
-  { label: 'Regions',      href: '/admin/regions',      icon: <GlobeIcon /> },
-  { label: 'Transactions', href: '/admin/transactions', icon: <MoneyIcon /> },
-  { label: 'Disputes',     href: '/admin/disputes',     icon: <AlertIcon /> },
-  { label: 'AI Chats',     href: '/admin/ai-chats',     icon: <SparkIcon /> },
-  { label: 'Audit Log',    href: '/admin/audit-log',    icon: <DocIcon /> },
+  { key: 'dashboard',    href: '/admin',              icon: <GridIcon /> },
+  { key: 'suppliers',    href: '/admin/suppliers',    icon: <BoxIcon /> },
+  { key: 'brokers',      href: '/admin/brokers',      icon: <StarIcon /> },
+  { key: 'users',        href: '/admin/users',        icon: <UserIcon /> },
+  { key: 'plans_access', href: '/admin/plans',      icon: <StarIcon /> },
+  { key: 'products',     href: '/admin/products',     icon: <ShopIcon /> },
+  { key: 'categories',   href: '/admin/categories',   icon: <TagIcon /> },
+  { key: 'orders',       href: '/admin/orders',       icon: <OrderIcon /> },
+  { key: 'regions',      href: '/admin/regions',      icon: <GlobeIcon /> },
+  { key: 'transactions', href: '/admin/transactions', icon: <MoneyIcon /> },
+  { key: 'disputes',     href: '/admin/disputes',     icon: <AlertIcon /> },
+  { key: 'ai_chats',     href: '/admin/ai-chats',     icon: <SparkIcon /> },
+  { key: 'audit_log',    href: '/admin/audit-log',    icon: <DocIcon /> },
 ]
 
 const NAV_BY_ROLE: Record<UserRole, NavItem[]> = {
@@ -77,6 +78,7 @@ function isActive(pathname: string, href: string) {
 
 export function Sidebar({ role, className }: { role: UserRole; className?: string }) {
   const pathname = usePathname()
+  const t = useT()
   const items = NAV_BY_ROLE[role] ?? BUYER_NAV
 
   return (
@@ -92,7 +94,7 @@ export function Sidebar({ role, className }: { role: UserRole; className?: strin
             )}
           >
             {item.icon}
-            {item.label}
+            {t(`dnav.${item.key}`)}
           </Link>
         ))}
       </nav>
