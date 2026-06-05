@@ -62,6 +62,7 @@ export function ProductForm({ supplierId, mode, productId, initialData }: Produc
   // create-mode only: stage images before product exists
   const [pendingFiles, setPendingFiles] = useState<File[]>([])
   const [pendingPreviews, setPendingPreviews] = useState<string[]>([])
+  const [pendingRoles, setPendingRoles] = useState<string[]>([])  // '' both | 'retail' | 'b2b'
   const fileRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -161,7 +162,7 @@ export function ProductForm({ supplierId, mode, productId, initialData }: Produc
         const upRes = await fetch('/api/upload', { method: 'POST', body: fd })
         const upJson = await upRes.json().catch(() => ({}))
         if (!upRes.ok || !upJson.url) continue
-        await supabase.from('product_images').insert({ product_id: newProduct.id, url: upJson.url, sort_order: i })
+        await (supabase.from('product_images') as any).insert({ product_id: newProduct.id, url: upJson.url, sort_order: i, image_role: pendingRoles[i] || null })
       }
     } else if (mode === 'edit' && productId) {
       const { error: updateError } = await supabase.from('products').update(payload).eq('id', productId)
@@ -188,12 +189,18 @@ export function ProductForm({ supplierId, mode, productId, initialData }: Produc
     const previews = allowed.map(f => URL.createObjectURL(f))
     setPendingFiles(prev => [...prev, ...allowed].slice(0, 10))
     setPendingPreviews(prev => [...prev, ...previews].slice(0, 10))
+    setPendingRoles(prev => [...prev, ...allowed.map(() => '')].slice(0, 10))
   }
 
   function removePending(index: number) {
     URL.revokeObjectURL(pendingPreviews[index])
     setPendingFiles(prev => prev.filter((_, i) => i !== index))
     setPendingPreviews(prev => prev.filter((_, i) => i !== index))
+    setPendingRoles(prev => prev.filter((_, i) => i !== index))
+  }
+
+  function setPendingRole(index: number, role: string) {
+    setPendingRoles(prev => prev.map((r, i) => i === index ? role : r))
   }
 
   const inputCls = 'w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B1F4D] focus:border-transparent transition-all bg-white'
@@ -348,20 +355,29 @@ export function ProductForm({ supplierId, mode, productId, initialData }: Produc
           {pendingPreviews.length > 0 ? (
             <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 mb-3">
               {pendingPreviews.map((src, i) => (
-                <div key={i} className="relative aspect-square rounded-xl overflow-hidden border border-gray-200 bg-gray-50 group">
-                  <Image src={src} alt={`Preview ${i + 1}`} fill className="object-cover" sizes="120px" />
-                  {i === 0 && (
-                    <span className="absolute top-1 left-1 bg-[#F5A623] text-[#0B1F4D] text-[9px] font-black px-1.5 py-0.5 rounded-full z-10">
-                      Primary
-                    </span>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => removePending(i)}
-                    className="absolute top-1 right-1 w-5 h-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10"
-                  >
-                    ×
-                  </button>
+                <div key={i} className="space-y-1">
+                  <div className="relative aspect-square rounded-xl overflow-hidden border border-gray-200 bg-gray-50 group">
+                    <Image src={src} alt={`Preview ${i + 1}`} fill className="object-cover" sizes="120px" />
+                    {i === 0 && (
+                      <span className="absolute top-1 left-1 bg-[#F5A623] text-[#0B1F4D] text-[9px] font-black px-1.5 py-0.5 rounded-full z-10">
+                        Primary
+                      </span>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => removePending(i)}
+                      className="absolute top-1 right-1 w-5 h-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                    >
+                      ×
+                    </button>
+                  </div>
+                  {/* Which shop gallery this photo belongs to */}
+                  <select value={pendingRoles[i] ?? ''} onChange={(e) => setPendingRole(i, e.target.value)}
+                    className="w-full text-[10px] font-bold rounded-md border border-gray-200 px-1 py-1 bg-white cursor-pointer">
+                    <option value="">Both shops</option>
+                    <option value="retail">Online only (bottle)</option>
+                    <option value="b2b">B2B / bulk (box·pallet)</option>
+                  </select>
                 </div>
               ))}
               {pendingPreviews.length < 10 && (
@@ -394,7 +410,9 @@ export function ProductForm({ supplierId, mode, productId, initialData }: Produc
               </div>
             </button>
           )}
-          <p className="text-xs text-gray-400 mt-2">First image becomes the primary listing photo. Images upload after the product is created.</p>
+          <p className="text-xs text-gray-400 mt-2">
+            First image is the primary photo. Tag each one: <strong>Online only</strong> = the bottle (retail shop), <strong>B2B / bulk</strong> = box / pallet / truck photos, <strong>Both</strong> = shown everywhere. Per-unit prices (box / pallet / truck) are set in “Packaging &amp; wholesale units” below.
+          </p>
           <input
             ref={fileRef}
             type="file"
