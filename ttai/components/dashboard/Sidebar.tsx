@@ -51,6 +51,7 @@ const ADMIN_NAV: NavItem[] = [
   { label: 'Suppliers',    href: '/admin/suppliers',    icon: <BoxIcon /> },
   { label: 'Brokers',      href: '/admin/brokers',      icon: <StarIcon /> },
   { label: 'Users',        href: '/admin/users',        icon: <UserIcon /> },
+  { label: 'Plans & Access', href: '/admin/plans',      icon: <StarIcon /> },
   { label: 'Products',     href: '/admin/products',     icon: <ShopIcon /> },
   { label: 'Categories',   href: '/admin/categories',   icon: <TagIcon /> },
   { label: 'Orders',       href: '/admin/orders',       icon: <OrderIcon /> },
