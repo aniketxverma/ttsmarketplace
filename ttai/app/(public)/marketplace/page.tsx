@@ -245,7 +245,7 @@ export default async function MarketplacePage({
                 {pageFamilies.map((fam) => {
                   // Multiple variants → one family card; single product → normal card.
                   if (fam.members.length > 1) {
-                    return <FamilyCard key={fam.key} family={fam} />
+                    return <FamilyCard key={fam.key} family={fam} shop="market" />
                   }
                   const p = fam.representative as any
                   const supplier = p.suppliers as { legal_name: string; trade_name: string | null; reliability_tier: import('@/types/domain').ReliabilityTier }
@@ -258,6 +258,7 @@ export default async function MarketplacePage({
                       supplier={supplier}
                       mainImageUrl={mainImg}
                       href={`/product/${p.slug ?? p.id}`}
+                      shop="market"
                     />
                   )
                 })}

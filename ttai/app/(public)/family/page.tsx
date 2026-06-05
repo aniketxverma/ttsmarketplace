@@ -14,13 +14,14 @@ export const revalidate = 60
 export default async function FamilyPage({
   searchParams,
 }: {
-  searchParams: { s?: string; line?: string; c?: string; retail?: string }
+  searchParams: { s?: string; line?: string; c?: string; retail?: string; shop?: string }
 }) {
   const supplierId = searchParams.s
   if (!supplierId || (!searchParams.line && !searchParams.c)) notFound()
 
   const supabase = createClient()
   const retail = searchParams.retail === '1'
+  const shop = searchParams.shop
 
   let q = (supabase.from('products') as any)
     .select(`
@@ -79,6 +80,7 @@ export default async function FamilyPage({
               mainImageUrl={img}
               href={`/product/${p.slug ?? p.id}`}
               retail={retail}
+              shop={shop}
             />
           )
         })}

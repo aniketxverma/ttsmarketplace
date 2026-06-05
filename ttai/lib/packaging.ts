@@ -71,3 +71,19 @@ export function availableUnits(p: PackagingProduct): PurchaseUnit[] {
 export const UNIT_LABEL: Record<PurchaseUnit, string> = {
   piece: 'Piece', box: 'Box', pallet: 'Pallet', truck: 'Truck',
 }
+
+/**
+ * Which purchase units each shop sells in:
+ *   online (TTAI Retail Store, end users)   → Piece + Box
+ *   market (Business Shop, shops/distributors) → Box + Pallet
+ *   b2b    (B2B Wholesale Hub, wholesalers)  → Pallet + Truck
+ * Anything else / direct visit → undefined (all units the product offers).
+ */
+export function unitsForShop(shop?: string | null): PurchaseUnit[] | undefined {
+  switch (shop) {
+    case 'online': return ['piece', 'box']
+    case 'market': return ['box', 'pallet']
+    case 'b2b':    return ['pallet', 'truck']
+    default:       return undefined
+  }
+}

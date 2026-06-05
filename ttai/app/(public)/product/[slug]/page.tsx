@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { Crown, ShieldCheck, Award, Store, ChevronLeft, Package, Users, ArrowRight } from 'lucide-react'
 import { ProductBuyArea } from './ProductBuyArea'
 import { ModelSelector } from './ModelSelector'
-import { unitsPerPallet, unitsPerTruck, cartonsPerTruck, type PurchaseUnit } from '@/lib/packaging'
+import { unitsPerPallet, unitsPerTruck, cartonsPerTruck, unitsForShop } from '@/lib/packaging'
 import { useServerTranslations } from '@/lib/i18n/server'
 import { BrandLogo } from '@/components/BrandLogo'
 
@@ -92,14 +92,12 @@ export default async function ProductPage({ params, searchParams }: { params: { 
   // Retail (Online Shop) view vs wholesale (B2B/marketplace). The shop=online
   // param (carried from the store) forces retail; otherwise follow the product's
   // own context. Retail = per-piece price, no MOQ.
+  // Retail (consumer) pricing only in the online store; market & b2b are wholesale.
   const retailView = searchParams.shop === 'online'
-    || (searchParams.shop !== 'b2b' && product.marketplace_context === 'retail')
+    || (!searchParams.shop && product.marketplace_context === 'retail')
 
-  // Shop-based purchase permissions (Phase 3): b2b = box+pallet, trade = pallet+truck,
-  // online / default (TTAIEMA) = all available units.
-  const shopUnits: PurchaseUnit[] | undefined =
-    searchParams.shop === 'b2b'   ? ['box', 'pallet'] :
-    searchParams.shop === 'trade' ? ['pallet', 'truck'] : undefined
+  // Per-shop purchase units: online = piece+box, market = box+pallet, b2b = pallet+truck.
+  const shopUnits = unitsForShop(searchParams.shop)
 
   // Model selector (Phase 3): sibling products in the same product line.
   let models: { id: string; slug: string; name: string; model_name: string | null }[] = []

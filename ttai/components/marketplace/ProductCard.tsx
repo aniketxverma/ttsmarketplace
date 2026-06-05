@@ -24,6 +24,8 @@ interface ProductCardProps {
   href: string
   /** Force retail presentation (no MOQ, VAT-inclusive) — used on the consumer Online Store. */
   retail?: boolean
+  /** Shop context carried to the product page: 'online' | 'market' | 'b2b'. */
+  shop?: string
 }
 
 const TIER_STYLES: Record<ReliabilityTier, string> = {
@@ -37,7 +39,7 @@ function formatPrice(cents: number, currency: string) {
   return new Intl.NumberFormat('en-EU', { style: 'currency', currency, minimumFractionDigits: 2 }).format(cents / 100)
 }
 
-export function ProductCard({ product, supplier, mainImageUrl, href, retail = false }: ProductCardProps) {
+export function ProductCard({ product, supplier, mainImageUrl, href, retail = false, shop }: ProductCardProps) {
   // Retail surface (Online Store) OR a retail-only product → consumer presentation.
   const isRetail = retail || product.marketplace_context === 'retail'
   // Retail uses the dedicated online-shop price when set; otherwise the
@@ -48,8 +50,9 @@ export function ProductCard({ product, supplier, mainImageUrl, href, retail = fa
         : product.price_cents))
     : product.price_cents
 
-  // Retail surfaces carry shop=online so the product page renders the retail view.
-  const finalHref = isRetail && !href.includes('?') ? `${href}?shop=online` : href
+  // Carry the shop context to the product page (retail surface ⇒ online).
+  const shopParam = isRetail ? 'online' : shop
+  const finalHref = shopParam && !href.includes('?') ? `${href}?shop=${shopParam}` : href
 
   const displayName = supplier.trade_name ?? supplier.legal_name
 

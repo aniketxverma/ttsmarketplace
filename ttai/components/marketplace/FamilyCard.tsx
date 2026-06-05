@@ -16,7 +16,7 @@ function formatPrice(cents: number, currency: string) {
 }
 
 /** One card representing a product family (several variants under one type). */
-export function FamilyCard({ family, retail = false }: { family: Family; retail?: boolean }) {
+export function FamilyCard({ family, retail = false, shop }: { family: Family; retail?: boolean; shop?: string }) {
   const rep = family.representative
   const supplier = rep.suppliers as { legal_name: string; trade_name: string | null; reliability_tier: ReliabilityTier } | undefined
   const displayName = supplier?.trade_name ?? supplier?.legal_name ?? ''
@@ -30,7 +30,8 @@ export function FamilyCard({ family, retail = false }: { family: Family; retail?
     ? minCents + Math.round(minCents * rep.vat_rate / 100)
     : minCents
 
-  const href = retail ? `${family.href}&retail=1` : family.href
+  const shopCtx = shop ?? (retail ? 'online' : undefined)
+  const href = `${family.href}${retail ? '&retail=1' : ''}${shopCtx ? `&shop=${shopCtx}` : ''}`
 
   return (
     <Link href={href} className="group block">
