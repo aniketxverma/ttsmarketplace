@@ -36,7 +36,10 @@ export function PurchasePanel({
   shopUnits?: PurchaseUnit[]
 }) {
   const allUnits = availableUnits(product)
-  const units = shopUnits ? allUnits.filter(u => shopUnits.includes(u)) : allUnits
+  // Prefer the shop's units, but never leave the product unbuyable: if it sells
+  // none of the shop's units, fall back to whatever units it does offer.
+  const preferred = shopUnits ? allUnits.filter(u => shopUnits.includes(u)) : allUnits
+  const units = preferred.length > 0 ? preferred : allUnits
   const { addItem } = useCart()
   const router = useRouter()
   const [unit, setUnit] = useState<PurchaseUnit>(units[0] ?? 'piece')

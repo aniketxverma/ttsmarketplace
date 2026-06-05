@@ -18,11 +18,12 @@ const PAGE_SIZE = 24
 export default async function MarketplacePage({
   searchParams,
 }: {
-  searchParams: { category?: string; q?: string; page?: string; region?: string }
+  searchParams: { category?: string; q?: string; page?: string; region?: string; supplier?: string }
 }) {
   const supabase = createClient()
   const page = parseInt(searchParams.page || '1')
   const activeRegion = searchParams.region ?? null
+  const activeSupplier = searchParams.supplier ?? null
 
   const [categoriesRes, promotionsRes] = await Promise.all([
     supabase.from('categories').select('*').order('sort_order'),
@@ -36,6 +37,14 @@ export default async function MarketplacePage({
   ])
 
   const allCats = categoriesRes.data ?? []
+
+  // When scoped to one supplier, show their name in the header.
+  let scopedSupplierName: string | null = null
+  if (activeSupplier) {
+    const { data: s } = await (supabase.from('suppliers') as any)
+      .select('trade_name, legal_name').eq('id', activeSupplier).maybeSingle()
+    scopedSupplierName = s?.trade_name ?? s?.legal_name ?? null
+  }
   const roots = allCats.filter((c) => c.parent_id === null) as Category[]
   const childMap: Record<string, Category[]> = {}
   allCats.forEach((c) => {
@@ -58,6 +67,9 @@ export default async function MarketplacePage({
     .eq('is_published', true)
     .eq('suppliers.status', 'ACTIVE')
     .in('marketplace_context', ['wholesale', 'both'])
+
+  // Scoped to a single supplier (e.g. arriving from a brand's "Shop B2B")
+  if (activeSupplier) productQuery = productQuery.eq('supplier_id', activeSupplier)
 
   if (searchParams.category) {
     const cat = allCats.find((c) => c.slug === searchParams.category)
@@ -132,10 +144,23 @@ export default async function MarketplacePage({
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold">Wholesale Marketplace</h1>
-        <p className="text-muted-foreground text-sm mt-1">
-          {totalProducts} products from verified suppliers
-        </p>
+        {scopedSupplierName ? (
+          <>
+            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#F5A623] mb-1">
+              <span>Wholesale shop</span>
+              <Link href="/marketplace" className="text-gray-400 hover:text-[#0B1F4D] normal-case font-semibold tracking-normal">· all suppliers</Link>
+            </div>
+            <h1 className="text-2xl font-bold">{scopedSupplierName}</h1>
+            <p className="text-muted-foreground text-sm mt-1">{totalProducts} wholesale products · buy by piece, box, pallet or truck</p>
+          </>
+        ) : (
+          <>
+            <h1 className="text-2xl font-bold">Wholesale Marketplace</h1>
+            <p className="text-muted-foreground text-sm mt-1">
+              {totalProducts} products from verified suppliers
+            </p>
+          </>
+        )}
       </div>
 
       <div className="mb-4">
@@ -152,6 +177,7 @@ export default async function MarketplacePage({
           const params = new URLSearchParams()
           if (searchParams.category) params.set('category', searchParams.category)
           if (searchParams.q) params.set('q', searchParams.q)
+          if (activeSupplier) params.set('supplier', activeSupplier)
           if (r.id) params.set('region', r.id)
           const href = `/marketplace${params.toString() ? `?${params.toString()}` : ''}`
           // A country key (europe:spain) keeps its parent region pill (europe) highlighted,

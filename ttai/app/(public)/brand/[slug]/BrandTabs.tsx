@@ -495,7 +495,7 @@ export function BrandTabs({
             <div data-reveal className={`grid grid-cols-1 ${canSeeB2B ? 'sm:grid-cols-2' : ''} gap-4 mb-14`}>
               {/* Shop B2B — hidden from end customers / consumers */}
               {canSeeB2B && (
-              <Link href={`/b2b?supplier=${supplier.id}`}
+              <Link href={`/marketplace?supplier=${supplier.id}`}
                 className="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col">
                 <div className="relative overflow-hidden bg-gradient-to-br from-[#0B1F4D] to-[#1a3a7a] px-5 py-4 flex items-center justify-between">
                   <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-[900ms] ease-out bg-gradient-to-r from-transparent via-white/20 to-transparent pointer-events-none" />
