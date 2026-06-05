@@ -5,7 +5,8 @@ import { createClient } from '@/lib/supabase/server'
 import { Crown, ShieldCheck, Award, Store, ChevronLeft, Package, Users, ArrowRight } from 'lucide-react'
 import { ProductBuyArea } from './ProductBuyArea'
 import { ModelSelector } from './ModelSelector'
-import { unitsPerPallet, unitsPerTruck, cartonsPerTruck, unitsForShop } from '@/lib/packaging'
+import { unitsPerPallet, unitsPerTruck, cartonsPerTruck, unitsForShop, intersectUnits } from '@/lib/packaging'
+import { chainLevel, unitsForRole } from '@/lib/business-chain'
 import { useServerTranslations } from '@/lib/i18n/server'
 import { BrandLogo } from '@/components/BrandLogo'
 
@@ -92,12 +93,25 @@ export default async function ProductPage({ params, searchParams }: { params: { 
   // Retail (Online Shop) view vs wholesale (B2B/marketplace). The shop=online
   // param (carried from the store) forces retail; otherwise follow the product's
   // own context. Retail = per-piece price, no MOQ.
-  // Retail (consumer) pricing only in the online store; market & b2b are wholesale.
-  const retailView = searchParams.shop === 'online'
+  // ── Role-based access (Factory → Supplier → Distributor → Retail → End user) ──
+  // End users see only retail (PVP) + buy by piece; retail shops piece+box;
+  // distributors box+pallet+truck; suppliers/factories everything.
+  const { data: { user } } = await supabase.auth.getUser()
+  let viewer: any = null
+  if (user) {
+    const { data } = await supabase.from('profiles').select('role, business_type').eq('id', user.id).single()
+    viewer = data
+  }
+  const level     = chainLevel(viewer?.role, (viewer as any)?.business_type)
+  const roleUnits = unitsForRole(level)
+  const isConsumer = level === 'consumer'
+
+  // Retail (consumer) pricing for end users / the online store; else wholesale.
+  const retailView = isConsumer || searchParams.shop === 'online'
     || (!searchParams.shop && product.marketplace_context === 'retail')
 
-  // Per-shop purchase units: online = piece+box, market = box+pallet, b2b = pallet+truck.
-  const shopUnits = unitsForShop(searchParams.shop)
+  // Effective units = shop constraint ∩ role constraint (graceful fallback in the panel).
+  const shopUnits = intersectUnits(unitsForShop(searchParams.shop), roleUnits)
 
   // Model selector (Phase 3): sibling products in the same product line.
   let models: { id: string; slug: string; name: string; model_name: string | null }[] = []

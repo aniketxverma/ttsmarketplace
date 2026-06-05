@@ -11,6 +11,8 @@
  * wholesale pricing, the consumer Online Shop, etc.).
  */
 
+import type { PurchaseUnit } from '@/lib/packaging'
+
 export type ChainLevel = 'consumer' | 'retail' | 'distributor' | 'factory' | 'admin'
 
 const FACTORY_TYPES     = ['Manufacturer', 'Brand Owner', 'OEM Producer']
@@ -134,6 +136,25 @@ export function accessFor(
   role?: string | null, businessType?: string | null, tier?: string | null,
 ): DirectoryAccess {
   return directoryAccess(chainLevel(role, businessType), tier)
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Role-based purchase rights (access structure):
+//   End user      → Piece only (retail PVP)
+//   Retail shop   → Piece + Box (retail + B2B)
+//   Distributor   → Box + Pallet + Truck (wholesale / bulk)
+//   Supplier/Factory/Admin → all units
+// ─────────────────────────────────────────────────────────────────────────────
+
+export function unitsForRole(level: ChainLevel): PurchaseUnit[] | undefined {
+  switch (level) {
+    case 'consumer':    return ['piece']
+    case 'retail':      return ['piece', 'box']
+    case 'distributor': return ['box', 'pallet', 'truck']
+    case 'factory':
+    case 'admin':
+    default:            return undefined // all available units
+  }
 }
 
 /** Can this viewer browse a listing of the given kind, at their tier? */

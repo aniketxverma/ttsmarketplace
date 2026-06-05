@@ -87,3 +87,10 @@ export function unitsForShop(shop?: string | null): PurchaseUnit[] | undefined {
     default:       return undefined
   }
 }
+
+/** Combine two unit constraints (shop ∩ role). undefined means "no constraint". */
+export function intersectUnits(a?: PurchaseUnit[], b?: PurchaseUnit[]): PurchaseUnit[] | undefined {
+  if (!a) return b
+  if (!b) return a
+  return a.filter(u => b.includes(u))
+}
