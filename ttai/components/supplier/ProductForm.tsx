@@ -5,12 +5,16 @@ import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import { slugify } from '@/lib/utils'
+import { canSellUnit, requiredPlanLabel, SELL_PLAN_LABEL } from '@/lib/selling'
+import type { PurchaseUnit } from '@/lib/packaging'
 
 interface ProductFormProps {
   supplierId: string
   mode: 'create' | 'edit'
   productId?: string
   initialData?: Partial<FormState>
+  /** Seller's plan tier — gates which units they can sell by. */
+  sellerTier?: string
 }
 
 interface FormState {
@@ -51,7 +55,7 @@ const INITIAL: FormState = {
 
 const CURRENCIES = ['EUR', 'USD', 'GBP', 'AED', 'SAR', 'MAD']
 
-export function ProductForm({ supplierId, mode, productId, initialData }: ProductFormProps) {
+export function ProductForm({ supplierId, mode, productId, initialData, sellerTier }: ProductFormProps) {
   const router = useRouter()
   const [form, setForm] = useState<FormState>({ ...INITIAL, ...initialData })
   const [categories, setCategories] = useState<{ id: string; name: string; slug: string }[]>([])
@@ -137,10 +141,11 @@ export function ProductForm({ supplierId, mode, productId, initialData }: Produc
       price_per_box_cents:    form.pricePerBox && parseFloat(form.pricePerBox) > 0 ? Math.round(parseFloat(form.pricePerBox) * 100) : null,
       price_per_pallet_cents: form.pricePerPallet && parseFloat(form.pricePerPallet) > 0 ? Math.round(parseFloat(form.pricePerPallet) * 100) : null,
       price_per_truck_cents:  form.pricePerTruck && parseFloat(form.pricePerTruck) > 0 ? Math.round(parseFloat(form.pricePerTruck) * 100) : null,
-      sell_piece:          form.sellPiece,
-      sell_box:            form.sellBox,
-      sell_pallet:         form.sellPallet,
-      sell_truck:          form.sellTruck,
+      // Cap sell-by units to the seller's plan (locked units can't be enabled).
+      sell_piece:          form.sellPiece  && canSellUnit(sellerTier, 'piece'),
+      sell_box:            form.sellBox    && canSellUnit(sellerTier, 'box'),
+      sell_pallet:         form.sellPallet && canSellUnit(sellerTier, 'pallet'),
+      sell_truck:          form.sellTruck  && canSellUnit(sellerTier, 'truck'),
       is_published:        form.isPublished,
     }
 
@@ -431,19 +436,38 @@ export function ProductForm({ supplierId, mode, productId, initialData }: Produc
           One product, sold by piece / box / pallet / truck. Pallet &amp; truck totals are calculated automatically from these numbers — never put specs inside images.
         </p>
 
-        {/* Sell-in toggles */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-5">
+        {/* Sell-in toggles — locked units stay visible with an upgrade CTA */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-2">
           {([
-            ['sellPiece', 'Piece'], ['sellBox', 'Box'], ['sellPallet', 'Pallet'], ['sellTruck', 'Truck'],
-          ] as const).map(([key, label]) => (
-            <button key={key} type="button" onClick={() => update(key, !form[key])}
-              className={`rounded-xl border px-3 py-2.5 text-sm font-bold transition-all ${
-                form[key] ? 'border-[#0B1F4D] bg-[#0B1F4D] text-white' : 'border-gray-200 text-gray-500 hover:border-gray-300'
-              }`}>
-              Sell by {label}
-            </button>
-          ))}
+            ['sellPiece', 'Piece', 'piece'], ['sellBox', 'Box', 'box'],
+            ['sellPallet', 'Pallet', 'pallet'], ['sellTruck', 'Truck', 'truck'],
+          ] as const).map(([key, label, unit]) => {
+            const unlocked = canSellUnit(sellerTier, unit as PurchaseUnit)
+            if (!unlocked) {
+              return (
+                <a key={key} href="/pricing"
+                  className="rounded-xl border border-dashed border-amber-300 bg-amber-50/60 px-3 py-2.5 text-left hover:bg-amber-50 transition-colors">
+                  <span className="flex items-center gap-1 text-sm font-bold text-amber-700">
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                    Sell by {label}
+                  </span>
+                  <span className="block text-[10px] font-semibold text-amber-600 mt-0.5">Upgrade to {requiredPlanLabel(unit as PurchaseUnit)} →</span>
+                </a>
+              )
+            }
+            return (
+              <button key={key} type="button" onClick={() => update(key, !form[key])}
+                className={`rounded-xl border px-3 py-2.5 text-sm font-bold transition-all ${
+                  form[key] ? 'border-[#0B1F4D] bg-[#0B1F4D] text-white' : 'border-gray-200 text-gray-500 hover:border-gray-300'
+                }`}>
+                Sell by {label}
+              </button>
+            )
+          })}
         </div>
+        <p className="text-xs text-gray-400 mb-5">
+          Your plan ({SELL_PLAN_LABEL[sellerTier ?? 'free'] ?? 'Starter'}) unlocks the units above. Locked units stay visible — upgrade to enable them.
+        </p>
 
         {/* Unit + commercial */}
         <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Unit (1 piece)</p>

@@ -16,6 +16,9 @@ export default async function NewProductPage() {
   if (!supplier) redirect('/supplier/onboarding')
   if (supplier.status !== 'ACTIVE') redirect('/supplier')
 
+  const { data: prof } = await (supabase.from('profiles') as any).select('tier').eq('id', user.id).single()
+  const sellerTier = prof?.tier ?? 'free'
+
   return (
     <div className="max-w-2xl space-y-6">
       <div>
@@ -23,7 +26,7 @@ export default async function NewProductPage() {
         <p className="text-muted-foreground text-sm mt-0.5">Products start as drafts — publish when ready</p>
       </div>
       <div className="rounded-xl border bg-card p-6">
-        <ProductForm supplierId={supplier.id} mode="create" />
+        <ProductForm supplierId={supplier.id} mode="create" sellerTier={sellerTier} />
       </div>
     </div>
   )

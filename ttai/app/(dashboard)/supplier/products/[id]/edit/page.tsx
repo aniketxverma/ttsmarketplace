@@ -14,6 +14,9 @@ export default async function EditProductPage({ params }: { params: { id: string
     .eq('owner_id', user.id)
     .single()
 
+  const { data: prof } = await (supabase.from('profiles') as any).select('tier').eq('id', user.id).single()
+  const sellerTier = prof?.tier ?? 'free'
+
   if (!supplier) redirect('/supplier/onboarding')
 
   const { data: product } = await (supabase
@@ -52,6 +55,7 @@ export default async function EditProductPage({ params }: { params: { id: string
           supplierId={supplier.id}
           mode="edit"
           productId={product.id}
+          sellerTier={sellerTier}
           initialData={{
             name:               product.name,
             slug:               product.slug,
