@@ -361,7 +361,7 @@ export default async function B2BPage({
                           product={p as Parameters<typeof ProductCard>[0]['product']}
                           supplier={supplier}
                           mainImageUrl={mainImg}
-                          href={`/product/${p.slug ?? p.id}`}
+                          href={`/product/${p.slug ?? p.id}?shop=b2b`}
                         />
                       )
                     })}
