@@ -5,6 +5,7 @@ import { Header } from '@/components/shared/Header'
 import { DashboardShell } from '@/components/dashboard/DashboardShell'
 import { ChatWidget } from '@/components/ai/ChatWidget'
 import { SELL_PLAN_LABEL } from '@/lib/selling'
+import { useServerTranslations } from '@/lib/i18n/server'
 import type { UserRole } from '@/types/domain'
 
 const NEXT_TIER: Record<string, string | null> = { free: 'standard', standard: 'pro', pro: 'full', full: null }
@@ -23,6 +24,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   if (!profile) redirect('/login')
 
+  const { t } = await useServerTranslations()
   const isPending = profile.approval_status === 'pending' && profile.role !== 'admin'
 
   // Persistent upgrade prompt — always nudge non-admins below the top plan.
@@ -30,10 +32,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const nextTier = profile.role === 'admin' ? null : NEXT_TIER[tier]
   const isSeller = ['supplier', 'broker'].includes(profile.role)
   const upgrade = nextTier ? {
-    label: SELL_PLAN_LABEL[nextTier],
     title: isSeller
-      ? `Upgrade to ${SELL_PLAN_LABEL[nextTier]} — sell B2B by pallet & truck and reach more buyers`
-      : `Become a verified supplier — list products and sell on TTAIEMA`,
+      ? `${t('dash.upgrade_to')} ${SELL_PLAN_LABEL[nextTier]} ${t('dash.sell_b2b_tail')}`
+      : t('dash.become_supplier'),
   } : null
 
   return (
@@ -48,15 +49,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
               </svg>
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-extrabold text-amber-900">Your account is under review</p>
-              <p className="text-xs text-amber-700 mt-0.5 leading-relaxed">
-                You can complete your profile while our team verifies your details (usually within 24–48 hours).
-                Marketplace, suppliers and ordering unlock automatically once approved.
-              </p>
+              <p className="text-sm font-extrabold text-amber-900">{t('dash.pending_title')}</p>
+              <p className="text-xs text-amber-700 mt-0.5 leading-relaxed">{t('dash.pending_body')}</p>
             </div>
             <span className="flex items-center gap-1.5 text-[11px] font-bold text-amber-700 bg-amber-100 px-2.5 py-1 rounded-full flex-shrink-0">
               <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-              Pending
+              {t('dash.pending_badge')}
             </span>
           </div>
         )}
@@ -73,11 +71,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
               </div>
               <div className="min-w-0">
                 <p className="text-sm font-extrabold leading-tight truncate">{upgrade.title}</p>
-                <p className="text-xs text-blue-200 mt-0.5">Grow with TTAIEMA — unlock more plans, distribution and investment projects.</p>
+                <p className="text-xs text-blue-200 mt-0.5">{t('dash.grow_sub')}</p>
               </div>
             </div>
             <span className="flex items-center gap-1.5 text-sm font-extrabold bg-[#F5A623] text-[#0B1F4D] px-4 py-2 rounded-xl flex-shrink-0 group-hover:gap-2.5 transition-all">
-              Upgrade
+              {t('dash.upgrade_btn')}
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" /></svg>
             </span>
           </Link>
