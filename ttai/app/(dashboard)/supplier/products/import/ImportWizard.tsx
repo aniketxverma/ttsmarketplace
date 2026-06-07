@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
 import { UploadCloud, FileSpreadsheet, Check, Loader2, Trash2, ImageOff } from 'lucide-react'
 
 type Category = { id: string; name: string; parent_id: string | null }
@@ -23,8 +23,10 @@ interface Row {
 }
 
 export function ImportWizard({ categories }: { categories: Category[] }) {
-  const router = useRouter()
+  const supabase = createClient()
   const [file, setFile] = useState<File | null>(null)
+  const [uploadedPath, setUploadedPath] = useState<string | null>(null)
+  const [uploading, setUploading] = useState(false)
   const [sheets, setSheets] = useState<string[]>([])
   const [sheet, setSheet] = useState<string>('')
   const [parsing, setParsing] = useState(false)
@@ -39,18 +41,43 @@ export function ImportWizard({ categories }: { categories: Category[] }) {
   const [importing, setImporting] = useState(false)
   const [result, setResult] = useState<{ created: number; failed: string[] } | null>(null)
 
+  /** Upload the file to storage once (signed URL) and remember its path. */
+  async function ensureUploaded(): Promise<string | null> {
+    if (uploadedPath) return uploadedPath
+    if (!file) return null
+    setUploading(true); setError(null)
+    try {
+      const r = await fetch('/api/supplier/import/upload-url', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filename: file.name }),
+      })
+      const j = await r.json().catch(() => ({}))
+      if (!r.ok) { setError(j.error ?? 'Could not start upload'); return null }
+      const { error: upErr } = await supabase.storage.from('brand-assets')
+        .uploadToSignedUrl(j.path, j.token, file, { contentType: file.type || 'application/octet-stream' })
+      if (upErr) {
+        const big = /exceed|maximum|size|413|payload/i.test(upErr.message)
+        setError(big
+          ? `Storage rejected the file — it's over your project's upload limit. Raise "Upload file size limit" in Supabase → Storage settings (e.g. to 150 MB), then retry.`
+          : `Upload failed: ${upErr.message}`)
+        return null
+      }
+      setUploadedPath(j.path)
+      return j.path
+    } finally {
+      setUploading(false)
+    }
+  }
+
   async function parse(withSheet?: string) {
     if (!file) return
-    const mb = file.size / (1024 * 1024)
-    if (mb > 20) {
-      setError(`This file is ${Math.round(mb)} MB — too large to upload through the browser (it likely has many full-resolution embedded photos). Import one category sheet at a time, compress the images first, or ask us to bulk-import it for you.`)
-      return
-    }
+    const path = await ensureUploaded()
+    if (!path) return
     setParsing(true); setError(null)
-    const fd = new FormData()
-    fd.append('file', file)
-    if (withSheet) fd.append('sheet', withSheet)
-    const res = await fetch('/api/supplier/import/parse', { method: 'POST', body: fd })
+    const res = await fetch('/api/supplier/import/parse', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ storagePath: path, sheet: withSheet || undefined }),
+    })
     const json = await res.json().catch(() => ({}))
     setParsing(false)
     if (!res.ok) {
@@ -62,6 +89,21 @@ export function ImportWizard({ categories }: { categories: Category[] }) {
     setSheet(json.sheet ?? '')
     setDetected(json.detected ?? [])
     setRows((json.rows as Row[]).map((r) => ({ ...r, _include: true })))
+  }
+
+  async function cleanup() {
+    if (!uploadedPath) return
+    try {
+      await fetch('/api/supplier/import/cleanup', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ storagePath: uploadedPath }),
+      })
+    } catch { /* best effort */ }
+  }
+
+  function reset() {
+    cleanup()
+    setUploadedPath(null); setFile(null); setRows(null); setSheets([]); setSheet(''); setError(null)
   }
 
   const included = rows?.filter((r) => r._include) ?? []
@@ -100,11 +142,15 @@ export function ImportWizard({ categories }: { categories: Category[] }) {
         )}
         <div className="mt-5 flex justify-center gap-3">
           <Link href="/supplier/products" className="rounded-xl bg-[#0B1F4D] text-white px-6 py-2.5 text-sm font-bold hover:bg-[#162d6e]">Go to my products</Link>
-          <button onClick={() => { setResult(null); setRows(null); setFile(null) }} className="rounded-xl border border-gray-200 px-6 py-2.5 text-sm font-bold text-gray-600 hover:bg-gray-50">Import another file</button>
+          {sheets.length > 1
+            ? <button onClick={() => { setResult(null) }} className="rounded-xl border border-gray-200 px-6 py-2.5 text-sm font-bold text-gray-600 hover:bg-gray-50">Import another sheet</button>
+            : <button onClick={() => { setResult(null); reset() }} className="rounded-xl border border-gray-200 px-6 py-2.5 text-sm font-bold text-gray-600 hover:bg-gray-50">Import another file</button>}
         </div>
       </div>
     )
   }
+
+  const busy = uploading || parsing
 
   return (
     <div className="space-y-5">
@@ -115,27 +161,19 @@ export function ImportWizard({ categories }: { categories: Category[] }) {
             <UploadCloud className="w-10 h-10 text-gray-300" />
             <div className="text-center">
               <p className="text-sm font-bold text-[#0B1F4D]">{file ? file.name : 'Click to choose an .xlsx file'}</p>
-              <p className="text-xs text-gray-400">Supplier price list with embedded product photos</p>
+              <p className="text-xs text-gray-400">Supplier price list with embedded product photos · large files OK</p>
             </div>
             <input type="file" accept=".xlsx" className="hidden"
-              onChange={(e) => { setFile(e.target.files?.[0] ?? null); setError(null); setSheets([]) }} />
+              onChange={(e) => { setFile(e.target.files?.[0] ?? null); setError(null); setSheets([]); setUploadedPath(null) }} />
           </label>
-
-          {sheets.length > 1 && (
-            <div className="mt-4 flex items-center gap-2">
-              <span className="text-xs font-bold text-gray-500 uppercase">Sheet</span>
-              <select value={sheet} onChange={(e) => setSheet(e.target.value)} className="rounded-xl border border-gray-200 px-3 py-2 text-sm">
-                <option value="">First sheet</option>
-                {sheets.map((s) => <option key={s} value={s}>{s}</option>)}
-              </select>
-            </div>
-          )}
 
           {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
 
-          <button type="button" disabled={!file || parsing} onClick={() => parse(sheet || undefined)}
+          <button type="button" disabled={!file || busy} onClick={() => parse()}
             className="mt-5 inline-flex items-center gap-2 rounded-xl bg-[#0B1F4D] text-white px-6 py-2.5 text-sm font-bold hover:bg-[#162d6e] disabled:opacity-50">
-            {parsing ? <><Loader2 className="w-4 h-4 animate-spin" /> Reading…</> : <><FileSpreadsheet className="w-4 h-4" /> Read file</>}
+            {uploading ? <><Loader2 className="w-4 h-4 animate-spin" /> Uploading… (large files take a while)</>
+              : parsing ? <><Loader2 className="w-4 h-4 animate-spin" /> Reading…</>
+              : <><FileSpreadsheet className="w-4 h-4" /> Upload &amp; read</>}
           </button>
         </div>
       )}
@@ -144,7 +182,16 @@ export function ImportWizard({ categories }: { categories: Category[] }) {
       {rows && (
         <>
           {/* Batch settings */}
-          <div className="rounded-2xl border border-gray-100 bg-white shadow-sm p-5 grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="rounded-2xl border border-gray-100 bg-white shadow-sm p-5 grid grid-cols-1 sm:grid-cols-4 gap-4">
+            {sheets.length > 1 && (
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-gray-500 uppercase">Sheet (category tab)</label>
+                <select value={sheet} disabled={busy} onChange={(e) => { setSheet(e.target.value); parse(e.target.value) }}
+                  className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm bg-white">
+                  {sheets.map((s) => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </div>
+            )}
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-gray-500 uppercase">Category *</label>
               <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm bg-white">
@@ -178,7 +225,12 @@ export function ImportWizard({ categories }: { categories: Category[] }) {
           </div>
 
           {/* Preview table */}
-          <div className="rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden">
+          <div className="relative rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden">
+            {parsing && (
+              <div className="absolute inset-0 bg-white/70 z-10 flex items-center justify-center">
+                <span className="inline-flex items-center gap-2 text-sm font-bold text-[#0B1F4D]"><Loader2 className="w-4 h-4 animate-spin" /> Reading sheet…</span>
+              </div>
+            )}
             <div className="max-h-[28rem] overflow-y-auto">
               <table className="w-full text-sm">
                 <thead className="sticky top-0 bg-gray-50 text-left text-[11px] font-extrabold text-gray-400 uppercase tracking-wide">
@@ -225,11 +277,11 @@ export function ImportWizard({ categories }: { categories: Category[] }) {
           </div>
 
           <div className="flex items-center gap-3">
-            <button type="button" disabled={importing || included.length === 0} onClick={runImport}
+            <button type="button" disabled={importing || busy || included.length === 0} onClick={runImport}
               className="inline-flex items-center gap-2 rounded-xl bg-[#F5A623] text-[#0B1F4D] px-7 py-3 text-sm font-extrabold hover:bg-[#fbb93a] disabled:opacity-50">
               {importing ? <><Loader2 className="w-4 h-4 animate-spin" /> Importing…</> : <>Import {included.length} products</>}
             </button>
-            <button type="button" onClick={() => { setRows(null); setError(null) }} className="text-sm font-bold text-gray-500 hover:text-gray-700">Start over</button>
+            <button type="button" onClick={reset} className="text-sm font-bold text-gray-500 hover:text-gray-700">Start over</button>
           </div>
         </>
       )}

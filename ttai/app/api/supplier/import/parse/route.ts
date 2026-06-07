@@ -41,15 +41,20 @@ export async function POST(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const form = await req.formData()
-  const file = form.get('file') as File | null
-  const sheetName = (form.get('sheet') as string | null) || null
-  if (!file) return NextResponse.json({ error: 'No file provided' }, { status: 400 })
-  if (file.size > 30 * 1024 * 1024) return NextResponse.json({ error: 'File must be under 30 MB' }, { status: 400 })
+  // The browser uploads the .xlsx straight to storage (signed URL); we read it
+  // back here so there is no API request-body size limit.
+  const { storagePath, sheet: sheetName } = await req.json().catch(() => ({})) as { storagePath?: string; sheet?: string }
+  if (!storagePath || !storagePath.startsWith(`imports/${user.id}/`)) {
+    return NextResponse.json({ error: 'Invalid or missing file reference' }, { status: 400 })
+  }
+
+  const admin = createAdminClient()
+  const { data: blob, error: dlErr } = await admin.storage.from('brand-assets').download(storagePath)
+  if (dlErr || !blob) return NextResponse.json({ error: 'Could not read the uploaded file from storage' }, { status: 400 })
 
   const wb = new ExcelJS.Workbook()
   try {
-    await wb.xlsx.load(Buffer.from(await file.arrayBuffer()) as any)
+    await wb.xlsx.load(Buffer.from(await blob.arrayBuffer()) as any)
   } catch {
     return NextResponse.json({ error: 'Could not read this file. Please upload a valid .xlsx workbook.' }, { status: 400 })
   }
@@ -104,7 +109,6 @@ export async function POST(req: NextRequest) {
   if (rows.length === 0) return NextResponse.json({ error: 'No product rows found under the header.', sheets }, { status: 422 })
 
   // 3) Extract embedded images → upload → attach to the nearest product row.
-  const admin = createAdminClient()
   const images = (typeof (ws as any).getImages === 'function' ? (ws as any).getImages() : []) as any[]
   for (const img of images) {
     const anchorRow = Math.round((img?.range?.tl?.nativeRow ?? 0)) + 1 // 0-based → 1-based
