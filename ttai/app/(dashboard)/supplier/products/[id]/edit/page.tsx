@@ -103,6 +103,7 @@ export default async function EditProductPage({ params }: { params: { id: string
             pricePerBox:        (product as any).price_per_box_cents != null ? ((product as any).price_per_box_cents / 100).toFixed(2) : '',
             pricePerPallet:     (product as any).price_per_pallet_cents != null ? ((product as any).price_per_pallet_cents / 100).toFixed(2) : '',
             pricePerTruck:      (product as any).price_per_truck_cents != null ? ((product as any).price_per_truck_cents / 100).toFixed(2) : '',
+            priceNegotiable:    (product as any).price_negotiable ?? false,
             minBoxQty:          (product as any).min_box_qty?.toString() ?? '1',
             minPalletQty:       (product as any).min_pallet_qty?.toString() ?? '1',
             minTruckQty:        (product as any).min_truck_qty?.toString() ?? '1',

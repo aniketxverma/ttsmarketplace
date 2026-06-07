@@ -21,11 +21,11 @@ export default async function SupplierProductsPage() {
 
   if (!supplier) redirect('/supplier/onboarding')
 
-  const { data: products } = await supabase
-    .from('products')
-    .select('id, name, price_cents, currency_code, is_published, stock_qty, min_order_qty, sku, categories(name), product_images(url, sort_order)')
+  const { data: products } = await (supabase
+    .from('products') as any)
+    .select('id, name, price_cents, currency_code, is_published, stock_qty, min_order_qty, sku, price_negotiable, categories(name), product_images(url, sort_order)')
     .eq('supplier_id', supplier.id)
-    .order('created_at', { ascending: false })
+    .order('created_at', { ascending: false }) as { data: any[] | null }
 
   return (
     <div className="space-y-6 max-w-6xl">
@@ -122,7 +122,12 @@ export default async function SupplierProductsPage() {
                       </div>
                     </td>
                     <td className="px-4 py-4 text-gray-500 hidden sm:table-cell">{cat?.name ?? '—'}</td>
-                    <td className="px-4 py-4 font-semibold text-[#0B1F4D]">{fmt(p.price_cents, p.currency_code)}</td>
+                    <td className="px-4 py-4">
+                      <span className="font-semibold text-[#0B1F4D]">{fmt(p.price_cents, p.currency_code)}</span>
+                      <span className={`block mt-0.5 text-[10px] font-bold ${(p as any).price_negotiable ? 'text-[#a9690b]' : 'text-gray-400'}`}>
+                        {(p as any).price_negotiable ? '💬 Negotiable' : '🔒 Fixed'}
+                      </span>
+                    </td>
                     <td className="px-4 py-4 hidden md:table-cell">
                       <span className={`text-sm font-medium ${p.stock_qty === 0 ? 'text-red-500' : p.stock_qty < 10 ? 'text-orange-500' : 'text-gray-700'}`}>
                         {p.stock_qty} units

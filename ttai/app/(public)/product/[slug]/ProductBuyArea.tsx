@@ -23,13 +23,14 @@ type ProductImage = { url: string; sort_order: number; image_role?: string | nul
 type Product = PackagingProduct & { id: string; name: string; slug: string; currency_code: string }
 
 export function ProductBuyArea({
-  product, images, retail = false, shopUnits, whatsapp, supplierName, imageUrl,
+  product, images, retail = false, shopUnits, negotiable = false, whatsapp, supplierName, imageUrl,
   categoryName, supplierLabel, supplierHref, shipsFrom, topSlot, children,
 }: {
   product: Product
   images: ProductImage[]
   retail?: boolean
   shopUnits?: PurchaseUnit[]
+  negotiable?: boolean
   whatsapp?: string | null
   supplierName: string
   imageUrl?: string
@@ -88,6 +89,12 @@ export function ProductBuyArea({
     if (whatsapp) window.open(`https://wa.me/${whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(msg)}`, '_blank')
     else router.push('/marketplace')
   }
+  function makeOffer() {
+    const u = UNIT_LABEL[unit].toLowerCase()
+    const msg = `Hi ${supplierName}, I'd like to negotiate the price for "${product.name}". For ${qty} ${u}${qty > 1 ? 's' : ''} my offer is ____ ${product.currency_code} / ${u}. Can we agree?`
+    if (whatsapp) window.open(`https://wa.me/${whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(msg)}`, '_blank')
+    else router.push('/marketplace')
+  }
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
@@ -138,6 +145,11 @@ export function ProductBuyArea({
           <span className="text-4xl font-black text-[#0B1F4D]">{fmt(unitPrice(product, unit, retail))}</span>
           <span className="text-sm text-gray-400 font-medium">/ {UNIT_LABEL[unit].toLowerCase()}</span>
         </div>
+        <div>
+          {negotiable
+            ? <span className="inline-flex items-center gap-1 rounded-full bg-[#F5A623]/15 text-[#a9690b] px-2.5 py-1 text-[11px] font-extrabold">💬 Negotiable price — make an offer</span>
+            : <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 text-gray-500 px-2.5 py-1 text-[11px] font-bold">🔒 Fixed price · final</span>}
+        </div>
 
         {/* Unit option cards */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
@@ -186,6 +198,12 @@ export function ProductBuyArea({
           className={`w-full flex items-center justify-center gap-2 rounded-xl px-4 py-3.5 text-sm font-bold transition-all ${added ? 'bg-green-50 text-green-700 border-2 border-green-500' : 'bg-[#0B1F4D] text-white hover:bg-[#162d6e] hover:shadow-lg'}`}>
           {added ? <><Check className="w-4 h-4" /> Added to cart!</> : <><ShoppingCart className="w-4 h-4" /> Add to cart · {fmt(lineTotal)}</>}
         </button>
+        {negotiable && (
+          <button type="button" onClick={makeOffer}
+            className="w-full flex items-center justify-center gap-1.5 rounded-xl border-2 border-[#F5A623] text-[#a9690b] px-4 py-3 text-sm font-bold hover:bg-[#F5A623]/5 transition-colors">
+            💬 Make an offer · negotiate price
+          </button>
+        )}
         {canQuote && (
           <button type="button" onClick={requestQuote} className="w-full flex items-center justify-center gap-1.5 text-xs font-bold text-[#ea580c] hover:underline">
             <FileText className="w-3.5 h-3.5" /> Or request a custom quote

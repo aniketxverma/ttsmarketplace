@@ -59,7 +59,7 @@ export default async function ProductPage({ params, searchParams }: { params: { 
     cartons_per_pallet, pallet_weight_kg, pallet_dimensions, pallet_height_cm,
     pallets_per_truck, truck_capacity, exw_price_cents,
     price_per_box_cents, price_per_pallet_cents, price_per_truck_cents,
-    sell_piece, sell_box, sell_pallet, sell_truck, hs_code, catalogue_url, video_url,
+    sell_piece, sell_box, sell_pallet, sell_truck, price_negotiable, hs_code, catalogue_url, video_url,
     product_images(url, sort_order, image_role),
     categories(name, slug),
     suppliers(
@@ -188,6 +188,7 @@ export default async function ProductPage({ params, searchParams }: { params: { 
           images={images}
           retail={retailView}
           shopUnits={shopUnits}
+          negotiable={!!product.price_negotiable}
           whatsapp={retailView ? null : (supplier?.whatsapp ?? null)}
           supplierName={retailView ? HOUSE_BRAND.name : (supplier?.trade_name ?? supplier?.legal_name ?? '')}
           imageUrl={images[0]?.url}

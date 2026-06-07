@@ -39,6 +39,7 @@ interface FormState {
   exwPrice: string; pricePerBox: string; pricePerPallet: string; pricePerTruck: string
   hsCode: string; catalogueUrl: string; videoUrl: string
   sellPiece: boolean; sellBox: boolean; sellPallet: boolean; sellTruck: boolean
+  priceNegotiable: boolean
   isPublished: boolean
 }
 
@@ -57,6 +58,7 @@ const INITIAL: FormState = {
   exwPrice: '', pricePerBox: '', pricePerPallet: '', pricePerTruck: '',
   hsCode: '', catalogueUrl: '', videoUrl: '',
   sellPiece: true, sellBox: false, sellPallet: false, sellTruck: false,
+  priceNegotiable: false,
   isPublished: false,
 }
 
@@ -167,6 +169,7 @@ export function ProductForm({
       min_box_qty:            Math.max(1, parseInt(form.minBoxQty)    || 1),
       min_pallet_qty:         Math.max(1, parseInt(form.minPalletQty) || 1),
       min_truck_qty:          Math.max(1, parseInt(form.minTruckQty)  || 1),
+      price_negotiable:    form.priceNegotiable,
       // Cap sell-by units to the seller's plan (locked units can't be enabled).
       sell_piece:          form.sellPiece  && canSellUnit(sellerTier, 'piece'),
       sell_box:            form.sellBox    && canSellUnit(sellerTier, 'box'),
@@ -418,6 +421,23 @@ export function ProductForm({
           <div className="space-y-1.5">
             <label className={labelCls}>Weight (grams)</label>
             <input className={inputCls} type="number" min="1" value={form.weightGrams} onChange={(e) => update('weightGrams', e.target.value)} placeholder="Optional" />
+          </div>
+
+          {/* Fixed vs Negotiable pricing */}
+          <div className="space-y-1.5 sm:col-span-2">
+            <label className={labelCls}>Price type</label>
+            <div className="grid grid-cols-2 gap-2">
+              <button type="button" onClick={() => update('priceNegotiable', false)}
+                className={`rounded-xl border p-3 text-left transition-all ${!form.priceNegotiable ? 'border-[#0B1F4D] bg-[#0B1F4D]/[0.04] ring-1 ring-[#0B1F4D]' : 'border-gray-200 hover:border-gray-300'}`}>
+                <p className="text-sm font-extrabold text-[#0B1F4D]">🔒 Fixed price</p>
+                <p className="text-[11px] text-gray-400 leading-tight">Final price — buyers purchase at the listed price.</p>
+              </button>
+              <button type="button" onClick={() => update('priceNegotiable', true)}
+                className={`rounded-xl border p-3 text-left transition-all ${form.priceNegotiable ? 'border-[#F5A623] bg-[#F5A623]/[0.06] ring-1 ring-[#F5A623]' : 'border-gray-200 hover:border-gray-300'}`}>
+                <p className="text-sm font-extrabold text-[#0B1F4D]">💬 Negotiable</p>
+                <p className="text-[11px] text-gray-400 leading-tight">Buyers can request a better price / make an offer.</p>
+              </button>
+            </div>
           </div>
         </div>
       </div>
