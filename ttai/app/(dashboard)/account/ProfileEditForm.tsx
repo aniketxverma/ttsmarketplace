@@ -22,6 +22,8 @@ interface ProfileData {
   avatar_url: string | null
   role: string | null
   email: string
+  vat_number?: string | null
+  tax_country?: string | null
 }
 
 const BUSINESS_TYPES = ['Company', 'SME', 'Individual / Freelancer', 'Cooperative', 'Government', 'NGO']
@@ -63,6 +65,8 @@ export function ProfileEditForm({ profile }: { profile: ProfileData }) {
     continent:        profile.continent        ?? '',
     website_url:      profile.website_url      ?? '',
     products_offered: profile.products_offered ?? '',
+    vat_number:       profile.vat_number       ?? '',
+    tax_country:      profile.tax_country       ?? '',
   })
 
   const [avatarPreview, setAvatarPreview] = useState<string | null>(profile.avatar_url)
@@ -237,6 +241,18 @@ export function ProfileEditForm({ profile }: { profile: ProfileData }) {
           <input type="url" value={form.website_url} onChange={e => set('website_url', e.target.value)}
             placeholder="https://yourwebsite.com" className={inputCls} />
         </Field>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Field label="VAT Number" hint="Used automatically at checkout for EU B2B reverse-charge">
+            <input type="text" value={form.vat_number} onChange={e => set('vat_number', e.target.value)}
+              placeholder="e.g. ESB12345678" className={inputCls} />
+          </Field>
+          <Field label="Tax Country" hint="2-letter ISO code, e.g. ES, DE, FR">
+            <input type="text" maxLength={2} value={form.tax_country}
+              onChange={e => set('tax_country', e.target.value.toUpperCase())}
+              placeholder="ES" className={inputCls + ' uppercase'} />
+          </Field>
+        </div>
       </div>
 
       {/* ── Products / Services ── */}

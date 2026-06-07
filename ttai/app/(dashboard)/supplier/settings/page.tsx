@@ -9,7 +9,7 @@ export default async function SupplierSettingsPage() {
 
   const [profileRes, supplierRes] = await Promise.all([
     supabase.from('profiles')
-      .select('id,full_name,username,phone,bio,company_name,business_type,category,country_name,city,continent,website_url,products_offered,avatar_url,role')
+      .select('*')
       .eq('id', user.id)
       .single(),
     supabase.from('suppliers').select('id').eq('owner_id', user.id).single(),

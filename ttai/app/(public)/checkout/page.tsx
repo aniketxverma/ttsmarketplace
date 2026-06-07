@@ -17,10 +17,12 @@ export default function CheckoutPage() {
   const [error, setError] = useState<string | null>(null)
 
   const [form, setForm] = useState({
-    fullName: '', line1: '', city: '', postalCode: '', country: 'ES', phone: '',
+    fullName: '', line1: '', city: '', postalCode: '', country: 'ES', phone: '', vatNumber: '',
   })
 
-  const vatCents = Math.round(totalCents * 0.1)
+  // Display estimate only — the authoritative VAT (incl. EU reverse charge) is
+  // computed server-side from your tax status and shown on the invoice.
+  const vatCents = Math.round(totalCents * 0.21)
   const grandTotal = totalCents + vatCents
   const currency = items[0]?.currency_code ?? 'EUR'
 
@@ -39,7 +41,8 @@ export default function CheckoutPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         items: items.map(i => ({ productId: i.productId, quantity: i.quantity, unit: i.unit })),
-        shippingAddress: form,
+        shippingAddress: { fullName: form.fullName, line1: form.line1, city: form.city, postalCode: form.postalCode, country: form.country, phone: form.phone },
+        vatNumber: form.vatNumber || undefined,
       }),
     })
 
@@ -154,6 +157,15 @@ export default function CheckoutPage() {
                         className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B1F4D] focus:border-transparent transition-all"
                       />
                     </div>
+                    <div className="space-y-1.5 sm:col-span-2">
+                      <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">VAT number <span className="text-gray-400 normal-case font-normal">(businesses — EU reverse charge)</span></label>
+                      <input
+                        name="vatNumber" value={form.vatNumber} onChange={handleChange}
+                        placeholder="e.g. DE123456789"
+                        className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B1F4D] focus:border-transparent transition-all"
+                      />
+                      <p className="text-xs text-gray-400">EU businesses with a valid VAT number in another country may be billed without VAT (intra-community).</p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -226,7 +238,7 @@ export default function CheckoutPage() {
                     <span className="font-medium">{fmt(totalCents, currency)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">VAT (10%)</span>
+                    <span className="text-gray-500">VAT (est.)</span>
                     <span className="font-medium">{fmt(vatCents, currency)}</span>
                   </div>
                   <div className="flex justify-between text-sm">

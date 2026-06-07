@@ -5,11 +5,18 @@ import { useRouter } from 'next/navigation'
 import type { PricingConfig } from '@/lib/pricing-rules'
 import { minRetailCents, addVatCents } from '@/lib/pricing-rules'
 
-export function PricingManager({ initial }: { initial: PricingConfig }) {
+export function PricingManager({
+  initial, tax,
+}: {
+  initial: PricingConfig
+  tax: { euReverseCharge: boolean; reverseChargeCategories: string }
+}) {
   const router = useRouter()
   const [minMarginPct, setMargin] = useState(String(initial.minMarginPct))
   const [vatPct, setVat] = useState(String(initial.vatPct))
   const [vatEnabled, setVatEnabled] = useState(initial.vatEnabled)
+  const [euReverseCharge, setEuRc] = useState(tax.euReverseCharge)
+  const [rcCategories, setRcCats] = useState(tax.reverseChargeCategories)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
 
@@ -25,7 +32,7 @@ export function PricingManager({ initial }: { initial: PricingConfig }) {
     setSaving(true); setSaved(false)
     const res = await fetch('/api/admin/pricing', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ minMarginPct: margin, vatPct: vat, vatEnabled }),
+      body: JSON.stringify({ minMarginPct: margin, vatPct: vat, vatEnabled, euReverseCharge, reverseChargeCategories: rcCategories }),
     })
     setSaving(false)
     if (res.ok) { setSaved(true); router.refresh(); setTimeout(() => setSaved(false), 2500) }
@@ -72,10 +79,30 @@ export function PricingManager({ initial }: { initial: PricingConfig }) {
           </div>
         </div>
 
+        {/* EU B2B reverse charge */}
+        <div className="flex items-center justify-between border-t border-gray-100 pt-5">
+          <div>
+            <p className="font-bold text-[#0B1F4D]">EU B2B reverse charge</p>
+            <p className="text-xs text-gray-400">Remove VAT on cross-border EU sales to businesses with a valid VAT number (intra-community).</p>
+          </div>
+          <button type="button" onClick={() => setEuRc((v) => !v)}
+            className={`relative w-12 h-6 rounded-full transition-colors ${euReverseCharge ? 'bg-green-500' : 'bg-gray-300'}`}>
+            <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${euReverseCharge ? 'translate-x-6' : ''}`} />
+          </button>
+        </div>
+
+        {/* Special tax categories */}
+        <div className="space-y-1.5">
+          <label className={labelCls}>Special (reverse-charge) category slugs</label>
+          <input type="text" value={rcCategories} onChange={(e) => setRcCats(e.target.value)} className={inputCls}
+            placeholder="e.g. mobile-phones, electronics-technology" />
+          <p className="text-xs text-gray-400">Comma-separated category slugs that use domestic B2B reverse charge (e.g. mobile phones). Leave blank for none.</p>
+        </div>
+
         <div className="flex items-center gap-3">
           <button type="button" onClick={save} disabled={saving}
             className="rounded-xl bg-[#0B1F4D] text-white px-6 py-2.5 text-sm font-bold hover:bg-[#162d6e] disabled:opacity-60">
-            {saving ? 'Saving…' : 'Save pricing rules'}
+            {saving ? 'Saving…' : 'Save pricing & tax rules'}
           </button>
           {saved && <span className="text-sm font-bold text-green-600">Saved ✓</span>}
         </div>

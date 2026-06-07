@@ -8,6 +8,7 @@ const ALLOWED_FIELDS = [
   'company_name', 'business_type', 'category',
   'country_name', 'city', 'continent',
   'website_url', 'products_offered',
+  'vat_number', 'tax_country',
 ]
 
 export async function PATCH(request: NextRequest) {
@@ -42,12 +43,18 @@ export async function PATCH(request: NextRequest) {
   }
 
   const admin = createAdminClient()
-  const { data, error } = await admin
+  let { data, error } = await admin
     .from('profiles')
     .update(updates)
     .eq('id', user.id)
     .select()
     .single()
+
+  // Resilience: if the tax columns aren't migrated yet, retry without them.
+  if (error && /vat_number|tax_country|column/i.test(error.message)) {
+    delete updates.vat_number; delete updates.tax_country
+    ;({ data, error } = await admin.from('profiles').update(updates).eq('id', user.id).select().single())
+  }
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 })
 

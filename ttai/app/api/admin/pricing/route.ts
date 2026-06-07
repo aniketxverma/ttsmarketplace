@@ -20,6 +20,9 @@ export async function POST(req: NextRequest) {
   if (body.minMarginPct !== undefined) rows.push({ key: 'pricing_min_margin_pct', value: String(Math.max(0, parseFloat(body.minMarginPct) || 0)) })
   if (body.vatPct       !== undefined) rows.push({ key: 'pricing_vat_pct',        value: String(Math.max(0, parseFloat(body.vatPct) || 0)) })
   if (body.vatEnabled   !== undefined) rows.push({ key: 'pricing_vat_enabled',    value: body.vatEnabled ? 'true' : 'false' })
+  // Tax rules
+  if (body.euReverseCharge !== undefined) rows.push({ key: 'tax_eu_reverse_charge', value: body.euReverseCharge ? 'true' : 'false' })
+  if (body.reverseChargeCategories !== undefined) rows.push({ key: 'tax_reverse_charge_categories', value: String(body.reverseChargeCategories ?? '') })
 
   if (rows.length) {
     const { error } = await (admin.from('app_settings') as any)

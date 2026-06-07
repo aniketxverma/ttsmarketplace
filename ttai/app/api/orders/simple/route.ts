@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { unitPrice, minUnitsFor, type PurchaseUnit } from '@/lib/packaging'
+import { determineTax, invoiceTreatment } from '@/lib/tax'
+import { getTaxConfig } from '@/lib/pricing-config'
 import { z } from 'zod'
 
 const schema = z.object({
@@ -19,6 +21,7 @@ const schema = z.object({
     country: z.string().min(2),
     phone: z.string().optional(),
   }),
+  vatNumber: z.string().optional(),
 })
 
 export async function POST(req: NextRequest) {
@@ -32,8 +35,15 @@ export async function POST(req: NextRequest) {
   const parsed = schema.safeParse(body)
   if (!parsed.success) return NextResponse.json({ error: parsed.error.errors[0].message }, { status: 400 })
 
-  const { items, shippingAddress } = parsed.data
+  const { items, shippingAddress, vatNumber } = parsed.data
   const admin = createAdminClient()
+
+  // Buyer profile (read defensively — vat_number column may not be migrated yet).
+  const { data: buyer } = await (admin.from('profiles') as any).select('*').eq('id', user.id).single()
+  const isBusiness = !!(buyer?.business_type) || ['supplier', 'broker', 'business_client'].includes(buyer?.role)
+  const buyerVat = (vatNumber || buyer?.vat_number || '').trim() || null
+  const buyerCountry = (shippingAddress.country || buyer?.tax_country || '').toUpperCase()
+  const taxConfig = await getTaxConfig()
 
   // Fetch all products in one query
   const productIds = items.map(i => i.productId)
@@ -43,7 +53,8 @@ export async function POST(req: NextRequest) {
       min_order_qty, min_box_qty, min_pallet_qty, min_truck_qty,
       units_per_carton, cartons_per_pallet, pallets_per_truck,
       price_per_box_cents, price_per_pallet_cents, price_per_truck_cents,
-      sell_piece, sell_box, sell_pallet, sell_truck`)
+      sell_piece, sell_box, sell_pallet, sell_truck,
+      categories(slug)`)
     .in('id', productIds)
     .eq('is_published', true) as { data: any[] | null }
 
@@ -77,17 +88,18 @@ export async function POST(req: NextRequest) {
     supplierGroups.get(sid)!.push(item)
   }
 
-  // Validate all suppliers are active
+  // Validate all suppliers are active (and grab their country for tax determination)
   const supplierIds = Array.from(supplierGroups.keys())
-  const { data: suppliers } = await admin
-    .from('suppliers')
-    .select('id, legal_name')
+  const { data: suppliers } = await (admin
+    .from('suppliers') as any)
+    .select('id, legal_name, trade_name, countries(iso_code)')
     .in('id', supplierIds)
     .eq('status', 'ACTIVE')
 
   if (!suppliers || suppliers.length !== supplierIds.length) {
     return NextResponse.json({ error: 'One or more suppliers are not available' }, { status: 404 })
   }
+  const supplierById = new Map<string, any>((suppliers as any[]).map((s) => [s.id, s]))
 
   const orderIds: string[] = []
 
@@ -97,7 +109,19 @@ export async function POST(req: NextRequest) {
       return sum + linePrice(product, item) * item.quantity
     }, 0)
 
-    const vatCents = Math.round(subtotalCents * 0.1) // flat 10% demo VAT
+    // ── Tax determination (B2C / B2B · country · VAT number · EU reverse charge) ──
+    const supplier = supplierById.get(supplierId)
+    const sellerCountry = supplier?.countries?.iso_code ?? 'ES'
+    const reverseChargeCategory = supplierItems.some((it: any) => {
+      const slug = products.find(p => p.id === it.productId)?.categories?.slug?.toLowerCase()
+      return slug && taxConfig.reverseChargeCategories.includes(slug)
+    })
+    const tax = determineTax({
+      sellerCountry, buyerCountry, buyerVatNumber: buyerVat, isBusiness,
+      reverseChargeCategory,
+      config: { vatEnabled: taxConfig.vatEnabled, defaultRatePct: taxConfig.defaultRatePct, euReverseCharge: taxConfig.euReverseCharge },
+    })
+    const vatCents = tax.treatment === 'standard' ? Math.round(subtotalCents * tax.ratePct / 100) : 0
     const totalCents = subtotalCents + vatCents
 
     const currency = products.find(p => p.supplier_id === supplierId)?.currency_code ?? 'EUR'
@@ -133,13 +157,34 @@ export async function POST(req: NextRequest) {
         product_id: item.productId,
         quantity: item.quantity,
         unit_price_cents: unitCents,
-        vat_rate: product.vat_rate ?? 10,
+        vat_rate: tax.ratePct,
         line_total_cents: unitCents * item.quantity,
         purchase_unit: item.unit ?? 'piece',
       }
     })
 
     await (admin.from('order_items') as any).insert(orderItems)
+
+    // ── Automatic invoice ───────────────────────────────────────────────────
+    const invoiceNumber = `INV-${new Date().getFullYear()}-${Date.now().toString(36)}-${String(supplierId).slice(0, 4)}`.toUpperCase()
+    await (admin.from('invoices') as any).insert({
+      order_id: order.id,
+      supplier_id: supplierId,
+      invoice_number: invoiceNumber,
+      amount_cents: totalCents,
+      currency_code: currency,
+      buyer_country: buyerCountry.slice(0, 2),
+      buyer_vat_number: buyerVat,
+      vat_treatment: invoiceTreatment(tax.treatment),
+      conditions_payload: {
+        subtotal_cents: subtotalCents, vat_cents: vatCents, vat_rate: tax.ratePct,
+        treatment: tax.treatment, reason: tax.reason,
+        buyer_name: shippingAddress.fullName, buyer_company: buyer?.company_name ?? null,
+        seller: supplier?.trade_name ?? supplier?.legal_name ?? null, seller_country: sellerCountry,
+      },
+      issued_at: new Date().toISOString(),
+    }).then((r: any) => { if (r?.error) console.error('Invoice insert error:', r.error.message) })
+
     orderIds.push(order.id)
   }
 

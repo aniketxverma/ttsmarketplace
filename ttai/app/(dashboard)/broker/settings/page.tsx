@@ -7,7 +7,7 @@ export default async function BrokerSettingsPage() {
   const supabase = createClient()
 
   const { data: profile } = await supabase.from('profiles')
-    .select('id,full_name,username,phone,bio,company_name,business_type,category,country_name,city,continent,website_url,products_offered,avatar_url,role')
+    .select('*')
     .eq('id', user.id)
     .single()
 
