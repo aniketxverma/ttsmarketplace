@@ -527,9 +527,16 @@ export function ProductForm({
       {/* Packaging & wholesale units */}
       <div>
         <h3 className="font-bold text-[#0B1F4D] text-sm mb-1 pb-2 border-b">Packaging &amp; wholesale units</h3>
-        <p className="text-xs text-gray-400 mt-2 mb-4">
-          One product, sold by piece / box / pallet / truck. Pallet &amp; truck totals are calculated automatically from these numbers — never put specs inside images.
+        <p className="text-xs text-gray-400 mt-2 mb-3">
+          One product, sold by piece / box / pallet / truck. Never put specs inside images.
         </p>
+        <div className="rounded-xl border border-blue-100 bg-blue-50/60 px-4 py-3 mb-4 text-xs text-blue-800 space-y-1">
+          <p className="font-bold">Two ways to price the wholesale tiers — choose per tier:</p>
+          <p>① <strong>Fixed base price</strong> — set the base wholesale price/piece above and leave the tier prices blank. Box/Pallet/Truck are <strong>calculated automatically</strong> (base × pieces).</p>
+          <p>② <strong>Discount %</strong> — leave the price blank and set a % off the base (e.g. Box 10%, Pallet 20%, Truck 30%).</p>
+          <p>③ <strong>Exact price</strong> — type a specific price for that tier to override the calculation.</p>
+          <p className="text-blue-600">A single piece always uses the retail (end-user) price.</p>
+        </div>
 
         {/* Sell-in toggles — locked units stay visible with an upgrade CTA */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-2">
