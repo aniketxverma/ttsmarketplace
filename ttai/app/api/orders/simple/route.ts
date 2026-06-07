@@ -53,6 +53,7 @@ export async function POST(req: NextRequest) {
       min_order_qty, min_box_qty, min_pallet_qty, min_truck_qty,
       units_per_carton, cartons_per_pallet, pallets_per_truck,
       price_per_box_cents, price_per_pallet_cents, price_per_truck_cents,
+      box_discount_pct, pallet_discount_pct, truck_discount_pct,
       sell_piece, sell_box, sell_pallet, sell_truck,
       categories(slug)`)
     .in('id', productIds)

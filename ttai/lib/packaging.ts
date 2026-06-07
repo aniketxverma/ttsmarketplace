@@ -25,6 +25,11 @@ export interface PackagingProduct {
   min_box_qty?: number | null
   min_pallet_qty?: number | null
   min_truck_qty?: number | null
+  // Optional per-tier volume discount (% off the wholesale base, used when no
+  // explicit tier price is set).
+  box_discount_pct?: number | null
+  pallet_discount_pct?: number | null
+  truck_discount_pct?: number | null
 }
 
 export const unitsPerPallet  = (p: PackagingProduct) => (p.units_per_carton ?? 0) * (p.cartons_per_pallet ?? 0)
@@ -51,15 +56,21 @@ export function cartonsIn(p: PackagingProduct, u: PurchaseUnit): number {
   }
 }
 
-/** Price (cents) for ONE of the given unit. Explicit per-unit price wins; else
- *  it's the piece price × pieces in that unit. Retail uses the online price. */
-export function unitPrice(p: PackagingProduct, u: PurchaseUnit, retail = false): number {
-  const piece = retail ? (p.retail_price_cents ?? p.price_cents) : p.price_cents
+/**
+ * Price (cents) for ONE of the given unit.
+ *   piece  → the end-user / RETAIL price (highest). A single unit is always retail.
+ *   box/pallet/truck → wholesale: an explicit tier price if set, otherwise the
+ *     wholesale base (price_cents) × pieces in that unit, minus any tier discount %.
+ * (The `retail` arg is kept for call-site compatibility and no longer needed.)
+ */
+export function unitPrice(p: PackagingProduct, u: PurchaseUnit, _retail = false): number {
+  const base = p.price_cents // wholesale base per piece — the volume reference
+  const afterDisc = (cents: number, pct?: number | null) => Math.round(cents * (pct && pct > 0 ? 1 - pct / 100 : 1))
   switch (u) {
-    case 'piece':  return piece
-    case 'box':    return p.price_per_box_cents    ?? piece * piecesIn(p, 'box')
-    case 'pallet': return p.price_per_pallet_cents ?? piece * piecesIn(p, 'pallet')
-    case 'truck':  return p.price_per_truck_cents  ?? piece * piecesIn(p, 'truck')
+    case 'piece':  return p.retail_price_cents ?? base
+    case 'box':    return p.price_per_box_cents    ?? afterDisc(base * piecesIn(p, 'box'),    p.box_discount_pct)
+    case 'pallet': return p.price_per_pallet_cents ?? afterDisc(base * piecesIn(p, 'pallet'), p.pallet_discount_pct)
+    case 'truck':  return p.price_per_truck_cents  ?? afterDisc(base * piecesIn(p, 'truck'),  p.truck_discount_pct)
   }
 }
 

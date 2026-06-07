@@ -37,6 +37,7 @@ interface FormState {
   cartonsPerPallet: string; palletWeightKg: string; palletDimensions: string; palletHeightCm: string
   palletsPerTruck: string; truckCapacity: string
   exwPrice: string; pricePerBox: string; pricePerPallet: string; pricePerTruck: string
+  boxDiscountPct: string; palletDiscountPct: string; truckDiscountPct: string
   hsCode: string; catalogueUrl: string; videoUrl: string
   sellPiece: boolean; sellBox: boolean; sellPallet: boolean; sellTruck: boolean
   priceNegotiable: boolean
@@ -56,6 +57,7 @@ const INITIAL: FormState = {
   cartonsPerPallet: '', palletWeightKg: '', palletDimensions: '', palletHeightCm: '',
   palletsPerTruck: '', truckCapacity: '',
   exwPrice: '', pricePerBox: '', pricePerPallet: '', pricePerTruck: '',
+  boxDiscountPct: '', palletDiscountPct: '', truckDiscountPct: '',
   hsCode: '', catalogueUrl: '', videoUrl: '',
   sellPiece: true, sellBox: false, sellPallet: false, sellTruck: false,
   priceNegotiable: false,
@@ -169,6 +171,10 @@ export function ProductForm({
       min_box_qty:            Math.max(1, parseInt(form.minBoxQty)    || 1),
       min_pallet_qty:         Math.max(1, parseInt(form.minPalletQty) || 1),
       min_truck_qty:          Math.max(1, parseInt(form.minTruckQty)  || 1),
+      // Per-tier volume discounts (% off base — used when no explicit price set).
+      box_discount_pct:       form.boxDiscountPct    ? Math.min(100, Math.max(0, parseFloat(form.boxDiscountPct)    || 0)) : 0,
+      pallet_discount_pct:    form.palletDiscountPct ? Math.min(100, Math.max(0, parseFloat(form.palletDiscountPct) || 0)) : 0,
+      truck_discount_pct:     form.truckDiscountPct  ? Math.min(100, Math.max(0, parseFloat(form.truckDiscountPct)  || 0)) : 0,
       price_negotiable:    form.priceNegotiable,
       // Cap sell-by units to the seller's plan (locked units can't be enabled).
       sell_piece:          form.sellPiece  && canSellUnit(sellerTier, 'piece'),
@@ -343,7 +349,7 @@ export function ProductForm({
         <h3 className="font-bold text-[#0B1F4D] text-sm mb-4 pb-2 border-b">Pricing & Inventory</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <label className={labelCls}>Wholesale price (B2B) *</label>
+            <label className={labelCls}>Base wholesale price / piece (B2B) *</label>
             <div className="flex gap-2">
               <select
                 className="rounded-xl border border-gray-200 px-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B1F4D] bg-white"
@@ -363,7 +369,7 @@ export function ProductForm({
                 placeholder="0.00"
               />
             </div>
-            <p className="text-xs text-gray-400">Per-unit wholesale price shown in the B2B marketplace</p>
+            <p className="text-xs text-gray-400">The base used to <strong>auto-calculate</strong> box/pallet/truck (× pieces, minus any discount). You can still type an exact price per tier below to override it.</p>
           </div>
           {(() => {
             const wholesaleCents = Math.round((parseFloat(form.priceDisplay) || 0) * 100)
@@ -614,6 +620,7 @@ export function ProductForm({
             : <a href="/pricing" className="flex items-center gap-1.5 rounded-xl border border-dashed border-amber-300 bg-amber-50/60 px-3 py-2.5 text-xs font-bold text-amber-700 hover:bg-amber-50">🔒 Upgrade to {requiredPlanLabel('box')} →</a>}
           </div>
           <div className="space-y-1.5"><label className={labelCls}>Min boxes / order</label><input className={inputCls} type="number" min="1" value={form.minBoxQty} onChange={(e) => update('minBoxQty', e.target.value)} placeholder="1" /></div>
+          <div className="space-y-1.5"><label className={labelCls}>…or discount %</label><input className={inputCls} type="number" min="0" max="100" step="0.5" value={form.boxDiscountPct} onChange={(e) => update('boxDiscountPct', e.target.value)} placeholder="e.g. 10" disabled={!!form.pricePerBox} /></div>
         </div>
 
         {/* Pallet */}
@@ -628,6 +635,7 @@ export function ProductForm({
             : <a href="/pricing" className="flex items-center gap-1.5 rounded-xl border border-dashed border-amber-300 bg-amber-50/60 px-3 py-2.5 text-xs font-bold text-amber-700 hover:bg-amber-50">🔒 Upgrade to {requiredPlanLabel('pallet')} →</a>}
           </div>
           <div className="space-y-1.5"><label className={labelCls}>Min pallets / order</label><input className={inputCls} type="number" min="1" value={form.minPalletQty} onChange={(e) => update('minPalletQty', e.target.value)} placeholder="1" /></div>
+          <div className="space-y-1.5"><label className={labelCls}>…or discount %</label><input className={inputCls} type="number" min="0" max="100" step="0.5" value={form.palletDiscountPct} onChange={(e) => update('palletDiscountPct', e.target.value)} placeholder="e.g. 20" disabled={!!form.pricePerPallet} /></div>
         </div>
 
         {/* Truck */}
@@ -640,7 +648,9 @@ export function ProductForm({
             : <a href="/pricing" className="flex items-center gap-1.5 rounded-xl border border-dashed border-amber-300 bg-amber-50/60 px-3 py-2.5 text-xs font-bold text-amber-700 hover:bg-amber-50">🔒 Upgrade to {requiredPlanLabel('truck')} →</a>}
           </div>
           <div className="space-y-1.5"><label className={labelCls}>Min trucks / order</label><input className={inputCls} type="number" min="1" value={form.minTruckQty} onChange={(e) => update('minTruckQty', e.target.value)} placeholder="1" /></div>
+          <div className="space-y-1.5"><label className={labelCls}>…or discount %</label><input className={inputCls} type="number" min="0" max="100" step="0.5" value={form.truckDiscountPct} onChange={(e) => update('truckDiscountPct', e.target.value)} placeholder="e.g. 30" disabled={!!form.pricePerTruck} /></div>
         </div>
+        <p className="text-xs text-gray-400 mt-3">For each volume tier: type an exact price, <strong>or</strong> leave it blank and set a discount % off the base wholesale price. Single pieces always use the retail price.</p>
       </div>
 
       {/* Publish toggle */}
