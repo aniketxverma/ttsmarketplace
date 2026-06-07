@@ -35,15 +35,26 @@ export default async function SupplierProductsPage() {
           <p className="text-gray-500 text-sm mt-0.5">{products?.length ?? 0} product{products?.length !== 1 ? 's' : ''} total</p>
         </div>
         {supplier.status === 'ACTIVE' ? (
-          <Link
-            href="/supplier/products/new"
-            className="flex items-center gap-2 rounded-xl bg-[#F5A623] text-[#0B1F4D] px-5 py-2.5 text-sm font-bold hover:bg-[#fbb93a] transition-colors"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
-            </svg>
-            Add Product
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/supplier/products/import"
+              className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white text-[#0B1F4D] px-4 py-2.5 text-sm font-bold hover:border-[#0B1F4D] transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              Import Excel
+            </Link>
+            <Link
+              href="/supplier/products/new"
+              className="flex items-center gap-2 rounded-xl bg-[#F5A623] text-[#0B1F4D] px-5 py-2.5 text-sm font-bold hover:bg-[#fbb93a] transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+              </svg>
+              Add Product
+            </Link>
+          </div>
         ) : (
           <div className="rounded-xl bg-yellow-50 border border-yellow-200 px-4 py-2 text-xs text-yellow-800 font-medium">
             Account verification required to add products
