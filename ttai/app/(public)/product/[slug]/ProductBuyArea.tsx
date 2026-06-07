@@ -9,7 +9,7 @@ import {
   Package, Box, Layers, Truck, ShoppingCart, FileText, Check, Image as ImageIcon,
 } from 'lucide-react'
 import {
-  availableUnits, piecesIn, cartonsIn, unitPrice, pricePerPiece, minUnitsFor, isRetailUnit,
+  availableUnits, piecesIn, cartonsIn, unitPrice, minUnitsFor,
   UNIT_LABEL, type PurchaseUnit, type PackagingProduct,
 } from '@/lib/packaging'
 
@@ -46,9 +46,6 @@ export function ProductBuyArea({
 
   // Each tier carries its own minimum order quantity (number of that unit).
   const minFor = (u: PurchaseUnit) => minUnitsFor(product, u)
-  // Split the offered units into the B2C (retail / piece) tier and B2B volume tiers.
-  const retailUnits = units.filter(isRetailUnit)
-  const tradeUnits  = units.filter(u => !isRetailUnit(u))
 
   const { addItem } = useCart()
   const router = useRouter()
@@ -57,7 +54,6 @@ export function ProductBuyArea({
   const [active, setActive] = useState(0)
   const [added, setAdded] = useState(false)
   const minQ = minFor(unit)
-  const selRetail = isRetailUnit(unit)
 
   const fmt = (cents: number) =>
     new Intl.NumberFormat('es-ES', { style: 'currency', currency: product.currency_code }).format(cents / 100)
@@ -137,24 +133,16 @@ export function ProductBuyArea({
 
         {topSlot}
 
-        {/* Selected-tier price — retail shows per piece; volume tiers show the
-            tier total plus the effective per-piece price (the volume saving). */}
+        {/* Selected-unit price */}
         <div className="flex items-baseline gap-2 flex-wrap">
           <span className="text-4xl font-black text-[#0B1F4D]">{fmt(unitPrice(product, unit, retail))}</span>
           <span className="text-sm text-gray-400 font-medium">/ {UNIT_LABEL[unit].toLowerCase()}</span>
-          {!selRetail && piecesIn(product, unit) > 0 && (
-            <span className="text-sm font-bold text-green-600">
-              = {fmt(pricePerPiece(product, unit, retail))} / piece
-            </span>
-          )}
         </div>
 
-        {/* Tier cards, grouped: End-User (B2C) vs B2B Volume Pricing */}
-        {(() => {
-          const TierCard = ({ u }: { u: PurchaseUnit }) => {
+        {/* Unit option cards */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+          {units.map((u) => {
             const Icon = UNIT_ICON[u]; const on = u === unit
-            const perPiece = pricePerPiece(product, u, retail)
-            const showPer = !isRetailUnit(u) && piecesIn(product, u) > 0
             return (
               <button key={u} type="button" onClick={() => pickUnit(u)}
                 className={`relative rounded-2xl border p-3 text-left transition-all ${on ? 'border-transparent shadow-md' : 'border-gray-200 hover:border-gray-300 bg-white'}`}
@@ -165,45 +153,11 @@ export function ProductBuyArea({
                 </div>
                 <p className="text-sm font-extrabold text-[#0B1F4D]">{UNIT_LABEL[u]}</p>
                 <p className="text-[11px] text-gray-400 leading-tight mb-1">{UNIT_SUB[u]}</p>
-                {showPer ? (
-                  <>
-                    <p className="text-sm font-extrabold" style={{ color: UNIT_ACCENT[u] }}>{fmt(perPiece)}<span className="text-[10px] font-semibold text-gray-400"> /pc</span></p>
-                    <p className="text-[10px] text-gray-400">{fmt(unitPrice(product, u, retail))} / {UNIT_LABEL[u].toLowerCase()}</p>
-                  </>
-                ) : (
-                  <p className="text-xs font-bold" style={{ color: UNIT_ACCENT[u] }}>{fmt(unitPrice(product, u, retail))}</p>
-                )}
-                {minUnitsFor(product, u) > 1 && (
-                  <p className="text-[10px] font-bold text-[#F5A623] mt-0.5">min {num(minUnitsFor(product, u))}</p>
-                )}
+                <p className="text-xs font-bold" style={{ color: UNIT_ACCENT[u] }}>{fmt(unitPrice(product, u, retail))}</p>
               </button>
             )
-          }
-          return (
-            <div className="space-y-4">
-              {retailUnits.length > 0 && (
-                <div>
-                  <p className="text-[11px] font-extrabold text-green-700 uppercase tracking-widest mb-2 flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-green-500" /> End-User price · retail
-                  </p>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                    {retailUnits.map((u) => <TierCard key={u} u={u} />)}
-                  </div>
-                </div>
-              )}
-              {tradeUnits.length > 0 && (
-                <div>
-                  <p className="text-[11px] font-extrabold text-[#7c3aed] uppercase tracking-widest mb-2 flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#7c3aed]" /> B2B volume pricing
-                  </p>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                    {tradeUnits.map((u) => <TierCard key={u} u={u} />)}
-                  </div>
-                </div>
-              )}
-            </div>
-          )
-        })()}
+          })}
+        </div>
 
         {/* Quantity */}
         <div className="flex items-center gap-3 flex-wrap">
