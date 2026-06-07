@@ -20,10 +20,9 @@ export default async function AdminSuppliersPage({
     .select('id, legal_name, trade_name, status, created_at, country_id, countries(iso_code), owner_id')
     .order('created_at', { ascending: true })
 
+  // A specific tab filters to that status; the ALL tab shows every supplier.
   if (status && status !== 'ALL') {
     query = query.eq('status', status)
-  } else {
-    query = query.in('status', ['PENDING', 'UNDER_REVIEW'])
   }
 
   const { data: suppliers } = await query

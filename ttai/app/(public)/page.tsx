@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
+import { Fragment } from 'react'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { useServerTranslations } from '@/lib/i18n/server'
@@ -7,6 +8,61 @@ import { HomeFeatures } from './HomeFeatures'
 import { IndustryExplorer } from './IndustryExplorer'
 import { Reveal } from '@/components/Reveal'
 import { PLANS } from '@/lib/pricing'
+import {
+  ShoppingBag, Box as BoxIcon, Layers, Truck, Ship, ArrowRight, Check,
+  ShoppingCart, Store, Boxes,
+} from 'lucide-react'
+
+/* ─── "Every way to buy" section data ───────────────────────────────────── */
+const BUY_LADDER = [
+  { Icon: ShoppingBag, label: 'Unit',  sub: 'By the piece' },
+  { Icon: BoxIcon,     label: 'Box',   sub: 'By the carton' },
+  { Icon: Layers,      label: 'Pallet',sub: 'Bulk volume' },
+  { Icon: Truck,       label: 'Truck', sub: 'Full load' },
+  { Icon: Ship,        label: 'Global',sub: 'Container & export' },
+] as const
+
+const BUY_CHANNELS = [
+  {
+    key: 'online',
+    href: '/store',
+    eyebrow: 'Retail',
+    title: 'Online Shop',
+    units: 'By unit or box',
+    blurb: 'Thousands of products from registered brands — ready to ship to your door.',
+    cta: 'Shop now',
+    Icon: ShoppingCart,
+    accent: '#7c3aed',
+    grad: 'from-purple-600 to-violet-700',
+    bullets: ['Verified products', 'Secure payment', 'Fast nationwide shipping'],
+  },
+  {
+    key: 'market',
+    href: '/marketplace',
+    eyebrow: 'Business',
+    title: 'Business Shop',
+    units: 'By box or pallet',
+    blurb: 'Special prices for shops, retailers and distributors buying in volume.',
+    cta: 'Explore wholesale',
+    Icon: Store,
+    accent: '#2563eb',
+    grad: 'from-blue-600 to-[#0B1F4D]',
+    bullets: ['Wholesale prices', 'Stock available', 'Scheduled deliveries'],
+  },
+  {
+    key: 'b2b',
+    href: '/b2b',
+    eyebrow: 'Wholesale',
+    title: 'B2B Hub',
+    units: 'Pallet or full truck',
+    blurb: 'From a pallet to a full container — efficient sourcing to grow without limits.',
+    cta: 'Trade in bulk',
+    Icon: Boxes,
+    accent: '#F5A623',
+    grad: 'from-amber-500 to-orange-600',
+    bullets: ['Best bulk pricing', 'Container loads', 'Global trade'],
+  },
+] as const
 
 /* ─── SVG icon components ───────────────────────────────────────────────── */
 function IconGlobe({ className = 'w-6 h-6' }: { className?: string }) {
@@ -204,7 +260,7 @@ const PRODUCT_FAMILIES = [
   { name: 'Recycling & Sustainability',       desc: 'Plastic, metal, glass & paper recycling, renewable energy & circular economy.',img: 'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?w=600&q=80', Icon: RecycleIcon,     color: 'bg-emerald-600', slug: 'recycling-sustainability' },
   { name: 'Healthcare & Medical',             desc: 'Clinics, hospitals, laboratories, medical devices & telemedicine.',            img: 'https://images.unsplash.com/photo-1538108149393-fbbd81895907?w=600&q=80', Icon: CareIcon,        color: 'bg-rose-500',    slug: 'healthcare-medical' },
   { name: 'Construction & Building',          desc: 'Building materials, structures & construction supply chain.',                  img: 'https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=600&q=80', Icon: IndustrialIcon,  color: 'bg-amber-600',   slug: 'construction-building' },
-  { name: 'Automotive',                       desc: 'Vehicles, parts, accessories and the automotive supply chain.',                img: 'https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=600&q=80', Icon: IndustrialIcon,  color: 'bg-zinc-600',    slug: 'automotive' },
+  { name: 'Automotive & Transport',          desc: 'Vehicles, parts, accessories and the automotive supply chain.',                img: 'https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=600&q=80', Icon: IndustrialIcon,  color: 'bg-zinc-600',    slug: 'automotive-transport' },
   { name: 'Textile & Fashion',                desc: 'Fabrics, apparel, fashion manufacturing and distribution.',                    img: 'https://images.unsplash.com/photo-1445205170230-053b83016050?w=600&q=80', Icon: CareIcon,        color: 'bg-pink-500',    slug: 'textile-fashion' },
   { name: 'Logistics & Supply Chain',         desc: 'Freight, warehousing, distribution and end-to-end logistics.',                 img: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=600&q=80', Icon: IndustrialIcon,  color: 'bg-cyan-600',    slug: 'logistics-supply-chain' },
   { name: 'Industrial & Manufacturing',       desc: 'Machinery, equipment, raw materials and industrial production.',                img: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=600&q=80', Icon: IndustrialIcon,  color: 'bg-indigo-600',  slug: 'industrial-manufacturing' },
@@ -468,147 +524,6 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
       <IndustryExplorer mode="shops" />
 
       {/* ══════════════════════════════════════════════════════════════════
-          SHOP BY REGION
-      ══════════════════════════════════════════════════════════════════ */}
-      <section id="shop-by-region" className="py-24 px-4 bg-[#0B1F4D] overflow-hidden relative">
-        {/* Subtle dot grid */}
-        <div className="absolute inset-0 opacity-[0.06] pointer-events-none"
-          style={{ backgroundImage: 'radial-gradient(circle, #ffffff 1px, transparent 1px)', backgroundSize: '32px 32px' }} />
-        {/* Glow orbs */}
-        <div className="absolute -top-32 -right-32 w-[500px] h-[500px] rounded-full bg-[#F5A623]/10 blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-32 -left-32 w-[400px] h-[400px] rounded-full bg-blue-500/10 blur-3xl pointer-events-none" />
-
-        <div className="container mx-auto relative">
-          {/* Header */}
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-12">
-            <div>
-              <p className="text-[#F5A623] font-semibold text-sm uppercase tracking-widest mb-2">{t('home.region_title')}</p>
-              <h2 className="text-3xl sm:text-4xl font-extrabold text-white">{t('home.region_heading')}</h2>
-              <p className="text-blue-300 mt-2 text-sm max-w-md">{t('home.region_subtitle')}</p>
-            </div>
-            <Link
-              href="/marketplace"
-              className="inline-flex items-center gap-2 text-sm font-bold text-[#F5A623] hover:text-[#fbb93a] transition-colors flex-shrink-0"
-            >
-              {t('home.region_view_all')}
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-              </svg>
-            </Link>
-          </div>
-
-          {/* Guide callout */}
-          <div className="flex items-center gap-3 mb-6 bg-[#F5A623]/10 border border-[#F5A623]/30 rounded-2xl px-5 py-3">
-            <span className="flex h-3 w-3 flex-shrink-0">
-              <span className="animate-ping absolute h-3 w-3 rounded-full bg-[#F5A623] opacity-75" />
-              <span className="relative h-3 w-3 rounded-full bg-[#F5A623]" />
-            </span>
-            <p className="text-sm font-bold text-[#F5A623]">
-              🇪🇸 Spain · Europe is now live — <span className="font-extrabold underline">Start exploring →</span>
-            </p>
-            <span className="ml-auto text-xs text-[#F5A623]/60 font-semibold whitespace-nowrap">More regions coming soon</span>
-          </div>
-
-          {/* Region cards grid — 2 large + 3 small */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {/* Large cards: Middle East (locked) + Europe (active) */}
-            {[
-              { id: 'middle-east', name: 'Middle East', tagline: 'From historic souks to gleaming skylines', img: 'https://images.unsplash.com/photo-1518684079-3c830dcef090?w=900&q=80', countries: 6, active: false },
-              { id: 'europe',      name: 'Europe',      tagline: '🇪🇸 Spain · Málaga · Mediterranean trade hub', img: 'https://images.unsplash.com/photo-1467269204594-9661b134dd2b?w=900&q=80', countries: 5, active: true  },
-            ].map((r) => {
-              if (!r.active) {
-                return (
-                  <div key={r.id}
-                    className="group relative rounded-2xl overflow-hidden shadow-xl bg-gray-800 cursor-not-allowed sm:col-span-1">
-                    <div className="relative h-56 sm:h-64 lg:h-72">
-                      <Image src={r.img} alt={r.name} fill
-                        className="object-cover grayscale saturate-0 opacity-60"
-                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" />
-                      <div className="absolute inset-0 bg-black/60" />
-                    </div>
-                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-                      <div className="w-14 h-14 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center">
-                        <IconLock className="w-7 h-7 text-white/80" />
-                      </div>
-                      <div className="text-center">
-                        <p className="text-white font-extrabold text-lg">{r.name}</p>
-                        <span className="inline-block mt-1 text-[11px] font-bold text-white/60 bg-white/10 px-3 py-1 rounded-full border border-white/20">
-                          Coming Soon
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                )
-              }
-
-              /* ── Active: Europe ── */
-              return (
-                <Link key={r.id} href={`/regions/${r.id}`}
-                  className="group relative rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 bg-gray-800 sm:col-span-1 ring-2 ring-[#F5A623] ring-offset-2 ring-offset-[#0B1F4D]">
-                  <div className="relative h-56 sm:h-64 lg:h-72">
-                    <Image src={r.img} alt={r.name} fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-500"
-                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                  </div>
-                  {/* Pulsing "Start Here" badge */}
-                  <div className="absolute top-3 left-3 flex items-center gap-1.5 bg-[#F5A623] text-[#0B1F4D] text-[11px] font-extrabold px-3 py-1.5 rounded-full shadow-lg">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#0B1F4D] animate-ping" />
-                    START HERE · SPAIN
-                  </div>
-                  <div className="absolute bottom-0 left-0 right-0 p-5">
-                    <div className="flex items-end justify-between">
-                      <div>
-                        <h3 className="text-white font-extrabold text-xl">{r.name}</h3>
-                        <p className="text-white/70 text-xs mt-1 leading-snug max-w-[220px]">{r.tagline}</p>
-                        <p className="text-[#F5A623] text-xs font-bold mt-2">{r.countries} countries · Open now</p>
-                      </div>
-                      <div className="w-10 h-10 rounded-full bg-[#F5A623] flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform flex-shrink-0">
-                        <svg className="w-4 h-4 text-[#0B1F4D]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
-                        </svg>
-                      </div>
-                    </div>
-                  </div>
-                </Link>
-              )
-            })}
-
-            {/* Small cards: Asia, Africa, Americas — all locked */}
-            <div className="flex flex-col gap-4">
-              {[
-                { id: 'asia',     name: 'Asia',     tagline: 'The engine of global manufacturing', img: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=700&q=80' },
-                { id: 'africa',   name: 'Africa',   tagline: 'A continent of rising markets',       img: 'https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?w=700&q=80' },
-                { id: 'americas', name: 'Americas', tagline: 'Vast markets coast to coast',         img: 'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=700&q=80' },
-              ].map((r) => (
-                <div key={r.id}
-                  className="relative rounded-2xl overflow-hidden shadow-lg flex-1 cursor-not-allowed bg-gray-800">
-                  <div className="relative h-32 sm:h-36">
-                    <Image src={r.img} alt={r.name} fill
-                      className="object-cover grayscale saturate-0 opacity-50"
-                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" />
-                    <div className="absolute inset-0 bg-black/55" />
-                  </div>
-                  <div className="absolute inset-0 flex items-center px-5">
-                    <div className="flex-1">
-                      <h3 className="text-white/70 font-extrabold text-base">{r.name}</h3>
-                      <p className="text-white/40 text-[11px] mt-0.5">{r.tagline}</p>
-                    </div>
-                    <div className="w-8 h-8 rounded-full bg-white/10 border border-white/20 flex items-center justify-center flex-shrink-0">
-                      <IconLock className="w-3.5 h-3.5 text-white/60" />
-                    </div>
-                  </div>
-                  <div className="absolute top-2 right-2 text-[10px] font-bold text-white/50 bg-white/10 px-2 py-0.5 rounded-full border border-white/10">
-                    Soon
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ══════════════════════════════════════════════════════════════════
           HOW IT WORKS — modern animated feature showcase
       ══════════════════════════════════════════════════════════════════ */}
       <HomeFeatures />
@@ -866,6 +781,113 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
                   <p className="text-xs text-gray-500 leading-relaxed">{TRUST_CARDS[i]?.desc}</p>
                 </div>
               </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════════════════════════
+          EVERY WAY TO BUY — channels showcase (sits directly above the footer)
+      ══════════════════════════════════════════════════════════════════ */}
+      <section className="relative overflow-hidden bg-[#0B1F4D] py-24 px-4">
+        {/* Texture + glow */}
+        <div className="absolute inset-0 opacity-[0.05] pointer-events-none"
+          style={{ backgroundImage: 'radial-gradient(circle, #ffffff 1px, transparent 1px)', backgroundSize: '30px 30px' }} />
+        <div className="absolute -top-40 -right-20 w-[600px] h-[600px] rounded-full bg-[#F5A623]/10 blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-40 -left-20 w-[500px] h-[500px] rounded-full bg-purple-500/10 blur-3xl pointer-events-none" />
+
+        <div className="container mx-auto max-w-6xl relative">
+          {/* Header */}
+          <Reveal from="up">
+            <div className="text-center max-w-2xl mx-auto mb-14">
+              <p className="text-[#F5A623] text-xs font-black uppercase tracking-[0.22em] mb-3">One platform · every channel</p>
+              <h2 className="text-3xl sm:text-5xl font-black text-white leading-[1.1] mb-4">
+                From a single unit<br className="hidden sm:block" /> to a full container
+              </h2>
+              <p className="text-blue-200/80 text-base sm:text-lg">
+                Buy by piece, box, pallet or truck — retail or wholesale, all in one place.
+                <span className="text-white font-bold"> TTAIEMA</span> scales with your business.
+              </p>
+            </div>
+          </Reveal>
+
+          {/* Scale ladder: Unit → Box → Pallet → Truck → Global */}
+          <Reveal from="up" delay={80}>
+            <div className="relative mb-16 rounded-3xl border border-white/10 bg-white/[0.03] backdrop-blur-sm px-4 sm:px-10 py-8">
+              <div className="flex items-start justify-between gap-1 sm:gap-3">
+                {BUY_LADDER.map((step, i) => (
+                  <Fragment key={step.label}>
+                    <div className="flex flex-col items-center text-center flex-1 min-w-0 group">
+                      <div className="relative w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-white/15 to-white/5 border border-white/15 flex items-center justify-center mb-2.5 shadow-lg group-hover:-translate-y-1 group-hover:border-[#F5A623]/50 transition-all duration-300">
+                        <step.Icon className="w-5 h-5 sm:w-7 sm:h-7 text-[#F5A623]" strokeWidth={1.75} />
+                        <span className="absolute -top-1.5 -left-1.5 w-5 h-5 rounded-full bg-[#F5A623] text-[#0B1F4D] text-[10px] font-black flex items-center justify-center shadow">{i + 1}</span>
+                      </div>
+                      <p className="text-white font-extrabold text-[11px] sm:text-sm leading-tight">{step.label}</p>
+                      <p className="text-blue-300/60 text-[10px] sm:text-xs hidden sm:block">{step.sub}</p>
+                    </div>
+                    {i < BUY_LADDER.length - 1 && (
+                      <div className="flex items-center pt-5 sm:pt-6 text-white/25">
+                        <svg className="w-3.5 h-3.5 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </div>
+                    )}
+                  </Fragment>
+                ))}
+              </div>
+            </div>
+          </Reveal>
+
+          {/* Three channels */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {BUY_CHANNELS.map((c, i) => (
+              <Reveal key={c.key} from="up" delay={i * 100}>
+                <Link href={c.href}
+                  className="group relative flex flex-col h-full rounded-3xl bg-white p-6 sm:p-7 shadow-xl hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-300 overflow-hidden">
+                  {/* Accent top strip */}
+                  <span className={`absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r ${c.grad}`} />
+                  <div className="flex items-center justify-between mb-5">
+                    <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${c.grad} flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                      <c.Icon className="w-7 h-7 text-white" strokeWidth={1.75} />
+                    </div>
+                    <span className="text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full"
+                      style={{ background: `${c.accent}14`, color: c.accent }}>{c.eyebrow}</span>
+                  </div>
+                  <h3 className="text-xl font-extrabold text-[#0B1F4D]">{c.title}</h3>
+                  <p className="text-sm font-bold mb-3" style={{ color: c.accent }}>{c.units}</p>
+                  <p className="text-sm text-gray-500 leading-relaxed mb-5">{c.blurb}</p>
+                  <ul className="space-y-2 mb-6 flex-1">
+                    {c.bullets.map((b) => (
+                      <li key={b} className="flex items-center gap-2 text-xs font-semibold text-gray-600">
+                        <span className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0"
+                          style={{ background: `${c.accent}1a`, color: c.accent }}>
+                          <Check className="w-2.5 h-2.5" strokeWidth={4} />
+                        </span>
+                        {b}
+                      </li>
+                    ))}
+                  </ul>
+                  <span className="inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-bold text-white transition-colors group-hover:gap-3"
+                    style={{ background: c.accent }}>
+                    {c.cta}
+                    <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
+                  </span>
+                </Link>
+              </Reveal>
+            ))}
+          </div>
+
+          {/* Bottom strip — trust points */}
+          <div className="mt-12 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-xs font-semibold text-blue-200/70">
+            {[
+              { Icon: BoxIcon, t: 'Thousands of products' },
+              { Icon: Store,   t: 'Verified suppliers' },
+              { Icon: Layers,  t: 'Every purchase format' },
+              { Icon: Ship,    t: 'Trusted global platform' },
+            ].map(({ Icon, t: label }) => (
+              <span key={label} className="flex items-center gap-2">
+                <Icon className="w-4 h-4 text-[#F5A623]" strokeWidth={1.75} />{label}
+              </span>
             ))}
           </div>
         </div>

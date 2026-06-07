@@ -97,11 +97,14 @@ const SUPPLIER_TYPES   = ['Wholesaler', 'Trader / Wholesaler', 'Supplier']
 
 /** Classify a business into factory / distributor / supplier for the directory. */
 export function entityKind(role?: string | null, businessType?: string | null): EntityKind {
+  // Explicit business types win.
   if (businessType && FACTORY_TYPES.includes(businessType)) return 'factory'
   if (businessType && DISTRIBUTOR_ONLY.includes(businessType)) return 'distributor'
   if (businessType && SUPPLIER_TYPES.includes(businessType)) return 'supplier'
   if (role === 'broker') return 'distributor'
-  if (role === 'supplier') return 'factory' // manufacturers / brand owners by default
+  // Everyone else (incl. generic "Company" suppliers) lands in the Suppliers
+  // directory — the default first link of the chain. Only an explicit factory
+  // or distributor business type moves a listing out of Suppliers.
   return 'supplier'
 }
 

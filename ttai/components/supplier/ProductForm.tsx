@@ -19,7 +19,7 @@ interface ProductFormProps {
 
 interface FormState {
   name: string; slug: string; categoryId: string; marketplaceContext: 'wholesale' | 'retail' | 'both'
-  productLine: string
+  productLine: string; isFamilyCover: boolean
   cityId: string; description: string; sku: string
   priceDisplay: string       // wholesale / B2B price, converted to cents on save
   retailPriceDisplay: string // online-shop (retail) per-piece price
@@ -38,7 +38,7 @@ interface FormState {
 
 const INITIAL: FormState = {
   name: '', slug: '', categoryId: '', marketplaceContext: 'wholesale',
-  productLine: '',
+  productLine: '', isFamilyCover: false,
   cityId: '', description: '', sku: '',
   priceDisplay: '', retailPriceDisplay: '', currencyCode: 'EUR',
   minOrderQty: '1', stockQty: '0', vatRate: '10', weightGrams: '',
@@ -105,13 +105,14 @@ export function ProductForm({ supplierId, mode, productId, initialData, sellerTi
       name:                form.name.trim(),
       slug:                form.slug.trim(),
       product_line:        form.productLine.trim() || null,
+      is_family_cover:     form.productLine.trim() ? form.isFamilyCover : false,
       description:         form.description.trim() || null,
       sku:                 form.sku.trim() || null,
       price_cents:         priceCents,
       retail_price_cents:  form.retailPriceDisplay && parseFloat(form.retailPriceDisplay) > 0
                              ? Math.round(parseFloat(form.retailPriceDisplay) * 100) : null,
       currency_code:       form.currencyCode,
-      min_order_qty:       form.marketplaceContext === 'retail' ? 1 : (parseInt(form.minOrderQty) || 1),
+      min_order_qty:       parseInt(form.minOrderQty) || 1,
       stock_qty:           parseInt(form.stockQty) || 0,
       vat_rate:            form.vatRate ? parseFloat(form.vatRate) : null,
       weight_grams:        form.weightGrams ? parseInt(form.weightGrams) : null,
@@ -151,6 +152,18 @@ export function ProductForm({ supplierId, mode, productId, initialData, sellerTi
 
     const supabase = createClient()
 
+    // Only one product per line can be the family cover — clear the flag on siblings.
+    async function dedupeCover(currentId: string | null) {
+      const line = form.productLine.trim()
+      if (!form.isFamilyCover || !line) return
+      let q = (supabase.from('products') as any)
+        .update({ is_family_cover: false })
+        .eq('supplier_id', supplierId)
+        .eq('product_line', line)
+      if (currentId) q = q.neq('id', currentId)
+      await q
+    }
+
     if (mode === 'create') {
       const { data: newProduct, error: insertError } = await supabase
         .from('products')
@@ -158,6 +171,7 @@ export function ProductForm({ supplierId, mode, productId, initialData, sellerTi
         .select('id')
         .single()
       if (insertError || !newProduct) { setError(insertError?.message ?? 'Insert failed'); setLoading(false); return }
+      await dedupeCover(newProduct.id)
 
       // Upload staged images via the server endpoint (admin → brand-assets bucket)
       for (let i = 0; i < pendingFiles.length; i++) {
@@ -172,6 +186,7 @@ export function ProductForm({ supplierId, mode, productId, initialData, sellerTi
     } else if (mode === 'edit' && productId) {
       const { error: updateError } = await supabase.from('products').update(payload).eq('id', productId)
       if (updateError) { setError(updateError.message); setLoading(false); return }
+      await dedupeCover(productId)
     }
 
     setSuccess(true)
@@ -259,6 +274,16 @@ export function ProductForm({ supplierId, mode, productId, initialData, sellerTi
             <p className="text-xs text-gray-400">
               Optional. Products sharing the same line show as one card in the marketplace; buyers open it to pick a variant. Leave blank to group by category.
             </p>
+            {form.productLine.trim() && (
+              <label className="mt-1 flex items-start gap-2.5 rounded-xl border border-gray-200 bg-amber-50/50 px-3.5 py-2.5 cursor-pointer hover:border-[#F5A623] transition-colors">
+                <input type="checkbox" checked={form.isFamilyCover} onChange={(e) => update('isFamilyCover', e.target.checked)}
+                  className="mt-0.5 w-4 h-4 accent-[#F5A623]" />
+                <span className="text-xs text-gray-600 leading-relaxed">
+                  <span className="font-bold text-[#0B1F4D]">⭐ Use this product&apos;s image as the family cover</span><br />
+                  This product&apos;s main image and name will represent the whole &ldquo;{form.productLine.trim()}&rdquo; family card in the marketplace grid. Only one product per line can be the cover.
+                </span>
+              </label>
+            )}
           </div>
           <div className="space-y-1.5">
             <label className={labelCls}>Sell in which shop?</label>
@@ -329,19 +354,15 @@ export function ProductForm({ supplierId, mode, productId, initialData, sellerTi
             <label className={labelCls}>VAT Rate %</label>
             <input className={inputCls} type="number" step="0.01" min="0" max="100" value={form.vatRate} onChange={(e) => update('vatRate', e.target.value)} placeholder="e.g. 21" />
           </div>
-          {form.marketplaceContext === 'retail' ? (
-            <div className="space-y-1.5">
-              <label className={labelCls}>Min Order Qty</label>
-              <div className={`${inputCls} flex items-center text-gray-400 bg-gray-50 cursor-not-allowed`}>
-                Sold by piece — no minimum
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-1.5">
-              <label className={labelCls}>Min Order Qty {form.marketplaceContext === 'both' && <span className="text-gray-400 normal-case font-normal">(wholesale)</span>}</label>
-              <input className={inputCls} type="number" min="1" value={form.minOrderQty} onChange={(e) => update('minOrderQty', e.target.value)} />
-            </div>
-          )}
+          <div className="space-y-1.5">
+            <label className={labelCls}>
+              Min Order Qty
+              {form.marketplaceContext === 'retail' && <span className="text-gray-400 normal-case font-normal"> (online shop)</span>}
+              {form.marketplaceContext === 'both'   && <span className="text-gray-400 normal-case font-normal"> (min pieces)</span>}
+            </label>
+            <input className={inputCls} type="number" min="1" value={form.minOrderQty} onChange={(e) => update('minOrderQty', e.target.value)} />
+            <p className="text-xs text-gray-400">Smallest quantity a buyer can order. Set 1 for no minimum.</p>
+          </div>
           <div className="space-y-1.5">
             <label className={labelCls}>Stock Qty</label>
             <input className={inputCls} type="number" min="0" value={form.stockQty} onChange={(e) => update('stockQty', e.target.value)} />

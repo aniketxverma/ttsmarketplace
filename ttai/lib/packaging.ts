@@ -74,16 +74,18 @@ export const UNIT_LABEL: Record<PurchaseUnit, string> = {
 
 /**
  * Which purchase units each shop sells in:
- *   online (TTAI Retail Store, end users)   → Piece + Box
- *   market (Business Shop, shops/distributors) → Box + Pallet
- *   b2b    (B2B Wholesale Hub, wholesalers)  → Pallet + Truck
+ *   online (TTAI Retail Store, end users)      → Piece + Box
+ *   market (TTAIEMA Marketplace, everything)   → Piece + Box + Pallet + Truck
+ *   b2b    (B2B Wholesale Hub, wholesalers)    → Box + Pallet + Truck (bulk, no single piece)
+ * Role-gating still applies on top (e.g. consumers only ever see Piece), so the
+ * larger units are only ever exposed to distributors/factories/admin.
  * Anything else / direct visit → undefined (all units the product offers).
  */
 export function unitsForShop(shop?: string | null): PurchaseUnit[] | undefined {
   switch (shop) {
     case 'online': return ['piece', 'box']
-    case 'market': return ['box', 'pallet']
-    case 'b2b':    return ['pallet', 'truck']
+    case 'market': return ['piece', 'box', 'pallet', 'truck']
+    case 'b2b':    return ['box', 'pallet', 'truck']
     default:       return undefined
   }
 }

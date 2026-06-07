@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { cn } from '@/lib/utils'
+import { HOUSE_BRAND } from '@/lib/house-brand'
 import type { Family } from '@/lib/product-family'
 import type { ReliabilityTier } from '@/types/domain'
 
@@ -19,10 +20,11 @@ function formatPrice(cents: number, currency: string) {
 export function FamilyCard({ family, retail = false, shop }: { family: Family; retail?: boolean; shop?: string }) {
   const rep = family.representative
   const supplier = rep.suppliers as { legal_name: string; trade_name: string | null; reliability_tier: ReliabilityTier } | undefined
-  const displayName = supplier?.trade_name ?? supplier?.legal_name ?? ''
   const count = family.members.length
 
   const isRetail = retail || rep.marketplace_context === 'retail'
+  // Retail storefront = single house brand (TTAIEMA); the real supplier is hidden.
+  const displayName = isRetail ? HOUSE_BRAND.name : (supplier?.trade_name ?? supplier?.legal_name ?? '')
   // Lowest price across the family → "from €x" (retail price in the online shop).
   const priceOf = (m: typeof rep) => isRetail ? (m.retail_price_cents ?? m.price_cents) : m.price_cents
   const minCents = Math.min(...family.members.map(priceOf))
@@ -75,11 +77,15 @@ export function FamilyCard({ family, retail = false, shop }: { family: Family; r
             </span>
           </div>
 
-          {supplier && (
+          {isRetail ? (
+            <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold bg-purple-100 text-purple-800">
+              <span className="w-1.5 h-1.5 rounded-full bg-purple-500" />{HOUSE_BRAND.badge}
+            </span>
+          ) : supplier ? (
             <span className={cn('inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium', TIER_STYLES[supplier.reliability_tier])}>
               {supplier.reliability_tier}
             </span>
-          )}
+          ) : null}
         </div>
       </div>
     </Link>

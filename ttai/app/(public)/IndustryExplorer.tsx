@@ -48,7 +48,7 @@ const INDUSTRIES: Industry[] = [
     { name: 'Medical Devices', slug: 'medical-devices' }, { name: 'Rehabilitation', slug: 'rehabilitation' }, { name: 'Telemedicine', slug: 'telemedicine' },
   ]},
   { name: 'Construction & Building', slug: 'construction-building', Icon: Building2, color: '#d97706', subs: [] },
-  { name: 'Automotive', slug: 'automotive', Icon: Car, color: '#52525b', subs: [] },
+  { name: 'Automotive & Transport', slug: 'automotive-transport', Icon: Car, color: '#52525b', subs: [] },
   { name: 'Textile & Fashion', slug: 'textile-fashion', Icon: Shirt, color: '#db2777', subs: [
     { name: 'Garment Manufacturing', slug: 'garment-manufacturing' }, { name: 'Fabrics & Materials', slug: 'fabrics-materials' },
     { name: 'Fashion Accessories', slug: 'fashion-accessories' }, { name: 'Footwear', slug: 'footwear' },

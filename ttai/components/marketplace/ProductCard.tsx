@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { cn } from '@/lib/utils'
+import { HOUSE_BRAND } from '@/lib/house-brand'
 import type { MarketplaceContext, ReliabilityTier } from '@/types/domain'
 
 interface ProductCardProps {
@@ -54,7 +55,8 @@ export function ProductCard({ product, supplier, mainImageUrl, href, retail = fa
   const shopParam = isRetail ? 'online' : shop
   const finalHref = shopParam && !href.includes('?') ? `${href}?shop=${shopParam}` : href
 
-  const displayName = supplier.trade_name ?? supplier.legal_name
+  // Retail storefront = single house brand (TTAIEMA); the real supplier is hidden.
+  const displayName = isRetail ? HOUSE_BRAND.name : (supplier.trade_name ?? supplier.legal_name)
 
   return (
     <Link href={finalHref} className="group block">
@@ -97,9 +99,15 @@ export function ProductCard({ product, supplier, mainImageUrl, href, retail = fa
             )}
           </div>
 
-          <span className={cn('inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium', TIER_STYLES[supplier.reliability_tier])}>
-            {supplier.reliability_tier}
-          </span>
+          {isRetail ? (
+            <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold bg-purple-100 text-purple-800">
+              <span className="w-1.5 h-1.5 rounded-full bg-purple-500" />{HOUSE_BRAND.badge}
+            </span>
+          ) : (
+            <span className={cn('inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium', TIER_STYLES[supplier.reliability_tier])}>
+              {supplier.reliability_tier}
+            </span>
+          )}
         </div>
       </div>
     </Link>

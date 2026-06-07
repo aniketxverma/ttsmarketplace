@@ -19,6 +19,7 @@ export interface FamilyProduct {
   supplier_id: string
   category_id: string
   product_line?: string | null
+  is_family_cover?: boolean | null
   suppliers?: any
   product_images?: { url: string; sort_order: number }[]
   categories?: { name: string; slug: string } | null
@@ -74,6 +75,15 @@ export function groupIntoFamilies<T extends FamilyProduct>(products: T[]): Famil
         members: [p],
         representative: p,
       })
+    }
+  }
+  // Honour the supplier-chosen cover: if a member is flagged, it represents the
+  // family (its image + name on the card). Otherwise the first member is kept.
+  for (const fam of Array.from(map.values())) {
+    const cover = fam.members.find((m) => m.is_family_cover)
+    if (cover) {
+      fam.representative = cover
+      fam.imageUrl = firstImage(cover) ?? fam.imageUrl
     }
   }
   return Array.from(map.values())

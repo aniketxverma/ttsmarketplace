@@ -23,13 +23,14 @@ type ProductImage = { url: string; sort_order: number; image_role?: string | nul
 type Product = PackagingProduct & { id: string; name: string; slug: string; currency_code: string }
 
 export function ProductBuyArea({
-  product, images, retail = false, shopUnits, whatsapp, supplierName, imageUrl,
+  product, images, retail = false, shopUnits, minOrderQty = 1, whatsapp, supplierName, imageUrl,
   categoryName, supplierLabel, supplierHref, shipsFrom, topSlot, children,
 }: {
   product: Product
   images: ProductImage[]
   retail?: boolean
   shopUnits?: PurchaseUnit[]
+  minOrderQty?: number
   whatsapp?: string | null
   supplierName: string
   imageUrl?: string
@@ -44,12 +45,17 @@ export function ProductBuyArea({
   const preferred = shopUnits ? allUnits.filter(u => shopUnits.includes(u)) : allUnits
   const units = preferred.length > 0 ? preferred : allUnits
 
+  // Minimum order quantity applies to single pieces (the online-shop unit).
+  // Larger units (box/pallet/truck) always start at 1.
+  const minFor = (u: PurchaseUnit) => (u === 'piece' ? Math.max(1, minOrderQty) : 1)
+
   const { addItem } = useCart()
   const router = useRouter()
   const [unit, setUnit] = useState<PurchaseUnit>(units[0] ?? 'piece')
-  const [qty, setQty] = useState(1)
+  const [qty, setQty] = useState(() => minFor(units[0] ?? 'piece'))
   const [active, setActive] = useState(0)
   const [added, setAdded] = useState(false)
+  const minQ = minFor(unit)
 
   const fmt = (cents: number) =>
     new Intl.NumberFormat('es-ES', { style: 'currency', currency: product.currency_code }).format(cents / 100)
@@ -63,7 +69,7 @@ export function ProductBuyArea({
   const gallery = roleImgs.length > 0 ? roleImgs : sorted
   const mainImg = gallery[Math.min(active, gallery.length - 1)]?.url
 
-  function pickUnit(u: PurchaseUnit) { setUnit(u); setQty(1); setActive(0) }
+  function pickUnit(u: PurchaseUnit) { setUnit(u); setQty(minFor(u)); setActive(0) }
 
   const pieces  = piecesIn(product, unit) * qty
   const cartons = cartonsIn(product, unit) * qty
@@ -156,14 +162,17 @@ export function ProductBuyArea({
         </div>
 
         {/* Quantity */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
           <span className="text-sm font-medium text-gray-700">Quantity:</span>
           <div className="flex items-center border rounded-lg overflow-hidden">
-            <button type="button" onClick={() => setQty(q => Math.max(1, q - 1))} disabled={qty <= 1} className="px-3 py-2 text-gray-600 hover:bg-gray-100 font-bold disabled:opacity-40">−</button>
+            <button type="button" onClick={() => setQty(q => Math.max(minQ, q - 1))} disabled={qty <= minQ} className="px-3 py-2 text-gray-600 hover:bg-gray-100 font-bold disabled:opacity-40">−</button>
             <span className="px-4 py-2 font-semibold text-sm border-x min-w-[3rem] text-center">{qty}</span>
             <button type="button" onClick={() => setQty(q => q + 1)} className="px-3 py-2 text-gray-600 hover:bg-gray-100 font-bold">+</button>
           </div>
           <span className="text-xs text-gray-400">{UNIT_LABEL[unit].toLowerCase()}{qty > 1 ? 's' : ''}</span>
+          {minQ > 1 && (
+            <span className="text-xs font-semibold text-[#F5A623]">Min. order: {num(minQ)} {UNIT_LABEL[unit].toLowerCase()}s</span>
+          )}
         </div>
 
         {/* Breakdown */}

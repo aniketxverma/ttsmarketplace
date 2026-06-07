@@ -10,6 +10,7 @@ import { chainLevel, unitsForRole } from '@/lib/business-chain'
 import { useServerTranslations, getLocale } from '@/lib/i18n/server'
 import { translateMany } from '@/lib/i18n/content'
 import { BrandLogo } from '@/components/BrandLogo'
+import { HOUSE_BRAND } from '@/lib/house-brand'
 
 export const revalidate = 60
 
@@ -157,9 +158,11 @@ export default async function ProductPage({ params, searchParams }: { params: { 
       {/* ── Breadcrumb ─────────────────────────────────────────────────────── */}
       <div className="border-b bg-white">
         <div className="max-w-6xl mx-auto px-4 sm:px-8 h-11 flex items-center gap-2 text-sm text-gray-400">
-          <Link href="/marketplace" className="hover:text-[#0B1F4D] transition-colors">{t('product.breadcrumb')}</Link>
+          <Link href={retailView ? HOUSE_BRAND.href : '/marketplace'} className="hover:text-[#0B1F4D] transition-colors">
+            {retailView ? HOUSE_BRAND.name : t('product.breadcrumb')}
+          </Link>
           <ChevronLeft className="w-3.5 h-3.5 rotate-180" />
-          {supplier?.brand_slug && (
+          {!retailView && supplier?.brand_slug && (
             <>
               <Link href={`/brand/${supplier.brand_slug}`} className="hover:text-[#0B1F4D] transition-colors font-medium">
                 {supplier.trade_name ?? supplier.legal_name}
@@ -178,12 +181,13 @@ export default async function ProductPage({ params, searchParams }: { params: { 
           images={images}
           retail={retailView}
           shopUnits={shopUnits}
-          whatsapp={supplier?.whatsapp ?? null}
-          supplierName={supplier?.trade_name ?? supplier?.legal_name ?? ''}
+          minOrderQty={product.min_order_qty ?? 1}
+          whatsapp={retailView ? null : (supplier?.whatsapp ?? null)}
+          supplierName={retailView ? HOUSE_BRAND.name : (supplier?.trade_name ?? supplier?.legal_name ?? '')}
           imageUrl={images[0]?.url}
           categoryName={product.categories?.name ?? null}
-          supplierLabel={supplier?.trade_name ?? supplier?.legal_name ?? null}
-          supplierHref={supplier ? (supplier.brand_slug ? `/brand/${supplier.brand_slug}` : '#') : null}
+          supplierLabel={retailView ? HOUSE_BRAND.name : (supplier?.trade_name ?? supplier?.legal_name ?? null)}
+          supplierHref={retailView ? HOUSE_BRAND.href : (supplier ? (supplier.brand_slug ? `/brand/${supplier.brand_slug}` : '#') : null)}
           shipsFrom={[supplier?.cities?.name, supplier?.countries?.name].filter(Boolean).join(', ') || null}
           topSlot={models.length > 1 ? <ModelSelector models={models} currentId={product.id} shop={searchParams.shop} /> : null}
         >
@@ -214,8 +218,8 @@ export default async function ProductPage({ params, searchParams }: { params: { 
               </div>
             )}
 
-            {/* ── Secondary contact (WhatsApp / Call) ──────────────── */}
-            {(waHref || supplier?.phone) && (
+            {/* ── Secondary contact (WhatsApp / Call) — hidden in the retail store ── */}
+            {!retailView && (waHref || supplier?.phone) && (
               <div className="flex items-center gap-2 pt-1">
                 <span className="text-xs text-gray-400 font-medium shrink-0">{t('product.contact_wa').split(' ')[0]}:</span>
                 {waHref && (
@@ -239,8 +243,28 @@ export default async function ProductPage({ params, searchParams }: { params: { 
               </div>
             )}
 
-            {/* Supplier card */}
-            {supplier && (
+            {/* House-brand card (retail store) — the consumer buys from TTAIEMA */}
+            {retailView && (
+              <Link href={HOUSE_BRAND.href}
+                className="flex items-center gap-4 bg-white rounded-2xl border border-gray-100 shadow-sm p-4 hover:shadow-md hover:border-purple-300 transition-all group">
+                <div className="w-14 h-14 rounded-xl overflow-hidden border border-gray-100 flex-shrink-0 bg-gradient-to-br from-purple-600 to-violet-700 flex items-center justify-center">
+                  <Store className="w-7 h-7 text-white" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap mb-0.5">
+                    <p className="font-extrabold text-[#0B1F4D] text-sm truncate">{HOUSE_BRAND.name}</p>
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-purple-100 text-purple-800">
+                      <ShieldCheck className="w-2.5 h-2.5" />{HOUSE_BRAND.badge}
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-400 truncate">{HOUSE_BRAND.tagline}</p>
+                </div>
+                <ArrowRight className="w-4 h-4 text-gray-300 group-hover:text-purple-600 transition-colors flex-shrink-0" />
+              </Link>
+            )}
+
+            {/* Supplier card (wholesale only) */}
+            {!retailView && supplier && (
               <Link href={`/brand/${supplier.brand_slug ?? supplier.id}`}
                 className="flex items-center gap-4 bg-white rounded-2xl border border-gray-100 shadow-sm p-4 hover:shadow-md hover:border-[#0B1F4D]/20 transition-all group">
                 {/* Logo */}
@@ -363,8 +387,13 @@ export default async function ProductPage({ params, searchParams }: { params: { 
         {more.length > 0 && (
           <div className="mt-14">
             <div className="flex items-center justify-between mb-5">
-              <h2 className="text-lg font-extrabold text-[#0B1F4D]">{t('product.more_from')} {supplier?.trade_name}</h2>
-              {supplier?.brand_slug && (
+              <h2 className="text-lg font-extrabold text-[#0B1F4D]">{t('product.more_from')} {retailView ? HOUSE_BRAND.name : supplier?.trade_name}</h2>
+              {retailView ? (
+                <Link href={HOUSE_BRAND.href}
+                  className="text-sm font-bold text-[#0B1F4D] hover:underline flex items-center gap-1">
+                  {t('product.view_all')} <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+              ) : supplier?.brand_slug && (
                 <Link href={`/brand/${supplier.brand_slug}`}
                   className="text-sm font-bold text-[#0B1F4D] hover:underline flex items-center gap-1">
                   {t('product.view_all')} <ArrowRight className="w-3.5 h-3.5" />
@@ -373,7 +402,7 @@ export default async function ProductPage({ params, searchParams }: { params: { 
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
               {more.map((p: any) => (
-                <Link key={p.id} href={`/product/${p.slug ?? p.id}`}
+                <Link key={p.id} href={`/product/${p.slug ?? p.id}${retailView ? '?shop=online' : ''}`}
                   className="bg-white rounded-xl border border-gray-100 overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all group">
                   <div className="relative aspect-square bg-[#F5F5F3]">
                     {p.thumb ? (
