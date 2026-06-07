@@ -7,7 +7,8 @@ import { ProductBuyArea } from './ProductBuyArea'
 import { ModelSelector } from './ModelSelector'
 import { unitsPerPallet, unitsPerTruck, cartonsPerTruck, unitsForShop, intersectUnits } from '@/lib/packaging'
 import { chainLevel, unitsForRole } from '@/lib/business-chain'
-import { useServerTranslations } from '@/lib/i18n/server'
+import { useServerTranslations, getLocale } from '@/lib/i18n/server'
+import { translateMany } from '@/lib/i18n/content'
 import { BrandLogo } from '@/components/BrandLogo'
 
 export const revalidate = 60
@@ -89,6 +90,13 @@ export default async function ProductPage({ params, searchParams }: { params: { 
   const supplier = product.suppliers as any
   const images   = ((product.product_images ?? []) as any[]).sort((a: any, b: any) => a.sort_order - b.sort_order)
   const tier     = TIER[supplier?.reliability_tier ?? 'UNVERIFIED'] ?? TIER.UNVERIFIED
+
+  // Translate the supplier's content (name/description, written in any language)
+  // into the viewer's language. Cached, so each text is translated only once.
+  const locale = getLocale()
+  const [tName, tDesc] = await translateMany([product.name, product.description], locale)
+  product.name = tName
+  if (tDesc) product.description = tDesc
 
   // Retail (Online Shop) view vs wholesale (B2B/marketplace). The shop=online
   // param (carried from the store) forces retail; otherwise follow the product's

@@ -20,6 +20,7 @@ export default {
     manage_business: 'Gerencie seu negócio',
   },
   dnav: {
+    translations: 'Traduções',
     my_profile: 'Meu perfil',
     dashboard: 'Painel',
     products: 'Produtos',
