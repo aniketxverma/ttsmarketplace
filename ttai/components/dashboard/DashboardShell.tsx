@@ -12,6 +12,7 @@ const SECTION_KEY: Record<string, string> = {
   documents: 'documents', settings: 'settings', suppliers: 'suppliers', promotions: 'promotions',
   invoices: 'invoices', payouts: 'payouts', channel: 'my_canal', channels: 'canales',
   brand: 'brand_profile', pos: 'points_of_sale', regions: 'regions', plans: 'plans_access',
+  pricing: 'pricing_rules', translations: 'translations',
   brokers: 'brokers', users: 'users', categories: 'categories', transactions: 'transactions',
   disputes: 'disputes', 'ai-chats': 'ai_chats', 'audit-log': 'audit_log',
 }

@@ -20,6 +20,11 @@ export interface PackagingProduct {
   sell_box?: boolean | null
   sell_pallet?: boolean | null
   sell_truck?: boolean | null
+  // Minimum order quantity per tier (number of that unit).
+  min_order_qty?: number | null   // End-user / piece tier
+  min_box_qty?: number | null
+  min_pallet_qty?: number | null
+  min_truck_qty?: number | null
 }
 
 export const unitsPerPallet  = (p: PackagingProduct) => (p.units_per_carton ?? 0) * (p.cartons_per_pallet ?? 0)
@@ -57,6 +62,26 @@ export function unitPrice(p: PackagingProduct, u: PurchaseUnit, retail = false):
     case 'truck':  return p.price_per_truck_cents  ?? piece * piecesIn(p, 'truck')
   }
 }
+
+/** Minimum number of the given unit a buyer must order (per-tier minimum). */
+export function minUnitsFor(p: PackagingProduct, u: PurchaseUnit): number {
+  switch (u) {
+    case 'piece':  return Math.max(1, p.min_order_qty  ?? 1)
+    case 'box':    return Math.max(1, p.min_box_qty    ?? 1)
+    case 'pallet': return Math.max(1, p.min_pallet_qty ?? 1)
+    case 'truck':  return Math.max(1, p.min_truck_qty  ?? 1)
+  }
+}
+
+/** Effective price per single piece when bought in the given unit/tier.
+ *  Surfaces volume savings (e.g. €3.50 piece → €1.85 in a box). */
+export function pricePerPiece(p: PackagingProduct, u: PurchaseUnit, retail = false): number {
+  const pieces = piecesIn(p, u)
+  return pieces > 0 ? Math.round(unitPrice(p, u, retail) / pieces) : unitPrice(p, u, retail)
+}
+
+/** True for the consumer / retail tier (sold by the piece). */
+export const isRetailUnit = (u: PurchaseUnit) => u === 'piece'
 
 /** Which purchase units the product can actually be bought in. */
 export function availableUnits(p: PackagingProduct): PurchaseUnit[] {

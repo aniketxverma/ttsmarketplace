@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { requireAuth } from '@/lib/auth/rbac'
 import { ProductForm } from '@/components/supplier/ProductForm'
 import { ProductImageManager } from '@/components/supplier/ProductImageManager'
+import { getPricingConfig } from '@/lib/pricing-config'
 
 export default async function EditProductPage({ params }: { params: { id: string } }) {
   const user = await requireAuth()
@@ -16,6 +17,7 @@ export default async function EditProductPage({ params }: { params: { id: string
 
   const { data: prof } = await (supabase.from('profiles') as any).select('tier').eq('id', user.id).single()
   const sellerTier = prof?.tier ?? 'free'
+  const pricing = await getPricingConfig()
 
   if (!supplier) redirect('/supplier/onboarding')
 
@@ -56,6 +58,9 @@ export default async function EditProductPage({ params }: { params: { id: string
           mode="edit"
           productId={product.id}
           sellerTier={sellerTier}
+          minMarginPct={pricing.minMarginPct}
+          vatPct={pricing.vatPct}
+          vatEnabled={pricing.vatEnabled}
           initialData={{
             name:               product.name,
             slug:               product.slug,
@@ -98,6 +103,9 @@ export default async function EditProductPage({ params }: { params: { id: string
             pricePerBox:        (product as any).price_per_box_cents != null ? ((product as any).price_per_box_cents / 100).toFixed(2) : '',
             pricePerPallet:     (product as any).price_per_pallet_cents != null ? ((product as any).price_per_pallet_cents / 100).toFixed(2) : '',
             pricePerTruck:      (product as any).price_per_truck_cents != null ? ((product as any).price_per_truck_cents / 100).toFixed(2) : '',
+            minBoxQty:          (product as any).min_box_qty?.toString() ?? '1',
+            minPalletQty:       (product as any).min_pallet_qty?.toString() ?? '1',
+            minTruckQty:        (product as any).min_truck_qty?.toString() ?? '1',
             sellPiece:          (product as any).sell_piece ?? true,
             sellBox:            (product as any).sell_box ?? false,
             sellPallet:         (product as any).sell_pallet ?? false,

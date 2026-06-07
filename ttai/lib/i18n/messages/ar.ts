@@ -41,6 +41,7 @@ export default {
     brokers: 'الوسطاء',
     users: 'المستخدمون',
     plans_access: 'الخطط والوصول',
+    pricing_rules: 'قواعد التسعير',
     categories: 'الفئات',
     transactions: 'المعاملات',
     disputes: 'النزاعات',

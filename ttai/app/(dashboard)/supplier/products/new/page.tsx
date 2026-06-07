@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { requireAuth } from '@/lib/auth/rbac'
 import { ProductForm } from '@/components/supplier/ProductForm'
+import { getPricingConfig } from '@/lib/pricing-config'
 
 export default async function NewProductPage() {
   const user = await requireAuth()
@@ -18,6 +19,7 @@ export default async function NewProductPage() {
 
   const { data: prof } = await (supabase.from('profiles') as any).select('tier').eq('id', user.id).single()
   const sellerTier = prof?.tier ?? 'free'
+  const pricing = await getPricingConfig()
 
   return (
     <div className="max-w-2xl space-y-6">
@@ -26,7 +28,8 @@ export default async function NewProductPage() {
         <p className="text-muted-foreground text-sm mt-0.5">Products start as drafts — publish when ready</p>
       </div>
       <div className="rounded-xl border bg-card p-6">
-        <ProductForm supplierId={supplier.id} mode="create" sellerTier={sellerTier} />
+        <ProductForm supplierId={supplier.id} mode="create" sellerTier={sellerTier}
+          minMarginPct={pricing.minMarginPct} vatPct={pricing.vatPct} vatEnabled={pricing.vatEnabled} />
       </div>
     </div>
   )

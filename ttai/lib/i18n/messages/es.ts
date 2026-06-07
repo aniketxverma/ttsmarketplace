@@ -41,6 +41,7 @@ export default {
     brokers: 'Brókers',
     users: 'Usuarios',
     plans_access: 'Planes y acceso',
+    pricing_rules: 'Reglas de precios',
     categories: 'Categorías',
     transactions: 'Transacciones',
     disputes: 'Disputas',

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { unitPrice, type PurchaseUnit } from '@/lib/packaging'
+import { unitPrice, minUnitsFor, type PurchaseUnit } from '@/lib/packaging'
 import { z } from 'zod'
 
 const schema = z.object({
@@ -39,7 +39,8 @@ export async function POST(req: NextRequest) {
   const productIds = items.map(i => i.productId)
   const { data: products } = await (admin
     .from('products') as any)
-    .select(`id, name, price_cents, retail_price_cents, currency_code, vat_rate, supplier_id, stock_qty, marketplace_context, min_order_qty,
+    .select(`id, name, price_cents, retail_price_cents, currency_code, vat_rate, supplier_id, stock_qty, marketplace_context,
+      min_order_qty, min_box_qty, min_pallet_qty, min_truck_qty,
       units_per_carton, cartons_per_pallet, pallets_per_truck,
       price_per_box_cents, price_per_pallet_cents, price_per_truck_cents,
       sell_piece, sell_box, sell_pallet, sell_truck`)
@@ -54,11 +55,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'One or more products not found' }, { status: 404 })
   }
 
-  // Enforce minimum order quantity (applies to single pieces — the online shop unit).
+  // Enforce the per-tier minimum order quantity (piece / box / pallet / truck).
   for (const item of items) {
     const product = products.find(p => p.id === item.productId)!
     const unit = (item.unit ?? 'piece') as PurchaseUnit
-    const min = unit === 'piece' ? Math.max(1, product.min_order_qty ?? 1) : 1
+    const min = minUnitsFor(product, unit)
     if (item.quantity < min) {
       return NextResponse.json(
         { error: `"${product.name}" has a minimum order of ${min} ${unit}${min > 1 ? 's' : ''}.` },

@@ -11,6 +11,8 @@ import { useServerTranslations, getLocale } from '@/lib/i18n/server'
 import { translateMany } from '@/lib/i18n/content'
 import { BrandLogo } from '@/components/BrandLogo'
 import { HOUSE_BRAND } from '@/lib/house-brand'
+import { getPricingConfig } from '@/lib/pricing-config'
+import { protectedRetailCents } from '@/lib/pricing-rules'
 
 export const revalidate = 60
 
@@ -49,7 +51,8 @@ export default async function ProductPage({ params, searchParams }: { params: { 
 
   const PRODUCT_SELECT = `
     id, name, slug, description, price_cents, retail_price_cents, currency_code,
-    min_order_qty, stock_qty, is_published, marketplace_context, supplier_id, product_line,
+    min_order_qty, min_box_qty, min_pallet_qty, min_truck_qty,
+    stock_qty, is_published, marketplace_context, supplier_id, product_line,
     model_name, reference_number, ean, country_of_origin, lead_time,
     net_content, unit_weight_kg, unit_dimensions,
     units_per_carton, carton_weight_kg, carton_net_weight_kg, carton_dimensions,
@@ -122,6 +125,10 @@ export default async function ProductPage({ params, searchParams }: { params: { 
   // Effective units = shop constraint ∩ role constraint (graceful fallback in the panel).
   const shopUnits = intersectUnits(unitsForShop(searchParams.shop), roleUnits)
 
+  // Retail price protection: never display an end-user price below wholesale + min margin.
+  const pricing = await getPricingConfig()
+  product.retail_price_cents = protectedRetailCents(product.retail_price_cents, product.price_cents, pricing.minMarginPct)
+
   // Model selector (Phase 3): sibling products in the same product line.
   let models: { id: string; slug: string; name: string; model_name: string | null }[] = []
   if (product.product_line) {
@@ -181,7 +188,6 @@ export default async function ProductPage({ params, searchParams }: { params: { 
           images={images}
           retail={retailView}
           shopUnits={shopUnits}
-          minOrderQty={product.min_order_qty ?? 1}
           whatsapp={retailView ? null : (supplier?.whatsapp ?? null)}
           supplierName={retailView ? HOUSE_BRAND.name : (supplier?.trade_name ?? supplier?.legal_name ?? '')}
           imageUrl={images[0]?.url}

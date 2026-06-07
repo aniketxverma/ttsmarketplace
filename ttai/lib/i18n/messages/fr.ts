@@ -41,6 +41,7 @@ export default {
     brokers: 'Courtiers',
     users: 'Utilisateurs',
     plans_access: 'Plans & Accès',
+    pricing_rules: 'Règles de prix',
     categories: 'Catégories',
     transactions: 'Transactions',
     disputes: 'Litiges',

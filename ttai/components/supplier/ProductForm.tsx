@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/client'
 import { slugify } from '@/lib/utils'
 import { canSellUnit, requiredPlanLabel, SELL_PLAN_LABEL } from '@/lib/selling'
 import type { PurchaseUnit } from '@/lib/packaging'
+import { minRetailCents, addVatCents } from '@/lib/pricing-rules'
 
 interface ProductFormProps {
   supplierId: string
@@ -15,6 +16,10 @@ interface ProductFormProps {
   initialData?: Partial<FormState>
   /** Seller's plan tier — gates which units they can sell by. */
   sellerTier?: string
+  /** Marketplace pricing rules (admin-configured). */
+  minMarginPct?: number
+  vatPct?: number
+  vatEnabled?: boolean
 }
 
 interface FormState {
@@ -24,6 +29,7 @@ interface FormState {
   priceDisplay: string       // wholesale / B2B price, converted to cents on save
   retailPriceDisplay: string // online-shop (retail) per-piece price
   currencyCode: string; minOrderQty: string; stockQty: string; vatRate: string; weightGrams: string
+  minBoxQty: string; minPalletQty: string; minTruckQty: string
   // Packaging & multi-unit purchasing
   modelName: string; referenceNumber: string; ean: string; countryOfOrigin: string; leadTime: string
   netContent: string; unitWeightKg: string; unitDimensions: string
@@ -42,6 +48,7 @@ const INITIAL: FormState = {
   cityId: '', description: '', sku: '',
   priceDisplay: '', retailPriceDisplay: '', currencyCode: 'EUR',
   minOrderQty: '1', stockQty: '0', vatRate: '10', weightGrams: '',
+  minBoxQty: '1', minPalletQty: '1', minTruckQty: '1',
   modelName: '', referenceNumber: '', ean: '', countryOfOrigin: '', leadTime: '',
   netContent: '', unitWeightKg: '', unitDimensions: '',
   unitsPerCarton: '', cartonWeightKg: '', cartonNetWeightKg: '', cartonDimensions: '',
@@ -55,7 +62,10 @@ const INITIAL: FormState = {
 
 const CURRENCIES = ['EUR', 'USD', 'GBP', 'AED', 'SAR', 'MAD']
 
-export function ProductForm({ supplierId, mode, productId, initialData, sellerTier }: ProductFormProps) {
+export function ProductForm({
+  supplierId, mode, productId, initialData, sellerTier,
+  minMarginPct = 30, vatPct = 21, vatEnabled = true,
+}: ProductFormProps) {
   const router = useRouter()
   const [form, setForm] = useState<FormState>({ ...INITIAL, ...initialData })
   const [categories, setCategories] = useState<{ id: string; name: string; slug: string }[]>([])
@@ -98,6 +108,18 @@ export function ProductForm({ supplierId, mode, productId, initialData, sellerTi
     }
     const priceCents = Math.round(priceFloat * 100)
 
+    // ── Retail price protection: never below wholesale + minimum margin ──────
+    const floorRetail = minRetailCents(priceCents, minMarginPct)
+    const enteredRetail = form.retailPriceDisplay && parseFloat(form.retailPriceDisplay) > 0
+      ? Math.round(parseFloat(form.retailPriceDisplay) * 100) : 0
+    if (enteredRetail > 0 && enteredRetail < floorRetail) {
+      const fmtCur = (c: number) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: form.currencyCode }).format(c / 100)
+      setError(`End-user price ${fmtCur(enteredRetail)} is below the minimum ${fmtCur(floorRetail)} (wholesale + ${minMarginPct}%). Set it equal or higher.`)
+      setLoading(false); return
+    }
+    // Empty / valid → store the protected price (auto-calculated to the floor when blank).
+    const finalRetailCents = enteredRetail > 0 ? enteredRetail : floorRetail
+
     const payload = {
       category_id:         form.categoryId,
       marketplace_context: form.marketplaceContext,
@@ -109,8 +131,7 @@ export function ProductForm({ supplierId, mode, productId, initialData, sellerTi
       description:         form.description.trim() || null,
       sku:                 form.sku.trim() || null,
       price_cents:         priceCents,
-      retail_price_cents:  form.retailPriceDisplay && parseFloat(form.retailPriceDisplay) > 0
-                             ? Math.round(parseFloat(form.retailPriceDisplay) * 100) : null,
+      retail_price_cents:  finalRetailCents > 0 ? finalRetailCents : null,
       currency_code:       form.currencyCode,
       min_order_qty:       parseInt(form.minOrderQty) || 1,
       stock_qty:           parseInt(form.stockQty) || 0,
@@ -142,6 +163,10 @@ export function ProductForm({ supplierId, mode, productId, initialData, sellerTi
       price_per_box_cents:    form.pricePerBox && parseFloat(form.pricePerBox) > 0 ? Math.round(parseFloat(form.pricePerBox) * 100) : null,
       price_per_pallet_cents: form.pricePerPallet && parseFloat(form.pricePerPallet) > 0 ? Math.round(parseFloat(form.pricePerPallet) * 100) : null,
       price_per_truck_cents:  form.pricePerTruck && parseFloat(form.pricePerTruck) > 0 ? Math.round(parseFloat(form.pricePerTruck) * 100) : null,
+      // Per-tier minimum order quantities (B2B volume tiers).
+      min_box_qty:            Math.max(1, parseInt(form.minBoxQty)    || 1),
+      min_pallet_qty:         Math.max(1, parseInt(form.minPalletQty) || 1),
+      min_truck_qty:          Math.max(1, parseInt(form.minTruckQty)  || 1),
       // Cap sell-by units to the seller's plan (locked units can't be enabled).
       sell_piece:          form.sellPiece  && canSellUnit(sellerTier, 'piece'),
       sell_box:            form.sellBox    && canSellUnit(sellerTier, 'box'),
@@ -337,19 +362,42 @@ export function ProductForm({ supplierId, mode, productId, initialData, sellerTi
             </div>
             <p className="text-xs text-gray-400">Per-unit wholesale price shown in the B2B marketplace</p>
           </div>
-          <div className="space-y-1.5">
-            <label className={labelCls}>Online shop price (retail)</label>
-            <input
-              className={inputCls}
-              type="number"
-              step="0.01"
-              min="0.01"
-              value={form.retailPriceDisplay}
-              onChange={(e) => update('retailPriceDisplay', e.target.value)}
-              placeholder="0.00"
-            />
-            <p className="text-xs text-gray-400">Per-piece price in the Online Shop. Leave empty to use the wholesale price.</p>
-          </div>
+          {(() => {
+            const wholesaleCents = Math.round((parseFloat(form.priceDisplay) || 0) * 100)
+            const floor = minRetailCents(wholesaleCents, minMarginPct)
+            const entered = Math.round((parseFloat(form.retailPriceDisplay) || 0) * 100)
+            const effective = entered > 0 ? Math.max(entered, floor) : floor
+            const productVat = form.vatRate ? parseFloat(form.vatRate) : vatPct
+            const withVat = vatEnabled ? addVatCents(effective, productVat) : effective
+            const below = entered > 0 && entered < floor
+            const fmtCur = (c: number) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: form.currencyCode }).format(c / 100)
+            return (
+              <div className="space-y-1.5">
+                <label className={labelCls}>End-user price (retail, per piece)</label>
+                <input
+                  className={`${inputCls} ${below ? 'border-red-400 ring-1 ring-red-300' : ''}`}
+                  type="number" step="0.01" min="0.01"
+                  value={form.retailPriceDisplay}
+                  onChange={(e) => update('retailPriceDisplay', e.target.value)}
+                  placeholder={floor > 0 ? (floor / 100).toFixed(2) : '0.00'}
+                />
+                {wholesaleCents > 0 ? (
+                  <div className="text-xs space-y-0.5">
+                    <p className={below ? 'text-red-600 font-bold' : 'text-gray-500'}>
+                      Minimum retail: <span className="font-bold">{fmtCur(floor)}</span> (wholesale + {minMarginPct}%)
+                      {below && ' — your price is below this and will be rejected.'}
+                    </p>
+                    <p className="text-gray-400">
+                      Shown to end user{vatEnabled ? <> incl. {productVat}% VAT: <span className="font-bold text-[#0B1F4D]">{fmtCur(withVat)}</span></> : <>: <span className="font-bold text-[#0B1F4D]">{fmtCur(effective)}</span></>}
+                      {entered === 0 && ' (auto-calculated — leave blank to use the minimum)'}
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-xs text-gray-400">Enter the wholesale price first to see the minimum protected retail price.</p>
+                )}
+              </div>
+            )
+          })()}
           <div className="space-y-1.5">
             <label className={labelCls}>VAT Rate %</label>
             <input className={inputCls} type="number" step="0.01" min="0" max="100" value={form.vatRate} onChange={(e) => update('vatRate', e.target.value)} placeholder="e.g. 21" />
@@ -545,6 +593,7 @@ export function ProductForm({ supplierId, mode, productId, initialData, sellerTi
             ? <input className={inputCls} type="number" step="0.01" value={form.pricePerBox} onChange={(e) => update('pricePerBox', e.target.value)} placeholder="auto" />
             : <a href="/pricing" className="flex items-center gap-1.5 rounded-xl border border-dashed border-amber-300 bg-amber-50/60 px-3 py-2.5 text-xs font-bold text-amber-700 hover:bg-amber-50">🔒 Upgrade to {requiredPlanLabel('box')} →</a>}
           </div>
+          <div className="space-y-1.5"><label className={labelCls}>Min boxes / order</label><input className={inputCls} type="number" min="1" value={form.minBoxQty} onChange={(e) => update('minBoxQty', e.target.value)} placeholder="1" /></div>
         </div>
 
         {/* Pallet */}
@@ -558,6 +607,7 @@ export function ProductForm({ supplierId, mode, productId, initialData, sellerTi
             ? <input className={inputCls} type="number" step="0.01" value={form.pricePerPallet} onChange={(e) => update('pricePerPallet', e.target.value)} placeholder="auto" />
             : <a href="/pricing" className="flex items-center gap-1.5 rounded-xl border border-dashed border-amber-300 bg-amber-50/60 px-3 py-2.5 text-xs font-bold text-amber-700 hover:bg-amber-50">🔒 Upgrade to {requiredPlanLabel('pallet')} →</a>}
           </div>
+          <div className="space-y-1.5"><label className={labelCls}>Min pallets / order</label><input className={inputCls} type="number" min="1" value={form.minPalletQty} onChange={(e) => update('minPalletQty', e.target.value)} placeholder="1" /></div>
         </div>
 
         {/* Truck */}
@@ -569,6 +619,7 @@ export function ProductForm({ supplierId, mode, productId, initialData, sellerTi
             ? <input className={inputCls} type="number" step="0.01" value={form.pricePerTruck} onChange={(e) => update('pricePerTruck', e.target.value)} placeholder="auto" />
             : <a href="/pricing" className="flex items-center gap-1.5 rounded-xl border border-dashed border-amber-300 bg-amber-50/60 px-3 py-2.5 text-xs font-bold text-amber-700 hover:bg-amber-50">🔒 Upgrade to {requiredPlanLabel('truck')} →</a>}
           </div>
+          <div className="space-y-1.5"><label className={labelCls}>Min trucks / order</label><input className={inputCls} type="number" min="1" value={form.minTruckQty} onChange={(e) => update('minTruckQty', e.target.value)} placeholder="1" /></div>
         </div>
       </div>
 
