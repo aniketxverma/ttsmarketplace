@@ -41,6 +41,11 @@ export function ImportWizard({ categories }: { categories: Category[] }) {
 
   async function parse(withSheet?: string) {
     if (!file) return
+    const mb = file.size / (1024 * 1024)
+    if (mb > 20) {
+      setError(`This file is ${Math.round(mb)} MB — too large to upload through the browser (it likely has many full-resolution embedded photos). Import one category sheet at a time, compress the images first, or ask us to bulk-import it for you.`)
+      return
+    }
     setParsing(true); setError(null)
     const fd = new FormData()
     fd.append('file', file)
