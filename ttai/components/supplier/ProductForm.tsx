@@ -40,7 +40,7 @@ interface FormState {
   boxDiscountPct: string; palletDiscountPct: string; truckDiscountPct: string
   hsCode: string; catalogueUrl: string; videoUrl: string
   sellPiece: boolean; sellBox: boolean; sellPallet: boolean; sellTruck: boolean
-  priceNegotiable: boolean
+  priceNegotiable: boolean; priceOnRequest: boolean
   isPublished: boolean
 }
 
@@ -60,7 +60,7 @@ const INITIAL: FormState = {
   boxDiscountPct: '', palletDiscountPct: '', truckDiscountPct: '',
   hsCode: '', catalogueUrl: '', videoUrl: '',
   sellPiece: true, sellBox: false, sellPallet: false, sellTruck: false,
-  priceNegotiable: false,
+  priceNegotiable: false, priceOnRequest: false,
   isPublished: false,
 }
 
@@ -189,6 +189,7 @@ export function ProductForm({
       pallet_discount_pct:    form.palletDiscountPct ? Math.min(100, Math.max(0, parseFloat(form.palletDiscountPct) || 0)) : 0,
       truck_discount_pct:     form.truckDiscountPct  ? Math.min(100, Math.max(0, parseFloat(form.truckDiscountPct)  || 0)) : 0,
       price_negotiable:    form.priceNegotiable,
+      price_on_request:    form.priceOnRequest,
       // Cap sell-by units to the seller's plan (locked units can't be enabled).
       sell_piece:          form.sellPiece  && canSellUnit(sellerTier, 'piece'),
       sell_box:            form.sellBox    && canSellUnit(sellerTier, 'box'),
@@ -202,7 +203,7 @@ export function ProductForm({
     // If a recently-added column (e.g. discount %) isn't migrated yet, drop those
     // keys and retry so saving still works.
     const OPTIONAL_KEYS = ['box_discount_pct', 'pallet_discount_pct', 'truck_discount_pct',
-      'brand_name', 'source_type', 'original_supplier_id', 'current_owner_id', 'created_by']
+      'brand_name', 'source_type', 'original_supplier_id', 'current_owner_id', 'created_by', 'price_on_request']
     const stripOptional = (obj: any) => { const o = { ...obj }; OPTIONAL_KEYS.forEach(k => delete o[k]); return o }
     const isMissingColumn = (msg?: string | null) => !!msg && /column|does not exist|discount_pct/i.test(msg)
 
@@ -460,19 +461,24 @@ export function ProductForm({
             <input className={inputCls} type="number" min="1" value={form.weightGrams} onChange={(e) => update('weightGrams', e.target.value)} placeholder="Optional" />
           </div>
 
-          {/* Fixed vs Negotiable pricing */}
+          {/* Price type: Fixed / Negotiable / On request */}
           <div className="space-y-1.5 sm:col-span-2">
             <label className={labelCls}>Price type</label>
-            <div className="grid grid-cols-2 gap-2">
-              <button type="button" onClick={() => update('priceNegotiable', false)}
-                className={`rounded-xl border p-3 text-left transition-all ${!form.priceNegotiable ? 'border-[#0B1F4D] bg-[#0B1F4D]/[0.04] ring-1 ring-[#0B1F4D]' : 'border-gray-200 hover:border-gray-300'}`}>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <button type="button" onClick={() => { update('priceNegotiable', false); update('priceOnRequest', false) }}
+                className={`rounded-xl border p-3 text-left transition-all ${!form.priceNegotiable && !form.priceOnRequest ? 'border-[#0B1F4D] bg-[#0B1F4D]/[0.04] ring-1 ring-[#0B1F4D]' : 'border-gray-200 hover:border-gray-300'}`}>
                 <p className="text-sm font-extrabold text-[#0B1F4D]">🔒 Fixed price</p>
                 <p className="text-[11px] text-gray-400 leading-tight">Final price — buyers purchase at the listed price.</p>
               </button>
-              <button type="button" onClick={() => update('priceNegotiable', true)}
-                className={`rounded-xl border p-3 text-left transition-all ${form.priceNegotiable ? 'border-[#F5A623] bg-[#F5A623]/[0.06] ring-1 ring-[#F5A623]' : 'border-gray-200 hover:border-gray-300'}`}>
+              <button type="button" onClick={() => { update('priceNegotiable', true); update('priceOnRequest', false) }}
+                className={`rounded-xl border p-3 text-left transition-all ${form.priceNegotiable && !form.priceOnRequest ? 'border-[#F5A623] bg-[#F5A623]/[0.06] ring-1 ring-[#F5A623]' : 'border-gray-200 hover:border-gray-300'}`}>
                 <p className="text-sm font-extrabold text-[#0B1F4D]">💬 Negotiable</p>
-                <p className="text-[11px] text-gray-400 leading-tight">Buyers can request a better price / make an offer.</p>
+                <p className="text-[11px] text-gray-400 leading-tight">Shows a price — buyers can make an offer.</p>
+              </button>
+              <button type="button" onClick={() => { update('priceOnRequest', true); update('priceNegotiable', false) }}
+                className={`rounded-xl border p-3 text-left transition-all ${form.priceOnRequest ? 'border-violet-500 bg-violet-50 ring-1 ring-violet-500' : 'border-gray-200 hover:border-gray-300'}`}>
+                <p className="text-sm font-extrabold text-[#0B1F4D]">🙈 Price on request</p>
+                <p className="text-[11px] text-gray-400 leading-tight">No public price (B2B) — buyers request a quote.</p>
               </button>
             </div>
           </div>

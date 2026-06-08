@@ -23,7 +23,7 @@ type ProductImage = { url: string; sort_order: number; image_role?: string | nul
 type Product = PackagingProduct & { id: string; name: string; slug: string; currency_code: string }
 
 export function ProductBuyArea({
-  product, images, retail = false, shopUnits, negotiable = false, brand = null, whatsapp, supplierName, imageUrl,
+  product, images, retail = false, shopUnits, negotiable = false, priceOnRequest = false, brand = null, whatsapp, supplierName, imageUrl,
   categoryName, supplierLabel, supplierHref, shipsFrom, supplierId, supplierMinCents = 0, topSlot, children,
 }: {
   product: Product
@@ -31,6 +31,7 @@ export function ProductBuyArea({
   retail?: boolean
   shopUnits?: PurchaseUnit[]
   negotiable?: boolean
+  priceOnRequest?: boolean
   brand?: string | null
   whatsapp?: string | null
   supplierName: string
@@ -148,12 +149,20 @@ export function ProductBuyArea({
         {topSlot}
 
         {/* Selected-unit price */}
-        <div className="flex items-baseline gap-2 flex-wrap">
-          <span className="text-4xl font-black text-[#0B1F4D]">{fmt(unitPrice(product, unit, retail))}</span>
-          <span className="text-sm text-gray-400 font-medium">/ {UNIT_LABEL[unit].toLowerCase()}</span>
-        </div>
+        {priceOnRequest ? (
+          <div className="flex items-baseline gap-2 flex-wrap">
+            <span className="text-3xl font-black text-violet-700">Price on request</span>
+          </div>
+        ) : (
+          <div className="flex items-baseline gap-2 flex-wrap">
+            <span className="text-4xl font-black text-[#0B1F4D]">{fmt(unitPrice(product, unit, retail))}</span>
+            <span className="text-sm text-gray-400 font-medium">/ {UNIT_LABEL[unit].toLowerCase()}</span>
+          </div>
+        )}
         <div>
-          {negotiable
+          {priceOnRequest
+            ? <span className="inline-flex items-center gap-1 rounded-full bg-violet-100 text-violet-800 px-2.5 py-1 text-[11px] font-extrabold">🙈 Contact for pricing — request a quote</span>
+            : negotiable
             ? <span className="inline-flex items-center gap-1 rounded-full bg-[#F5A623]/15 text-[#a9690b] px-2.5 py-1 text-[11px] font-extrabold">💬 Negotiable price — make an offer</span>
             : <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 text-gray-500 px-2.5 py-1 text-[11px] font-bold">🔒 Fixed price · final</span>}
         </div>
@@ -179,7 +188,7 @@ export function ProductBuyArea({
                 </div>
                 <p className="text-sm font-extrabold text-[#0B1F4D]">{UNIT_LABEL[u]}</p>
                 <p className="text-[11px] text-gray-400 leading-tight mb-1">{UNIT_SUB[u]}</p>
-                <p className="text-xs font-bold" style={{ color: UNIT_ACCENT[u] }}>{fmt(unitPrice(product, u, retail))}</p>
+                {!priceOnRequest && <p className="text-xs font-bold" style={{ color: UNIT_ACCENT[u] }}>{fmt(unitPrice(product, u, retail))}</p>}
               </button>
             )
           })}
@@ -204,14 +213,21 @@ export function ProductBuyArea({
           {pallets > 0 && <div><p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">Pallets</p><p className="text-lg font-extrabold text-[#0B1F4D]">{num(pallets)}</p></div>}
           {cartons > 0 && <div><p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">Boxes</p><p className="text-lg font-extrabold text-[#0B1F4D]">{num(cartons)}</p></div>}
           <div><p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">Units</p><p className="text-lg font-extrabold text-[#0B1F4D]">{num(pieces)}</p></div>
-          <div><p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">Total</p><p className="text-lg font-extrabold" style={{ color: UNIT_ACCENT[unit] }}>{fmt(lineTotal)}</p></div>
+          {!priceOnRequest && <div><p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">Total</p><p className="text-lg font-extrabold" style={{ color: UNIT_ACCENT[unit] }}>{fmt(lineTotal)}</p></div>}
         </div>
 
         {/* Action */}
-        <button type="button" onClick={addToCart}
-          className={`w-full flex items-center justify-center gap-2 rounded-xl px-4 py-3.5 text-sm font-bold transition-all ${added ? 'bg-green-50 text-green-700 border-2 border-green-500' : 'bg-[#0B1F4D] text-white hover:bg-[#162d6e] hover:shadow-lg'}`}>
-          {added ? <><Check className="w-4 h-4" /> Added to cart!</> : <><ShoppingCart className="w-4 h-4" /> Add to cart · {fmt(lineTotal)}</>}
-        </button>
+        {priceOnRequest ? (
+          <button type="button" onClick={requestQuote}
+            className="w-full flex items-center justify-center gap-2 rounded-xl px-4 py-3.5 text-sm font-bold bg-violet-600 text-white hover:bg-violet-700 hover:shadow-lg transition-all">
+            <FileText className="w-4 h-4" /> Request price / quote
+          </button>
+        ) : (
+          <button type="button" onClick={addToCart}
+            className={`w-full flex items-center justify-center gap-2 rounded-xl px-4 py-3.5 text-sm font-bold transition-all ${added ? 'bg-green-50 text-green-700 border-2 border-green-500' : 'bg-[#0B1F4D] text-white hover:bg-[#162d6e] hover:shadow-lg'}`}>
+            {added ? <><Check className="w-4 h-4" /> Added to cart!</> : <><ShoppingCart className="w-4 h-4" /> Add to cart · {fmt(lineTotal)}</>}
+          </button>
+        )}
         {negotiable && (
           <button type="button" onClick={makeOffer}
             className="w-full flex items-center justify-center gap-1.5 rounded-xl border-2 border-[#F5A623] text-[#a9690b] px-4 py-3 text-sm font-bold hover:bg-[#F5A623]/5 transition-colors">
