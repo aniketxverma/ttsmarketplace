@@ -12,7 +12,7 @@ export async function GET(
     .from('products')
     .select(
       `*,
-      suppliers(legal_name, trade_name, logo_url, reliability_tier, status, description, country_id, city_id),
+      suppliers!supplier_id(legal_name, trade_name, logo_url, reliability_tier, status, description, country_id, city_id),
       categories(id, name, slug, parent_id),
       product_images(url, sort_order)`
     )
@@ -38,7 +38,7 @@ export async function PATCH(
 
   const { data: product } = await supabase
     .from('products')
-    .select('supplier_id, suppliers(owner_id)')
+    .select('supplier_id, suppliers!supplier_id(owner_id)')
     .eq('id', params.id)
     .single()
 
@@ -72,7 +72,7 @@ export async function DELETE(
   // Verify the caller owns this product (or is admin).
   const { data: product } = await supabase
     .from('products')
-    .select('id, suppliers(owner_id)')
+    .select('id, suppliers!supplier_id(owner_id)')
     .eq('id', params.id)
     .single()
   if (!product) return NextResponse.json({ error: 'Not found' }, { status: 404 })

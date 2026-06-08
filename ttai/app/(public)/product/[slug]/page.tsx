@@ -66,7 +66,7 @@ export default async function ProductPage({ params, searchParams }: { params: { 
     sell_piece, sell_box, sell_pallet, sell_truck, price_negotiable, hs_code, catalogue_url, video_url,
     product_images(url, sort_order, image_role),
     categories(name, slug),
-    suppliers(
+    suppliers!supplier_id(
       id, trade_name, legal_name, brand_slug, logo_url, tagline,
       phone, whatsapp, business_email, reliability_tier,
       years_experience, employee_count, countries_served,

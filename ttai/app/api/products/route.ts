@@ -17,7 +17,7 @@ export async function GET(request: Request) {
     .from('products')
     .select(
       `*,
-      suppliers!inner(legal_name, trade_name, logo_url, reliability_tier, status),
+      suppliers!supplier_id!inner(legal_name, trade_name, logo_url, reliability_tier, status),
       categories(name, slug),
       product_images(url, sort_order)`,
       { count: 'exact' }

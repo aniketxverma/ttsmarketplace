@@ -27,7 +27,7 @@ export default async function FamilyPage({
     .select(`
       id, name, slug, price_cents, retail_price_cents, currency_code, min_order_qty, marketplace_context, vat_rate,
       supplier_id, category_id, product_line,
-      suppliers!inner(legal_name, trade_name, brand_slug, reliability_tier, status),
+      suppliers!supplier_id!inner(legal_name, trade_name, brand_slug, reliability_tier, status),
       categories(name, slug),
       product_images(url, sort_order)
     `)

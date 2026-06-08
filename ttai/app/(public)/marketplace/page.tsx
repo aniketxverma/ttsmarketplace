@@ -74,7 +74,7 @@ export default async function MarketplacePage({
     .select(
       `id, name, slug, price_cents, retail_price_cents, currency_code, min_order_qty, marketplace_context, vat_rate,
       supplier_id, category_id, product_line, is_family_cover,
-      suppliers!inner(legal_name, trade_name, reliability_tier, status),
+      suppliers!supplier_id!inner(legal_name, trade_name, reliability_tier, status),
       categories(name, slug),
       product_images(url, sort_order)`
     )
@@ -202,7 +202,7 @@ export default async function MarketplacePage({
     const catIds = [activeCat.id, ...allCats.filter((c) => c.parent_id === activeCat.id).map((c) => c.id)]
     const { data: supRows } = await supabase
       .from('products')
-      .select('supplier_id, suppliers!inner(id, legal_name, trade_name, logo_url, reliability_tier, brand_slug, tagline, status)')
+      .select('supplier_id, suppliers!supplier_id!inner(id, legal_name, trade_name, logo_url, reliability_tier, brand_slug, tagline, status)')
       .eq('is_published', true)
       .eq('suppliers.status', 'ACTIVE')
       .in('category_id', catIds)

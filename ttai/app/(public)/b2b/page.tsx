@@ -117,7 +117,7 @@ export default async function B2BPage({
     .from('products')
     .select(
       `id, name, slug, price_cents, currency_code, min_order_qty, marketplace_context, vat_rate,
-      suppliers!inner(legal_name, trade_name, reliability_tier, status),
+      suppliers!supplier_id!inner(legal_name, trade_name, reliability_tier, status),
       product_images(url, sort_order)`,
       { count: 'exact' }
     )

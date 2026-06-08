@@ -22,7 +22,7 @@ export default async function RetailProductPage({
     .from('products')
     .select(
       `*,
-      suppliers(id, legal_name, trade_name, reliability_tier, status),
+      suppliers!supplier_id(id, legal_name, trade_name, reliability_tier, status),
       categories(name, slug),
       product_images(url, sort_order)`
     )
