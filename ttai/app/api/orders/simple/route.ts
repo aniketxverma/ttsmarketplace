@@ -94,7 +94,7 @@ export async function POST(req: NextRequest) {
   const supplierIds = Array.from(supplierGroups.keys())
   const { data: suppliers } = await (admin
     .from('suppliers') as any)
-    .select('id, legal_name, trade_name, countries(iso_code)')
+    .select('*, countries(iso_code)')
     .in('id', supplierIds)
     .eq('status', 'ACTIVE')
 
@@ -111,8 +111,21 @@ export async function POST(req: NextRequest) {
       return sum + linePrice(product, item) * item.quantity
     }, 0)
 
-    // ── Tax determination (B2C / B2B · country · VAT number · EU reverse charge) ──
     const supplier = supplierById.get(supplierId)
+
+    // ── Minimum order value: the buyer can mix products to reach it ──
+    const minVal = supplier?.min_order_value_cents ?? 0
+    if (minVal > 0 && subtotalCents < minVal) {
+      const cur = products.find(p => p.supplier_id === supplierId)?.currency_code ?? 'EUR'
+      const f = (c: number) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: cur }).format(c / 100)
+      const who = supplier?.trade_name ?? supplier?.legal_name ?? 'This supplier'
+      return NextResponse.json(
+        { error: `${who} requires a minimum order of ${f(minVal)}. Your order is ${f(subtotalCents)} — add ${f(minVal - subtotalCents)} more from this supplier.` },
+        { status: 400 },
+      )
+    }
+
+    // ── Tax determination (B2C / B2B · country · VAT number · EU reverse charge) ──
     const sellerCountry = supplier?.countries?.iso_code ?? 'ES'
     const reverseChargeCategory = supplierItems.some((it: any) => {
       const slug = products.find(p => p.id === it.productId)?.categories?.slug?.toLowerCase()

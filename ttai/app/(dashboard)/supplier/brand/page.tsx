@@ -23,6 +23,12 @@ export default async function SupplierBrandPage() {
 
   if (!supplier) redirect('/supplier')
 
+  // Minimum order value (defensive — column may not be migrated yet).
+  try {
+    const { data: mv } = await (supabase.from('suppliers') as any).select('min_order_value_cents').eq('id', supplier.id).single()
+    if (mv) supplier.min_order_value_cents = mv.min_order_value_cents
+  } catch { /* not migrated */ }
+
   // Fetch gallery and certifications
   const [galleryRes, certsRes] = await Promise.all([
     supabase

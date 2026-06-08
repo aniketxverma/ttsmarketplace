@@ -18,6 +18,7 @@ interface Supplier {
   employee_count: number | null
   years_experience: number | null
   countries_served: number | null
+  min_order_value_cents?: number | null
   website: string | null
   phone: string | null
   whatsapp: string | null
@@ -133,6 +134,7 @@ export function BrandProfileEditor({ supplier, gallery: initialGallery, certific
     employee_count:  supplier.employee_count?.toString() ?? '',
     years_experience: supplier.years_experience?.toString() ?? '',
     countries_served: supplier.countries_served?.toString() ?? '',
+    min_order_value: supplier.min_order_value_cents ? (supplier.min_order_value_cents / 100).toString() : '',
     website:         supplier.website ?? '',
     phone:           supplier.phone ?? '',
     whatsapp:        supplier.whatsapp ?? '',
@@ -185,6 +187,7 @@ export function BrandProfileEditor({ supplier, gallery: initialGallery, certific
       employee_count:  form.employee_count ? parseInt(form.employee_count) : null,
       years_experience: form.years_experience ? parseInt(form.years_experience) : null,
       countries_served: form.countries_served ? parseInt(form.countries_served) : null,
+      min_order_value_cents: form.min_order_value && parseFloat(form.min_order_value) > 0 ? Math.round(parseFloat(form.min_order_value) * 100) : 0,
       website:         form.website || null,
       phone:           form.phone || null,
       whatsapp:        form.whatsapp || null,
@@ -315,6 +318,9 @@ export function BrandProfileEditor({ supplier, gallery: initialGallery, certific
               </Field>
               <Field label="Years of Experience">
                 <input className={INPUT} type="number" value={form.years_experience} onChange={(e) => set('years_experience', e.target.value)} placeholder="15" min="0" />
+              </Field>
+              <Field label="Minimum order value (€)">
+                <input className={INPUT} type="number" step="1" min="0" value={form.min_order_value} onChange={(e) => set('min_order_value', e.target.value)} placeholder="e.g. 5000 — leave blank for none" />
               </Field>
               <Field label="Employee Count">
                 <input className={INPUT} type="number" value={form.employee_count} onChange={(e) => set('employee_count', e.target.value)} placeholder="50" min="1" />

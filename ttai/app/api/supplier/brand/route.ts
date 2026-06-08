@@ -16,6 +16,7 @@ const ALLOWED = new Set([
   'website', 'phone', 'whatsapp', 'business_email', 'working_hours', 'google_map_link',
   'instagram', 'facebook', 'linkedin', 'twitter', 'youtube',
   'seo_title', 'seo_description', 'seo_keywords', 'og_image', 'section_visibility',
+  'min_order_value_cents',
 ])
 
 export async function POST(req: NextRequest) {
@@ -35,7 +36,14 @@ export async function POST(req: NextRequest) {
     .from('suppliers').select('id').eq('owner_id', user.id).maybeSingle()
   if (!sup) return NextResponse.json({ error: 'No supplier profile found' }, { status: 404 })
 
-  const { error } = await (admin.from('suppliers') as any).update(payload).eq('id', (sup as any).id)
+  let { error } = await (admin.from('suppliers') as any).update(payload).eq('id', (sup as any).id)
+  // Resilience: if a recently-added column isn't migrated yet, drop it and retry.
+  if (error && /min_order_value_cents|column|does not exist/i.test(error.message)) {
+    delete payload.min_order_value_cents
+    if (Object.keys(payload).length) {
+      ;({ error } = await (admin.from('suppliers') as any).update(payload).eq('id', (sup as any).id))
+    } else error = null
+  }
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
   return NextResponse.json({ ok: true })
