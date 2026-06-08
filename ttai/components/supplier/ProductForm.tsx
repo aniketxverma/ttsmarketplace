@@ -186,6 +186,12 @@ export function ProductForm({
 
     const supabase = createClient()
 
+    // If a recently-added column (e.g. discount %) isn't migrated yet, drop those
+    // keys and retry so saving still works.
+    const OPTIONAL_KEYS = ['box_discount_pct', 'pallet_discount_pct', 'truck_discount_pct']
+    const stripOptional = (obj: any) => { const o = { ...obj }; OPTIONAL_KEYS.forEach(k => delete o[k]); return o }
+    const isMissingColumn = (msg?: string | null) => !!msg && /column|does not exist|discount_pct/i.test(msg)
+
     // Only one product per line can be the family cover — clear the flag on siblings.
     async function dedupeCover(currentId: string | null) {
       const line = form.productLine.trim()
@@ -199,12 +205,12 @@ export function ProductForm({
     }
 
     if (mode === 'create') {
-      const { data: newProduct, error: insertError } = await supabase
-        .from('products')
-        .insert({ ...payload, supplier_id: supplierId })
-        .select('id')
-        .single()
-      if (insertError || !newProduct) { setError(insertError?.message ?? 'Insert failed'); setLoading(false); return }
+      let ins = await supabase.from('products').insert({ ...payload, supplier_id: supplierId }).select('id').single()
+      if (ins.error && isMissingColumn(ins.error.message)) {
+        ins = await supabase.from('products').insert({ ...stripOptional(payload), supplier_id: supplierId }).select('id').single()
+      }
+      const newProduct = ins.data
+      if (ins.error || !newProduct) { setError(ins.error?.message ?? 'Insert failed'); setLoading(false); return }
       await dedupeCover(newProduct.id)
 
       // Upload staged images via the server endpoint (admin → brand-assets bucket)
@@ -218,8 +224,11 @@ export function ProductForm({
         await (supabase.from('product_images') as any).insert({ product_id: newProduct.id, url: upJson.url, sort_order: i, image_role: pendingRoles[i] || null })
       }
     } else if (mode === 'edit' && productId) {
-      const { error: updateError } = await supabase.from('products').update(payload).eq('id', productId)
-      if (updateError) { setError(updateError.message); setLoading(false); return }
+      let upd = await supabase.from('products').update(payload).eq('id', productId)
+      if (upd.error && isMissingColumn(upd.error.message)) {
+        upd = await supabase.from('products').update(stripOptional(payload)).eq('id', productId)
+      }
+      if (upd.error) { setError(upd.error.message); setLoading(false); return }
       await dedupeCover(productId)
     }
 

@@ -49,7 +49,10 @@ export default async function ProductPage({ params, searchParams }: { params: { 
   const { t } = await useServerTranslations()
   const supabase = createClient()
 
-  const PRODUCT_SELECT = `
+  // Optional columns that may not be migrated yet — kept separate so a schema lag
+  // never 404s the whole product page (we retry without them on error).
+  const OPTIONAL_COLS = 'box_discount_pct, pallet_discount_pct, truck_discount_pct'
+  const buildSelect = (withOptional: boolean) => `
     id, name, slug, description, price_cents, retail_price_cents, currency_code,
     min_order_qty, min_box_qty, min_pallet_qty, min_truck_qty,
     stock_qty, is_published, marketplace_context, supplier_id, product_line,
@@ -59,7 +62,7 @@ export default async function ProductPage({ params, searchParams }: { params: { 
     cartons_per_pallet, pallet_weight_kg, pallet_dimensions, pallet_height_cm,
     pallets_per_truck, truck_capacity, exw_price_cents,
     price_per_box_cents, price_per_pallet_cents, price_per_truck_cents,
-    box_discount_pct, pallet_discount_pct, truck_discount_pct,
+    ${withOptional ? OPTIONAL_COLS + ',' : ''}
     sell_piece, sell_box, sell_pallet, sell_truck, price_negotiable, hs_code, catalogue_url, video_url,
     product_images(url, sort_order, image_role),
     categories(name, slug),
@@ -71,23 +74,22 @@ export default async function ProductPage({ params, searchParams }: { params: { 
     )
   `
 
-  // Try slug lookup first
-  let { data: product } = await (supabase
-    .from('products') as any)
-    .select(PRODUCT_SELECT)
-    .eq('slug', params.slug)
-    .eq('is_published', true)
-    .single() as { data: any }
+  // Fetch by slug or id, retrying without the optional columns if they don't exist.
+  async function loadProduct(by: 'slug' | 'id', value: string) {
+    let res = await (supabase.from('products') as any)
+      .select(buildSelect(true)).eq(by, value).eq('is_published', true).single()
+    if (res.error && /column|does not exist|discount_pct/i.test(res.error.message)) {
+      res = await (supabase.from('products') as any)
+        .select(buildSelect(false)).eq(by, value).eq('is_published', true).single()
+    }
+    return res.data as any
+  }
+
+  let product = await loadProduct('slug', params.slug)
 
   // Fallback: treat the param as a UUID (id) — handles old links or brand-page ID links
   if (!product) {
-    const { data: byId } = await (supabase
-      .from('products') as any)
-      .select(PRODUCT_SELECT)
-      .eq('id', params.slug)
-      .eq('is_published', true)
-      .single() as { data: any }
-    product = byId
+    product = await loadProduct('id', params.slug)
   }
 
   if (!product) notFound()

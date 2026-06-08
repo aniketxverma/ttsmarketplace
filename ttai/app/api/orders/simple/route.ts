@@ -45,19 +45,20 @@ export async function POST(req: NextRequest) {
   const buyerCountry = (shippingAddress.country || buyer?.tax_country || '').toUpperCase()
   const taxConfig = await getTaxConfig()
 
-  // Fetch all products in one query
+  // Fetch all products in one query (retry without optional discount cols if not migrated)
   const productIds = items.map(i => i.productId)
-  const { data: products } = await (admin
-    .from('products') as any)
-    .select(`id, name, price_cents, retail_price_cents, currency_code, vat_rate, supplier_id, stock_qty, marketplace_context,
+  const prodSelect = (withDisc: boolean) => `id, name, price_cents, retail_price_cents, currency_code, vat_rate, supplier_id, stock_qty, marketplace_context,
       min_order_qty, min_box_qty, min_pallet_qty, min_truck_qty,
       units_per_carton, cartons_per_pallet, pallets_per_truck,
       price_per_box_cents, price_per_pallet_cents, price_per_truck_cents,
-      box_discount_pct, pallet_discount_pct, truck_discount_pct,
+      ${withDisc ? 'box_discount_pct, pallet_discount_pct, truck_discount_pct,' : ''}
       sell_piece, sell_box, sell_pallet, sell_truck,
-      categories(slug)`)
-    .in('id', productIds)
-    .eq('is_published', true) as { data: any[] | null }
+      categories(slug)`
+  let prodRes = await (admin.from('products') as any).select(prodSelect(true)).in('id', productIds).eq('is_published', true)
+  if (prodRes.error && /column|does not exist|discount_pct/i.test(prodRes.error.message)) {
+    prodRes = await (admin.from('products') as any).select(prodSelect(false)).in('id', productIds).eq('is_published', true)
+  }
+  const products = prodRes.data as any[] | null
 
   // Server-authoritative price for a cart line (never trusts the client price).
   const linePrice = (product: any, item: { unit?: string; retail?: boolean }) =>
