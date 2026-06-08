@@ -2,8 +2,75 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import ExcelJS from 'exceljs'
+import JSZip from 'jszip'
 
 export const maxDuration = 120
+
+/**
+ * Extract "Place in Cell" images (Excel rich-data / cell images). exceljs only
+ * reads floating drawing images, so these are parsed straight from the xlsx zip.
+ * Each maps to an exact cell → row. Chain:
+ *   cell.vm → valueMetadata bk → futureMetadata(XLRICHVALUE) rvb.i → rich value
+ *           → richValueRel → relationship → xl/media/imageN
+ */
+async function extractInCellImages(zipBuf: Buffer, sheetName: string): Promise<{ row: number; buffer: Buffer; ext: string }[]> {
+  let zip: JSZip
+  try { zip = await JSZip.loadAsync(zipBuf) } catch { return [] }
+  const read = async (p: string) => { const f = zip.file(p); return f ? await f.async('string') : null }
+  const strip = (t: string) => 'xl/' + t.replace(/^(\.\.\/)+/, '')
+
+  const relsXml = await read('xl/richData/_rels/richValueRel.xml.rels')
+  if (!relsXml) return [] // no rich-data images in this workbook
+
+  const rIdToMedia: Record<string, string> = {}
+  for (const m of Array.from(relsXml.matchAll(/Id="(rId\d+)"[^>]*Target="([^"]+)"/g))) rIdToMedia[m[1]] = strip(m[2])
+
+  const rvrXml = (await read('xl/richData/richValueRel.xml')) ?? ''
+  const relIndexToRId = Array.from(rvrXml.matchAll(/r:id="(rId\d+)"/g)).map((m) => m[1])
+
+  const rvXml = (await read('xl/richData/rdrichvalue.xml')) ?? ''
+  const rvToRelIndex = (rvXml.match(/<rv\b[\s\S]*?<\/rv>/g) || []).map((rv) => {
+    const v = Array.from(rv.matchAll(/<v>([^<]*)<\/v>/g)).map((x) => parseInt(x[1], 10)).find((n) => !isNaN(n))
+    return v ?? 0
+  })
+
+  const metaXml = (await read('xl/metadata.xml')) ?? ''
+  const fmBlock = metaXml.match(/<futureMetadata[^>]*XLRICHVALUE[\s\S]*?<\/futureMetadata>/)?.[0] ?? ''
+  const fmToRv = (fmBlock.match(/<bk>[\s\S]*?<\/bk>/g) || []).map((bk) => {
+    const i = bk.match(/rvb\s+i="(\d+)"/); return i ? parseInt(i[1], 10) : 0
+  })
+  const vmBlock = metaXml.match(/<valueMetadata[\s\S]*?<\/valueMetadata>/)?.[0] ?? ''
+  const vmToFm = (vmBlock.match(/<bk>[\s\S]*?<\/bk>/g) || []).map((bk) => {
+    const v = bk.match(/<rc[^>]*\sv="(\d+)"/); return v ? parseInt(v[1], 10) : 0
+  })
+
+  // locate this sheet's xml path via workbook rels
+  const wbXml = (await read('xl/workbook.xml')) ?? ''
+  const wbRels = (await read('xl/_rels/workbook.xml.rels')) ?? ''
+  const ridToTarget: Record<string, string> = {}
+  for (const m of Array.from(wbRels.matchAll(/Id="(rId\d+)"[^>]*Target="([^"]+)"/g))) ridToTarget[m[1]] = m[2]
+  let sheetPath = ''
+  for (const m of Array.from(wbXml.matchAll(/<sheet[^>]*name="([^"]+)"[^>]*r:id="(rId\d+)"/g))) {
+    if (m[1] === sheetName) { sheetPath = strip(ridToTarget[m[2]] || ''); break }
+  }
+  if (!sheetPath) {
+    const first = Object.values(ridToTarget).find((t) => /worksheets\/sheet/i.test(t))
+    sheetPath = first ? strip(first) : 'xl/worksheets/sheet1.xml'
+  }
+  const sheetXml = (await read(sheetPath)) ?? ''
+
+  const out: { row: number; buffer: Buffer; ext: string }[] = []
+  for (const m of Array.from(sheetXml.matchAll(/<c\s+r="[A-Z]+(\d+)"[^>]*\bvm="(\d+)"/g))) {
+    const row = parseInt(m[1], 10)
+    const vm = parseInt(m[2], 10)
+    const rId = relIndexToRId[rvToRelIndex[fmToRv[vmToFm[vm - 1] ?? 0] ?? 0] ?? 0]
+    const mediaPath = rId ? rIdToMedia[rId] : undefined
+    const f = mediaPath ? zip.file(mediaPath) : null
+    if (!f) continue
+    out.push({ row, buffer: await f.async('nodebuffer'), ext: (mediaPath!.split('.').pop() || 'png').toLowerCase() })
+  }
+  return out
+}
 
 /** Header label → product field, by fuzzy match. First match wins. */
 const FIELD_PATTERNS: { field: string; re: RegExp }[] = [
@@ -52,9 +119,10 @@ export async function POST(req: NextRequest) {
   const { data: blob, error: dlErr } = await admin.storage.from('brand-assets').download(storagePath)
   if (dlErr || !blob) return NextResponse.json({ error: 'Could not read the uploaded file from storage' }, { status: 400 })
 
+  const fileBuf = Buffer.from(await blob.arrayBuffer())
   const wb = new ExcelJS.Workbook()
   try {
-    await wb.xlsx.load(Buffer.from(await blob.arrayBuffer()) as any)
+    await wb.xlsx.load(fileBuf as any)
   } catch {
     return NextResponse.json({ error: 'Could not read this file. Please upload a valid .xlsx workbook.' }, { status: 400 })
   }
@@ -108,7 +176,17 @@ export async function POST(req: NextRequest) {
   }
   if (rows.length === 0) return NextResponse.json({ error: 'No product rows found under the header.', sheets }, { status: 422 })
 
-  // 3) Extract embedded images → upload → attach to the nearest product row.
+  // Upload one image buffer to storage and attach its public URL to a row.
+  async function uploadImg(buffer: Buffer, extRaw: string, target: Row) {
+    const ext = (extRaw || 'png').replace(/[^a-z0-9]/gi, '').toLowerCase() || 'png'
+    const path = `products/${user!.id}/xlsx-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`
+    const { error } = await admin.storage.from('brand-assets')
+      .upload(path, buffer, { contentType: `image/${ext === 'jpg' ? 'jpeg' : ext}`, upsert: true })
+    if (error) return
+    target.images.push(admin.storage.from('brand-assets').getPublicUrl(path).data.publicUrl)
+  }
+
+  // 3) Extract embedded floating images → upload → attach to the nearest product row.
   const images = (typeof (ws as any).getImages === 'function' ? (ws as any).getImages() : []) as any[]
   for (const img of images) {
     const anchorRow = Math.round((img?.range?.tl?.nativeRow ?? 0)) + 1 // 0-based → 1-based
@@ -123,12 +201,16 @@ export async function POST(req: NextRequest) {
     if (!best || bestDist > 6) continue
     const media: any = wb.getImage?.(Number(img.imageId))
     if (!media?.buffer) continue
-    const ext = (media.extension || 'png').replace(/[^a-z0-9]/gi, '') || 'png'
-    const path = `products/${user.id}/xlsx-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`
-    const { error } = await admin.storage.from('brand-assets').upload(path, media.buffer, { contentType: `image/${ext}`, upsert: true })
-    if (error) continue
-    best.images.push(admin.storage.from('brand-assets').getPublicUrl(path).data.publicUrl)
+    await uploadImg(media.buffer, media.extension || 'png', best)
   }
+
+  // 3b) "Place in Cell" (rich-data) images — exact cell → row mapping.
+  try {
+    for (const im of await extractInCellImages(fileBuf, ws.name)) {
+      const target = rows.find((r) => r.excelRow === im.row)
+      if (target) await uploadImg(im.buffer, im.ext, target)
+    }
+  } catch { /* best effort — ignore rich-data parse failures */ }
 
   return NextResponse.json({
     sheets, sheet: ws.name, headerRow: headerRowIdx,
