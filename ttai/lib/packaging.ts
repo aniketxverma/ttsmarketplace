@@ -94,6 +94,17 @@ export function pricePerPiece(p: PackagingProduct, u: PurchaseUnit, retail = fal
 /** True for the consumer / retail tier (sold by the piece). */
 export const isRetailUnit = (u: PurchaseUnit) => u === 'piece'
 
+/**
+ * Cost basis used for the protected retail price: the BOX price per piece
+ * (what the article costs when bought by the box) — retail = this + margin.
+ * Falls back to the base wholesale price per piece when there's no box.
+ */
+export function retailCostBaseCents(p: PackagingProduct): number {
+  const boxPieces = piecesIn(p, 'box')
+  if (boxPieces > 0) return Math.round(unitPrice(p, 'box') / boxPieces)
+  return p.price_cents
+}
+
 /** Which purchase units the product can actually be bought in. */
 export function availableUnits(p: PackagingProduct): PurchaseUnit[] {
   const out: PurchaseUnit[] = []

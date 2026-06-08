@@ -97,6 +97,18 @@ export function ProductForm({
     })
   }
 
+  // Cost basis for the protected retail price = BOX price per piece (else base price).
+  function retailCostBasisCents(): number {
+    const baseCents = Math.round((parseFloat(form.priceDisplay) || 0) * 100)
+    const boxPieces = parseInt(form.unitsPerCarton) || 0
+    if (boxPieces <= 0) return baseCents
+    const disc = parseFloat(form.boxDiscountPct) || 0
+    const boxTotal = form.pricePerBox && parseFloat(form.pricePerBox) > 0
+      ? Math.round(parseFloat(form.pricePerBox) * 100)
+      : Math.round(baseCents * boxPieces * (disc > 0 ? 1 - disc / 100 : 1))
+    return boxTotal > 0 ? Math.round(boxTotal / boxPieces) : baseCents
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
@@ -113,12 +125,12 @@ export function ProductForm({
     const priceCents = Math.round(priceFloat * 100)
 
     // ── Retail price protection: never below wholesale + minimum margin ──────
-    const floorRetail = minRetailCents(priceCents, minMarginPct)
+    const floorRetail = minRetailCents(retailCostBasisCents(), minMarginPct)
     const enteredRetail = form.retailPriceDisplay && parseFloat(form.retailPriceDisplay) > 0
       ? Math.round(parseFloat(form.retailPriceDisplay) * 100) : 0
     if (enteredRetail > 0 && enteredRetail < floorRetail) {
       const fmtCur = (c: number) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: form.currencyCode }).format(c / 100)
-      setError(`End-user price ${fmtCur(enteredRetail)} is below the minimum ${fmtCur(floorRetail)} (wholesale + ${minMarginPct}%). Set it equal or higher.`)
+      setError(`End-user price ${fmtCur(enteredRetail)} is below the minimum ${fmtCur(floorRetail)} (box price + ${minMarginPct}%). Set it equal or higher.`)
       setLoading(false); return
     }
     // Empty / valid → store the protected price (auto-calculated to the floor when blank).
@@ -391,7 +403,7 @@ export function ProductForm({
             <p className="text-xs text-gray-400">The base used to <strong>auto-calculate</strong> box/pallet/truck (× pieces, minus any discount). You can still type an exact price per tier below to override it.</p>
           </div>
           {(() => {
-            const wholesaleCents = Math.round((parseFloat(form.priceDisplay) || 0) * 100)
+            const wholesaleCents = retailCostBasisCents()
             const floor = minRetailCents(wholesaleCents, minMarginPct)
             const entered = Math.round((parseFloat(form.retailPriceDisplay) || 0) * 100)
             const effective = entered > 0 ? Math.max(entered, floor) : floor
@@ -412,7 +424,7 @@ export function ProductForm({
                 {wholesaleCents > 0 ? (
                   <div className="text-xs space-y-0.5">
                     <p className={below ? 'text-red-600 font-bold' : 'text-gray-500'}>
-                      Minimum retail: <span className="font-bold">{fmtCur(floor)}</span> (wholesale + {minMarginPct}%)
+                      Minimum retail: <span className="font-bold">{fmtCur(floor)}</span> (box price/piece <span className="font-semibold">{fmtCur(wholesaleCents)}</span> + {minMarginPct}%)
                       {below && ' — your price is below this and will be rejected.'}
                     </p>
                     <p className="text-gray-400">

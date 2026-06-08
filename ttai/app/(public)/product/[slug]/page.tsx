@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { Crown, ShieldCheck, Award, Store, ChevronLeft, Package, Users, ArrowRight } from 'lucide-react'
 import { ProductBuyArea } from './ProductBuyArea'
 import { ModelSelector } from './ModelSelector'
-import { unitsPerPallet, unitsPerTruck, cartonsPerTruck, unitsForShop, intersectUnits } from '@/lib/packaging'
+import { unitsPerPallet, unitsPerTruck, cartonsPerTruck, unitsForShop, intersectUnits, retailCostBaseCents } from '@/lib/packaging'
 import { chainLevel, unitsForRole } from '@/lib/business-chain'
 import { useServerTranslations, getLocale } from '@/lib/i18n/server'
 import { translateMany } from '@/lib/i18n/content'
@@ -133,9 +133,9 @@ export default async function ProductPage({ params, searchParams }: { params: { 
   // Effective units = shop constraint ∩ role constraint (graceful fallback in the panel).
   const shopUnits = intersectUnits(unitsForShop(searchParams.shop), roleUnits)
 
-  // Retail price protection: never display an end-user price below wholesale + min margin.
+  // Retail price protection: never display an end-user price below the box cost + min margin.
   const pricing = await getPricingConfig()
-  product.retail_price_cents = protectedRetailCents(product.retail_price_cents, product.price_cents, pricing.minMarginPct)
+  product.retail_price_cents = protectedRetailCents(product.retail_price_cents, retailCostBaseCents(product), pricing.minMarginPct)
 
   // Model selector (Phase 3): sibling products in the same product line.
   let models: { id: string; slug: string; name: string; model_name: string | null }[] = []
