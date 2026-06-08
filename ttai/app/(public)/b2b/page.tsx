@@ -201,6 +201,7 @@ export default async function B2BPage({
                           supplier={supplier}
                           mainImageUrl={mainImg}
                           href={`/product/${p.slug ?? p.id}?shop=b2b`}
+                          shop="b2b"
                         />
                       )
                     })}

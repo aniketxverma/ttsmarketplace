@@ -55,8 +55,10 @@ export function ProductCard({ product, supplier, mainImageUrl, href, retail = fa
   const shopParam = isRetail ? 'online' : shop
   const finalHref = shopParam && !href.includes('?') ? `${href}?shop=${shopParam}` : href
 
-  // Retail storefront = single house brand (TTAIEMA); the real supplier is hidden.
-  const displayName = isRetail ? HOUSE_BRAND.name : (supplier.trade_name ?? supplier.legal_name)
+  // Trade Hub (b2b) sells under the single house brand (TTAIEMA); retail & business
+  // shop show the real supplier.
+  const houseBrand = shop === 'b2b'
+  const displayName = houseBrand ? HOUSE_BRAND.name : (supplier.trade_name ?? supplier.legal_name)
 
   return (
     <Link href={finalHref} className="group block">
@@ -99,7 +101,7 @@ export function ProductCard({ product, supplier, mainImageUrl, href, retail = fa
             )}
           </div>
 
-          {isRetail ? (
+          {houseBrand ? (
             <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold bg-purple-100 text-purple-800">
               <span className="w-1.5 h-1.5 rounded-full bg-purple-500" />{HOUSE_BRAND.badge}
             </span>

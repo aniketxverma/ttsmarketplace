@@ -23,8 +23,10 @@ export function FamilyCard({ family, retail = false, shop }: { family: Family; r
   const count = family.members.length
 
   const isRetail = retail || rep.marketplace_context === 'retail'
-  // Retail storefront = single house brand (TTAIEMA); the real supplier is hidden.
-  const displayName = isRetail ? HOUSE_BRAND.name : (supplier?.trade_name ?? supplier?.legal_name ?? '')
+  // Trade Hub (b2b) sells under the single house brand (TTAIEMA); retail & business
+  // shop show the real supplier.
+  const houseBrand = shop === 'b2b'
+  const displayName = houseBrand ? HOUSE_BRAND.name : (supplier?.trade_name ?? supplier?.legal_name ?? '')
   // Lowest price across the family → "from €x" (retail price in the online shop).
   const priceOf = (m: typeof rep) => isRetail ? (m.retail_price_cents ?? m.price_cents) : m.price_cents
   const minCents = Math.min(...family.members.map(priceOf))
@@ -77,7 +79,7 @@ export function FamilyCard({ family, retail = false, shop }: { family: Family; r
             </span>
           </div>
 
-          {isRetail ? (
+          {houseBrand ? (
             <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold bg-purple-100 text-purple-800">
               <span className="w-1.5 h-1.5 rounded-full bg-purple-500" />{HOUSE_BRAND.badge}
             </span>

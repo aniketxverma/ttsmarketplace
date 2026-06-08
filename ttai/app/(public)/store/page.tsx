@@ -93,13 +93,13 @@ export default async function StorePage({
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
             <div>
               <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 text-white/80 text-xs font-bold uppercase tracking-widest px-3 py-1.5 rounded-full mb-3">
-                <Zap className="w-3 h-3 text-[#F5A623]" />Official Store
+                <Zap className="w-3 h-3 text-[#F5A623]" />Direct from Suppliers
               </div>
               <h1 className="text-3xl sm:text-4xl font-extrabold text-white leading-tight mb-1">
-                TTAIEMA Store
+                TTAI Retail Store
               </h1>
               <p className="text-white/60 text-sm">
-                {count ?? 0} products · curated &amp; fulfilled by TTAIEMA
+                {count ?? 0} products · shop direct from verified suppliers
               </p>
             </div>
             <Link href="/marketplace"
@@ -111,7 +111,7 @@ export default async function StorePage({
           {/* Trust chips */}
           <div className="flex flex-wrap gap-4 mt-6">
             {[
-              { Icon: Shield, text: 'Curated by TTAIEMA' },
+              { Icon: Shield, text: 'Verified Suppliers' },
               { Icon: Truck,  text: 'Fast Shipping'      },
               { Icon: Star,   text: 'Quality Guaranteed' },
             ].map(({ Icon, text }) => (

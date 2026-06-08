@@ -125,6 +125,11 @@ export default async function ProductPage({ params, searchParams }: { params: { 
   const retailView = isConsumer || searchParams.shop === 'online'
     || (!searchParams.shop && product.marketplace_context === 'retail')
 
+  // House brand (Official TTAIEMA Store) — shown ONLY in the Trade Hub (B2B), where
+  // TTAIEMA is the seller of record. The Retail Store & Business Shop show the real
+  // supplier. (This only swaps the seller *display*, not pricing.)
+  const houseBrand = searchParams.shop === 'b2b'
+
   // Effective units = shop constraint ∩ role constraint (graceful fallback in the panel).
   const shopUnits = intersectUnits(unitsForShop(searchParams.shop), roleUnits)
 
@@ -168,11 +173,11 @@ export default async function ProductPage({ params, searchParams }: { params: { 
       {/* ── Breadcrumb ─────────────────────────────────────────────────────── */}
       <div className="border-b bg-white">
         <div className="max-w-6xl mx-auto px-4 sm:px-8 h-11 flex items-center gap-2 text-sm text-gray-400">
-          <Link href={retailView ? HOUSE_BRAND.href : '/marketplace'} className="hover:text-[#0B1F4D] transition-colors">
-            {retailView ? HOUSE_BRAND.name : t('product.breadcrumb')}
+          <Link href={houseBrand ? HOUSE_BRAND.href : '/marketplace'} className="hover:text-[#0B1F4D] transition-colors">
+            {houseBrand ? HOUSE_BRAND.name : t('product.breadcrumb')}
           </Link>
           <ChevronLeft className="w-3.5 h-3.5 rotate-180" />
-          {!retailView && supplier?.brand_slug && (
+          {!houseBrand && supplier?.brand_slug && (
             <>
               <Link href={`/brand/${supplier.brand_slug}`} className="hover:text-[#0B1F4D] transition-colors font-medium">
                 {supplier.trade_name ?? supplier.legal_name}
@@ -192,12 +197,12 @@ export default async function ProductPage({ params, searchParams }: { params: { 
           retail={retailView}
           shopUnits={shopUnits}
           negotiable={!!product.price_negotiable}
-          whatsapp={retailView ? null : (supplier?.whatsapp ?? null)}
-          supplierName={retailView ? HOUSE_BRAND.name : (supplier?.trade_name ?? supplier?.legal_name ?? '')}
+          whatsapp={houseBrand ? null : (supplier?.whatsapp ?? null)}
+          supplierName={houseBrand ? HOUSE_BRAND.name : (supplier?.trade_name ?? supplier?.legal_name ?? '')}
           imageUrl={images[0]?.url}
           categoryName={product.categories?.name ?? null}
-          supplierLabel={retailView ? HOUSE_BRAND.name : (supplier?.trade_name ?? supplier?.legal_name ?? null)}
-          supplierHref={retailView ? HOUSE_BRAND.href : (supplier ? (supplier.brand_slug ? `/brand/${supplier.brand_slug}` : '#') : null)}
+          supplierLabel={houseBrand ? HOUSE_BRAND.name : (supplier?.trade_name ?? supplier?.legal_name ?? null)}
+          supplierHref={houseBrand ? HOUSE_BRAND.href : (supplier ? (supplier.brand_slug ? `/brand/${supplier.brand_slug}` : '#') : null)}
           shipsFrom={[supplier?.cities?.name, supplier?.countries?.name].filter(Boolean).join(', ') || null}
           topSlot={models.length > 1 ? <ModelSelector models={models} currentId={product.id} shop={searchParams.shop} /> : null}
         >
@@ -229,7 +234,7 @@ export default async function ProductPage({ params, searchParams }: { params: { 
             )}
 
             {/* ── Secondary contact (WhatsApp / Call) — hidden in the retail store ── */}
-            {!retailView && (waHref || supplier?.phone) && (
+            {!houseBrand && (waHref || supplier?.phone) && (
               <div className="flex items-center gap-2 pt-1">
                 <span className="text-xs text-gray-400 font-medium shrink-0">{t('product.contact_wa').split(' ')[0]}:</span>
                 {waHref && (
@@ -254,7 +259,7 @@ export default async function ProductPage({ params, searchParams }: { params: { 
             )}
 
             {/* House-brand card (retail store) — the consumer buys from TTAIEMA */}
-            {retailView && (
+            {houseBrand && (
               <Link href={HOUSE_BRAND.href}
                 className="flex items-center gap-4 bg-white rounded-2xl border border-gray-100 shadow-sm p-4 hover:shadow-md hover:border-purple-300 transition-all group">
                 <div className="w-14 h-14 rounded-xl overflow-hidden border border-gray-100 flex-shrink-0 bg-gradient-to-br from-purple-600 to-violet-700 flex items-center justify-center">
@@ -274,7 +279,7 @@ export default async function ProductPage({ params, searchParams }: { params: { 
             )}
 
             {/* Supplier card (wholesale only) */}
-            {!retailView && supplier && (
+            {!houseBrand && supplier && (
               <Link href={`/brand/${supplier.brand_slug ?? supplier.id}`}
                 className="flex items-center gap-4 bg-white rounded-2xl border border-gray-100 shadow-sm p-4 hover:shadow-md hover:border-[#0B1F4D]/20 transition-all group">
                 {/* Logo */}
@@ -397,8 +402,8 @@ export default async function ProductPage({ params, searchParams }: { params: { 
         {more.length > 0 && (
           <div className="mt-14">
             <div className="flex items-center justify-between mb-5">
-              <h2 className="text-lg font-extrabold text-[#0B1F4D]">{t('product.more_from')} {retailView ? HOUSE_BRAND.name : supplier?.trade_name}</h2>
-              {retailView ? (
+              <h2 className="text-lg font-extrabold text-[#0B1F4D]">{t('product.more_from')} {houseBrand ? HOUSE_BRAND.name : supplier?.trade_name}</h2>
+              {houseBrand ? (
                 <Link href={HOUSE_BRAND.href}
                   className="text-sm font-bold text-[#0B1F4D] hover:underline flex items-center gap-1">
                   {t('product.view_all')} <ArrowRight className="w-3.5 h-3.5" />
@@ -412,7 +417,7 @@ export default async function ProductPage({ params, searchParams }: { params: { 
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
               {more.map((p: any) => (
-                <Link key={p.id} href={`/product/${p.slug ?? p.id}${retailView ? '?shop=online' : ''}`}
+                <Link key={p.id} href={`/product/${p.slug ?? p.id}${houseBrand ? '?shop=b2b' : ''}`}
                   className="bg-white rounded-xl border border-gray-100 overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all group">
                   <div className="relative aspect-square bg-[#F5F5F3]">
                     {p.thumb ? (
