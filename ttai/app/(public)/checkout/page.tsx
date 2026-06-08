@@ -26,6 +26,18 @@ export default function CheckoutPage() {
   const grandTotal = totalCents + vatCents
   const currency = items[0]?.currency_code ?? 'EUR'
 
+  // Per-supplier minimum order value — buyer can combine products to reach it.
+  const supGroups = new Map<string, { name: string; min: number; subtotal: number; currency: string }>()
+  for (const it of items) {
+    const sid = it.supplierId ?? `name:${it.supplierName}`
+    const g = supGroups.get(sid) ?? { name: it.supplierName, min: 0, subtotal: 0, currency: it.currency_code }
+    g.subtotal += it.price_cents * it.quantity
+    if (it.supplierMinCents) g.min = it.supplierMinCents
+    supGroups.set(sid, g)
+  }
+  const unmetMin = Array.from(supGroups.values()).filter((g) => g.min > 0 && g.subtotal < g.min)
+  const minBlocked = unmetMin.length > 0
+
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }))
   }
@@ -251,12 +263,24 @@ export default function CheckoutPage() {
                   </div>
                 </div>
 
+                {/* Minimum-order-value warnings */}
+                {unmetMin.length > 0 && (
+                  <div className="px-5 pb-1 space-y-2">
+                    {unmetMin.map((g, i) => (
+                      <div key={i} className="rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-2.5 text-xs text-amber-800">
+                        <span className="font-bold">{g.name}</span> requires a minimum order of {fmt(g.min, g.currency)}.
+                        Add <span className="font-bold">{fmt(g.min - g.subtotal, g.currency)}</span> more from this supplier to checkout.
+                      </div>
+                    ))}
+                  </div>
+                )}
+
                 {/* CTA */}
-                <div className="p-5 pt-0">
+                <div className="p-5 pt-2">
                   <button
                     type="submit"
-                    disabled={loading}
-                    className="w-full rounded-xl bg-[#F5A623] text-[#0B1F4D] py-4 text-sm font-extrabold hover:bg-[#fbb93a] hover:shadow-lg hover:shadow-[#F5A623]/30 transition-all duration-200 disabled:opacity-60 flex items-center justify-center gap-2"
+                    disabled={loading || minBlocked}
+                    className="w-full rounded-xl bg-[#F5A623] text-[#0B1F4D] py-4 text-sm font-extrabold hover:bg-[#fbb93a] hover:shadow-lg hover:shadow-[#F5A623]/30 transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
                     {loading ? (
                       <>

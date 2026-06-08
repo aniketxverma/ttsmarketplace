@@ -17,7 +17,7 @@ function formatPrice(cents: number, currency: string) {
 }
 
 /** One card representing a product family (several variants under one type). */
-export function FamilyCard({ family, retail = false, shop, brand, sponsored }: { family: Family; retail?: boolean; shop?: string; brand?: string | null; sponsored?: boolean }) {
+export function FamilyCard({ family, retail = false, shop, brand, sponsored, minOrderCents }: { family: Family; retail?: boolean; shop?: string; brand?: string | null; sponsored?: boolean; minOrderCents?: number }) {
   const rep = family.representative
   const supplier = rep.suppliers as { legal_name: string; trade_name: string | null; reliability_tier: ReliabilityTier } | undefined
   const count = family.members.length
@@ -92,6 +92,11 @@ export function FamilyCard({ family, retail = false, shop, brand, sponsored }: {
           ) : supplier ? (
             <span className={cn('inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium', TIER_STYLES[supplier.reliability_tier])}>
               {supplier.reliability_tier}
+            </span>
+          ) : null}
+          {!isRetail && minOrderCents ? (
+            <span className="ml-1.5 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+              Min. order {formatPrice(minOrderCents, rep.currency_code)}
             </span>
           ) : null}
         </div>

@@ -24,7 +24,7 @@ type Product = PackagingProduct & { id: string; name: string; slug: string; curr
 
 export function ProductBuyArea({
   product, images, retail = false, shopUnits, negotiable = false, brand = null, whatsapp, supplierName, imageUrl,
-  categoryName, supplierLabel, supplierHref, shipsFrom, topSlot, children,
+  categoryName, supplierLabel, supplierHref, shipsFrom, supplierId, supplierMinCents = 0, topSlot, children,
 }: {
   product: Product
   images: ProductImage[]
@@ -34,6 +34,8 @@ export function ProductBuyArea({
   brand?: string | null
   whatsapp?: string | null
   supplierName: string
+  supplierId?: string
+  supplierMinCents?: number
   imageUrl?: string
   categoryName?: string | null
   supplierLabel?: string | null
@@ -82,6 +84,7 @@ export function ProductBuyArea({
       productId: product.id, unit, unitLabel: UNIT_LABEL[unit], name: product.name,
       price_cents: unitPrice(product, unit, retail),
       currency_code: product.currency_code, imageUrl, supplierName, retail,
+      supplierId, supplierMinCents: supplierMinCents || undefined,
     }, qty)
     setAdded(true); setTimeout(() => setAdded(false), 2000)
   }
@@ -154,6 +157,13 @@ export function ProductBuyArea({
             ? <span className="inline-flex items-center gap-1 rounded-full bg-[#F5A623]/15 text-[#a9690b] px-2.5 py-1 text-[11px] font-extrabold">💬 Negotiable price — make an offer</span>
             : <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 text-gray-500 px-2.5 py-1 text-[11px] font-bold">🔒 Fixed price · final</span>}
         </div>
+
+        {supplierMinCents > 0 && (
+          <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-2.5 text-xs text-amber-800">
+            <Truck className="w-4 h-4 mt-0.5 flex-shrink-0" />
+            <p><span className="font-bold">Minimum order {fmt(supplierMinCents)}</span> from this supplier — combine any products &amp; quantities to reach it.</p>
+          </div>
+        )}
 
         {/* Unit option cards */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">

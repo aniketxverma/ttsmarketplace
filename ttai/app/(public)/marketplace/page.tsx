@@ -140,6 +140,16 @@ export default async function MarketplacePage({
     ? prodList.filter((p) => (p.brand_name ?? '').toLowerCase() === activeBrand.toLowerCase())
     : prodList
 
+  // Supplier minimum order value per product (defensive — column may not be migrated).
+  const supMin = new Map<string, number>()
+  try {
+    const sids = Array.from(new Set(prodList.map((p) => p.supplier_id).filter(Boolean)))
+    if (sids.length) {
+      const { data } = await (supabase.from('suppliers') as any).select('id, min_order_value_cents').in('id', sids)
+      for (const s of (data ?? []) as any[]) if (s.min_order_value_cents > 0) supMin.set(s.id, s.min_order_value_cents)
+    }
+  } catch { /* not migrated */ }
+
   // Phase 6 — active sponsored product ids (defensive).
   const sponsoredSet = new Set<string>()
   try {
@@ -335,13 +345,14 @@ export default async function MarketplacePage({
             const renderCard = (fam: typeof families[number]) => {
               const sponsored = isSponsoredFam(fam)
               const brand = (fam.representative as any).brand_name ?? null
-              if (fam.members.length > 1) return <FamilyCard key={fam.key} family={fam} shop="market" brand={brand} sponsored={sponsored} />
+              const minOrderCents = supMin.get((fam.representative as any).supplier_id) ?? 0
+              if (fam.members.length > 1) return <FamilyCard key={fam.key} family={fam} shop="market" brand={brand} sponsored={sponsored} minOrderCents={minOrderCents} />
               const p = fam.representative as any
               const supplier = p.suppliers as { legal_name: string; trade_name: string | null; reliability_tier: import('@/types/domain').ReliabilityTier }
               const mainImg = (p.product_images as { url: string; sort_order: number }[])?.sort((a, b) => a.sort_order - b.sort_order)[0]?.url
               return (
                 <ProductCard key={p.id} product={p as Parameters<typeof ProductCard>[0]['product']}
-                  supplier={supplier} mainImageUrl={mainImg} href={`/product/${p.slug ?? p.id}`} shop="market" brand={brand} sponsored={sponsored} />
+                  supplier={supplier} mainImageUrl={mainImg} href={`/product/${p.slug ?? p.id}`} shop="market" brand={brand} sponsored={sponsored} minOrderCents={minOrderCents} />
               )
             }
 

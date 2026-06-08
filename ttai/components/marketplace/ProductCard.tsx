@@ -29,6 +29,7 @@ interface ProductCardProps {
   shop?: string
   brand?: string | null
   sponsored?: boolean
+  minOrderCents?: number
 }
 
 const TIER_STYLES: Record<ReliabilityTier, string> = {
@@ -42,7 +43,7 @@ function formatPrice(cents: number, currency: string) {
   return new Intl.NumberFormat('en-EU', { style: 'currency', currency, minimumFractionDigits: 2 }).format(cents / 100)
 }
 
-export function ProductCard({ product, supplier, mainImageUrl, href, retail = false, shop, brand, sponsored }: ProductCardProps) {
+export function ProductCard({ product, supplier, mainImageUrl, href, retail = false, shop, brand, sponsored, minOrderCents }: ProductCardProps) {
   // Retail surface (Online Store) OR a retail-only product → consumer presentation.
   const isRetail = retail || product.marketplace_context === 'retail'
   // Retail uses the dedicated online-shop price when set; otherwise the
@@ -120,6 +121,11 @@ export function ProductCard({ product, supplier, mainImageUrl, href, retail = fa
               {supplier.reliability_tier}
             </span>
           )}
+          {!isRetail && minOrderCents ? (
+            <span className="ml-1.5 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+              Min. order {formatPrice(minOrderCents, product.currency_code)}
+            </span>
+          ) : null}
         </div>
       </div>
     </Link>

@@ -13,6 +13,8 @@ export interface CartItem {
   currency_code: string
   imageUrl?: string
   supplierName: string
+  supplierId?: string            // for grouping + minimum-order-value checks
+  supplierMinCents?: number      // supplier's minimum order value (cents)
   quantity: number           // number of that unit
   min_order_qty?: number
   retail?: boolean           // piece bought in the online shop (retail price)

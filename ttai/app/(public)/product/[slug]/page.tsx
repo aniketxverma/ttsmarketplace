@@ -137,6 +137,15 @@ export default async function ProductPage({ params, searchParams }: { params: { 
   const pricing = await getPricingConfig()
   product.retail_price_cents = protectedRetailCents(product.retail_price_cents, retailCostBaseCents(product), pricing.minMarginPct)
 
+  // Supplier minimum order value (wholesale only; defensive — column may not be migrated).
+  let supplierMinCents = 0
+  if (!retailView && supplier?.id) {
+    try {
+      const { data: mv } = await (supabase.from('suppliers') as any).select('min_order_value_cents').eq('id', supplier.id).single()
+      supplierMinCents = mv?.min_order_value_cents ?? 0
+    } catch { /* not migrated */ }
+  }
+
   // Model selector (Phase 3): sibling products in the same product line.
   let models: { id: string; slug: string; name: string; model_name: string | null }[] = []
   if (product.product_line) {
@@ -198,6 +207,8 @@ export default async function ProductPage({ params, searchParams }: { params: { 
           shopUnits={shopUnits}
           negotiable={!!product.price_negotiable}
           brand={product.brand_name ?? null}
+          supplierId={supplier?.id}
+          supplierMinCents={supplierMinCents}
           whatsapp={houseBrand ? null : (supplier?.whatsapp ?? null)}
           supplierName={houseBrand ? HOUSE_BRAND.name : (supplier?.trade_name ?? supplier?.legal_name ?? '')}
           imageUrl={images[0]?.url}
