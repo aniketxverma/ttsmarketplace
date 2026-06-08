@@ -24,11 +24,11 @@ export async function Header() {
   const NAV = [
     { label: 'Home',                    href: '/' },
     { label: t('nav.marketplace'),      href: '/marketplace' },
-    { label: 'Regions',                 href: '/#shop-by-region' },
+    { label: 'Regions',                 href: '/regions/europe' },
     { label: 'Store',                   href: '/store' },
     { label: t('nav.suppliers'),        href: '/suppliers' },
     { label: 'Pricing',                 href: '/pricing' },
-    { label: 'Canales',                 href: '/channels' },
+    { label: 'Channels',                href: '/channels' },
   ]
 
   return (
