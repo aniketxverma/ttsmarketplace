@@ -7,8 +7,7 @@ export const maxDuration = 120
 
 interface ImportRow {
   name: string
-  price_usd: number | null
-  price_rmb: number | null
+  price: number | null
   ean: string | null
   color: string | null
   units_per_carton: number | null
@@ -18,13 +17,15 @@ interface ImportRow {
   images: string[]
 }
 
+const ALLOWED_CURRENCIES = ['EUR', 'USD', 'GBP', 'CNY', 'AED', 'SAR', 'MAD']
+
 export async function POST(req: NextRequest) {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await req.json().catch(() => null) as
-    | { products: ImportRow[]; categoryId: string; currency: 'USD' | 'RMB'; marketplaceContext?: string }
+    | { products: ImportRow[]; categoryId: string; currency?: string; marketplaceContext?: string }
     | null
   if (!body?.products?.length) return NextResponse.json({ error: 'No products to import' }, { status: 400 })
   if (!body.categoryId) return NextResponse.json({ error: 'Please choose a category for the batch' }, { status: 400 })
@@ -34,7 +35,7 @@ export async function POST(req: NextRequest) {
     .select('id').eq('owner_id', user.id).maybeSingle()
   if (!supplier) return NextResponse.json({ error: 'No supplier profile found for this account' }, { status: 403 })
 
-  const currencyCode = body.currency === 'RMB' ? 'CNY' : 'USD'
+  const currencyCode = ALLOWED_CURRENCIES.includes(body.currency ?? '') ? body.currency! : 'EUR'
   const context = ['wholesale', 'retail', 'both'].includes(body.marketplaceContext ?? '') ? body.marketplaceContext! : 'wholesale'
 
   let created = 0
@@ -43,8 +44,7 @@ export async function POST(req: NextRequest) {
   for (const p of body.products) {
     const name = (p.name || '').trim()
     if (!name) continue
-    const priceVal = body.currency === 'RMB' ? p.price_rmb : p.price_usd
-    const priceCents = priceVal && priceVal > 0 ? Math.round(priceVal * 100) : 0
+    const priceCents = p.price && p.price > 0 ? Math.round(p.price * 100) : 0
     const desc = [p.color ? `Color: ${p.color}` : '', p.description ?? ''].filter(Boolean).join('\n').trim() || null
     const slug = `${slugify(name).slice(0, 60)}-${Math.random().toString(36).slice(2, 6)}`
 

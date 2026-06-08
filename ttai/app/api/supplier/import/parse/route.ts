@@ -74,16 +74,14 @@ async function extractInCellImages(zipBuf: Buffer, sheetName: string): Promise<{
 
 /** Header label → product field, by fuzzy match. First match wins. */
 const FIELD_PATTERNS: { field: string; re: RegExp }[] = [
-  { field: 'name',              re: /product\s*name|item\s*name|^name$/i },
-  { field: 'price_usd',         re: /usd/i },
-  { field: 'price_rmb',         re: /rmb|cny|¥/i },
-  { field: 'ean',               re: /barcode|ean|upc/i },
+  { field: 'name',              re: /product\s*name|item\s*name|^name$|model|title/i },
+  { field: 'price',             re: /price|cost|exw|\bfob\b|usd|eur|rmb|cny/i },
+  { field: 'ean',               re: /barcode|ean|upc|gtin/i },
   { field: 'color',             re: /colou?r/i },
-  { field: 'units_per_carton',  re: /qty\s*\/?\s*ctn|per\s*carton|pcs?\s*\/\s*ctn/i },
-  { field: 'carton_dimensions', re: /carton\s*size|carton\s*dimension/i },
+  { field: 'units_per_carton',  re: /qty\s*\/?\s*ctn|per\s*carton|pcs?\s*\/\s*ctn|units?\s*\/?\s*(box|carton)/i },
+  { field: 'carton_dimensions', re: /carton\s*size|carton\s*dimension|box\s*size/i },
   { field: 'weight',            re: /weight/i },
   { field: 'description',       re: /description|specification|specs?/i },
-  { field: 'moq',               re: /quantity you need|\bmoq\b|min\.?\s*order/i },
 ]
 
 function cellText(v: any): string {
@@ -131,53 +129,67 @@ export async function POST(req: NextRequest) {
   const ws = (sheetName ? wb.getWorksheet(sheetName) : null) ?? wb.worksheets[0]
   if (!ws) return NextResponse.json({ error: 'The workbook has no sheets', sheets }, { status: 400 })
 
-  // 1) Locate the header row + map columns.
-  let headerRowIdx = -1
-  const mapping: Record<string, number> = {}
-  for (let r = 1; r <= Math.min(25, ws.rowCount); r++) {
-    const labels: { col: number; text: string }[] = []
-    ws.getRow(r).eachCell({ includeEmpty: false }, (cell, col) => labels.push({ col, text: cellText(cell.value).trim() }))
-    const joined = labels.map((l) => l.text.toLowerCase()).join(' | ')
-    if (/product\s*name/.test(joined) && /(price|description|barcode)/.test(joined)) {
-      headerRowIdx = r
-      for (const { field, re } of FIELD_PATTERNS) {
-        if (field in mapping) continue
-        const hit = labels.find((l) => re.test(l.text))
-        if (hit) mapping[field] = hit.col
-      }
-      break
+  // 1) Pick the header row leniently (never fails). Score by how many text
+  //    cells it has + a bonus for common header keywords.
+  const HEADER_KW = /name|product|item|price|cost|description|spec|qty|quantity|barcode|ean|sku|code|colou?r|weight|carton|box|pallet|model|unit/i
+  const maxCol = Math.min(40, ws.columnCount || 40)
+  const rowLabels = (r: number) => {
+    const out: string[] = []
+    for (let c = 1; c <= maxCol; c++) out[c] = cellText(ws.getRow(r).getCell(c).value).trim()
+    return out
+  }
+  let headerRowIdx = 1, bestScore = -1
+  for (let r = 1; r <= Math.min(20, ws.rowCount); r++) {
+    const labels = rowLabels(r)
+    let textCnt = 0, kwCnt = 0
+    for (let c = 1; c <= maxCol; c++) {
+      const t = labels[c]; if (!t) continue
+      if (isNaN(Number(t))) textCnt++
+      if (HEADER_KW.test(t)) kwCnt++
+    }
+    const score = textCnt + kwCnt * 3
+    if (score > bestScore) { bestScore = score; headerRowIdx = r }
+  }
+  const header = rowLabels(headerRowIdx)
+
+  // 2) Auto-map fields → column index (best guess; user can override in the UI).
+  const autoMap: Record<string, number> = {}
+  for (const { field, re } of FIELD_PATTERNS) {
+    for (let c = 1; c <= maxCol; c++) {
+      if (header[c] && re.test(header[c])) { autoMap[field] = c; break }
     }
   }
-  if (headerRowIdx === -1) {
-    return NextResponse.json({ error: 'Could not find a header row with a "Product Name" column. Try selecting a different sheet.', sheets }, { status: 422 })
+
+  // 3) Columns (header + sample values) for the mapping UI.
+  const sampleRows: number[] = []
+  for (let r = headerRowIdx + 1; r <= ws.rowCount && sampleRows.length < 4; r++) {
+    const any = rowLabels(r).some((t) => t)
+    if (any) sampleRows.push(r)
+  }
+  const columns = [] as { index: number; header: string; samples: string[] }[]
+  for (let c = 1; c <= maxCol; c++) {
+    const samples = sampleRows.map((r) => cellText(ws.getRow(r).getCell(c).value).trim()).filter(Boolean).slice(0, 3)
+    if (header[c] || samples.length) columns.push({ index: c, header: header[c] || '', samples })
   }
 
-  // 2) Read product rows.
-  type Row = { excelRow: number; name: string; price_usd: number | null; price_rmb: number | null; ean: string | null; color: string | null; units_per_carton: number | null; carton_dimensions: string | null; weight_grams: number | null; description: string | null; images: string[] }
-  const rows: Row[] = []
+  // 4) Raw rows — every column's value per row, so the client can apply any mapping.
+  type RawRow = { excelRow: number; cells: Record<number, string>; images: string[] }
+  const rows: RawRow[] = []
+  const rowByExcel = new Map<number, RawRow>()
   for (let r = headerRowIdx + 1; r <= ws.rowCount; r++) {
-    const row = ws.getRow(r)
-    const get = (f: string) => (mapping[f] ? cellText(row.getCell(mapping[f]).value).trim() : '')
-    const name = get('name')
-    if (!name) continue
-    rows.push({
-      excelRow: r,
-      name,
-      price_usd: toNum(get('price_usd')),
-      price_rmb: toNum(get('price_rmb')),
-      ean: get('ean') || null,
-      color: get('color') || null,
-      units_per_carton: get('units_per_carton') ? Math.round(toNum(get('units_per_carton')) || 0) || null : null,
-      carton_dimensions: get('carton_dimensions') || null,
-      weight_grams: get('weight') ? Math.round(toNum(get('weight')) || 0) || null : null,
-      description: get('description') || null,
-      images: [],
-    })
+    const cells: Record<number, string> = {}
+    let any = false
+    for (let c = 1; c <= maxCol; c++) {
+      const t = cellText(ws.getRow(r).getCell(c).value).trim()
+      if (t) { cells[c] = t; any = true }
+    }
+    if (!any) continue
+    const rr: RawRow = { excelRow: r, cells, images: [] }
+    rows.push(rr); rowByExcel.set(r, rr)
   }
-  if (rows.length === 0) return NextResponse.json({ error: 'No product rows found under the header.', sheets }, { status: 422 })
 
   // Upload one image buffer to storage and attach its public URL to a row.
-  async function uploadImg(buffer: Buffer, extRaw: string, target: Row) {
+  async function uploadImg(buffer: Buffer, extRaw: string, target: RawRow) {
     const ext = (extRaw || 'png').replace(/[^a-z0-9]/gi, '').toLowerCase() || 'png'
     const path = `products/${user!.id}/xlsx-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`
     const { error } = await admin.storage.from('brand-assets')
@@ -186,36 +198,32 @@ export async function POST(req: NextRequest) {
     target.images.push(admin.storage.from('brand-assets').getPublicUrl(path).data.publicUrl)
   }
 
-  // 3) Extract embedded floating images → upload → attach to the nearest product row.
+  // 5) Floating images → nearest row at/after the anchor.
   const images = (typeof (ws as any).getImages === 'function' ? (ws as any).getImages() : []) as any[]
   for (const img of images) {
-    const anchorRow = Math.round((img?.range?.tl?.nativeRow ?? 0)) + 1 // 0-based → 1-based
-    // nearest data row at/after the anchor (images sit at the top of a product's tall row)
-    let best: Row | null = null
-    let bestDist = Infinity
+    const anchorRow = Math.round((img?.range?.tl?.nativeRow ?? 0)) + 1
+    let best: RawRow | null = null, bestDist = Infinity
     for (const row of rows) {
       const d = row.excelRow - anchorRow
-      const dist = d >= -1 ? d : Infinity // prefer rows at or below the anchor
+      const dist = d >= -1 ? d : Infinity
       if (dist < bestDist) { bestDist = dist; best = row }
     }
     if (!best || bestDist > 6) continue
     const media: any = wb.getImage?.(Number(img.imageId))
-    if (!media?.buffer) continue
-    await uploadImg(media.buffer, media.extension || 'png', best)
+    if (media?.buffer) await uploadImg(media.buffer, media.extension || 'png', best)
   }
 
-  // 3b) "Place in Cell" (rich-data) images — exact cell → row mapping.
+  // 5b) "Place in Cell" (rich-data) images → exact row.
   try {
     for (const im of await extractInCellImages(fileBuf, ws.name)) {
-      const target = rows.find((r) => r.excelRow === im.row)
+      const target = rowByExcel.get(im.row)
       if (target) await uploadImg(im.buffer, im.ext, target)
     }
-  } catch { /* best effort — ignore rich-data parse failures */ }
+  } catch { /* best effort */ }
 
   return NextResponse.json({
     sheets, sheet: ws.name, headerRow: headerRowIdx,
-    detected: Object.keys(mapping),
-    count: rows.length,
+    columns, autoMap, count: rows.length,
     rows: rows.map(({ excelRow, ...r }) => r),
   })
 }
