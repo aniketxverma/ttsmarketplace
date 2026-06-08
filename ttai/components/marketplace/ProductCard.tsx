@@ -27,6 +27,8 @@ interface ProductCardProps {
   retail?: boolean
   /** Shop context carried to the product page: 'online' | 'market' | 'b2b'. */
   shop?: string
+  brand?: string | null
+  sponsored?: boolean
 }
 
 const TIER_STYLES: Record<ReliabilityTier, string> = {
@@ -40,7 +42,7 @@ function formatPrice(cents: number, currency: string) {
   return new Intl.NumberFormat('en-EU', { style: 'currency', currency, minimumFractionDigits: 2 }).format(cents / 100)
 }
 
-export function ProductCard({ product, supplier, mainImageUrl, href, retail = false, shop }: ProductCardProps) {
+export function ProductCard({ product, supplier, mainImageUrl, href, retail = false, shop, brand, sponsored }: ProductCardProps) {
   // Retail surface (Online Store) OR a retail-only product → consumer presentation.
   const isRetail = retail || product.marketplace_context === 'retail'
   // Retail uses the dedicated online-shop price when set; otherwise the
@@ -64,6 +66,11 @@ export function ProductCard({ product, supplier, mainImageUrl, href, retail = fa
     <Link href={finalHref} className="group block">
       <div className="bg-card rounded-xl border overflow-hidden hover:shadow-md transition-shadow">
         <div className="aspect-square relative bg-muted overflow-hidden">
+          {sponsored && (
+            <span className="absolute top-2 left-2 z-10 inline-flex items-center gap-1 rounded-full bg-[#F5A623] text-[#0B1F4D] text-[10px] font-extrabold px-2 py-0.5 shadow">
+              ★ Sponsored
+            </span>
+          )}
           {mainImageUrl ? (
             <Image
               src={mainImageUrl}
@@ -82,7 +89,10 @@ export function ProductCard({ product, supplier, mainImageUrl, href, retail = fa
         </div>
 
         <div className="p-3 space-y-2">
-          <p className="text-xs text-muted-foreground truncate">{displayName}</p>
+          <div className="flex items-center gap-1.5">
+            <p className="text-xs text-muted-foreground truncate">{displayName}</p>
+            {brand && <span className="text-[10px] font-extrabold uppercase tracking-wide text-[#0B1F4D] bg-[#0B1F4D]/5 px-1.5 py-0.5 rounded flex-shrink-0">{brand}</span>}
+          </div>
           <h3 className="font-medium text-sm leading-tight line-clamp-2">{product.name}</h3>
 
           <div className="flex items-center justify-between gap-2">

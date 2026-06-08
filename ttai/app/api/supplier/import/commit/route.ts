@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await req.json().catch(() => null) as
-    | { products: ImportRow[]; categoryId: string; currency?: string; marketplaceContext?: string }
+    | { products: ImportRow[]; categoryId: string; currency?: string; marketplaceContext?: string; catalogueName?: string }
     | null
   if (!body?.products?.length) return NextResponse.json({ error: 'No products to import' }, { status: 400 })
   if (!body.categoryId) return NextResponse.json({ error: 'Please choose a category for the batch' }, { status: 400 })
@@ -38,6 +38,27 @@ export async function POST(req: NextRequest) {
 
   const currencyCode = ALLOWED_CURRENCIES.includes(body.currency ?? '') ? body.currency! : 'EUR'
   const context = ['wholesale', 'retail', 'both'].includes(body.marketplaceContext ?? '') ? body.marketplaceContext! : 'wholesale'
+
+  // Phase 2 — resolve brand names → brand_id (dedupe by slug). Phase 3 — catalogue.
+  const brandIdByName = new Map<string, string>()
+  for (const p of body.products) {
+    const bn = (p.brand || '').trim()
+    if (!bn || brandIdByName.has(bn.toLowerCase())) continue
+    const bslug = slugify(bn).slice(0, 60) || bn.toLowerCase()
+    const kind = /\boem\b/i.test(bn) ? 'oem' : /private|white\s*label/i.test(bn) ? 'private_label' : 'brand'
+    try {
+      let { data: br } = await (admin.from('brands') as any).select('id').eq('slug', bslug).maybeSingle()
+      if (!br) { const ins = await (admin.from('brands') as any).insert({ name: bn, slug: bslug, kind }).select('id').single(); br = ins.data }
+      if (br?.id) brandIdByName.set(bn.toLowerCase(), br.id)
+    } catch { /* brands table not migrated — skip linking */ }
+  }
+  let catalogueId: string | null = null
+  try {
+    const cat = await (admin.from('catalogues') as any)
+      .insert({ owner_supplier_id: supplier.id, name: (body.catalogueName || 'Excel import').slice(0, 120), source_type: 'Supplier', product_count: body.products.length, created_by: user.id })
+      .select('id').single()
+    catalogueId = cat.data?.id ?? null
+  } catch { /* catalogues table not migrated — skip */ }
 
   let created = 0
   const failed: string[] = []
@@ -66,14 +87,17 @@ export async function POST(req: NextRequest) {
       sell_piece: true,
       is_published: false, // imported as drafts — supplier reviews & publishes
     }
-    // Provenance + brand (optional columns — retried without them if not migrated).
+    // Provenance + brand + catalogue (optional columns — retried without them if not migrated).
     const provenance = {
-      brand_name: p.brand || null, source_type: 'Supplier',
+      brand_name: p.brand || null,
+      brand_id: p.brand ? (brandIdByName.get(p.brand.trim().toLowerCase()) ?? null) : null,
+      catalogue_id: catalogueId,
+      source_type: 'Supplier',
       original_supplier_id: supplier.id, current_owner_id: supplier.id,
       created_by: user.id, import_date: new Date().toISOString(),
     }
     let ins = await (admin.from('products') as any).insert({ ...base, ...provenance }).select('id').single()
-    if (ins.error && /column|does not exist|brand|source_type|owner|created_by|import_date/i.test(ins.error.message)) {
+    if (ins.error && /column|does not exist|brand|source_type|owner|created_by|import_date|catalogue/i.test(ins.error.message)) {
       ins = await (admin.from('products') as any).insert(base).select('id').single()
     }
     const prod = ins.data

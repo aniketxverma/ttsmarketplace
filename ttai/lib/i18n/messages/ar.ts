@@ -43,6 +43,7 @@ export default {
     users: 'المستخدمون',
     plans_access: 'الخطط والوصول',
     pricing_rules: 'قواعد التسعير',
+    sponsorships: 'مُموّلة',
     categories: 'الفئات',
     transactions: 'المعاملات',
     disputes: 'النزاعات',

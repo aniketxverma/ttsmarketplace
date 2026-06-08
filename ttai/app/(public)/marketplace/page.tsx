@@ -32,7 +32,7 @@ const CAT_ACCENT: Record<string, string> = {
 export default async function MarketplacePage({
   searchParams,
 }: {
-  searchParams: { category?: string; q?: string; page?: string; region?: string; supplier?: string }
+  searchParams: { category?: string; q?: string; page?: string; region?: string; supplier?: string; brand?: string }
 }) {
   const supabase = createClient()
   const page = parseInt(searchParams.page || '1')
@@ -121,8 +121,41 @@ export default async function MarketplacePage({
     .order('created_at', { ascending: false })
     .limit(500)
 
-  const families = groupIntoFamilies((allProducts ?? []) as any[])
-  const totalProducts = (allProducts ?? []).length
+  const prodList = (allProducts ?? []) as any[]
+
+  // Phase 2 — attach brand (defensive: brand_name column may not be migrated yet).
+  try {
+    const ids = prodList.map((p) => p.id)
+    if (ids.length) {
+      const { data } = await (supabase.from('products') as any).select('id, brand_name').in('id', ids)
+      const bMap = new Map((data ?? []).map((r: any) => [r.id, r.brand_name]))
+      for (const p of prodList) p.brand_name = bMap.get(p.id) ?? null
+    }
+  } catch { /* not migrated — no brands */ }
+
+  // Brand filter + the list of brands available (for the chips).
+  const activeBrand = searchParams.brand ?? null
+  const brandList = Array.from(new Set(prodList.map((p) => p.brand_name).filter(Boolean))).sort() as string[]
+  const filteredProducts = activeBrand
+    ? prodList.filter((p) => (p.brand_name ?? '').toLowerCase() === activeBrand.toLowerCase())
+    : prodList
+
+  // Phase 6 — active sponsored product ids (defensive).
+  const sponsoredSet = new Set<string>()
+  try {
+    const nowIso = new Date().toISOString()
+    const { data: sp } = await (supabase.from('sponsored_placements') as any)
+      .select('product_id, starts_at, ends_at').eq('kind', 'product').eq('is_active', true)
+    for (const s of (sp ?? []) as any[]) {
+      if (!s.product_id || (s.starts_at && s.starts_at > nowIso) || (s.ends_at && s.ends_at < nowIso)) continue
+      sponsoredSet.add(s.product_id)
+    }
+  } catch { /* not migrated */ }
+
+  const families = groupIntoFamilies(filteredProducts)
+  const isSponsoredFam = (fam: typeof families[number]) => fam.members.some((m: any) => sponsoredSet.has(m.id))
+  families.sort((a, b) => Number(isSponsoredFam(b)) - Number(isSponsoredFam(a))) // sponsored first (stable)
+  const totalProducts = filteredProducts.length
   const totalPages = Math.ceil(families.length / PAGE_SIZE)
   const from = (page - 1) * PAGE_SIZE
   const pageFamilies = families.slice(from, from + PAGE_SIZE)
@@ -134,7 +167,7 @@ export default async function MarketplacePage({
     for (let i = 0; cur && cur.parent_id && i < 10; i++) cur = catById.get(cur.parent_id)
     return cur ?? null
   }
-  const isGroupedView = !searchParams.category && !searchParams.q && !activeSupplier
+  const isGroupedView = !searchParams.category && !searchParams.q && !activeSupplier && !activeBrand
   const categorySections: { cat: Category; families: typeof families }[] = []
   if (isGroupedView) {
     const byRoot = new Map<string, typeof families>()
@@ -203,6 +236,27 @@ export default async function MarketplacePage({
       <div className="mb-4">
         <SearchBar defaultValue={searchParams.q} />
       </div>
+
+      {/* ── Brand filter ── */}
+      {brandList.length > 0 && (
+        <div className="mb-4 flex items-center gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+          <span className="text-xs font-bold text-gray-400 uppercase tracking-wide flex-shrink-0 mr-1">Brand:</span>
+          {[{ v: '', label: 'All Brands' }, ...brandList.map((b) => ({ v: b, label: b }))].map(({ v, label }) => {
+            const params = new URLSearchParams()
+            if (v) params.set('brand', v)
+            if (searchParams.category) params.set('category', searchParams.category)
+            if (activeRegion) params.set('region', activeRegion)
+            if (activeSupplier) params.set('supplier', activeSupplier)
+            const on = (v || '') === (activeBrand || '')
+            return (
+              <Link key={label} href={`/marketplace${params.toString() ? `?${params.toString()}` : ''}`}
+                className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${on ? 'bg-[#0B1F4D] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+                {label}
+              </Link>
+            )
+          })}
+        </div>
+      )}
 
       {/* ── Region filter — pick a region after choosing your category ── */}
       <div className="mb-6 flex items-center gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
@@ -279,13 +333,15 @@ export default async function MarketplacePage({
           {(() => {
             // One renderer reused by both the grouped sections and the flat grid.
             const renderCard = (fam: typeof families[number]) => {
-              if (fam.members.length > 1) return <FamilyCard key={fam.key} family={fam} shop="market" />
+              const sponsored = isSponsoredFam(fam)
+              const brand = (fam.representative as any).brand_name ?? null
+              if (fam.members.length > 1) return <FamilyCard key={fam.key} family={fam} shop="market" brand={brand} sponsored={sponsored} />
               const p = fam.representative as any
               const supplier = p.suppliers as { legal_name: string; trade_name: string | null; reliability_tier: import('@/types/domain').ReliabilityTier }
               const mainImg = (p.product_images as { url: string; sort_order: number }[])?.sort((a, b) => a.sort_order - b.sort_order)[0]?.url
               return (
                 <ProductCard key={p.id} product={p as Parameters<typeof ProductCard>[0]['product']}
-                  supplier={supplier} mainImageUrl={mainImg} href={`/product/${p.slug ?? p.id}`} shop="market" />
+                  supplier={supplier} mainImageUrl={mainImg} href={`/product/${p.slug ?? p.id}`} shop="market" brand={brand} sponsored={sponsored} />
               )
             }
 

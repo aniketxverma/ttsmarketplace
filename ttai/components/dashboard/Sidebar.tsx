@@ -55,6 +55,7 @@ const ADMIN_NAV: NavItem[] = [
   { key: 'users',        href: '/admin/users',        icon: <UserIcon /> },
   { key: 'plans_access', href: '/admin/plans',      icon: <StarIcon /> },
   { key: 'pricing_rules', href: '/admin/pricing',   icon: <MoneyIcon /> },
+  { key: 'sponsorships', href: '/admin/sponsorships', icon: <StarIcon /> },
   { key: 'translations', href: '/admin/translations', icon: <GlobeIcon /> },
   { key: 'products',     href: '/admin/products',     icon: <ShopIcon /> },
   { key: 'categories',   href: '/admin/categories',   icon: <TagIcon /> },

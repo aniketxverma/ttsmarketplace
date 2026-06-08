@@ -43,6 +43,7 @@ export default {
     users: 'Users',
     plans_access: 'Plans & Access',
     pricing_rules: 'Pricing Rules',
+    sponsorships: 'Sponsored',
     categories: 'Categories',
     transactions: 'Transactions',
     disputes: 'Disputes',

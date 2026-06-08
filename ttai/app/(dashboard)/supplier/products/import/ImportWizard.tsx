@@ -123,7 +123,7 @@ export function ImportWizard({ categories }: { categories: Category[] }) {
       .filter((p) => p.name)
     const res = await fetch('/api/supplier/import/commit', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ products, categoryId, currency, marketplaceContext: context }),
+      body: JSON.stringify({ products, categoryId, currency, marketplaceContext: context, catalogueName: file?.name ?? 'Excel import' }),
     })
     const json = await res.json().catch(() => ({}))
     setImporting(false)

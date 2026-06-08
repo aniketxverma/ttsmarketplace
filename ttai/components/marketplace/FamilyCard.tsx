@@ -17,7 +17,7 @@ function formatPrice(cents: number, currency: string) {
 }
 
 /** One card representing a product family (several variants under one type). */
-export function FamilyCard({ family, retail = false, shop }: { family: Family; retail?: boolean; shop?: string }) {
+export function FamilyCard({ family, retail = false, shop, brand, sponsored }: { family: Family; retail?: boolean; shop?: string; brand?: string | null; sponsored?: boolean }) {
   const rep = family.representative
   const supplier = rep.suppliers as { legal_name: string; trade_name: string | null; reliability_tier: ReliabilityTier } | undefined
   const count = family.members.length
@@ -41,6 +41,9 @@ export function FamilyCard({ family, retail = false, shop }: { family: Family; r
     <Link href={href} className="group block">
       <div className="bg-card rounded-xl border overflow-hidden hover:shadow-md transition-shadow">
         <div className="aspect-square relative bg-muted overflow-hidden">
+          {sponsored && (
+            <span className="absolute top-2 left-2 z-10 inline-flex items-center gap-1 rounded-full bg-[#F5A623] text-[#0B1F4D] text-[10px] font-extrabold px-2 py-0.5 shadow">★ Sponsored</span>
+          )}
           {family.imageUrl ? (
             <Image
               src={family.imageUrl}
@@ -66,7 +69,10 @@ export function FamilyCard({ family, retail = false, shop }: { family: Family; r
         </div>
 
         <div className="p-3 space-y-2">
-          <p className="text-xs text-muted-foreground truncate">{displayName}</p>
+          <div className="flex items-center gap-1.5">
+            <p className="text-xs text-muted-foreground truncate">{displayName}</p>
+            {brand && <span className="text-[10px] font-extrabold uppercase tracking-wide text-[#0B1F4D] bg-[#0B1F4D]/5 px-1.5 py-0.5 rounded flex-shrink-0">{brand}</span>}
+          </div>
           <h3 className="font-medium text-sm leading-tight line-clamp-2">{family.title}</h3>
 
           <div className="flex items-center justify-between gap-2">
