@@ -24,6 +24,7 @@ export default {
     my_profile: 'ملفي',
     dashboard: 'لوحة التحكم',
     products: 'المنتجات',
+    sourcing: 'التوريد',
     regions: 'المناطق',
     brand_profile: 'ملف العلامة',
     my_canal: 'قناتي',

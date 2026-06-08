@@ -24,6 +24,7 @@ export default {
     my_profile: 'My Profile',
     dashboard: 'Dashboard',
     products: 'Products',
+    sourcing: 'Sourcing',
     regions: 'Regions',
     brand_profile: 'Brand Profile',
     my_canal: 'My Canal',

@@ -8,7 +8,7 @@ import type { UserRole } from '@/types/domain'
 
 // Path segment → dnav translation key
 const SECTION_KEY: Record<string, string> = {
-  '': 'dashboard', products: 'products', orders: 'orders', messages: 'messages',
+  '': 'dashboard', products: 'products', sourcing: 'sourcing', orders: 'orders', messages: 'messages',
   documents: 'documents', settings: 'settings', suppliers: 'suppliers', promotions: 'promotions',
   invoices: 'invoices', payouts: 'payouts', channel: 'my_canal', channels: 'canales',
   brand: 'brand_profile', pos: 'points_of_sale', regions: 'regions', plans: 'plans_access',
