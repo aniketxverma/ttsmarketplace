@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 
 export async function GET(
   _request: Request,
@@ -68,10 +69,26 @@ export async function DELETE(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { error } = await supabase
+  // Verify the caller owns this product (or is admin).
+  const { data: product } = await supabase
     .from('products')
-    .update({ is_published: false })
+    .select('id, suppliers(owner_id)')
     .eq('id', params.id)
+    .single()
+  if (!product) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+
+  const supplier = product.suppliers as any as { owner_id: string } | null
+  const { data: me } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+  if (supplier?.owner_id !== user.id && me?.role !== 'admin') {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
+
+  // Hard delete (admin client bypasses RLS). Clear rows that have no ON DELETE
+  // CASCADE first; product_images cascade automatically.
+  const admin = createAdminClient()
+  await admin.from('order_items').delete().eq('product_id', params.id)
+  await (admin.from('broker_promotions') as any).delete().eq('product_id', params.id)
+  const { error } = await admin.from('products').delete().eq('id', params.id)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 })
 

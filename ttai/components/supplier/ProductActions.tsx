@@ -27,10 +27,15 @@ export function ProductActions({ productId, isPublished }: Props) {
   async function handleDelete() {
     if (!confirmDelete) { setConfirmDelete(true); return }
     setLoading(true)
-    await fetch(`/api/products/${productId}`, { method: 'DELETE' })
-    router.refresh()
+    const res = await fetch(`/api/products/${productId}`, { method: 'DELETE' })
     setLoading(false)
     setConfirmDelete(false)
+    if (!res.ok) {
+      const j = await res.json().catch(() => ({}))
+      alert(j.error ?? 'Could not delete this product')
+      return
+    }
+    router.refresh()
   }
 
   return (
