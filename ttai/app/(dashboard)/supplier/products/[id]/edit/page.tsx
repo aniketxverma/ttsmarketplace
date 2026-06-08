@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { requireAuth } from '@/lib/auth/rbac'
 import { ProductForm } from '@/components/supplier/ProductForm'
 import { ProductImageManager } from '@/components/supplier/ProductImageManager'
+import { ProvenanceCard } from '@/components/supplier/ProvenanceCard'
 import { getPricingConfig } from '@/lib/pricing-config'
 
 export default async function EditProductPage({ params }: { params: { id: string } }) {
@@ -40,6 +41,9 @@ export default async function EditProductPage({ params }: { params: { id: string
         <h1 className="text-2xl font-bold">Edit Product</h1>
         <p className="text-muted-foreground text-sm mt-0.5">{product.name}</p>
       </div>
+
+      {/* Provenance / traceability */}
+      <ProvenanceCard product={product} />
 
       {/* Images */}
       <div className="rounded-xl border bg-card p-6 space-y-3">
