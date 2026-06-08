@@ -14,6 +14,20 @@ import { REGIONS } from '@/lib/regions-data'
 import type { Category } from '@/types/domain'
 
 const PAGE_SIZE = 24
+const SECTION_LIMIT = 8 // products shown per category in the grouped "All Products" view
+
+// Accent colour per root category (falls back to brand navy).
+const CAT_ACCENT: Record<string, string> = {
+  'electronics-technology': '#2563eb', 'electronics-tech': '#2563eb',
+  'cleaning-household': '#16a34a',
+  'food-beverage': '#ea580c', 'agriculture-food': '#ea580c',
+  'home-appliances': '#0891b2',
+  'health-beauty': '#db2777', 'personal-care': '#db2777',
+  'logistics-supply-chain': '#64748b', 'consulting-services': '#0d9488',
+  'textile-fashion': '#c026d3', 'construction-building': '#d97706', 'construction-materials': '#d97706',
+  'automotive-transport': '#52525b', 'recycling-sustainability': '#059669',
+  'industrial-manufacturing': '#4f46e5', 'healthcare-medical': '#e11d48',
+}
 
 export default async function MarketplacePage({
   searchParams,
@@ -112,6 +126,29 @@ export default async function MarketplacePage({
   const totalPages = Math.ceil(families.length / PAGE_SIZE)
   const from = (page - 1) * PAGE_SIZE
   const pageFamilies = families.slice(from, from + PAGE_SIZE)
+
+  // ── Category-grouped "All Products" view (no specific category/search/supplier) ──
+  const catById = new Map<string, any>(allCats.map((c: any) => [c.id, c]))
+  const rootOf = (catId?: string | null): any => {
+    let cur = catId ? catById.get(catId) : null
+    for (let i = 0; cur && cur.parent_id && i < 10; i++) cur = catById.get(cur.parent_id)
+    return cur ?? null
+  }
+  const isGroupedView = !searchParams.category && !searchParams.q && !activeSupplier
+  const categorySections: { cat: Category; families: typeof families }[] = []
+  if (isGroupedView) {
+    const byRoot = new Map<string, typeof families>()
+    for (const fam of families) {
+      const root = rootOf((fam.representative as any).category_id)
+      if (!root) continue
+      if (!byRoot.has(root.id)) byRoot.set(root.id, [])
+      byRoot.get(root.id)!.push(fam)
+    }
+    for (const r of roots) {
+      const fams = byRoot.get(r.id)
+      if (fams && fams.length) categorySections.push({ cat: r, families: fams })
+    }
+  }
   const promotions = (promotionsRes.data ?? []) as unknown as Parameters<typeof PromotionBanner>[0]['promotions']
 
   // ── Suppliers active in the selected category (so buyers see profiles, not just products) ──
@@ -239,38 +276,72 @@ export default async function MarketplacePage({
             </div>
           )}
 
-          {pageFamilies.length > 0 ? (
-            <>
-              <ProductGrid>
-                {pageFamilies.map((fam) => {
-                  // Multiple variants → one family card; single product → normal card.
-                  if (fam.members.length > 1) {
-                    return <FamilyCard key={fam.key} family={fam} shop="market" />
-                  }
-                  const p = fam.representative as any
-                  const supplier = p.suppliers as { legal_name: string; trade_name: string | null; reliability_tier: import('@/types/domain').ReliabilityTier }
-                  const images = p.product_images as { url: string; sort_order: number }[]
-                  const mainImg = images?.sort((a, b) => a.sort_order - b.sort_order)[0]?.url
-                  return (
-                    <ProductCard
-                      key={p.id}
-                      product={p as Parameters<typeof ProductCard>[0]['product']}
-                      supplier={supplier}
-                      mainImageUrl={mainImg}
-                      href={`/product/${p.slug ?? p.id}`}
-                      shop="market"
-                    />
-                  )
-                })}
-              </ProductGrid>
-              <Pagination page={page} totalPages={totalPages} />
-            </>
-          ) : (
-            <div className="text-center py-20 text-muted-foreground">
-              <p className="text-lg">No products found</p>
-              <p className="text-sm mt-1">Try adjusting your filters or search query</p>
-            </div>
-          )}
+          {(() => {
+            // One renderer reused by both the grouped sections and the flat grid.
+            const renderCard = (fam: typeof families[number]) => {
+              if (fam.members.length > 1) return <FamilyCard key={fam.key} family={fam} shop="market" />
+              const p = fam.representative as any
+              const supplier = p.suppliers as { legal_name: string; trade_name: string | null; reliability_tier: import('@/types/domain').ReliabilityTier }
+              const mainImg = (p.product_images as { url: string; sort_order: number }[])?.sort((a, b) => a.sort_order - b.sort_order)[0]?.url
+              return (
+                <ProductCard key={p.id} product={p as Parameters<typeof ProductCard>[0]['product']}
+                  supplier={supplier} mainImageUrl={mainImg} href={`/product/${p.slug ?? p.id}`} shop="market" />
+              )
+            }
+
+            if (isGroupedView && categorySections.length > 0) {
+              return (
+                <div className="space-y-12">
+                  {categorySections.map(({ cat, families: fams }) => {
+                    const accent = CAT_ACCENT[cat.slug] ?? '#0B1F4D'
+                    const subs = (childMap[cat.id] ?? []).slice(0, 4).map((c) => c.name).join(' · ')
+                    const href = `/marketplace?category=${cat.slug}${activeRegion ? `&region=${activeRegion}` : ''}`
+                    return (
+                      <section key={cat.id}>
+                        <div className="flex items-end justify-between gap-3 mb-4">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <span className="w-1.5 h-9 rounded-full flex-shrink-0" style={{ background: accent }} />
+                            <div className="min-w-0">
+                              <h2 className="text-xl font-extrabold text-[#0B1F4D] leading-tight">{cat.name}</h2>
+                              {subs && <p className="text-xs text-gray-400 truncate">{subs}</p>}
+                            </div>
+                          </div>
+                          <Link href={href} className="text-sm font-bold whitespace-nowrap inline-flex items-center gap-1 hover:gap-2 transition-all" style={{ color: accent }}>
+                            Explore Category
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" /></svg>
+                          </Link>
+                        </div>
+                        <ProductGrid>{fams.slice(0, SECTION_LIMIT).map(renderCard)}</ProductGrid>
+                        {fams.length > SECTION_LIMIT && (
+                          <div className="mt-4 text-center">
+                            <Link href={href} className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-5 py-2.5 text-sm font-bold text-[#0B1F4D] hover:border-[#0B1F4D] transition-colors">
+                              View all {fams.length} in {cat.name}
+                            </Link>
+                          </div>
+                        )}
+                      </section>
+                    )
+                  })}
+                </div>
+              )
+            }
+
+            if (pageFamilies.length > 0) {
+              return (
+                <>
+                  <ProductGrid>{pageFamilies.map(renderCard)}</ProductGrid>
+                  <Pagination page={page} totalPages={totalPages} />
+                </>
+              )
+            }
+
+            return (
+              <div className="text-center py-20 text-muted-foreground">
+                <p className="text-lg">No products found</p>
+                <p className="text-sm mt-1">Try adjusting your filters or search query</p>
+              </div>
+            )
+          })()}
         </div>
       </div>
     </div>
