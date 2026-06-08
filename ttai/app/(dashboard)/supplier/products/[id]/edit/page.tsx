@@ -66,6 +66,7 @@ export default async function EditProductPage({ params }: { params: { id: string
             slug:               product.slug,
             productLine:        (product as any).product_line ?? '',
             isFamilyCover:      (product as any).is_family_cover ?? false,
+            brandName:          (product as any).brand_name ?? '',
             categoryId:         product.category_id,
             marketplaceContext: product.marketplace_context as 'wholesale' | 'retail' | 'both',
             cityId:             product.city_id ?? '',

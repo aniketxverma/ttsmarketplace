@@ -23,7 +23,7 @@ type ProductImage = { url: string; sort_order: number; image_role?: string | nul
 type Product = PackagingProduct & { id: string; name: string; slug: string; currency_code: string }
 
 export function ProductBuyArea({
-  product, images, retail = false, shopUnits, negotiable = false, whatsapp, supplierName, imageUrl,
+  product, images, retail = false, shopUnits, negotiable = false, brand = null, whatsapp, supplierName, imageUrl,
   categoryName, supplierLabel, supplierHref, shipsFrom, topSlot, children,
 }: {
   product: Product
@@ -31,6 +31,7 @@ export function ProductBuyArea({
   retail?: boolean
   shopUnits?: PurchaseUnit[]
   negotiable?: boolean
+  brand?: string | null
   whatsapp?: string | null
   supplierName: string
   imageUrl?: string
@@ -134,7 +135,10 @@ export function ProductBuyArea({
               {supplierLabel}
             </Link>
           )}
-          {categoryName && <p className="text-xs font-bold text-[#F5A623] uppercase tracking-widest mb-1.5">{categoryName}</p>}
+          <div className="flex items-center gap-2 flex-wrap mb-1.5">
+            {categoryName && <p className="text-xs font-bold text-[#F5A623] uppercase tracking-widest">{categoryName}</p>}
+            {brand && <span className="text-[11px] font-extrabold uppercase tracking-wide bg-[#0B1F4D]/5 text-[#0B1F4D] px-2 py-0.5 rounded">{brand}</span>}
+          </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0B1F4D] leading-tight">{product.name}</h1>
         </div>
 

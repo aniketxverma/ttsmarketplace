@@ -75,6 +75,7 @@ async function extractInCellImages(zipBuf: Buffer, sheetName: string): Promise<{
 /** Header label → product field, by fuzzy match. First match wins. */
 const FIELD_PATTERNS: { field: string; re: RegExp }[] = [
   { field: 'name',              re: /product\s*name|item\s*name|^name$|model|title/i },
+  { field: 'brand',             re: /brand|marca|make|manufacturer/i },
   { field: 'price',             re: /price|cost|exw|\bfob\b|usd|eur|rmb|cny/i },
   { field: 'ean',               re: /barcode|ean|upc|gtin/i },
   { field: 'color',             re: /colou?r/i },

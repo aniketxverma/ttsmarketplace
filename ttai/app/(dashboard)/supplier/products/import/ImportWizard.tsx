@@ -12,6 +12,7 @@ type RawRow = { cells: Record<number, string>; images: string[]; _include: boole
 
 const FIELDS: { key: string; label: string; required?: boolean }[] = [
   { key: 'name', label: 'Product Name', required: true },
+  { key: 'brand', label: 'Brand' },
   { key: 'price', label: 'Price' },
   { key: 'ean', label: 'Barcode / EAN' },
   { key: 'color', label: 'Color' },
@@ -109,6 +110,7 @@ export function ImportWizard({ categories }: { categories: Category[] }) {
     const products = included
       .map((r) => ({
         name: cell(r, 'name').trim(),
+        brand: cell(r, 'brand') || null,
         price: toNum(cell(r, 'price')),
         ean: cell(r, 'ean') || null,
         color: cell(r, 'color') || null,

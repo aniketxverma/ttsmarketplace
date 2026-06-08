@@ -24,7 +24,7 @@ interface ProductFormProps {
 
 interface FormState {
   name: string; slug: string; categoryId: string; marketplaceContext: 'wholesale' | 'retail' | 'both'
-  productLine: string; isFamilyCover: boolean
+  productLine: string; isFamilyCover: boolean; brandName: string
   cityId: string; description: string; sku: string
   priceDisplay: string       // wholesale / B2B price, converted to cents on save
   retailPriceDisplay: string // online-shop (retail) per-piece price
@@ -46,7 +46,7 @@ interface FormState {
 
 const INITIAL: FormState = {
   name: '', slug: '', categoryId: '', marketplaceContext: 'wholesale',
-  productLine: '', isFamilyCover: false,
+  productLine: '', isFamilyCover: false, brandName: '',
   cityId: '', description: '', sku: '',
   priceDisplay: '', retailPriceDisplay: '', currencyCode: 'EUR',
   minOrderQty: '1', stockQty: '0', vatRate: '10', weightGrams: '',
@@ -132,6 +132,7 @@ export function ProductForm({
       slug:                form.slug.trim(),
       product_line:        form.productLine.trim() || null,
       is_family_cover:     form.productLine.trim() ? form.isFamilyCover : false,
+      brand_name:          form.brandName.trim() || null,
       description:         form.description.trim() || null,
       sku:                 form.sku.trim() || null,
       price_cents:         priceCents,
@@ -188,7 +189,8 @@ export function ProductForm({
 
     // If a recently-added column (e.g. discount %) isn't migrated yet, drop those
     // keys and retry so saving still works.
-    const OPTIONAL_KEYS = ['box_discount_pct', 'pallet_discount_pct', 'truck_discount_pct']
+    const OPTIONAL_KEYS = ['box_discount_pct', 'pallet_discount_pct', 'truck_discount_pct',
+      'brand_name', 'source_type', 'original_supplier_id', 'current_owner_id', 'created_by']
     const stripOptional = (obj: any) => { const o = { ...obj }; OPTIONAL_KEYS.forEach(k => delete o[k]); return o }
     const isMissingColumn = (msg?: string | null) => !!msg && /column|does not exist|discount_pct/i.test(msg)
 
@@ -205,7 +207,10 @@ export function ProductForm({
     }
 
     if (mode === 'create') {
-      let ins = await supabase.from('products').insert({ ...payload, supplier_id: supplierId }).select('id').single()
+      // Provenance: this supplier is the origin + current owner (captured once).
+      const { data: { user } } = await supabase.auth.getUser()
+      const provenance = { original_supplier_id: supplierId, current_owner_id: supplierId, source_type: 'Supplier', created_by: user?.id ?? null }
+      let ins = await supabase.from('products').insert({ ...payload, ...provenance, supplier_id: supplierId }).select('id').single()
       if (ins.error && isMissingColumn(ins.error.message)) {
         ins = await supabase.from('products').insert({ ...stripOptional(payload), supplier_id: supplierId }).select('id').single()
       }
@@ -303,6 +308,11 @@ export function ProductForm({
           <div className="space-y-1.5">
             <label className={labelCls}>SKU</label>
             <input className={inputCls} value={form.sku} onChange={(e) => update('sku', e.target.value)} placeholder="e.g. EVOO-001" />
+          </div>
+          <div className="space-y-1.5">
+            <label className={labelCls}>Brand</label>
+            <input className={inputCls} value={form.brandName} onChange={(e) => update('brandName', e.target.value)} placeholder="e.g. Samsung, JBL, OEM" />
+            <p className="text-xs text-gray-400">Brand, OEM or private label — used for filtering &amp; future sponsored positions.</p>
           </div>
           <div className="space-y-1.5">
             <label className={labelCls}>Category *</label>

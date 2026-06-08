@@ -7,6 +7,7 @@ export const maxDuration = 120
 
 interface ImportRow {
   name: string
+  brand: string | null
   price: number | null
   ean: string | null
   color: string | null
@@ -48,28 +49,35 @@ export async function POST(req: NextRequest) {
     const desc = [p.color ? `Color: ${p.color}` : '', p.description ?? ''].filter(Boolean).join('\n').trim() || null
     const slug = `${slugify(name).slice(0, 60)}-${Math.random().toString(36).slice(2, 6)}`
 
-    const { data: prod, error } = await (admin.from('products') as any)
-      .insert({
-        supplier_id: supplier.id,
-        category_id: body.categoryId,
-        marketplace_context: context,
-        name,
-        slug,
-        description: desc,
-        ean: p.ean,
-        units_per_carton: p.units_per_carton,
-        carton_dimensions: p.carton_dimensions,
-        weight_grams: p.weight_grams,
-        price_cents: priceCents,
-        currency_code: currencyCode,
-        min_order_qty: 1,
-        stock_qty: 0,
-        sell_piece: true,
-        is_published: false, // imported as drafts — supplier reviews & publishes
-      })
-      .select('id').single()
-
-    if (error || !prod) { failed.push(name); continue }
+    const base: Record<string, any> = {
+      supplier_id: supplier.id,
+      category_id: body.categoryId,
+      marketplace_context: context,
+      name, slug,
+      description: desc,
+      ean: p.ean,
+      units_per_carton: p.units_per_carton,
+      carton_dimensions: p.carton_dimensions,
+      weight_grams: p.weight_grams,
+      price_cents: priceCents,
+      currency_code: currencyCode,
+      min_order_qty: 1,
+      stock_qty: 0,
+      sell_piece: true,
+      is_published: false, // imported as drafts — supplier reviews & publishes
+    }
+    // Provenance + brand (optional columns — retried without them if not migrated).
+    const provenance = {
+      brand_name: p.brand || null, source_type: 'Supplier',
+      original_supplier_id: supplier.id, current_owner_id: supplier.id,
+      created_by: user.id, import_date: new Date().toISOString(),
+    }
+    let ins = await (admin.from('products') as any).insert({ ...base, ...provenance }).select('id').single()
+    if (ins.error && /column|does not exist|brand|source_type|owner|created_by|import_date/i.test(ins.error.message)) {
+      ins = await (admin.from('products') as any).insert(base).select('id').single()
+    }
+    const prod = ins.data
+    if (ins.error || !prod) { failed.push(name); continue }
 
     if (p.images?.length) {
       await (admin.from('product_images') as any).insert(

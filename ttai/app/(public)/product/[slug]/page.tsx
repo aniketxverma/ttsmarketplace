@@ -51,7 +51,7 @@ export default async function ProductPage({ params, searchParams }: { params: { 
 
   // Optional columns that may not be migrated yet — kept separate so a schema lag
   // never 404s the whole product page (we retry without them on error).
-  const OPTIONAL_COLS = 'box_discount_pct, pallet_discount_pct, truck_discount_pct'
+  const OPTIONAL_COLS = 'box_discount_pct, pallet_discount_pct, truck_discount_pct, brand_name'
   const buildSelect = (withOptional: boolean) => `
     id, name, slug, description, price_cents, retail_price_cents, currency_code,
     min_order_qty, min_box_qty, min_pallet_qty, min_truck_qty,
@@ -197,6 +197,7 @@ export default async function ProductPage({ params, searchParams }: { params: { 
           retail={retailView}
           shopUnits={shopUnits}
           negotiable={!!product.price_negotiable}
+          brand={product.brand_name ?? null}
           whatsapp={houseBrand ? null : (supplier?.whatsapp ?? null)}
           supplierName={houseBrand ? HOUSE_BRAND.name : (supplier?.trade_name ?? supplier?.legal_name ?? '')}
           imageUrl={images[0]?.url}
