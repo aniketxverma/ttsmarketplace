@@ -4,6 +4,8 @@ import { ProductCard } from '@/components/marketplace/ProductCard'
 import { FamilyCard } from '@/components/marketplace/FamilyCard'
 import { groupIntoFamilies } from '@/lib/product-family'
 import { dedupeByMaster } from '@/lib/offers'
+import { localizeCategoryNames } from '@/lib/i18n/categories'
+import { getLocale } from '@/lib/i18n/server'
 import { ProductGrid } from '@/components/marketplace/ProductGrid'
 import { CategoryNav } from '@/components/marketplace/CategoryNav'
 import { SearchBar } from '@/components/marketplace/SearchBar'
@@ -51,7 +53,7 @@ export default async function MarketplacePage({
       .limit(3),
   ])
 
-  const allCats = categoriesRes.data ?? []
+  const allCats = await localizeCategoryNames(categoriesRes.data ?? [], await getLocale())
 
   // When scoped to one supplier, show their name in the header.
   let scopedSupplierName: string | null = null

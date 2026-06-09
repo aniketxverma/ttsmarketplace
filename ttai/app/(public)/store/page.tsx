@@ -3,6 +3,8 @@ import { ProductCard } from '@/components/marketplace/ProductCard'
 import { FamilyCard } from '@/components/marketplace/FamilyCard'
 import { groupIntoFamilies } from '@/lib/product-family'
 import { dedupeProductsByMaster } from '@/lib/offers-server'
+import { localizeCategoryNames } from '@/lib/i18n/categories'
+import { getLocale } from '@/lib/i18n/server'
 import { ProductGrid } from '@/components/marketplace/ProductGrid'
 import { CategoryNav } from '@/components/marketplace/CategoryNav'
 import { SearchBar } from '@/components/marketplace/SearchBar'
@@ -27,7 +29,7 @@ export default async function StorePage({
   const page = parseInt(searchParams.page ?? '1')
 
   const categoriesRes = await supabase.from('categories').select('*').order('sort_order')
-  const allCats = categoriesRes.data ?? []
+  const allCats = await localizeCategoryNames(categoriesRes.data ?? [], await getLocale())
 
   // Build category tree (same as marketplace)
   const roots = allCats.filter((c) => c.parent_id === null) as Category[]

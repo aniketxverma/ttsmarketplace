@@ -13,6 +13,8 @@ import { CategoryNav } from '@/components/marketplace/CategoryNav'
 import { Pagination } from '@/components/marketplace/Pagination'
 import { tierRank } from '@/lib/business-chain'
 import { dedupeProductsByMaster } from '@/lib/offers-server'
+import { localizeCategoryNames } from '@/lib/i18n/categories'
+import { getLocale } from '@/lib/i18n/server'
 import type { Category } from '@/types/domain'
 
 const TIER: Record<string, { label: string; Icon: typeof Crown; bg: string; text: string }> = {
@@ -86,7 +88,7 @@ export default async function B2BPage({
   ])
 
   const suppliers = suppliersRes.data ?? []
-  const allCats   = categoriesRes.data ?? []
+  const allCats   = await localizeCategoryNames(categoriesRes.data ?? [], await getLocale())
 
   // Category tree for sidebar
   const roots = allCats.filter((c: any) => c.parent_id === null) as Category[]
