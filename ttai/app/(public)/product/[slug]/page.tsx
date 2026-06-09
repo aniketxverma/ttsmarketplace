@@ -18,7 +18,9 @@ import { HOUSE_BRAND } from '@/lib/house-brand'
 import { getPricingConfig } from '@/lib/pricing-config'
 import { protectedRetailCents } from '@/lib/pricing-rules'
 
-export const revalidate = 60
+// Per-request render: this page varies by viewer (subscription blur gate, retail vs
+// wholesale pricing, role), so it must NOT be served from a shared static cache.
+export const dynamic = 'force-dynamic'
 
 export async function generateMetadata({ params }: { params: { slug: string } }) {
   const supabase = createClient()
