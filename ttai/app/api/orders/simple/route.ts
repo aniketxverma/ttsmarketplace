@@ -71,6 +71,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'One or more products not found' }, { status: 404 })
   }
 
+  // Dropship source per product (which mother brand fulfills it, and at what cost).
+  // Defensive — the columns may not be migrated yet.
+  const dropMap = new Map<string, { mother: string; cost: number }>()
+  try {
+    const { data } = await (admin.from('products') as any)
+      .select('id, dropship_supplier_id, dropship_cost_cents').in('id', productIds)
+    for (const r of (data ?? []) as any[]) if (r.dropship_supplier_id) dropMap.set(r.id, { mother: r.dropship_supplier_id, cost: r.dropship_cost_cents ?? 0 })
+  } catch { /* not migrated */ }
+
   // Enforce the per-tier minimum order quantity (piece / box / pallet / truck).
   for (const item of items) {
     const product = products.find(p => p.id === item.productId)!
@@ -224,6 +233,41 @@ export async function POST(req: NextRequest) {
     }).then((r: any) => { if (r?.error) console.error('Invoice insert error:', r.error.message) })
 
     orderIds.push(order.id)
+
+    // ── Auto-dropship: forward dropshipped items to the mother brand to ship the
+    //    end customer directly. The sales point pays the mother the cost; the margin
+    //    (sales-point price − cost) stays with the sales point. Non-fatal.
+    try {
+      const motherGroups = new Map<string, typeof supplierItems>()
+      for (const it of supplierItems as any[]) {
+        const d = dropMap.get(it.productId)
+        if (!d || d.mother === supplierId) continue
+        if (!motherGroups.has(d.mother)) motherGroups.set(d.mother, [] as any)
+        motherGroups.get(d.mother)!.push(it)
+      }
+      for (const [motherId, mItems] of Array.from(motherGroups.entries())) {
+        const mSubtotal = (mItems as any[]).reduce((s, it) => s + (dropMap.get(it.productId)?.cost ?? 0) * it.quantity, 0)
+        const supplyRow: Record<string, any> = {
+          buyer_id: supplier?.owner_id, supplier_id: motherId, status: 'pending',
+          marketplace_context: 'wholesale', subtotal_cents: mSubtotal, vat_cents: 0, shipping_cents: 0,
+          total_cents: mSubtotal, currency_code: currency, shipping_address: shippingAddress,
+          payment_method: 'dropship', source_order_id: order.id,
+          idempotency_key: `drop-${order.id}-${motherId}`,
+        }
+        if (!supplyRow.buyer_id) continue
+        let sup = await (admin.from('orders') as any).insert(supplyRow).select('id').single()
+        if (sup.error && /column|does not exist|payment_method|source_order/i.test(sup.error.message)) {
+          const { payment_method, source_order_id, ...rest } = supplyRow
+          sup = await (admin.from('orders') as any).insert(rest).select('id').single()
+        }
+        if (sup.data) {
+          await (admin.from('order_items') as any).insert((mItems as any[]).map((it) => {
+            const cost = dropMap.get(it.productId)?.cost ?? 0
+            return { order_id: sup.data.id, product_id: it.productId, quantity: it.quantity, unit_price_cents: cost, vat_rate: 0, line_total_cents: cost * it.quantity, purchase_unit: it.unit ?? 'piece' }
+          }))
+        }
+      }
+    } catch (e) { console.error('dropship forward failed:', (e as Error).message) }
   }
 
   // ── Card: create a Stripe Checkout Session for the whole cart ───────────

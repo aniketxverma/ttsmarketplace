@@ -70,11 +70,15 @@ export async function POST(req: NextRequest) {
           marketplace_context: 'retail', min_order_qty: 1, stock_qty: 0,
           sell_piece: true, is_published: true,
           slug: `${slugify(p.name).slice(0, 50)}-${Math.random().toString(36).slice(2, 6)}`,
+          // Auto-dropship: this listing is fulfilled by the mother brand at its price.
+          dropship_supplier_id: invite.inviter_supplier_id,
+          dropship_cost_cents: p.price_cents ?? 0,
         }
         // Defensive: strip optional cols if a column isn't migrated.
         let ins = await (admin.from('products') as any).insert(row).select('id').single()
         if (ins.error && /column|does not exist/i.test(ins.error.message)) {
           delete row.master_product_id; delete row.specs; delete row.brand_name
+          delete row.dropship_supplier_id; delete row.dropship_cost_cents
           ins = await (admin.from('products') as any).insert(row).select('id').single()
         }
         if (ins.error || !ins.data) continue
