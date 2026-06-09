@@ -37,6 +37,13 @@ export default async function SupplierProductsPage() {
         {supplier.status === 'ACTIVE' ? (
           <div className="flex items-center gap-2">
             <Link
+              href="/supplier/master-catalog"
+              className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white text-[#0B1F4D] px-4 py-2.5 text-sm font-bold hover:border-[#0B1F4D] transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z" /></svg>
+              Master Catalog
+            </Link>
+            <Link
               href="/supplier/products/import"
               className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white text-[#0B1F4D] px-4 py-2.5 text-sm font-bold hover:border-[#0B1F4D] transition-colors"
             >

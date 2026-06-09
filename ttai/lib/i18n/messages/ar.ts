@@ -25,6 +25,7 @@ export default {
     dashboard: 'لوحة التحكم',
     products: 'المنتجات',
     sourcing: 'التوريد',
+    master_catalog: 'الكتالوج الرئيسي',
     regions: 'المناطق',
     brand_profile: 'ملف العلامة',
     my_canal: 'قناتي',

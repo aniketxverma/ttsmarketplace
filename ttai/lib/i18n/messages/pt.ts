@@ -25,6 +25,7 @@ export default {
     dashboard: 'Painel',
     products: 'Produtos',
     sourcing: 'Fornecimento',
+    master_catalog: 'Catálogo mestre',
     regions: 'Regiões',
     brand_profile: 'Perfil da marca',
     my_canal: 'Meu canal',

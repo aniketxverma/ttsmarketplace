@@ -25,6 +25,7 @@ export default {
     dashboard: 'Tableau de bord',
     products: 'Produits',
     sourcing: 'Approvisionnement',
+    master_catalog: 'Catalogue maître',
     regions: 'Régions',
     brand_profile: 'Profil de marque',
     my_canal: 'Mon canal',

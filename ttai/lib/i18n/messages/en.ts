@@ -25,6 +25,7 @@ export default {
     dashboard: 'Dashboard',
     products: 'Products',
     sourcing: 'Sourcing',
+    master_catalog: 'Master Catalog',
     regions: 'Regions',
     brand_profile: 'Brand Profile',
     my_canal: 'My Canal',

@@ -230,6 +230,8 @@ export function ProductForm({
       const newProduct = ins.data
       if (ins.error || !newProduct) { setError(ins.error?.message ?? 'Insert failed'); setLoading(false); return }
       await dedupeCover(newProduct.id)
+      // Index in the global master catalog (best effort).
+      fetch('/api/supplier/master', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'link', productId: newProduct.id }) }).catch(() => {})
 
       // Upload staged images via the server endpoint (admin → brand-assets bucket)
       for (let i = 0; i < pendingFiles.length; i++) {

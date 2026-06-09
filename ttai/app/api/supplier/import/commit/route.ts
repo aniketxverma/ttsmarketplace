@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { slugify } from '@/lib/utils'
+import { findOrCreateMaster } from '@/lib/master'
 
 export const maxDuration = 120
 
@@ -102,6 +103,12 @@ export async function POST(req: NextRequest) {
     }
     const prod = ins.data
     if (ins.error || !prod) { failed.push(name); continue }
+
+    // Index in the master catalog (best effort) so others can reuse it.
+    try {
+      const mid = await findOrCreateMaster(admin, { ...base, ...provenance, id: prod.id }, user.id)
+      if (mid) await (admin.from('products') as any).update({ master_product_id: mid }).eq('id', prod.id)
+    } catch { /* master table not migrated */ }
 
     if (p.images?.length) {
       await (admin.from('product_images') as any).insert(
