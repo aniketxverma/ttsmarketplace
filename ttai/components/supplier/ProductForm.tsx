@@ -9,11 +9,14 @@ import { canSellUnit, requiredPlanLabel, SELL_PLAN_LABEL } from '@/lib/selling'
 import type { PurchaseUnit } from '@/lib/packaging'
 import { minRetailCents, addVatCents } from '@/lib/pricing-rules'
 
+type TemplateField = { key: string; label: string; type?: 'text' | 'number' | 'select'; options?: string[] }
+
 interface ProductFormProps {
   supplierId: string
   mode: 'create' | 'edit'
   productId?: string
   initialData?: Partial<FormState>
+  initialSpecs?: Record<string, any>
   /** Seller's plan tier — gates which units they can sell by. */
   sellerTier?: string
   /** Marketplace pricing rules (admin-configured). */
@@ -67,12 +70,13 @@ const INITIAL: FormState = {
 const CURRENCIES = ['EUR', 'USD', 'GBP', 'AED', 'SAR', 'MAD']
 
 export function ProductForm({
-  supplierId, mode, productId, initialData, sellerTier,
+  supplierId, mode, productId, initialData, initialSpecs, sellerTier,
   minMarginPct = 30, vatPct = 21, vatEnabled = true,
 }: ProductFormProps) {
   const router = useRouter()
   const [form, setForm] = useState<FormState>({ ...INITIAL, ...initialData })
-  const [categories, setCategories] = useState<{ id: string; name: string; slug: string }[]>([])
+  const [specs, setSpecs] = useState<Record<string, string>>(() => (initialSpecs ?? {}) as Record<string, string>)
+  const [categories, setCategories] = useState<{ id: string; name: string; slug: string; template_fields?: TemplateField[] }[]>([])
   const [cities, setCities] = useState<{ id: string; name: string }[]>([])
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -85,7 +89,7 @@ export function ProductForm({
 
   useEffect(() => {
     const supabase = createClient()
-    supabase.from('categories').select('id, name, slug').order('name').then(({ data }) => setCategories(data ?? []))
+    supabase.from('categories').select('id, name, slug, template_fields').order('name').then(({ data }) => setCategories((data as any) ?? []))
     supabase.from('cities').select('id, name').eq('retail_active', true).order('name').then(({ data }) => setCities(data ?? []))
   }, [])
 
@@ -190,6 +194,7 @@ export function ProductForm({
       truck_discount_pct:     form.truckDiscountPct  ? Math.min(100, Math.max(0, parseFloat(form.truckDiscountPct)  || 0)) : 0,
       price_negotiable:    form.priceNegotiable,
       price_on_request:    form.priceOnRequest,
+      specs:               specs,
       // Cap sell-by units to the seller's plan (locked units can't be enabled).
       sell_piece:          form.sellPiece  && canSellUnit(sellerTier, 'piece'),
       sell_box:            form.sellBox    && canSellUnit(sellerTier, 'box'),
@@ -203,7 +208,7 @@ export function ProductForm({
     // If a recently-added column (e.g. discount %) isn't migrated yet, drop those
     // keys and retry so saving still works.
     const OPTIONAL_KEYS = ['box_discount_pct', 'pallet_discount_pct', 'truck_discount_pct',
-      'brand_name', 'source_type', 'original_supplier_id', 'current_owner_id', 'created_by', 'price_on_request']
+      'brand_name', 'source_type', 'original_supplier_id', 'current_owner_id', 'created_by', 'price_on_request', 'specs']
     const stripOptional = (obj: any) => { const o = { ...obj }; OPTIONAL_KEYS.forEach(k => delete o[k]); return o }
     const isMissingColumn = (msg?: string | null) => !!msg && /column|does not exist|discount_pct/i.test(msg)
 
@@ -377,6 +382,34 @@ export function ProductForm({
           </div>
         </div>
       </div>
+
+      {/* Specifications — dynamic fields from the category template */}
+      {(() => {
+        const template = (categories.find((c) => c.id === form.categoryId)?.template_fields ?? []) as TemplateField[]
+        if (!template.length) return null
+        return (
+          <div>
+            <h3 className="font-bold text-[#0B1F4D] text-sm mb-1 pb-2 border-b">Specifications</h3>
+            <p className="text-xs text-gray-400 mt-2 mb-4">Standard fields for this category — they become part of the master product so everyone reuses the same specs.</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {template.map((f) => (
+                <div key={f.key} className="space-y-1.5">
+                  <label className={labelCls}>{f.label}</label>
+                  {f.type === 'select' && f.options ? (
+                    <select className={inputCls} value={specs[f.key] ?? ''} onChange={(e) => setSpecs((s) => ({ ...s, [f.key]: e.target.value }))}>
+                      <option value="">—</option>
+                      {f.options.map((o) => <option key={o} value={o}>{o}</option>)}
+                    </select>
+                  ) : (
+                    <input className={inputCls} type={f.type === 'number' ? 'number' : 'text'} value={specs[f.key] ?? ''}
+                      onChange={(e) => setSpecs((s) => ({ ...s, [f.key]: e.target.value }))} placeholder={f.label} />
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )
+      })()}
 
       {/* Pricing */}
       <div>

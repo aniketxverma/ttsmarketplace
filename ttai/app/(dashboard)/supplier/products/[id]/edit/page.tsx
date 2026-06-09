@@ -77,6 +77,7 @@ export default async function EditProductPage({ params }: { params: { id: string
           minMarginPct={pricing.minMarginPct}
           vatPct={pricing.vatPct}
           vatEnabled={pricing.vatEnabled}
+          initialSpecs={(product as any).specs ?? {}}
           initialData={{
             name:               product.name,
             slug:               product.slug,

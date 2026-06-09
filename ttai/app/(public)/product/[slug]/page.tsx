@@ -51,7 +51,7 @@ export default async function ProductPage({ params, searchParams }: { params: { 
 
   // Optional columns that may not be migrated yet — kept separate so a schema lag
   // never 404s the whole product page (we retry without them on error).
-  const OPTIONAL_COLS = 'box_discount_pct, pallet_discount_pct, truck_discount_pct, brand_name, price_on_request'
+  const OPTIONAL_COLS = 'box_discount_pct, pallet_discount_pct, truck_discount_pct, brand_name, price_on_request, specs'
   const buildSelect = (withOptional: boolean) => `
     id, name, slug, description, price_cents, retail_price_cents, currency_code,
     min_order_qty, min_box_qty, min_pallet_qty, min_truck_qty,
@@ -407,6 +407,27 @@ export default async function ProductPage({ params, searchParams }: { params: { 
                   <Row label="EAN"            value={product.ean} />
                 </div>
               )}
+            </div>
+          )
+        })()}
+
+        {/* ── Specifications (from the category template) ──────────────────── */}
+        {(() => {
+          const specs = (product.specs ?? {}) as Record<string, any>
+          const entries = Object.entries(specs).filter(([, v]) => v !== null && v !== undefined && String(v).trim() !== '')
+          if (entries.length === 0) return null
+          const humanize = (k: string) => k.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+          return (
+            <div className="mt-14">
+              <h2 className="text-lg font-extrabold text-[#0B1F4D] mb-5">Specifications</h2>
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-1.5">
+                {entries.map(([k, v]) => (
+                  <div key={k} className="flex justify-between gap-3 py-1.5 border-b border-gray-50">
+                    <span className="text-xs text-gray-400">{humanize(k)}</span>
+                    <span className="text-xs font-bold text-[#0B1F4D] text-right">{String(v)}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           )
         })()}
