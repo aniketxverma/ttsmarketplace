@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
 
 const POS_TYPES = [
   { value: 'shop',         label: 'Retail Shop',      color: 'bg-blue-100 text-blue-700' },
@@ -65,8 +64,7 @@ function emptyForm() {
   }
 }
 
-export function PosManager({ supplierId, initialPosList }: Props) {
-  const supabase = createClient()
+export function PosManager({ initialPosList }: Props) {
   const [posList, setPosList] = useState<PosItem[]>(initialPosList)
   const [showForm, setShowForm] = useState(false)
   const [editId, setEditId] = useState<string | null>(null)
@@ -104,88 +102,29 @@ export function PosManager({ supplierId, initialPosList }: Props) {
     if (!form.name.trim()) { setError('POS name is required'); return }
     setSaving(true); setError(null)
 
-    if (editId) {
-      // Update core
-      const { error: e1 } = await (supabase.from('supplier_pos' as any) as any)
-        .update({ name: form.name, type: form.type, status: form.status, is_public: form.is_public })
-        .eq('id', editId)
-      if (e1) { setSaving(false); setError(e1.message); return }
+    // Persist server-side (admin client + ownership check) so RLS never drops writes.
+    const res = await fetch('/api/supplier/pos', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'save', id: editId, pos: { ...form } }),
+    })
+    const json = await res.json().catch(() => ({}))
+    if (!res.ok) { setSaving(false); setError(json.error ?? 'Save failed'); return }
 
-      // Upsert location
-      await (supabase.from('pos_locations' as any) as any).upsert({
-        pos_id: editId,
-        address_line1: form.address_line1 || null,
-        city: form.city || null,
-        region: '',
-        postal_code: form.postal_code || null,
-        country: form.country || null,
-        latitude: form.latitude ? parseFloat(form.latitude) : null,
-        longitude: form.longitude ? parseFloat(form.longitude) : null,
-      }, { onConflict: 'pos_id' })
-
-      // Upsert details
-      await (supabase.from('pos_details' as any) as any).upsert({
-        pos_id: editId,
-        manager_name: form.manager_name || null,
-        phone: form.phone || null,
-        whatsapp: form.whatsapp || null,
-        email: form.email || null,
-        accepts_walk_ins: form.accepts_walk_ins,
-        accepts_orders: form.accepts_orders,
-        services_offered: form.services_offered,
-        notes: form.notes || null,
-        opening_hours: form.opening_hours,
-      }, { onConflict: 'pos_id' })
-
-      setPosList((list) => list.map((p) => p.id === editId ? {
-        ...p, name: form.name, type: form.type, status: form.status, is_public: form.is_public,
-        pos_locations: { address_line1: form.address_line1, city: form.city, country: form.country, latitude: form.latitude ? parseFloat(form.latitude) : undefined, longitude: form.longitude ? parseFloat(form.longitude) : undefined },
-        pos_details: { phone: form.phone, whatsapp: form.whatsapp, email: form.email, manager_name: form.manager_name, accepts_walk_ins: form.accepts_walk_ins, accepts_orders: form.accepts_orders, services_offered: form.services_offered, opening_hours: form.opening_hours },
-      } : p))
-    } else {
-      // Insert new POS
-      const { data: newPos, error: e1 } = await (supabase.from('supplier_pos' as any) as any)
-        .insert({ supplier_id: supplierId, name: form.name, type: form.type, status: form.status, is_public: form.is_public, sort_order: posList.length })
-        .select().single()
-      if (e1 || !newPos) { setSaving(false); setError(e1?.message ?? 'Failed to create POS'); return }
-
-      await Promise.all([
-        (supabase.from('pos_locations' as any) as any).insert({
-          pos_id: newPos.id,
-          address_line1: form.address_line1 || null,
-          city: form.city || null,
-          postal_code: form.postal_code || null,
-          country: form.country || null,
-          latitude: form.latitude ? parseFloat(form.latitude) : null,
-          longitude: form.longitude ? parseFloat(form.longitude) : null,
-        }),
-        (supabase.from('pos_details' as any) as any).insert({
-          pos_id: newPos.id,
-          manager_name: form.manager_name || null,
-          phone: form.phone || null,
-          whatsapp: form.whatsapp || null,
-          email: form.email || null,
-          accepts_walk_ins: form.accepts_walk_ins,
-          accepts_orders: form.accepts_orders,
-          services_offered: form.services_offered,
-          notes: form.notes || null,
-          opening_hours: form.opening_hours,
-        }),
-      ])
-
-      setPosList((list) => [...list, {
-        ...newPos,
-        pos_locations: { address_line1: form.address_line1, city: form.city, country: form.country },
-        pos_details: { phone: form.phone, manager_name: form.manager_name, services_offered: form.services_offered, opening_hours: form.opening_hours },
-      }])
-    }
+    const saved = json.pos
+    setPosList((list) => editId
+      ? list.map((p) => (p.id === editId ? { ...p, ...saved } : p))
+      : [...list, saved])
 
     setSaving(false); setShowForm(false); setEditId(null)
   }
 
   async function deletePos(id: string) {
     if (!confirm('Delete this location? This cannot be undone.')) return
-    await (supabase.from('supplier_pos' as any) as any).delete().eq('id', id)
+    const res = await fetch('/api/supplier/pos', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'delete', id }),
+    })
+    if (!res.ok) { const j = await res.json().catch(() => ({})); setError(j.error ?? 'Delete failed'); return }
     setPosList((list) => list.filter((p) => p.id !== id))
   }
 
