@@ -12,6 +12,16 @@ import { CONDITIONS } from '@/lib/conditions'
 
 type TemplateField = { key: string; label: string; type?: 'text' | 'number' | 'select'; options?: string[] }
 
+/** Inline preview for a product video — supports YouTube, Vimeo and direct files. */
+function VideoPreview({ url }: { url: string }) {
+  const yt = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{11})/)
+  if (yt) return <iframe className="w-full aspect-video rounded-xl border border-gray-200" src={`https://www.youtube.com/embed/${yt[1]}`} allowFullScreen title="Product video" />
+  const vimeo = url.match(/vimeo\.com\/(\d+)/)
+  if (vimeo) return <iframe className="w-full aspect-video rounded-xl border border-gray-200" src={`https://player.vimeo.com/video/${vimeo[1]}`} allowFullScreen title="Product video" />
+  if (/\.(mp4|webm|ogg|mov)(\?|$)/i.test(url)) return <video src={url} controls className="w-full aspect-video rounded-xl border border-gray-200 bg-black" />
+  return <a href={url} target="_blank" rel="noopener noreferrer" className="text-xs font-bold text-[#0B1F4D] underline">Open video link ↗</a>
+}
+
 interface ProductFormProps {
   supplierId: string
   mode: 'create' | 'edit'
@@ -84,6 +94,7 @@ export function ProductForm({
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
+  const [videoBusy, setVideoBusy] = useState(false)
   // create-mode only: stage images before product exists
   const [pendingFiles, setPendingFiles] = useState<File[]>([])
   const [pendingPreviews, setPendingPreviews] = useState<string[]>([])
@@ -281,6 +292,12 @@ export function ProductForm({
     else setError(json.error ?? 'Upload failed')
   }
 
+  async function handleVideoFile(f: File) {
+    setVideoBusy(true)
+    await uploadDoc(f, 'video', 'videoUrl')
+    setVideoBusy(false)
+  }
+
   function handlePendingFiles(fileList: FileList) {
     const allowed = Array.from(fileList).filter(f => f.type.startsWith('image/')).slice(0, 10)
     const previews = allowed.map(f => URL.createObjectURL(f))
@@ -390,6 +407,30 @@ export function ProductForm({
             <textarea className={`${inputCls} h-28 resize-none`} value={form.description} onChange={(e) => update('description', e.target.value)} placeholder="Describe your product — specifications, certifications, packaging..." />
           </div>
         </div>
+      </div>
+
+      {/* Product Video — paste a link OR upload a file */}
+      <div className="rounded-xl border bg-card p-6 mb-6">
+        <h3 className="font-bold text-[#0B1F4D] text-sm mb-1 pb-2 border-b">Product Video <span className="text-gray-400 font-normal">(optional)</span></h3>
+        <p className="text-xs text-gray-400 mb-3">Paste a YouTube, Vimeo or MP4 link — or upload a video file (up to 100 MB).</p>
+        <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-3 items-end">
+          <div className="space-y-1.5">
+            <label className={labelCls}>Video link</label>
+            <input className={inputCls} value={form.videoUrl} onChange={(e) => update('videoUrl', e.target.value)}
+              placeholder="https://youtube.com/watch?v=…  or  https://…/clip.mp4" />
+          </div>
+          <label className={`flex items-center justify-center gap-2 rounded-xl border border-dashed px-4 py-2.5 text-xs font-bold cursor-pointer transition-colors ${videoBusy ? 'border-gray-200 text-gray-400' : 'border-gray-300 text-[#0B1F4D] hover:border-[#0B1F4D]'}`}>
+            {videoBusy ? 'Uploading…' : '⬆ Upload file'}
+            <input type="file" accept="video/*" className="hidden" disabled={videoBusy}
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleVideoFile(f) }} />
+          </label>
+        </div>
+        {form.videoUrl && (
+          <div className="mt-3 max-w-md">
+            <VideoPreview url={form.videoUrl} />
+            <button type="button" onClick={() => update('videoUrl', '')} className="mt-1.5 text-xs text-red-400 hover:text-red-600">Remove video</button>
+          </div>
+        )}
       </div>
 
       {/* Specifications — dynamic fields from the category template */}
@@ -709,15 +750,7 @@ export function ProductForm({
           </div>
           <div className="space-y-1.5">
             <label className={labelCls}>Product video</label>
-            {form.videoUrl ? (
-              <div className="flex items-center gap-2 text-xs">
-                <a href={form.videoUrl} target="_blank" rel="noopener noreferrer" className="text-[#0B1F4D] font-bold underline truncate">View video</a>
-                <button type="button" onClick={() => update('videoUrl', '')} className="text-red-400 hover:text-red-600">remove</button>
-              </div>
-            ) : (
-              <input className="text-xs" type="file" accept="video/*"
-                onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadDoc(f, 'video', 'videoUrl') }} />
-            )}
+            <p className="text-xs text-gray-400">Set above in the <span className="font-semibold text-gray-500">Product Video</span> section.</p>
           </div>
         </div>
 
