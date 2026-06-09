@@ -24,6 +24,7 @@ const SUPPLIER_NAV: NavItem[] = [
   { key: 'subscriptions', href: '/buyer/channels',         icon: <RadioIcon /> },
   { key: 'points_of_sale', href: '/supplier/pos',          icon: <PinIcon /> },
   { key: 'sales_network', href: '/supplier/network',       icon: <NetworkIcon /> },
+  { key: 'send_offers',   href: '/supplier/offers',        icon: <MegaphoneIcon /> },
   { key: 'orders',        href: '/supplier/orders',        icon: <OrderIcon /> },
   { key: 'messages',      href: '/supplier/messages',      icon: <ChatIcon /> },
   { key: 'documents',     href: '/supplier/documents',     icon: <DocIcon /> },
@@ -125,3 +126,4 @@ function ChatIcon()    { return <svg className="w-4 h-4" fill="none" stroke="cur
 function PinIcon()     { return <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg> }
 function RadioIcon()   { return <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0" /></svg> }
 function NetworkIcon() { return <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4a2 2 0 110 4 2 2 0 010-4zM5 16a2 2 0 110 4 2 2 0 010-4zM19 16a2 2 0 110 4 2 2 0 010-4zM12 8v4m0 0l-5 4m5-4l5 4" /></svg> }
+function MegaphoneIcon() { return <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" /></svg> }

@@ -28,9 +28,10 @@ export default async function SupplierPosPage() {
     <div className="max-w-4xl">
       <div className="mb-6 flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Points of Sale</h1>
+          <h1 className="text-2xl font-bold">My Locations</h1>
           <p className="text-muted-foreground text-sm mt-0.5">
-            Manage your physical locations — shops, warehouses, pickup points and more
+            Your own physical locations — shops, warehouses and pickup points (shown on your profile map).
+            To invite partner companies into your network, use <span className="font-semibold">Sales Network</span>.
           </p>
         </div>
       </div>
