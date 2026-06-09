@@ -2,21 +2,33 @@ import { createClient } from '@/lib/supabase/server'
 import { requireRole } from '@/lib/auth/rbac'
 import { AddCategoryForm } from './AddCategoryForm'
 import { DeleteCategory } from './DeleteCategory'
+import { CategoryTemplateEditor } from './CategoryTemplateEditor'
+
+type Cat = {
+  id: string
+  name: string
+  slug: string
+  depth: number
+  marketplace_context: string
+  sort_order: number
+  parent_id: string | null
+  template_fields?: { key: string; label: string; type: 'text' | 'number' | 'select'; options?: string[] }[]
+}
 
 export default async function AdminCategoriesPage() {
   await requireRole('admin')
   const supabase = createClient()
 
-  const { data: categories } = await supabase
-    .from('categories')
-    .select('id, name, slug, depth, marketplace_context, sort_order, parent_id')
+  const { data: categories } = await (supabase
+    .from('categories') as any)
+    .select('id, name, slug, depth, marketplace_context, sort_order, parent_id, template_fields')
     .order('depth', { ascending: true })
     .order('sort_order', { ascending: true })
-    .order('name', { ascending: true })
+    .order('name', { ascending: true }) as { data: Cat[] | null }
 
   // Group: root first, then children
   const roots = categories?.filter((c) => !c.parent_id) ?? []
-  const childrenByParent: Record<string, typeof roots> = {}
+  const childrenByParent: Record<string, Cat[]> = {}
   categories?.filter((c) => c.parent_id).forEach((c) => {
     if (!childrenByParent[c.parent_id!]) childrenByParent[c.parent_id!] = []
     childrenByParent[c.parent_id!].push(c)
@@ -49,6 +61,7 @@ export default async function AdminCategoriesPage() {
               <th className="text-left px-4 py-3 font-medium hidden sm:table-cell">Slug</th>
               <th className="text-left px-4 py-3 font-medium">Context</th>
               <th className="text-left px-4 py-3 font-medium hidden md:table-cell">Depth</th>
+              <th className="text-left px-4 py-3 font-medium">Fields</th>
               <th className="px-4 py-3" />
             </tr>
           </thead>
@@ -64,6 +77,9 @@ export default async function AdminCategoriesPage() {
                     </span>
                   </td>
                   <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">Root</td>
+                  <td className="px-4 py-3">
+                    <CategoryTemplateEditor categoryId={root.id} categoryName={root.name} initialFields={(root as any).template_fields ?? []} />
+                  </td>
                   <td className="px-4 py-3 text-right">
                     <DeleteCategory categoryId={root.id} hasChildren={!!(childrenByParent[root.id]?.length)} />
                   </td>
@@ -78,6 +94,9 @@ export default async function AdminCategoriesPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">Sub</td>
+                    <td className="px-4 py-3">
+                      <CategoryTemplateEditor categoryId={child.id} categoryName={child.name} initialFields={(child as any).template_fields ?? []} />
+                    </td>
                     <td className="px-4 py-3 text-right">
                       <DeleteCategory categoryId={child.id} hasChildren={false} />
                     </td>
@@ -87,7 +106,7 @@ export default async function AdminCategoriesPage() {
             ))}
             {!roots.length && (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">No categories yet</td>
+                <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">No categories yet</td>
               </tr>
             )}
           </tbody>
