@@ -7,6 +7,8 @@ import { BrandTabs } from './BrandTabs'
 import { StatsBar } from './StatsBar'
 import { BrandLogo } from '@/components/BrandLogo'
 import { canSeeB2B, tierRank } from '@/lib/business-chain'
+import { translateCached } from '@/lib/i18n/content'
+import { getLocale } from '@/lib/i18n/server'
 import Link from 'next/link'
 import { Lock } from 'lucide-react'
 
@@ -190,6 +192,19 @@ export default async function BrandPage({ params }: { params: { slug: string } }
   })
 
   const shareUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? ''}/brand/${params.slug}`
+
+  // Show the supplier's written content in the visitor's language (cached).
+  const locale = await getLocale()
+  if (locale && locale !== 'en') {
+    const [tg, ab, de] = await Promise.all([
+      translateCached(supplier.tagline ?? '', locale),
+      translateCached(supplier.about_company ?? '', locale),
+      translateCached(supplier.description ?? '', locale),
+    ])
+    supplier.tagline = tg || supplier.tagline
+    supplier.about_company = ab || supplier.about_company
+    supplier.description = de || supplier.description
+  }
 
   // Matchmaking gate: hide all direct contact for non-members so every CTA below
   // (and the BrandTabs contact tab) collapses to the "Unlock contact" prompt.

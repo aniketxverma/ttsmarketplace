@@ -4,7 +4,7 @@ import { ProductCard } from '@/components/marketplace/ProductCard'
 import { FamilyCard } from '@/components/marketplace/FamilyCard'
 import { groupIntoFamilies } from '@/lib/product-family'
 import { dedupeByMaster } from '@/lib/offers'
-import { localizeCategoryNames } from '@/lib/i18n/categories'
+import { localizeCategoryNames, localizeNames } from '@/lib/i18n/categories'
 import { getLocale } from '@/lib/i18n/server'
 import { ProductGrid } from '@/components/marketplace/ProductGrid'
 import { CategoryNav } from '@/components/marketplace/CategoryNav'
@@ -53,7 +53,8 @@ export default async function MarketplacePage({
       .limit(3),
   ])
 
-  const allCats = await localizeCategoryNames(categoriesRes.data ?? [], await getLocale())
+  const locale = await getLocale()
+  const allCats = await localizeCategoryNames(categoriesRes.data ?? [], locale)
 
   // When scoped to one supplier, show their name in the header.
   let scopedSupplierName: string | null = null
@@ -147,6 +148,11 @@ export default async function MarketplacePage({
   const deduped = dedupeByMaster(prodList as any) as any[]
   prodList.length = 0
   prodList.push(...deduped)
+
+  // Show product names in the visitor's language (cards) — detail page already does.
+  const localized = await localizeNames(prodList as any, locale)
+  prodList.length = 0
+  prodList.push(...localized)
 
   // Brand filter + the list of brands available (for the chips).
   const activeBrand = searchParams.brand ?? null

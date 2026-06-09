@@ -28,3 +28,6 @@ export async function localizeCategoryNames<T extends { name?: string | null }>(
     return cats
   }
 }
+
+/** Same as above but for any list of objects with a `name` (e.g. products). */
+export const localizeNames = localizeCategoryNames
