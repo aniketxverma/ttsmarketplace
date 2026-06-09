@@ -127,6 +127,7 @@ export default async function EditProductPage({ params }: { params: { id: string
             warranty:           (product as any).warranty ?? '',
             warehouseLocation:  (product as any).warehouse_location ?? '',
             deliveryDays:       (product as any).delivery_days != null ? String((product as any).delivery_days) : '',
+            shipping:           (product as any).shipping_cents != null ? ((product as any).shipping_cents / 100).toFixed(2) : '',
             minBoxQty:          (product as any).min_box_qty?.toString() ?? '1',
             minPalletQty:       (product as any).min_pallet_qty?.toString() ?? '1',
             minTruckQty:        (product as any).min_truck_qty?.toString() ?? '1',
