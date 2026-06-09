@@ -185,12 +185,17 @@ export default async function ProductPage({ params, searchParams }: { params: { 
     .eq('supplier_id', supplier?.id)
     .eq('is_published', true)
     .neq('slug', params.slug)
-    .limit(6) as { data: any[] | null }
+    .order('created_at', { ascending: false })
+    .limit(18) as { data: any[] | null }
 
-  const more = (moreRaw ?? []).map((p: any) => {
-    const imgs = ((p.product_images ?? []) as any[]).sort((a: any, b: any) => a.sort_order - b.sort_order)
-    return { ...p, thumb: imgs[0]?.url ?? null }
-  })
+  // Only show real cards — drop items with no image (blank tiles look broken).
+  const more = (moreRaw ?? [])
+    .map((p: any) => {
+      const imgs = ((p.product_images ?? []) as any[]).sort((a: any, b: any) => a.sort_order - b.sort_order)
+      return { ...p, thumb: imgs[0]?.url ?? null }
+    })
+    .filter((p: any) => p.thumb)
+    .slice(0, 6)
 
   const waHref = supplier?.whatsapp
     ? `https://wa.me/${supplier.whatsapp.replace(/\D/g, '')}?text=Hola! Estoy interesado/a en: ${product.name}`
