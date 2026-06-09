@@ -2,12 +2,15 @@ import { notFound } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { Crown, ShieldCheck, Award, Store, ChevronLeft, Package, Users, ArrowRight } from 'lucide-react'
 import { ProductBuyArea } from './ProductBuyArea'
 import { ModelSelector } from './ModelSelector'
 import { CopyProductButton } from './CopyProductButton'
+import { SellersTable } from '../../p/[id]/SellersTable'
+import { getMasterSellers } from '@/lib/offers-server'
 import { unitsPerPallet, unitsPerTruck, cartonsPerTruck, unitsForShop, intersectUnits, retailCostBaseCents } from '@/lib/packaging'
-import { chainLevel, unitsForRole } from '@/lib/business-chain'
+import { chainLevel, unitsForRole, tierRank } from '@/lib/business-chain'
 import { useServerTranslations, getLocale } from '@/lib/i18n/server'
 import { translateMany } from '@/lib/i18n/content'
 import { BrandLogo } from '@/components/BrandLogo'
@@ -52,7 +55,7 @@ export default async function ProductPage({ params, searchParams }: { params: { 
 
   // Optional columns that may not be migrated yet — kept separate so a schema lag
   // never 404s the whole product page (we retry without them on error).
-  const OPTIONAL_COLS = 'box_discount_pct, pallet_discount_pct, truck_discount_pct, brand_name, price_on_request, specs'
+  const OPTIONAL_COLS = 'box_discount_pct, pallet_discount_pct, truck_discount_pct, brand_name, price_on_request, specs, master_product_id'
   const buildSelect = (withOptional: boolean) => `
     id, name, slug, description, price_cents, retail_price_cents, currency_code,
     min_order_qty, min_box_qty, min_pallet_qty, min_truck_qty,
@@ -116,7 +119,7 @@ export default async function ProductPage({ params, searchParams }: { params: { 
   let viewer: any = null
   let viewerSupplierId: string | null = null
   if (user) {
-    const { data } = await supabase.from('profiles').select('role, business_type').eq('id', user.id).single()
+    const { data } = await (supabase.from('profiles') as any).select('role, business_type, tier, country_name, tax_country').eq('id', user.id).single()
     viewer = data
     // Suppliers can one-click "Copy Existing Product" into their own catalogue.
     const { data: sup } = await supabase.from('suppliers').select('id').eq('owner_id', user.id).maybeSingle()
@@ -150,6 +153,18 @@ export default async function ProductPage({ params, searchParams }: { params: { 
       supplierMinCents = mv?.min_order_value_cents ?? 0
     } catch { /* not migrated */ }
   }
+
+  // Other suppliers offering the SAME master product (multi-seller comparison).
+  // Supplier identity/location/contact is gated behind a paid plan (matchmaking value).
+  let sellers: Awaited<ReturnType<typeof getMasterSellers>> = []
+  const masterId = (product as any).master_product_id ?? null
+  if (masterId) {
+    const buyerCountry = viewer?.country_name ?? viewer?.tax_country ?? null
+    sellers = await getMasterSellers(createAdminClient(), masterId, {
+      retail: retailView, buyerCountry, region: (product as any).specs?.region ?? null,
+    })
+  }
+  const sellersUnlocked = (viewer?.tier ? tierRank(viewer.tier) >= 1 : false) || viewer?.role === 'admin' || !!viewerSupplierId
 
   // Model selector (Phase 3): sibling products in the same product line.
   let models: { id: string; slug: string; name: string; model_name: string | null }[] = []
@@ -344,6 +359,15 @@ export default async function ProductPage({ params, searchParams }: { params: { 
             )}
 
         </ProductBuyArea>
+
+        {/* ── Available Sellers — same product, many suppliers (matchmaking) ── */}
+        {sellers.length > 1 && (
+          <div className="mt-14">
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+              <SellersTable sellers={sellers} productName={product.name} locked={!sellersUnlocked} />
+            </div>
+          </div>
+        )}
 
         {/* ── Packaging & logistics (DB-driven, never baked into images) ───── */}
         {(() => {

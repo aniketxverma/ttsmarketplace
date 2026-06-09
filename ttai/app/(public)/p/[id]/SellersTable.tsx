@@ -2,34 +2,10 @@
 
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
-import { Star, ShieldCheck, Crown, MessageCircle, Truck, Check } from 'lucide-react'
+import { ShieldCheck, Crown, MessageCircle, Truck, Lock } from 'lucide-react'
+import type { Seller } from '@/lib/offers'
 
-export type Seller = {
-  productId: string
-  slug: string
-  href: string
-  productPriceCents: number
-  shippingCents: number | null
-  totalCents: number
-  currency: string
-  condition: string | null
-  region: string | null
-  customsNote: string
-  customsOk: boolean
-  deliveryDays: number | null
-  leadTime: string | null
-  stock: number
-  city: string | null
-  country: string | null
-  flag: string
-  supplierName: string
-  verified: boolean
-  premium: boolean
-  tierLabel: string
-  whatsapp: string | null
-  brandSlug: string | null
-  nearby: boolean
-}
+export type { Seller }
 
 const SORTS = [
   { id: 'best', label: 'Best Price' },
@@ -44,9 +20,10 @@ function money(cents: number, currency: string) {
   return new Intl.NumberFormat('es-ES', { style: 'currency', currency, maximumFractionDigits: 0 }).format(cents / 100)
 }
 
-export function SellersTable({ sellers, productName }: { sellers: Seller[]; productName: string }) {
+export function SellersTable({ sellers, productName, locked = false }: { sellers: Seller[]; productName: string; locked?: boolean }) {
   const [sort, setSort] = useState<(typeof SORTS)[number]['id']>('best')
   const [expanded, setExpanded] = useState(false)
+  const blur = 'blur-[5px] select-none pointer-events-none'
 
   const bestPriceId = useMemo(
     () => sellers.reduce<{ id: string | null; t: number }>((a, s) => (s.totalCents < a.t ? { id: s.productId, t: s.totalCents } : a), { id: null, t: Infinity }).id,
@@ -76,6 +53,20 @@ export function SellersTable({ sellers, productName }: { sellers: Seller[]; prod
         </label>
       </div>
 
+      {locked && (
+        <div className="mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+          <div className="flex items-center gap-2.5">
+            <Lock className="w-5 h-5 text-amber-600 flex-shrink-0" />
+            <p className="text-sm text-amber-900">
+              <span className="font-extrabold">{sellers.length} verified supplier{sellers.length === 1 ? '' : 's'}</span> compete for this product. Prices are public — unlock <span className="font-bold">supplier names, locations &amp; contact</span> to order.
+            </p>
+          </div>
+          <Link href="/pricing" className="flex-shrink-0 inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#0B1F4D] text-white px-5 py-2.5 text-sm font-extrabold hover:bg-[#162d6e] whitespace-nowrap">
+            <Lock className="w-3.5 h-3.5" /> Unlock suppliers
+          </Link>
+        </div>
+      )}
+
       {/* Header (desktop) */}
       <div className="hidden lg:grid grid-cols-[1.4fr_0.8fr_1.3fr_1.1fr_1fr_0.9fr] gap-3 px-4 py-2 text-[11px] font-bold uppercase tracking-wide text-gray-400 border-b">
         <span>Supplier</span><span>Location</span><span>Offer Details</span><span>Price Details</span><span>Delivery</span><span className="text-right">Action</span>
@@ -93,10 +84,10 @@ export function SellersTable({ sellers, productName }: { sellers: Seller[]; prod
                   {s.premium && !isBest && <span className="inline-flex items-center justify-center rounded bg-[#0B1F4D] text-white text-[9px] font-extrabold px-1.5 py-0.5">PREMIUM</span>}
                 </div>
                 <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#0B1F4D] to-[#2563eb] text-white flex items-center justify-center text-sm font-extrabold flex-shrink-0">
-                  {s.supplierName.charAt(0).toUpperCase()}
+                  {locked ? <Lock className="w-4 h-4" /> : s.supplierName.charAt(0).toUpperCase()}
                 </div>
                 <div className="min-w-0">
-                  <p className="font-bold text-[#0B1F4D] text-sm truncate">{s.supplierName}</p>
+                  <p className={`font-bold text-[#0B1F4D] text-sm truncate ${locked ? blur : ''}`}>{locked ? 'Verified Supplier Co.' : s.supplierName}</p>
                   <span className={`inline-flex items-center gap-1 text-[11px] font-bold ${s.premium ? 'text-amber-600' : 'text-green-600'}`}>
                     {s.premium ? <Crown className="w-3 h-3" /> : <ShieldCheck className="w-3 h-3" />}{s.tierLabel}
                   </span>
@@ -105,9 +96,9 @@ export function SellersTable({ sellers, productName }: { sellers: Seller[]; prod
 
               {/* Location */}
               <div className="text-sm">
-                <span className="text-xl leading-none mr-1">{s.flag}</span>
-                <div className="text-xs text-gray-600 mt-0.5">{[s.city, s.country].filter(Boolean).join(', ') || '—'}</div>
-                {s.nearby && <span className="inline-flex items-center gap-1 text-[10px] font-bold text-blue-600 mt-0.5">Near you</span>}
+                <span className={`text-xl leading-none mr-1 ${locked ? blur : ''}`}>{s.flag}</span>
+                <div className={`text-xs text-gray-600 mt-0.5 ${locked ? blur : ''}`}>{locked ? 'Madrid, Spain' : ([s.city, s.country].filter(Boolean).join(', ') || '—')}</div>
+                {!locked && s.nearby && <span className="inline-flex items-center gap-1 text-[10px] font-bold text-blue-600 mt-0.5">Near you</span>}
               </div>
 
               {/* Offer details */}
@@ -132,17 +123,25 @@ export function SellersTable({ sellers, productName }: { sellers: Seller[]; prod
 
               {/* Action */}
               <div className="flex flex-col items-stretch lg:items-end gap-1.5">
-                <Link href={s.href} className="inline-flex items-center justify-center rounded-lg bg-[#0B1F4D] text-white px-4 py-2 text-xs font-extrabold hover:bg-[#162d6e] whitespace-nowrap">
-                  View &amp; Order
-                </Link>
-                {(s.whatsapp || s.brandSlug) && (
-                  <a
-                    href={s.whatsapp ? `https://wa.me/${s.whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent('Hi! I am interested in: ' + productName)}` : `/brand/${s.brandSlug}`}
-                    target={s.whatsapp ? '_blank' : undefined} rel="noreferrer"
-                    className="inline-flex items-center justify-center gap-1 text-[11px] font-bold text-[#2563eb] hover:underline"
-                  >
-                    <MessageCircle className="w-3 h-3" /> Chat with Supplier
-                  </a>
+                {locked ? (
+                  <Link href="/pricing" className="inline-flex items-center justify-center gap-1 rounded-lg bg-[#F5A623] text-[#0B1F4D] px-4 py-2 text-xs font-extrabold hover:bg-[#fbb93a] whitespace-nowrap">
+                    <Lock className="w-3 h-3" /> Unlock to order
+                  </Link>
+                ) : (
+                  <>
+                    <Link href={s.href} className="inline-flex items-center justify-center rounded-lg bg-[#0B1F4D] text-white px-4 py-2 text-xs font-extrabold hover:bg-[#162d6e] whitespace-nowrap">
+                      View &amp; Order
+                    </Link>
+                    {(s.whatsapp || s.brandSlug) && (
+                      <a
+                        href={s.whatsapp ? `https://wa.me/${s.whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent('Hi! I am interested in: ' + productName)}` : `/brand/${s.brandSlug}`}
+                        target={s.whatsapp ? '_blank' : undefined} rel="noreferrer"
+                        className="inline-flex items-center justify-center gap-1 text-[11px] font-bold text-[#2563eb] hover:underline"
+                      >
+                        <MessageCircle className="w-3 h-3" /> Chat with Supplier
+                      </a>
+                    )}
+                  </>
                 )}
               </div>
             </div>

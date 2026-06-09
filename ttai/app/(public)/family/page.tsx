@@ -76,7 +76,7 @@ export default async function FamilyPage({
         {products.map((p) => {
           const sup = p.suppliers as { legal_name: string; trade_name: string | null; reliability_tier: import('@/types/domain').ReliabilityTier }
           const img = (p.product_images as { url: string; sort_order: number }[])?.sort((a, b) => a.sort_order - b.sort_order)[0]?.url
-          const href = p._masterId ? `/p/${p._masterId}${retail ? '?shop=online' : ''}` : `/product/${p.slug ?? p.id}`
+          const href = `/product/${p.slug ?? p.id}`
           return (
             <ProductCard
               key={p.id}

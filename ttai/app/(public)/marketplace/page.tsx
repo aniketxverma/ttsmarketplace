@@ -364,8 +364,8 @@ export default async function MarketplacePage({
               const p = fam.representative as any
               const supplier = p.suppliers as { legal_name: string; trade_name: string | null; reliability_tier: import('@/types/domain').ReliabilityTier }
               const mainImg = (p.product_images as { url: string; sort_order: number }[])?.sort((a, b) => a.sort_order - b.sort_order)[0]?.url
-              // Master group → the single deduped listing; otherwise the supplier's own page.
-              const href = p._masterId ? `/p/${p._masterId}` : `/product/${p.slug ?? p.id}`
+              // Deduped card → the best offer's product page (which lists all sellers).
+              const href = `/product/${p.slug ?? p.id}`
               return (
                 <ProductCard key={p.id} product={p as Parameters<typeof ProductCard>[0]['product']}
                   supplier={supplier} mainImageUrl={mainImg} href={href} shop="market" brand={brand} sponsored={sponsored} minOrderCents={minOrderCents} offerCount={offerCount} />

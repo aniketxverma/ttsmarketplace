@@ -163,7 +163,7 @@ export default async function StorePage({
                     }
                     const images = p.product_images as { url: string; sort_order: number }[]
                     const mainImg = images?.sort((a, b) => a.sort_order - b.sort_order)[0]?.url
-                    const href = p._masterId ? `/p/${p._masterId}?shop=online` : `/product/${p.slug ?? p.id}`
+                    const href = `/product/${p.slug ?? p.id}`
                     return (
                       <ProductCard
                         key={p.id}

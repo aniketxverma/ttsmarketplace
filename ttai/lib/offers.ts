@@ -4,6 +4,34 @@
 
 const TIER_RANK: Record<string, number> = { GOLD: 0, SILVER: 1, BRONZE: 2, UNVERIFIED: 3 }
 
+/** A supplier offer as rendered in the "Available Sellers" comparison table. */
+export type Seller = {
+  productId: string
+  slug: string
+  href: string
+  productPriceCents: number
+  shippingCents: number | null
+  totalCents: number
+  currency: string
+  condition: string | null
+  region: string | null
+  customsNote: string
+  customsOk: boolean
+  deliveryDays: number | null
+  leadTime: string | null
+  stock: number
+  city: string | null
+  country: string | null
+  flag: string
+  supplierName: string
+  verified: boolean
+  premium: boolean
+  tierLabel: string
+  whatsapp: string | null
+  brandSlug: string | null
+  nearby: boolean
+}
+
 export interface OfferLike {
   id: string
   price_cents: number
