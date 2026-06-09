@@ -38,19 +38,38 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true })
   }
 
-  // ── Backfill: translate every published product into all languages ──────
+  // ── Backfill: translate published products into all languages ───────────
+  // Resumable in small batches so a single request never times out at the gateway.
   if (body.action === 'backfill') {
-    const targets = SUPPORTED_LOCALES.filter(l => l !== DEFAULT_LOCALE) // skip source default
-    const { data: products } = await (admin.from('products') as any)
-      .select('id, name, description').eq('is_published', true).limit(500)
-    let texts = 0
-    for (const p of (products ?? []) as any[]) {
-      for (const lang of targets) {
-        await translateMany([p.name, p.description], lang)
-        texts += 2
+    try {
+      const targets = SUPPORTED_LOCALES.filter(l => l !== DEFAULT_LOCALE) // skip source default
+      const BATCH = Math.min(Math.max(Number(body.batch) || 3, 1), 8)
+      const offset = Math.max(Number(body.offset) || 0, 0)
+
+      const { count } = await (admin.from('products') as any)
+        .select('id', { count: 'exact', head: true }).eq('is_published', true)
+      const total = count ?? 0
+
+      const { data: products } = await (admin.from('products') as any)
+        .select('id, name, description').eq('is_published', true)
+        .order('id', { ascending: true }).range(offset, offset + BATCH - 1)
+
+      let texts = 0
+      for (const p of (products ?? []) as any[]) {
+        // All languages for this product in parallel (name + description each).
+        await Promise.all(targets.map((lang) => translateMany([p.name, p.description], lang)))
+        texts += targets.length * 2
       }
+
+      const processed = (products ?? []).length
+      const nextOffset = offset + processed
+      return NextResponse.json({
+        ok: true, total, languages: targets.length, processed, texts,
+        nextOffset, done: nextOffset >= total || processed === 0,
+      })
+    } catch (e: any) {
+      return NextResponse.json({ error: e?.message ?? 'Translation failed' }, { status: 500 })
     }
-    return NextResponse.json({ ok: true, products: (products ?? []).length, languages: targets.length, texts })
   }
 
   return NextResponse.json({ error: 'Unknown action' }, { status: 400 })

@@ -39,12 +39,29 @@ export function TranslationManager({
   async function backfill() {
     if (!confirm('Translate all published products into every language now? This may take a while.')) return
     setRunning(true); setResult(null)
-    const res = await fetch('/api/admin/translation', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'backfill' }),
-    })
-    const json = await res.json().catch(() => ({}))
+
+    // Run in small resumable batches so a single request never times out.
+    let offset = 0, total = 0, texts = 0, languages = 0, guard = 0
+    try {
+      while (guard++ < 500) {
+        const res = await fetch('/api/admin/translation', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'backfill', offset, batch: 3 }),
+        })
+        const json = await res.json().catch(() => ({}))
+        if (!res.ok) { setResult(json.error ?? `Failed (HTTP ${res.status})`); setRunning(false); return }
+        total = json.total ?? total
+        languages = json.languages ?? languages
+        texts += json.texts ?? 0
+        offset = json.nextOffset ?? offset
+        setResult(`Translating… ${Math.min(offset, total)} / ${total} products`)
+        if (json.done) break
+      }
+      setResult(`Done — ${total} products × ${languages} languages (${texts} texts processed).`)
+    } catch (e: any) {
+      setResult(e?.message ? `Failed: ${e.message}` : 'Failed (network)')
+    }
     setRunning(false)
-    setResult(res.ok ? `Done — ${json.products} products × ${json.languages} languages (${json.texts} texts processed).` : (json.error ?? 'Failed'))
     router.refresh()
   }
 
