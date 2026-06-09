@@ -6,7 +6,9 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { BrandTabs } from './BrandTabs'
 import { StatsBar } from './StatsBar'
 import { BrandLogo } from '@/components/BrandLogo'
-import { canSeeB2B } from '@/lib/business-chain'
+import { canSeeB2B, tierRank } from '@/lib/business-chain'
+import Link from 'next/link'
+import { Lock } from 'lucide-react'
 
 export const revalidate = 60
 
@@ -84,11 +86,16 @@ export default async function BrandPage({ params }: { params: { slug: string } }
   const { data: { user } } = await supabase.auth.getUser()
   const isAuthenticated = !!user
 
-  // Business-chain visibility: consumers (anonymous) don't see B2B/wholesale
+  // Business-chain visibility: consumers (anonymous) don't see B2B/wholesale.
+  // Seller CONTACT is members-only — only paid plans / admins / suppliers can see it.
   let viewerCanSeeB2B = false
+  let contactUnlocked = false
   if (user) {
-    const { data: viewer } = await supabase.from('profiles').select('role, business_type').eq('id', user.id).single()
+    const { data: viewer } = await (supabase.from('profiles') as any).select('role, tier, business_type').eq('id', user.id).single()
     viewerCanSeeB2B = canSeeB2B(viewer?.role, (viewer as any)?.business_type)
+    const paid = viewer?.tier ? tierRank(viewer.tier) >= 1 : false
+    const { data: ownSup } = await supabase.from('suppliers').select('id').eq('owner_id', user.id).maybeSingle()
+    contactUnlocked = paid || viewer?.role === 'admin' || !!ownSup
   }
 
   const [productsRes, galleryRes, certsRes, reviewsRes, docsRes, posRes, channelRes] = await Promise.all([
@@ -183,6 +190,15 @@ export default async function BrandPage({ params }: { params: { slug: string } }
   })
 
   const shareUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? ''}/brand/${params.slug}`
+
+  // Matchmaking gate: hide all direct contact for non-members so every CTA below
+  // (and the BrandTabs contact tab) collapses to the "Unlock contact" prompt.
+  if (!contactUnlocked) {
+    supplier.phone = null
+    supplier.whatsapp = null
+    supplier.business_email = null
+    supplier.website = null
+  }
 
   // WhatsApp helper
   const waHref = supplier.whatsapp
@@ -311,6 +327,12 @@ export default async function BrandPage({ params }: { params: { slug: string } }
                   </svg>
                   Email
                 </a>
+              )}
+              {!contactUnlocked && (
+                <Link href={isAuthenticated ? '/pricing' : '/register'}
+                  className="flex items-center gap-2 bg-[#F5A623] hover:bg-[#fbb93a] text-[#0B1F4D] px-5 py-2.5 rounded-xl text-sm font-extrabold shadow-lg transition-colors">
+                  <Lock className="w-4 h-4" /> Unlock contact
+                </Link>
               )}
             </div>
 

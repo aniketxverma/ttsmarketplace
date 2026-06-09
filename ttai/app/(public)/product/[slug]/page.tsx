@@ -8,6 +8,7 @@ import { ProductBuyArea } from './ProductBuyArea'
 import { ModelSelector } from './ModelSelector'
 import { CopyProductButton } from './CopyProductButton'
 import { SellersTable } from '../../p/[id]/SellersTable'
+import { SellerInfoPanel } from '@/components/product/SellerInfoPanel'
 import { getMasterSellers } from '@/lib/offers-server'
 import { unitsPerPallet, unitsPerTruck, cartonsPerTruck, unitsForShop, intersectUnits, retailCostBaseCents } from '@/lib/packaging'
 import { chainLevel, unitsForRole, tierRank } from '@/lib/business-chain'
@@ -321,43 +322,9 @@ export default async function ProductPage({ params, searchParams }: { params: { 
               </Link>
             )}
 
-            {/* Supplier card (wholesale only) */}
+            {/* Seller details (wholesale only) — contact gated behind a paid plan */}
             {!houseBrand && supplier && (
-              <Link href={`/brand/${supplier.brand_slug ?? supplier.id}`}
-                className="flex items-center gap-4 bg-white rounded-2xl border border-gray-100 shadow-sm p-4 hover:shadow-md hover:border-[#0B1F4D]/20 transition-all group">
-                {/* Logo */}
-                <div className="w-14 h-14 rounded-xl overflow-hidden border border-gray-100 flex-shrink-0 bg-white">
-                  <BrandLogo
-                    src={supplier.logo_url}
-                    name={supplier.trade_name ?? supplier.legal_name ?? 'S'}
-                    size={56}
-                    textClass="text-xl"
-                  />
-                </div>
-                {/* Info */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                    <p className="font-extrabold text-[#0B1F4D] text-sm truncate">{supplier.trade_name ?? supplier.legal_name}</p>
-                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold ${tier.bg} ${tier.text}`}>
-                      <tier.Icon className="w-2.5 h-2.5" />{tier.label}
-                    </span>
-                  </div>
-                  {supplier.tagline && <p className="text-xs text-gray-400 truncate">{supplier.tagline}</p>}
-                  <div className="flex items-center gap-3 mt-1">
-                    {supplier.years_experience > 0 && (
-                      <span className="text-[10px] text-gray-500 flex items-center gap-0.5">
-                        <Package className="w-3 h-3" />{supplier.years_experience} {t('common.years')}
-                      </span>
-                    )}
-                    {supplier.countries_served > 0 && (
-                      <span className="text-[10px] text-gray-500 flex items-center gap-0.5">
-                        <Users className="w-3 h-3" />{supplier.countries_served} {t('common.countries')}
-                      </span>
-                    )}
-                  </div>
-                </div>
-                <ArrowRight className="w-4 h-4 text-gray-300 group-hover:text-[#0B1F4D] transition-colors flex-shrink-0" />
-              </Link>
+              <SellerInfoPanel supplier={supplier} locked={!sellersUnlocked} loggedIn={!!user} />
             )}
 
             {/* Supplier-only: clone this product into your own catalogue */}
