@@ -12,6 +12,7 @@ import { SearchBar } from '@/components/marketplace/SearchBar'
 import { CategoryNav } from '@/components/marketplace/CategoryNav'
 import { Pagination } from '@/components/marketplace/Pagination'
 import { tierRank } from '@/lib/business-chain'
+import { dedupeProductsByMaster } from '@/lib/offers-server'
 import type { Category } from '@/types/domain'
 
 const TIER: Record<string, { label: string; Icon: typeof Crown; bg: string; text: string }> = {
@@ -113,13 +114,12 @@ export default async function B2BPage({
 
   // Wholesale products. When scoped to one supplier (their own B2B shop), show ALL their
   // published products; global browse keeps the wholesale/both filter.
-  let productQuery = supabase
-    .from('products')
+  let productQuery = (supabase
+    .from('products') as any)
     .select(
       `id, name, slug, price_cents, currency_code, min_order_qty, marketplace_context, vat_rate,
       suppliers!supplier_id!inner(legal_name, trade_name, reliability_tier, status),
-      product_images(url, sort_order)`,
-      { count: 'exact' }
+      product_images(url, sort_order)`
     )
     .eq('is_published', true)
 
@@ -141,12 +141,18 @@ export default async function B2BPage({
     productQuery = productQuery.ilike('name', `%${searchParams.q}%`)
   }
 
-  const from = (page - 1) * PAGE_SIZE
-  const { data: products, count } = await productQuery
+  const { data: allRows } = await productQuery
     .order('created_at', { ascending: false })
-    .range(from, from + PAGE_SIZE - 1)
+    .limit(500)
 
-  const totalPages = Math.ceil((count ?? 0) / PAGE_SIZE)
+  // One product, many suppliers — collapse offers sharing a master into one card.
+  // The Trade Hub sells under the house brand (TTAIEMA), so cards stay on the
+  // house-brand product page and we do NOT reveal the supplier count.
+  const deduped = await dedupeProductsByMaster(supabase, (allRows ?? []) as any[])
+  const count = deduped.length
+  const totalPages = Math.ceil(count / PAGE_SIZE)
+  const from = (page - 1) * PAGE_SIZE
+  const products = deduped.slice(from, from + PAGE_SIZE)
 
   return (
     <div className="min-h-screen bg-white">

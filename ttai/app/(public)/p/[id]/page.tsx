@@ -25,7 +25,11 @@ function money(cents: number, currency: string) {
   return new Intl.NumberFormat('es-ES', { style: 'currency', currency }).format(cents / 100)
 }
 
-export default async function MasterProductPage({ params }: { params: { id: string } }) {
+function sameC(a?: string | null, b?: string | null) {
+  return !!a && !!b && a.trim().toLowerCase() === b.trim().toLowerCase()
+}
+
+export default async function MasterProductPage({ params, searchParams }: { params: { id: string }; searchParams: { shop?: string } }) {
   const supabase = createClient()
 
   const { data: master } = await (supabase.from('master_products') as any)
@@ -34,12 +38,24 @@ export default async function MasterProductPage({ params }: { params: { id: stri
     .maybeSingle()
   if (!master) notFound()
 
+  // Buyer's country (for "nearest supplier" ranking) — from their profile, if logged in.
+  const { data: { user } } = await supabase.auth.getUser()
+  let buyerCountry: string | null = null
+  if (user) {
+    const { data: prof } = await (supabase.from('profiles') as any)
+      .select('country_name, tax_country').eq('id', user.id).maybeSingle()
+    buyerCountry = prof?.country_name ?? prof?.tax_country ?? null
+  }
+
+  // Retail (consumer) presentation when arriving from the Online Store.
+  const retail = searchParams.shop === 'online'
+
   // All supplier offers for this master = published products linked to it.
   const { data: rows } = await (supabase.from('products') as any)
     .select(`
-      id, slug, name, price_cents, currency_code, stock_qty, min_order_qty,
+      id, slug, name, price_cents, retail_price_cents, vat_rate, currency_code, stock_qty, min_order_qty,
       condition, warranty, warehouse_location, delivery_days, lead_time,
-      suppliers!supplier_id!inner(id, legal_name, trade_name, reliability_tier, status, cities(name), countries(name)),
+      suppliers!supplier_id!inner(id, legal_name, trade_name, reliability_tier, status, cities(name), countries(name, iso_code)),
       product_images(url, sort_order)
     `)
     .eq('master_product_id', params.id)
@@ -52,20 +68,27 @@ export default async function MasterProductPage({ params }: { params: { id: stri
     ((rows ?? []) as any[]).map((p) => {
       const s = p.suppliers
       const img = (p.product_images ?? []).slice().sort((a: any, b: any) => a.sort_order - b.sort_order)[0]?.url ?? masterImages[0]
+      // Retail surface shows the consumer price (retail set, else wholesale + VAT).
+      const retailCents = p.retail_price_cents ?? (p.vat_rate ? p.price_cents + Math.round(p.price_cents * p.vat_rate / 100) : p.price_cents)
+      const showCents = retail ? retailCents : p.price_cents
       return {
         productId: p.id, slug: p.slug, name: p.name,
-        priceCents: p.price_cents, currency: p.currency_code, stock: p.stock_qty ?? 0,
+        priceCents: showCents, currency: p.currency_code, stock: p.stock_qty ?? 0,
         condition: p.condition ?? null, warranty: p.warranty ?? null, warehouse: p.warehouse_location ?? null,
         deliveryDays: p.delivery_days ?? null, leadTime: p.lead_time ?? null,
         location: [s?.cities?.name, s?.countries?.name].filter(Boolean).join(', ') || null,
+        nearby: buyerCountry ? (sameC(s?.countries?.name, buyerCountry) || sameC(s?.countries?.iso_code, buyerCountry)) : false,
+        retail,
         supplierName: s?.trade_name ?? s?.legal_name ?? 'Supplier', supplierId: s?.id,
         tier: s?.reliability_tier ?? 'UNVERIFIED', imageUrl: img,
-        minOrderQty: p.min_order_qty ?? 1,
-        // ranking inputs
+        minOrderQty: retail ? 1 : (p.min_order_qty ?? 1),
+        // ranking inputs (rank on wholesale price for stable ordering)
         price_cents: p.price_cents, master_product_id: params.id, stock_qty: p.stock_qty ?? 0,
         reliability_tier: s?.reliability_tier ?? 'UNVERIFIED',
+        country: s?.countries?.name ?? s?.countries?.iso_code ?? null,
       } as any
     }),
+    { buyerCountry },
   ) as any
 
   const best = offers[0] ?? null

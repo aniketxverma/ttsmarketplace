@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { ProductCard } from '@/components/marketplace/ProductCard'
 import { ProductGrid } from '@/components/marketplace/ProductGrid'
+import { dedupeProductsByMaster } from '@/lib/offers-server'
 
 export const revalidate = 60
 
@@ -38,9 +39,12 @@ export default async function FamilyPage({
   if (searchParams.line) q = q.eq('product_line', searchParams.line)
   else q = q.eq('category_id', searchParams.c)
 
-  const { data: products } = await q.order('price_cents', { ascending: true }) as { data: any[] | null }
+  const { data: rawProducts } = await q.order('price_cents', { ascending: true }) as { data: any[] | null }
 
-  if (!products || products.length === 0) notFound()
+  if (!rawProducts || rawProducts.length === 0) notFound()
+
+  // Collapse any same-master duplicates into one card (links to the multi-supplier page).
+  const products = await dedupeProductsByMaster(supabase, rawProducts)
 
   const first = products[0]
   const supplier = first.suppliers as { legal_name: string; trade_name: string | null; brand_slug: string | null }
@@ -72,15 +76,17 @@ export default async function FamilyPage({
         {products.map((p) => {
           const sup = p.suppliers as { legal_name: string; trade_name: string | null; reliability_tier: import('@/types/domain').ReliabilityTier }
           const img = (p.product_images as { url: string; sort_order: number }[])?.sort((a, b) => a.sort_order - b.sort_order)[0]?.url
+          const href = p._masterId ? `/p/${p._masterId}${retail ? '?shop=online' : ''}` : `/product/${p.slug ?? p.id}`
           return (
             <ProductCard
               key={p.id}
               product={p as Parameters<typeof ProductCard>[0]['product']}
               supplier={sup}
               mainImageUrl={img}
-              href={`/product/${p.slug ?? p.id}`}
+              href={href}
               retail={retail}
               shop={shop}
+              offerCount={p._offerCount ?? 0}
             />
           )
         })}

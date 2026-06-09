@@ -16,6 +16,8 @@ export type Offer = {
   deliveryDays: number | null
   leadTime: string | null
   location: string | null
+  nearby?: boolean
+  retail?: boolean
   supplierName: string
   supplierId: string
   tier: string
@@ -46,6 +48,7 @@ export function OfferList({ offers }: { offers: Offer[] }) {
       supplierName: o.supplierName,
       supplierId: o.supplierId,
       min_order_qty: o.minOrderQty,
+      retail: o.retail,
     }, Math.max(1, o.minOrderQty))
   }
 
@@ -62,6 +65,7 @@ export function OfferList({ offers }: { offers: Offer[] }) {
                 <span className="font-extrabold text-[#0B1F4D] truncate">{o.supplierName || 'Supplier'}</span>
                 {tier && <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold ${tier.cls}`}><tier.Icon className="w-2.5 h-2.5" />{tier.label}</span>}
                 {best && <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-green-100 text-green-700"><Check className="w-2.5 h-2.5" />Best price</span>}
+                {o.nearby && <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-700"><MapPin className="w-2.5 h-2.5" />Near you</span>}
               </div>
               <div className="flex items-center gap-3 flex-wrap text-[11px] text-gray-500 mt-1">
                 {o.location && <span className="inline-flex items-center gap-1"><MapPin className="w-3 h-3" />{o.location}</span>}
@@ -72,7 +76,7 @@ export function OfferList({ offers }: { offers: Offer[] }) {
               </div>
             </div>
             <div className="flex items-center gap-3 flex-shrink-0">
-              <span className="text-lg font-extrabold text-[#0B1F4D]">{money(o.priceCents, o.currency)}</span>
+              <span className="text-lg font-extrabold text-[#0B1F4D]">{money(o.priceCents, o.currency)}<span className="text-[10px] font-normal text-gray-400 ml-1">{o.retail ? 'inc. VAT' : 'ex. VAT'}</span></span>
               <button onClick={() => buy(o)} disabled={o.stock <= 0}
                 className="rounded-xl bg-[#F5A623] text-[#0B1F4D] px-5 py-2.5 text-sm font-extrabold hover:bg-[#fbb93a] disabled:opacity-40 disabled:cursor-not-allowed">
                 Add to cart

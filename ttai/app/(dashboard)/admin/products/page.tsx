@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { requireRole } from '@/lib/auth/rbac'
 import { formatCents } from '@/lib/utils'
 import { PublishToggle } from './PublishToggle'
+import { LinkDuplicatesButton } from './LinkDuplicatesButton'
 
 const FILTERS = ['all', 'published', 'draft']
 
@@ -41,9 +42,12 @@ export default async function AdminProductsPage({
 
   return (
     <div className="space-y-6 max-w-6xl">
-      <div>
-        <h1 className="text-2xl font-bold">Products</h1>
-        <p className="text-muted-foreground text-sm mt-0.5">{counts.all} products across all suppliers</p>
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-bold">Products</h1>
+          <p className="text-muted-foreground text-sm mt-0.5">{counts.all} products across all suppliers</p>
+        </div>
+        <LinkDuplicatesButton />
       </div>
 
       <div className="flex gap-2 flex-wrap">

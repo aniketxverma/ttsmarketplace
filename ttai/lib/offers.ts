@@ -11,21 +11,39 @@ export interface OfferLike {
   stock_qty?: number | null
   delivery_days?: number | null
   reliability_tier?: string | null
+  /** Supplier country (name or ISO) — used for "nearest" ranking. */
+  country?: string | null
+}
+
+export interface SortOpts {
+  /** Buyer's country (name or ISO). Offers from the same country rank higher (tie of price). */
+  buyerCountry?: string | null
+}
+
+function sameCountry(offer?: string | null, buyer?: string | null) {
+  if (!offer || !buyer) return false
+  return offer.trim().toLowerCase() === buyer.trim().toLowerCase()
 }
 
 /**
  * Rank supplier offers by the marketplace priority:
  *   1. Best price          (lowest price_cents)
- *   2. Fastest delivery     (lowest delivery_days)
- *   3. Premium suppliers    (GOLD → SILVER → BRONZE → UNVERIFIED)
- *   4. In stock             (stocked offers before out-of-stock)
- * "Nearest supplier" is applied separately when the buyer's location is known.
+ *   2. Nearest supplier     (same country as the buyer, when known)
+ *   3. Fastest delivery     (lowest delivery_days)
+ *   4. Premium suppliers    (GOLD → SILVER → BRONZE → UNVERIFIED)
+ *   5. In stock             (stocked offers before out-of-stock)
  */
-export function sortOffers<T extends OfferLike>(offers: T[]): T[] {
+export function sortOffers<T extends OfferLike>(offers: T[], opts: SortOpts = {}): T[] {
+  const buyer = opts.buyerCountry
   return offers.slice().sort((a, b) => {
     const pa = a.price_cents ?? Number.MAX_SAFE_INTEGER
     const pb = b.price_cents ?? Number.MAX_SAFE_INTEGER
     if (pa !== pb) return pa - pb
+    if (buyer) {
+      const na = sameCountry(a.country, buyer) ? 0 : 1
+      const nb = sameCountry(b.country, buyer) ? 0 : 1
+      if (na !== nb) return na - nb
+    }
     const da = a.delivery_days ?? 999
     const db = b.delivery_days ?? 999
     if (da !== db) return da - db
@@ -38,8 +56,8 @@ export function sortOffers<T extends OfferLike>(offers: T[]): T[] {
   })
 }
 
-export function bestOffer<T extends OfferLike>(offers: T[]): T | null {
-  return offers.length ? sortOffers(offers)[0] : null
+export function bestOffer<T extends OfferLike>(offers: T[], opts: SortOpts = {}): T | null {
+  return offers.length ? sortOffers(offers, opts)[0] : null
 }
 
 /**

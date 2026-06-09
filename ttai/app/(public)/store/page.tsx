@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { ProductCard } from '@/components/marketplace/ProductCard'
 import { FamilyCard } from '@/components/marketplace/FamilyCard'
 import { groupIntoFamilies } from '@/lib/product-family'
+import { dedupeProductsByMaster } from '@/lib/offers-server'
 import { ProductGrid } from '@/components/marketplace/ProductGrid'
 import { CategoryNav } from '@/components/marketplace/CategoryNav'
 import { SearchBar } from '@/components/marketplace/SearchBar'
@@ -76,7 +77,9 @@ export default async function StorePage({
     .order('created_at', { ascending: false })
     .limit(500)
 
-  const families = groupIntoFamilies((allProducts ?? []) as any[])
+  // One product, many suppliers — collapse offers sharing a master into one card.
+  const deduped = await dedupeProductsByMaster(supabase, (allProducts ?? []) as any[])
+  const families = groupIntoFamilies(deduped as any[])
   const count = (allProducts ?? []).length
   const totalPages = Math.ceil(families.length / PAGE_SIZE)
   const from = (page - 1) * PAGE_SIZE
@@ -160,14 +163,16 @@ export default async function StorePage({
                     }
                     const images = p.product_images as { url: string; sort_order: number }[]
                     const mainImg = images?.sort((a, b) => a.sort_order - b.sort_order)[0]?.url
+                    const href = p._masterId ? `/p/${p._masterId}?shop=online` : `/product/${p.slug ?? p.id}`
                     return (
                       <ProductCard
                         key={p.id}
                         product={p as Parameters<typeof ProductCard>[0]['product']}
                         supplier={supplier}
                         mainImageUrl={mainImg}
-                        href={`/product/${p.slug ?? p.id}`}
+                        href={href}
                         retail
+                        offerCount={p._offerCount ?? 0}
                       />
                     )
                   })}
