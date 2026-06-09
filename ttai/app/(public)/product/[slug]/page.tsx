@@ -57,7 +57,10 @@ export default async function ProductPage({ params, searchParams }: { params: { 
 
   // Optional columns that may not be migrated yet — kept separate so a schema lag
   // never 404s the whole product page (we retry without them on error).
-  const OPTIONAL_COLS = 'box_discount_pct, pallet_discount_pct, truck_discount_pct, brand_name, price_on_request, specs, master_product_id'
+  // NOTE: only columns that actually exist may go here — one missing column makes the
+  // whole optional select fail and the retry drops ALL of them (incl. master_product_id,
+  // which hid the Available Sellers section). The *_discount_pct columns are not migrated.
+  const OPTIONAL_COLS = 'brand_name, price_on_request, specs, master_product_id'
   const buildSelect = (withOptional: boolean) => `
     id, name, slug, description, price_cents, retail_price_cents, currency_code,
     min_order_qty, min_box_qty, min_pallet_qty, min_truck_qty,
