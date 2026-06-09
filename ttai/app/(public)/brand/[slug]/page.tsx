@@ -98,7 +98,7 @@ export default async function BrandPage({ params }: { params: { slug: string } }
       .eq('supplier_id', supplier.id)
       .eq('is_published', true)
       .order('created_at', { ascending: false })
-      .limit(24),
+      .limit(500), // fetch the full catalogue so EVERY category is represented (BrandTabs groups by category)
     (supabase.from('brand_gallery' as any) as any)
       .select('id, url, type, caption, sort_order')
       .eq('supplier_id', supplier.id)

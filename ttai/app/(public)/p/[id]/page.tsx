@@ -3,6 +3,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { ChevronLeft, ImageOff, Users } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { sortOffers } from '@/lib/offers'
 import { type Offer } from './OfferList'
 import { OfferBrowser } from './OfferBrowser'
@@ -11,8 +12,10 @@ import { CopyProductButton } from '../../product/[slug]/CopyProductButton'
 export const revalidate = 60
 
 export async function generateMetadata({ params }: { params: { id: string } }) {
-  const supabase = createClient()
-  const { data: m } = await (supabase.from('master_products') as any)
+  // Master catalog is public read-only data — read with the admin client so RLS on
+  // master_products can never blank the page (it's not user-scoped).
+  const admin = createAdminClient()
+  const { data: m } = await (admin.from('master_products') as any)
     .select('name, description, image_urls').eq('id', params.id).maybeSingle()
   if (!m) return {}
   return {
@@ -32,8 +35,11 @@ function sameC(a?: string | null, b?: string | null) {
 
 export default async function MasterProductPage({ params, searchParams }: { params: { id: string }; searchParams: { shop?: string } }) {
   const supabase = createClient()
+  // Public catalog reads via admin (service-role) so RLS on master_products /
+  // products can never 404 the page. Only published, ACTIVE-supplier data is shown.
+  const admin = createAdminClient()
 
-  const { data: master } = await (supabase.from('master_products') as any)
+  const { data: master } = await (admin.from('master_products') as any)
     .select('id, name, brand_name, family, model, ean, description, specs, image_urls, capacity, color, region, categories(name, slug)')
     .eq('id', params.id)
     .maybeSingle()
@@ -52,7 +58,7 @@ export default async function MasterProductPage({ params, searchParams }: { para
   const retail = searchParams.shop === 'online'
 
   // All supplier offers for this master = published products linked to it.
-  const { data: rows } = await (supabase.from('products') as any)
+  const { data: rows } = await (admin.from('products') as any)
     .select(`
       id, slug, name, price_cents, retail_price_cents, vat_rate, currency_code, stock_qty, min_order_qty,
       condition, warranty, warehouse_location, delivery_days, lead_time,
