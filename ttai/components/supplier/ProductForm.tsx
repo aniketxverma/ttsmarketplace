@@ -9,6 +9,7 @@ import { canSellUnit, requiredPlanLabel, SELL_PLAN_LABEL } from '@/lib/selling'
 import type { PurchaseUnit } from '@/lib/packaging'
 import { minRetailCents, addVatCents } from '@/lib/pricing-rules'
 import { CONDITIONS } from '@/lib/conditions'
+import { useT } from '@/lib/i18n/client'
 
 type TemplateField = { key: string; label: string; type?: 'text' | 'number' | 'select'; options?: string[] }
 
@@ -87,6 +88,7 @@ export function ProductForm({
   minMarginPct = 30, vatPct = 21, vatEnabled = true,
 }: ProductFormProps) {
   const router = useRouter()
+  const t = useT()
   const [form, setForm] = useState<FormState>({ ...INITIAL, ...initialData })
   const [specs, setSpecs] = useState<Record<string, string>>(() => (initialSpecs ?? {}) as Record<string, string>)
   const [categories, setCategories] = useState<{ id: string; name: string; slug: string; template_fields?: TemplateField[] }[]>([])
@@ -329,8 +331,8 @@ export function ProductForm({
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
           </svg>
         </div>
-        <p className="font-bold text-gray-900">Product saved!</p>
-        <p className="text-sm text-gray-500 mt-1">Redirecting to products list...</p>
+        <p className="font-bold text-gray-900">{t('pform.saved')}</p>
+        <p className="text-sm text-gray-500 mt-1">{t('pform.redirecting')}</p>
       </div>
     )
   }
@@ -340,35 +342,35 @@ export function ProductForm({
 
       {/* Basic Info */}
       <div>
-        <h3 className="font-bold text-[#0B1F4D] text-sm mb-4 pb-2 border-b">Basic Information</h3>
+        <h3 className="font-bold text-[#0B1F4D] text-sm mb-4 pb-2 border-b">{t('pform.basic_info')}</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-1.5 sm:col-span-2">
-            <label className={labelCls}>Product Name *</label>
+            <label className={labelCls}>{t('pform.product_name')} *</label>
             <input className={inputCls} value={form.name} onChange={(e) => update('name', e.target.value)} required placeholder="e.g. Organic Extra Virgin Olive Oil 5L" />
           </div>
           <div className="space-y-1.5">
-            <label className={labelCls}>URL Slug *</label>
+            <label className={labelCls}>{t('pform.url_slug')} *</label>
             <input className={inputCls} value={form.slug} onChange={(e) => update('slug', e.target.value)} required pattern="[a-z0-9-]+" placeholder="auto-generated-from-name" />
-            <p className="text-xs text-gray-400">Lowercase letters, numbers and hyphens only</p>
+            <p className="text-xs text-gray-400">{t('pform.slug_hint')}</p>
           </div>
           <div className="space-y-1.5">
-            <label className={labelCls}>SKU</label>
+            <label className={labelCls}>{t('pform.sku')}</label>
             <input className={inputCls} value={form.sku} onChange={(e) => update('sku', e.target.value)} placeholder="e.g. EVOO-001" />
           </div>
           <div className="space-y-1.5">
-            <label className={labelCls}>Brand</label>
+            <label className={labelCls}>{t('pform.brand')}</label>
             <input className={inputCls} value={form.brandName} onChange={(e) => update('brandName', e.target.value)} placeholder="e.g. Samsung, JBL, OEM" />
             <p className="text-xs text-gray-400">Brand, OEM or private label — used for filtering &amp; future sponsored positions.</p>
           </div>
           <div className="space-y-1.5">
-            <label className={labelCls}>Category *</label>
+            <label className={labelCls}>{t('pform.category')} *</label>
             <select className={inputCls} value={form.categoryId} onChange={(e) => update('categoryId', e.target.value)} required>
-              <option value="">Select category...</option>
+              <option value="">{t('pform.select_category')}</option>
               {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
           </div>
           <div className="space-y-1.5 sm:col-span-2">
-            <label className={labelCls}>Product line / family</label>
+            <label className={labelCls}>{t('pform.product_line')}</label>
             <input className={inputCls} value={form.productLine} onChange={(e) => update('productLine', e.target.value)} placeholder="e.g. Rozil Detergents" />
             <p className="text-xs text-gray-400">
               Optional. Products sharing the same line show as one card in the marketplace; buyers open it to pick a variant. Leave blank to group by category.
@@ -385,25 +387,25 @@ export function ProductForm({
             )}
           </div>
           <div className="space-y-1.5">
-            <label className={labelCls}>Sell in which shop?</label>
+            <label className={labelCls}>{t('pform.sell_shop')}</label>
             <select className={inputCls} value={form.marketplaceContext} onChange={(e) => update('marketplaceContext', e.target.value as FormState['marketplaceContext'])}>
-              <option value="wholesale">Shop B2B only — wholesale (box / pallet / truck)</option>
-              <option value="retail">Online Shop only — retail (by piece)</option>
-              <option value="both">Both shops — B2B &amp; Online</option>
+              <option value="wholesale">{t('pform.shop_b2b')}</option>
+              <option value="retail">{t('pform.shop_retail')}</option>
+              <option value="both">{t('pform.shop_both')}</option>
             </select>
             <p className="text-[11px] text-gray-400">Controls where this product appears: your B2B (wholesale) shop, your Online (retail) shop, or both.</p>
           </div>
           {needsCity && (
             <div className="space-y-1.5">
-              <label className={labelCls}>City *</label>
+              <label className={labelCls}>{t('pform.city')} *</label>
               <select className={inputCls} value={form.cityId} onChange={(e) => update('cityId', e.target.value)} required>
-                <option value="">Select city...</option>
+                <option value="">{t('pform.select_city')}</option>
                 {cities.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
             </div>
           )}
           <div className="space-y-1.5 sm:col-span-2">
-            <label className={labelCls}>Description</label>
+            <label className={labelCls}>{t('pform.description')}</label>
             <textarea className={`${inputCls} h-28 resize-none`} value={form.description} onChange={(e) => update('description', e.target.value)} placeholder="Describe your product — specifications, certifications, packaging..." />
           </div>
         </div>
@@ -411,11 +413,11 @@ export function ProductForm({
 
       {/* Product Video — paste a link OR upload a file */}
       <div className="rounded-xl border bg-card p-6 mb-6">
-        <h3 className="font-bold text-[#0B1F4D] text-sm mb-1 pb-2 border-b">Product Video <span className="text-gray-400 font-normal">(optional)</span></h3>
+        <h3 className="font-bold text-[#0B1F4D] text-sm mb-1 pb-2 border-b">{t('pform.product_video')} <span className="text-gray-400 font-normal">({t('pform.optional')})</span></h3>
         <p className="text-xs text-gray-400 mb-3">Paste a YouTube, Vimeo or MP4 link — or upload a video file (up to 100 MB).</p>
         <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-3 items-end">
           <div className="space-y-1.5">
-            <label className={labelCls}>Video link</label>
+            <label className={labelCls}>{t('pform.video_link')}</label>
             <input className={inputCls} value={form.videoUrl} onChange={(e) => update('videoUrl', e.target.value)}
               placeholder="https://youtube.com/watch?v=…  or  https://…/clip.mp4" />
           </div>
@@ -428,7 +430,7 @@ export function ProductForm({
         {form.videoUrl && (
           <div className="mt-3 max-w-md">
             <VideoPreview url={form.videoUrl} />
-            <button type="button" onClick={() => update('videoUrl', '')} className="mt-1.5 text-xs text-red-400 hover:text-red-600">Remove video</button>
+            <button type="button" onClick={() => update('videoUrl', '')} className="mt-1.5 text-xs text-red-400 hover:text-red-600">{t('pform.remove_video')}</button>
           </div>
         )}
       </div>
@@ -439,7 +441,7 @@ export function ProductForm({
         if (!template.length) return null
         return (
           <div>
-            <h3 className="font-bold text-[#0B1F4D] text-sm mb-1 pb-2 border-b">Specifications</h3>
+            <h3 className="font-bold text-[#0B1F4D] text-sm mb-1 pb-2 border-b">{t('pform.specifications')}</h3>
             <p className="text-xs text-gray-400 mt-2 mb-4">Standard fields for this category — they become part of the master product so everyone reuses the same specs.</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {template.map((f) => (
@@ -463,10 +465,10 @@ export function ProductForm({
 
       {/* Pricing */}
       <div>
-        <h3 className="font-bold text-[#0B1F4D] text-sm mb-4 pb-2 border-b">Pricing & Inventory</h3>
+        <h3 className="font-bold text-[#0B1F4D] text-sm mb-4 pb-2 border-b">{t('pform.pricing_inventory')}</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <label className={labelCls}>Base wholesale price / piece (B2B) *</label>
+            <label className={labelCls}>{t('pform.base_price')} *</label>
             <div className="flex gap-2">
               <select
                 className="rounded-xl border border-gray-200 px-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B1F4D] bg-white"
@@ -499,7 +501,7 @@ export function ProductForm({
             const fmtCur = (c: number) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: form.currencyCode }).format(c / 100)
             return (
               <div className="space-y-1.5">
-                <label className={labelCls}>End-user price (retail, per piece)</label>
+                <label className={labelCls}>{t('pform.retail_price')}</label>
                 <input
                   className={`${inputCls} ${below ? 'border-red-400 ring-1 ring-red-300' : ''}`}
                   type="number" step="0.01" min="0.01"
@@ -525,12 +527,12 @@ export function ProductForm({
             )
           })()}
           <div className="space-y-1.5">
-            <label className={labelCls}>VAT Rate %</label>
+            <label className={labelCls}>{t('pform.vat_rate')}</label>
             <input className={inputCls} type="number" step="0.01" min="0" max="100" value={form.vatRate} onChange={(e) => update('vatRate', e.target.value)} placeholder="e.g. 21" />
           </div>
           <div className="space-y-1.5">
             <label className={labelCls}>
-              Min Order Qty
+              {t('pform.min_order_qty')}
               {form.marketplaceContext === 'retail' && <span className="text-gray-400 normal-case font-normal"> (online shop)</span>}
               {form.marketplaceContext === 'both'   && <span className="text-gray-400 normal-case font-normal"> (min pieces)</span>}
             </label>
@@ -538,56 +540,56 @@ export function ProductForm({
             <p className="text-xs text-gray-400">Smallest quantity a buyer can order. Set 1 for no minimum.</p>
           </div>
           <div className="space-y-1.5">
-            <label className={labelCls}>Stock Qty</label>
+            <label className={labelCls}>{t('pform.stock_qty')}</label>
             <input className={inputCls} type="number" min="0" value={form.stockQty} onChange={(e) => update('stockQty', e.target.value)} />
           </div>
           <div className="space-y-1.5">
-            <label className={labelCls}>Weight (grams)</label>
-            <input className={inputCls} type="number" min="1" value={form.weightGrams} onChange={(e) => update('weightGrams', e.target.value)} placeholder="Optional" />
+            <label className={labelCls}>{t('pform.weight_g')}</label>
+            <input className={inputCls} type="number" min="1" value={form.weightGrams} onChange={(e) => update('weightGrams', e.target.value)} placeholder={t('pform.optional')} />
           </div>
           <div className="space-y-1.5">
-            <label className={labelCls}>Condition</label>
+            <label className={labelCls}>{t('pform.condition')}</label>
             <select className={inputCls} value={form.condition} onChange={(e) => update('condition', e.target.value)}>
               <option value="">—</option>
               {CONDITIONS.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
           <div className="space-y-1.5">
-            <label className={labelCls}>Warranty</label>
+            <label className={labelCls}>{t('pform.warranty')}</label>
             <input className={inputCls} value={form.warranty} onChange={(e) => update('warranty', e.target.value)} placeholder="e.g. 12 months" />
           </div>
           <div className="space-y-1.5">
-            <label className={labelCls}>Warehouse location</label>
+            <label className={labelCls}>{t('pform.warehouse')}</label>
             <input className={inputCls} value={form.warehouseLocation} onChange={(e) => update('warehouseLocation', e.target.value)} placeholder="e.g. Madrid · Aisle 4" />
           </div>
           <div className="space-y-1.5">
-            <label className={labelCls}>Delivery time (days)</label>
+            <label className={labelCls}>{t('pform.delivery_days')}</label>
             <input className={inputCls} type="number" min="0" value={form.deliveryDays} onChange={(e) => update('deliveryDays', e.target.value)} placeholder="e.g. 3" />
             <p className="text-xs text-gray-400">Used to rank your offer (fastest delivery wins ties).</p>
           </div>
           <div className="space-y-1.5">
-            <label className={labelCls}>Shipping cost (€)</label>
+            <label className={labelCls}>{t('pform.shipping_cost')} (€)</label>
             <input className={inputCls} type="number" step="0.01" min="0" value={form.shipping} onChange={(e) => update('shipping', e.target.value)} placeholder="0 = free" />
             <p className="text-xs text-gray-400">Shown as Product + Shipping = Total in the seller comparison.</p>
           </div>
 
           {/* Price type: Fixed / Negotiable / On request */}
           <div className="space-y-1.5 sm:col-span-2">
-            <label className={labelCls}>Price type</label>
+            <label className={labelCls}>{t('pform.price_type')}</label>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               <button type="button" onClick={() => { update('priceNegotiable', false); update('priceOnRequest', false) }}
                 className={`rounded-xl border p-3 text-left transition-all ${!form.priceNegotiable && !form.priceOnRequest ? 'border-[#0B1F4D] bg-[#0B1F4D]/[0.04] ring-1 ring-[#0B1F4D]' : 'border-gray-200 hover:border-gray-300'}`}>
-                <p className="text-sm font-extrabold text-[#0B1F4D]">🔒 Fixed price</p>
+                <p className="text-sm font-extrabold text-[#0B1F4D]">🔒 {t('pform.price_fixed')}</p>
                 <p className="text-[11px] text-gray-400 leading-tight">Final price — buyers purchase at the listed price.</p>
               </button>
               <button type="button" onClick={() => { update('priceNegotiable', true); update('priceOnRequest', false) }}
                 className={`rounded-xl border p-3 text-left transition-all ${form.priceNegotiable && !form.priceOnRequest ? 'border-[#F5A623] bg-[#F5A623]/[0.06] ring-1 ring-[#F5A623]' : 'border-gray-200 hover:border-gray-300'}`}>
-                <p className="text-sm font-extrabold text-[#0B1F4D]">💬 Negotiable</p>
+                <p className="text-sm font-extrabold text-[#0B1F4D]">💬 {t('pform.price_negotiable')}</p>
                 <p className="text-[11px] text-gray-400 leading-tight">Shows a price — buyers can make an offer.</p>
               </button>
               <button type="button" onClick={() => { update('priceOnRequest', true); update('priceNegotiable', false) }}
                 className={`rounded-xl border p-3 text-left transition-all ${form.priceOnRequest ? 'border-violet-500 bg-violet-50 ring-1 ring-violet-500' : 'border-gray-200 hover:border-gray-300'}`}>
-                <p className="text-sm font-extrabold text-[#0B1F4D]">🙈 Price on request</p>
+                <p className="text-sm font-extrabold text-[#0B1F4D]">🙈 {t('pform.price_request')}</p>
                 <p className="text-[11px] text-gray-400 leading-tight">No public price (B2B) — buyers request a quote.</p>
               </button>
             </div>
@@ -598,7 +600,7 @@ export function ProductForm({
       {/* Images — create mode only (edit mode uses ProductImageManager on the page) */}
       {mode === 'create' && (
         <div>
-          <h3 className="font-bold text-[#0B1F4D] text-sm mb-4 pb-2 border-b">Product Images</h3>
+          <h3 className="font-bold text-[#0B1F4D] text-sm mb-4 pb-2 border-b">{t('pform.product_images')}</h3>
           {pendingPreviews.length > 0 ? (
             <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 mb-3">
               {pendingPreviews.map((src, i) => (
@@ -652,8 +654,8 @@ export function ProductForm({
                 </svg>
               </div>
               <div className="text-center">
-                <p className="font-bold text-sm">Click to add product images</p>
-                <p className="text-xs mt-0.5">JPG, PNG, WebP — up to 10 images</p>
+                <p className="font-bold text-sm">{t('pform.add_images')}</p>
+                <p className="text-xs mt-0.5">{t('pform.images_hint')}</p>
               </div>
             </button>
           )}
@@ -673,7 +675,7 @@ export function ProductForm({
 
       {/* Packaging & wholesale units */}
       <div>
-        <h3 className="font-bold text-[#0B1F4D] text-sm mb-1 pb-2 border-b">Packaging &amp; wholesale units</h3>
+        <h3 className="font-bold text-[#0B1F4D] text-sm mb-1 pb-2 border-b">{t('pform.packaging_units')}</h3>
         <p className="text-xs text-gray-400 mt-2 mb-3">
           One product, sold by piece / box / pallet / truck. Never put specs inside images.
         </p>
@@ -719,28 +721,28 @@ export function ProductForm({
         </p>
 
         {/* Unit + commercial */}
-        <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Unit (1 piece)</p>
+        <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">{t('pform.unit_piece')}</p>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
-          <div className="space-y-1.5"><label className={labelCls}>Net content</label><input className={inputCls} value={form.netContent} onChange={(e) => update('netContent', e.target.value)} placeholder="5 L" /></div>
-          <div className="space-y-1.5"><label className={labelCls}>Unit weight (kg)</label><input className={inputCls} type="number" step="0.01" value={form.unitWeightKg} onChange={(e) => update('unitWeightKg', e.target.value)} placeholder="5.25" /></div>
-          <div className="space-y-1.5"><label className={labelCls}>Unit dimensions</label><input className={inputCls} value={form.unitDimensions} onChange={(e) => update('unitDimensions', e.target.value)} placeholder="18.5 x 11.5 x 29.5 cm" /></div>
-          <div className="space-y-1.5"><label className={labelCls}>EAN / barcode</label><input className={inputCls} value={form.ean} onChange={(e) => update('ean', e.target.value)} placeholder="8421234567890" /></div>
-          <div className="space-y-1.5"><label className={labelCls}>Model</label><input className={inputCls} value={form.modelName} onChange={(e) => update('modelName', e.target.value)} placeholder="Rozil Max Power" /></div>
-          <div className="space-y-1.5"><label className={labelCls}>Reference</label><input className={inputCls} value={form.referenceNumber} onChange={(e) => update('referenceNumber', e.target.value)} placeholder="REF-001" /></div>
-          <div className="space-y-1.5"><label className={labelCls}>Country of origin</label><input className={inputCls} value={form.countryOfOrigin} onChange={(e) => update('countryOfOrigin', e.target.value)} placeholder="Spain" /></div>
-          <div className="space-y-1.5"><label className={labelCls}>Lead time</label><input className={inputCls} value={form.leadTime} onChange={(e) => update('leadTime', e.target.value)} placeholder="7–14 days" /></div>
-          <div className="space-y-1.5"><label className={labelCls}>EXW price ({form.currencyCode})</label><input className={inputCls} type="number" step="0.01" value={form.exwPrice} onChange={(e) => update('exwPrice', e.target.value)} placeholder="Ex Works unit price" /></div>
-          <div className="space-y-1.5"><label className={labelCls}>HS code</label><input className={inputCls} value={form.hsCode} onChange={(e) => update('hsCode', e.target.value)} placeholder="3402.20" /></div>
+          <div className="space-y-1.5"><label className={labelCls}>{t('pform.net_content')}</label><input className={inputCls} value={form.netContent} onChange={(e) => update('netContent', e.target.value)} placeholder="5 L" /></div>
+          <div className="space-y-1.5"><label className={labelCls}>{t('pform.unit_weight')}</label><input className={inputCls} type="number" step="0.01" value={form.unitWeightKg} onChange={(e) => update('unitWeightKg', e.target.value)} placeholder="5.25" /></div>
+          <div className="space-y-1.5"><label className={labelCls}>{t('pform.unit_dims')}</label><input className={inputCls} value={form.unitDimensions} onChange={(e) => update('unitDimensions', e.target.value)} placeholder="18.5 x 11.5 x 29.5 cm" /></div>
+          <div className="space-y-1.5"><label className={labelCls}>{t('pform.ean')}</label><input className={inputCls} value={form.ean} onChange={(e) => update('ean', e.target.value)} placeholder="8421234567890" /></div>
+          <div className="space-y-1.5"><label className={labelCls}>{t('pform.model')}</label><input className={inputCls} value={form.modelName} onChange={(e) => update('modelName', e.target.value)} placeholder="Rozil Max Power" /></div>
+          <div className="space-y-1.5"><label className={labelCls}>{t('pform.reference')}</label><input className={inputCls} value={form.referenceNumber} onChange={(e) => update('referenceNumber', e.target.value)} placeholder="REF-001" /></div>
+          <div className="space-y-1.5"><label className={labelCls}>{t('pform.country_origin')}</label><input className={inputCls} value={form.countryOfOrigin} onChange={(e) => update('countryOfOrigin', e.target.value)} placeholder="Spain" /></div>
+          <div className="space-y-1.5"><label className={labelCls}>{t('pform.lead_time')}</label><input className={inputCls} value={form.leadTime} onChange={(e) => update('leadTime', e.target.value)} placeholder="7–14 days" /></div>
+          <div className="space-y-1.5"><label className={labelCls}>{t('pform.exw_price')} ({form.currencyCode})</label><input className={inputCls} type="number" step="0.01" value={form.exwPrice} onChange={(e) => update('exwPrice', e.target.value)} placeholder="Ex Works unit price" /></div>
+          <div className="space-y-1.5"><label className={labelCls}>{t('pform.hs_code')}</label><input className={inputCls} value={form.hsCode} onChange={(e) => update('hsCode', e.target.value)} placeholder="3402.20" /></div>
         </div>
 
         {/* Marketing material */}
-        <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2 mt-5">Marketing material</p>
+        <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2 mt-5">{t('pform.marketing_material')}</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="space-y-1.5">
-            <label className={labelCls}>Product catalogue (PDF)</label>
+            <label className={labelCls}>{t('pform.catalogue_pdf')}</label>
             {form.catalogueUrl ? (
               <div className="flex items-center gap-2 text-xs">
-                <a href={form.catalogueUrl} target="_blank" rel="noopener noreferrer" className="text-[#0B1F4D] font-bold underline truncate">View catalogue</a>
+                <a href={form.catalogueUrl} target="_blank" rel="noopener noreferrer" className="text-[#0B1F4D] font-bold underline truncate">{t('pform.view_catalogue')}</a>
                 <button type="button" onClick={() => update('catalogueUrl', '')} className="text-red-400 hover:text-red-600">remove</button>
               </div>
             ) : (
@@ -749,51 +751,51 @@ export function ProductForm({
             )}
           </div>
           <div className="space-y-1.5">
-            <label className={labelCls}>Product video</label>
+            <label className={labelCls}>{t('pform.product_video')}</label>
             <p className="text-xs text-gray-400">Set above in the <span className="font-semibold text-gray-500">Product Video</span> section.</p>
           </div>
         </div>
 
         {/* Box */}
-        <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Box (carton)</p>
+        <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">{t('pform.box_carton')}</p>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
-          <div className="space-y-1.5"><label className={labelCls}>Units per box</label><input className={inputCls} type="number" min="1" value={form.unitsPerCarton} onChange={(e) => update('unitsPerCarton', e.target.value)} placeholder="4" /></div>
-          <div className="space-y-1.5"><label className={labelCls}>Box gross weight (kg)</label><input className={inputCls} type="number" step="0.01" value={form.cartonWeightKg} onChange={(e) => update('cartonWeightKg', e.target.value)} placeholder="22" /></div>
-          <div className="space-y-1.5"><label className={labelCls}>Box net weight (kg)</label><input className={inputCls} type="number" step="0.01" value={form.cartonNetWeightKg} onChange={(e) => update('cartonNetWeightKg', e.target.value)} placeholder="21" /></div>
-          <div className="space-y-1.5"><label className={labelCls}>Box dimensions</label><input className={inputCls} value={form.cartonDimensions} onChange={(e) => update('cartonDimensions', e.target.value)} placeholder="40 x 28 x 29 cm" /></div>
+          <div className="space-y-1.5"><label className={labelCls}>{t('pform.units_per_box')}</label><input className={inputCls} type="number" min="1" value={form.unitsPerCarton} onChange={(e) => update('unitsPerCarton', e.target.value)} placeholder="4" /></div>
+          <div className="space-y-1.5"><label className={labelCls}>{t('pform.box_gross_w')}</label><input className={inputCls} type="number" step="0.01" value={form.cartonWeightKg} onChange={(e) => update('cartonWeightKg', e.target.value)} placeholder="22" /></div>
+          <div className="space-y-1.5"><label className={labelCls}>{t('pform.box_net_w')}</label><input className={inputCls} type="number" step="0.01" value={form.cartonNetWeightKg} onChange={(e) => update('cartonNetWeightKg', e.target.value)} placeholder="21" /></div>
+          <div className="space-y-1.5"><label className={labelCls}>{t('pform.box_dims')}</label><input className={inputCls} value={form.cartonDimensions} onChange={(e) => update('cartonDimensions', e.target.value)} placeholder="40 x 28 x 29 cm" /></div>
           <div className="space-y-1.5"><label className={labelCls}>Price per box ({form.currencyCode})</label>{canSellUnit(sellerTier, 'box')
             ? <input className={inputCls} type="number" step="0.01" value={form.pricePerBox} onChange={(e) => update('pricePerBox', e.target.value)} placeholder="auto" />
             : <a href="/pricing" className="flex items-center gap-1.5 rounded-xl border border-dashed border-amber-300 bg-amber-50/60 px-3 py-2.5 text-xs font-bold text-amber-700 hover:bg-amber-50">🔒 Upgrade to {requiredPlanLabel('box')} →</a>}
           </div>
-          <div className="space-y-1.5"><label className={labelCls}>Min boxes / order</label><input className={inputCls} type="number" min="1" value={form.minBoxQty} onChange={(e) => update('minBoxQty', e.target.value)} placeholder="1" /></div>
+          <div className="space-y-1.5"><label className={labelCls}>{t('pform.min_boxes')}</label><input className={inputCls} type="number" min="1" value={form.minBoxQty} onChange={(e) => update('minBoxQty', e.target.value)} placeholder="1" /></div>
           <div className="space-y-1.5"><label className={labelCls}>…or discount %</label><input className={inputCls} type="number" min="0" max="100" step="0.5" value={form.boxDiscountPct} onChange={(e) => update('boxDiscountPct', e.target.value)} placeholder="e.g. 10" disabled={!!form.pricePerBox} /></div>
         </div>
 
         {/* Pallet */}
-        <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Pallet</p>
+        <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">{t('pform.pallet')}</p>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
-          <div className="space-y-1.5"><label className={labelCls}>Boxes per pallet</label><input className={inputCls} type="number" min="1" value={form.cartonsPerPallet} onChange={(e) => update('cartonsPerPallet', e.target.value)} placeholder="105" /></div>
-          <div className="space-y-1.5"><label className={labelCls}>Pallet weight (kg)</label><input className={inputCls} type="number" step="0.01" value={form.palletWeightKg} onChange={(e) => update('palletWeightKg', e.target.value)} placeholder="1050" /></div>
-          <div className="space-y-1.5"><label className={labelCls}>Pallet height (cm)</label><input className={inputCls} type="number" min="1" value={form.palletHeightCm} onChange={(e) => update('palletHeightCm', e.target.value)} placeholder="160" /></div>
-          <div className="space-y-1.5"><label className={labelCls}>Pallet dimensions</label><input className={inputCls} value={form.palletDimensions} onChange={(e) => update('palletDimensions', e.target.value)} placeholder="120 x 100 x 160 cm" /></div>
+          <div className="space-y-1.5"><label className={labelCls}>{t('pform.boxes_per_pallet')}</label><input className={inputCls} type="number" min="1" value={form.cartonsPerPallet} onChange={(e) => update('cartonsPerPallet', e.target.value)} placeholder="105" /></div>
+          <div className="space-y-1.5"><label className={labelCls}>{t('pform.pallet_weight')}</label><input className={inputCls} type="number" step="0.01" value={form.palletWeightKg} onChange={(e) => update('palletWeightKg', e.target.value)} placeholder="1050" /></div>
+          <div className="space-y-1.5"><label className={labelCls}>{t('pform.pallet_height')}</label><input className={inputCls} type="number" min="1" value={form.palletHeightCm} onChange={(e) => update('palletHeightCm', e.target.value)} placeholder="160" /></div>
+          <div className="space-y-1.5"><label className={labelCls}>{t('pform.pallet_dims')}</label><input className={inputCls} value={form.palletDimensions} onChange={(e) => update('palletDimensions', e.target.value)} placeholder="120 x 100 x 160 cm" /></div>
           <div className="space-y-1.5"><label className={labelCls}>Price per pallet ({form.currencyCode})</label>{canSellUnit(sellerTier, 'pallet')
             ? <input className={inputCls} type="number" step="0.01" value={form.pricePerPallet} onChange={(e) => update('pricePerPallet', e.target.value)} placeholder="auto" />
             : <a href="/pricing" className="flex items-center gap-1.5 rounded-xl border border-dashed border-amber-300 bg-amber-50/60 px-3 py-2.5 text-xs font-bold text-amber-700 hover:bg-amber-50">🔒 Upgrade to {requiredPlanLabel('pallet')} →</a>}
           </div>
-          <div className="space-y-1.5"><label className={labelCls}>Min pallets / order</label><input className={inputCls} type="number" min="1" value={form.minPalletQty} onChange={(e) => update('minPalletQty', e.target.value)} placeholder="1" /></div>
+          <div className="space-y-1.5"><label className={labelCls}>{t('pform.min_pallets')}</label><input className={inputCls} type="number" min="1" value={form.minPalletQty} onChange={(e) => update('minPalletQty', e.target.value)} placeholder="1" /></div>
           <div className="space-y-1.5"><label className={labelCls}>…or discount %</label><input className={inputCls} type="number" min="0" max="100" step="0.5" value={form.palletDiscountPct} onChange={(e) => update('palletDiscountPct', e.target.value)} placeholder="e.g. 20" disabled={!!form.pricePerPallet} /></div>
         </div>
 
         {/* Truck */}
-        <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">Truck (full load)</p>
+        <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-2">{t('pform.truck_full')}</p>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div className="space-y-1.5"><label className={labelCls}>Pallets per truck</label><input className={inputCls} type="number" min="1" value={form.palletsPerTruck} onChange={(e) => update('palletsPerTruck', e.target.value)} placeholder="33" /></div>
-          <div className="space-y-1.5"><label className={labelCls}>Truck capacity</label><input className={inputCls} value={form.truckCapacity} onChange={(e) => update('truckCapacity', e.target.value)} placeholder="13.6 m / 33 pallets" /></div>
+          <div className="space-y-1.5"><label className={labelCls}>{t('pform.pallets_per_truck')}</label><input className={inputCls} type="number" min="1" value={form.palletsPerTruck} onChange={(e) => update('palletsPerTruck', e.target.value)} placeholder="33" /></div>
+          <div className="space-y-1.5"><label className={labelCls}>{t('pform.truck_capacity')}</label><input className={inputCls} value={form.truckCapacity} onChange={(e) => update('truckCapacity', e.target.value)} placeholder="13.6 m / 33 pallets" /></div>
           <div className="space-y-1.5"><label className={labelCls}>Price per truck ({form.currencyCode})</label>{canSellUnit(sellerTier, 'truck')
             ? <input className={inputCls} type="number" step="0.01" value={form.pricePerTruck} onChange={(e) => update('pricePerTruck', e.target.value)} placeholder="auto" />
             : <a href="/pricing" className="flex items-center gap-1.5 rounded-xl border border-dashed border-amber-300 bg-amber-50/60 px-3 py-2.5 text-xs font-bold text-amber-700 hover:bg-amber-50">🔒 Upgrade to {requiredPlanLabel('truck')} →</a>}
           </div>
-          <div className="space-y-1.5"><label className={labelCls}>Min trucks / order</label><input className={inputCls} type="number" min="1" value={form.minTruckQty} onChange={(e) => update('minTruckQty', e.target.value)} placeholder="1" /></div>
+          <div className="space-y-1.5"><label className={labelCls}>{t('pform.min_trucks')}</label><input className={inputCls} type="number" min="1" value={form.minTruckQty} onChange={(e) => update('minTruckQty', e.target.value)} placeholder="1" /></div>
           <div className="space-y-1.5"><label className={labelCls}>…or discount %</label><input className={inputCls} type="number" min="0" max="100" step="0.5" value={form.truckDiscountPct} onChange={(e) => update('truckDiscountPct', e.target.value)} placeholder="e.g. 30" disabled={!!form.pricePerTruck} /></div>
         </div>
         <p className="text-xs text-gray-400 mt-3">For each volume tier: type an exact price, <strong>or</strong> leave it blank and set a discount % off the base wholesale price. Single pieces always use the retail price.</p>
@@ -803,7 +805,7 @@ export function ProductForm({
       <div className="rounded-xl border border-gray-200 p-4 flex items-center justify-between">
         <div>
           <p className="font-semibold text-sm text-gray-900">
-            {form.isPublished ? 'Published — visible on marketplace' : 'Draft — not visible to buyers'}
+            {form.isPublished ? t('pform.published_label') : t('pform.draft_label')}
           </p>
           <p className="text-xs text-gray-500 mt-0.5">
             {form.isPublished ? 'Buyers can discover and purchase this product.' : 'Save as draft and publish when ready.'}
@@ -839,10 +841,10 @@ export function ProductForm({
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
               </svg>
-              Saving...
+              {t('pform.saving')}
             </>
           ) : (
-            mode === 'create' ? 'Create Product' : 'Save Changes'
+            mode === 'create' ? t('pform.create_product') : t('pform.save_changes')
           )}
         </button>
         <button
@@ -850,7 +852,7 @@ export function ProductForm({
           onClick={() => router.back()}
           className="rounded-xl border-2 border-gray-200 px-5 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
         >
-          Cancel
+          {t('pform.cancel')}
         </button>
       </div>
     </form>
