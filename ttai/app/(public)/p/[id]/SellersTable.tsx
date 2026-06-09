@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
-import { ShieldCheck, Crown, MessageCircle, Truck, Lock } from 'lucide-react'
+import { ShieldCheck, Crown, MessageCircle, Truck, Lock, MapPin, Package, Check, ChevronDown } from 'lucide-react'
 import type { Seller } from '@/lib/offers'
 
 export type { Seller }
@@ -17,7 +17,7 @@ const TIER_RANK: Record<string, number> = { Premium: 0, Verified: 1, Supplier: 2
 const PAGE = 4
 
 function money(cents: number, currency: string) {
-  return new Intl.NumberFormat('es-ES', { style: 'currency', currency, maximumFractionDigits: 0 }).format(cents / 100)
+  return new Intl.NumberFormat('es-ES', { style: 'currency', currency, minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(cents / 100)
 }
 
 export function SellersTable({ sellers, productName, locked = false }: { sellers: Seller[]; productName: string; locked?: boolean }) {
@@ -43,102 +43,139 @@ export function SellersTable({ sellers, productName, locked = false }: { sellers
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-extrabold text-[#0B1F4D]">Available Sellers ({sellers.length})</h2>
-        <label className="flex items-center gap-2 text-sm">
-          <span className="text-gray-400 font-medium">Sort by:</span>
-          <select value={sort} onChange={(e) => setSort(e.target.value as any)} className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-semibold text-gray-700">
-            {SORTS.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
-          </select>
+      {/* Heading */}
+      <div className="flex items-center justify-between gap-3 mb-5">
+        <div>
+          <h2 className="text-lg font-extrabold text-[#0B1F4D] leading-tight">Available Sellers</h2>
+          <p className="text-xs text-gray-400 mt-0.5">{sellers.length} supplier{sellers.length === 1 ? '' : 's'} competing for this product</p>
+        </div>
+        <label className="flex items-center gap-2 text-sm flex-shrink-0">
+          <span className="text-gray-400 font-medium hidden sm:inline">Sort by</span>
+          <div className="relative">
+            <select value={sort} onChange={(e) => setSort(e.target.value as any)}
+              className="appearance-none rounded-xl border border-gray-200 bg-white pl-3 pr-8 py-2 text-sm font-bold text-[#0B1F4D] cursor-pointer hover:border-[#0B1F4D]/40 focus:outline-none focus:ring-2 focus:ring-[#0B1F4D]/20">
+              {SORTS.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
+            </select>
+            <ChevronDown className="w-4 h-4 text-gray-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+          </div>
         </label>
       </div>
 
       {locked && (
-        <div className="mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
-          <div className="flex items-center gap-2.5">
-            <Lock className="w-5 h-5 text-amber-600 flex-shrink-0" />
-            <p className="text-sm text-amber-900">
-              <span className="font-extrabold">{sellers.length} verified supplier{sellers.length === 1 ? '' : 's'}</span> compete for this product. Prices are public — unlock <span className="font-bold">supplier names, locations &amp; contact</span> to order.
+        <div className="mb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl border border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50/60 px-5 py-4">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-amber-100 flex items-center justify-center flex-shrink-0"><Lock className="w-4 h-4 text-amber-600" /></div>
+            <p className="text-sm text-amber-900 leading-snug">
+              <span className="font-extrabold">{sellers.length} verified supplier{sellers.length === 1 ? '' : 's'}</span> competing here. Prices are public — unlock <span className="font-bold">names, locations &amp; contact</span> to order.
             </p>
           </div>
-          <Link href="/pricing" className="flex-shrink-0 inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#0B1F4D] text-white px-5 py-2.5 text-sm font-extrabold hover:bg-[#162d6e] whitespace-nowrap">
+          <Link href="/pricing" className="flex-shrink-0 inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#0B1F4D] text-white px-5 py-2.5 text-sm font-extrabold hover:bg-[#162d6e] transition-colors whitespace-nowrap shadow-sm">
             <Lock className="w-3.5 h-3.5" /> Unlock suppliers
           </Link>
         </div>
       )}
 
-      {/* Header (desktop) */}
-      <div className="hidden lg:grid grid-cols-[1.4fr_0.8fr_1.3fr_1.1fr_1fr_0.9fr] gap-3 px-4 py-2 text-[11px] font-bold uppercase tracking-wide text-gray-400 border-b">
-        <span>Supplier</span><span>Location</span><span>Offer Details</span><span>Price Details</span><span>Delivery</span><span className="text-right">Action</span>
+      {/* Column header (desktop) */}
+      <div className="hidden lg:grid grid-cols-[1.7fr_1fr_1.25fr_1.05fr_1fr_auto] gap-4 px-4 pb-2 text-[10px] font-bold uppercase tracking-wider text-gray-400">
+        <span>Supplier</span><span>Location</span><span>Offer</span><span>Price</span><span>Delivery</span><span className="text-right pr-1">Action</span>
       </div>
 
-      <div className="divide-y divide-gray-100">
+      <div className="space-y-2.5">
         {shown.map((s) => {
           const isBest = s.productId === bestPriceId
           return (
-            <div key={s.productId} className="grid grid-cols-1 lg:grid-cols-[1.4fr_0.8fr_1.3fr_1.1fr_1fr_0.9fr] gap-3 px-4 py-4 items-center hover:bg-gray-50/60">
+            <div key={s.productId}
+              className={`group relative rounded-2xl border p-4 transition-all duration-150 lg:grid lg:grid-cols-[1.7fr_1fr_1.25fr_1.05fr_1fr_auto] gap-4 lg:items-center flex flex-col gap-3
+                ${isBest ? 'border-green-300 bg-green-50/40 ring-1 ring-green-100' : 'border-gray-200 hover:border-[#0B1F4D]/30 hover:shadow-md'}`}>
+              {isBest && <span className="absolute left-0 top-4 bottom-4 w-1 rounded-r-full bg-green-500" />}
+
               {/* Supplier */}
               <div className="flex items-center gap-3 min-w-0">
-                <div className="flex flex-col gap-1">
-                  {isBest && <span className="inline-flex items-center justify-center rounded bg-green-600 text-white text-[9px] font-extrabold px-1.5 py-0.5">BEST PRICE</span>}
-                  {s.premium && !isBest && <span className="inline-flex items-center justify-center rounded bg-[#0B1F4D] text-white text-[9px] font-extrabold px-1.5 py-0.5">PREMIUM</span>}
-                </div>
-                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#0B1F4D] to-[#2563eb] text-white flex items-center justify-center text-sm font-extrabold flex-shrink-0">
+                <div className={`w-11 h-11 rounded-full flex items-center justify-center text-base font-extrabold flex-shrink-0 text-white shadow-sm ${isBest ? 'bg-gradient-to-br from-green-500 to-emerald-600' : 'bg-gradient-to-br from-[#0B1F4D] to-[#2563eb]'}`}>
                   {locked ? <Lock className="w-4 h-4" /> : s.supplierName.charAt(0).toUpperCase()}
                 </div>
                 <div className="min-w-0">
-                  <p className={`font-bold text-[#0B1F4D] text-sm truncate ${locked ? blur : ''}`}>{locked ? 'Verified Supplier Co.' : s.supplierName}</p>
-                  <span className={`inline-flex items-center gap-1 text-[11px] font-bold ${s.premium ? 'text-amber-600' : 'text-green-600'}`}>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <p className={`font-extrabold text-[#0B1F4D] text-sm leading-tight ${locked ? blur : ''}`}>{locked ? 'Verified Supplier Co.' : s.supplierName}</p>
+                    {isBest && <span className="inline-flex items-center gap-0.5 rounded-md bg-green-600 text-white text-[9px] font-extrabold px-1.5 py-0.5 leading-none"><Check className="w-2.5 h-2.5" />BEST</span>}
+                  </div>
+                  <span className={`inline-flex items-center gap-1 text-[11px] font-bold mt-1 px-1.5 py-0.5 rounded-md ${s.premium ? 'bg-amber-50 text-amber-700' : 'bg-slate-100 text-slate-600'}`}>
                     {s.premium ? <Crown className="w-3 h-3" /> : <ShieldCheck className="w-3 h-3" />}{s.tierLabel}
                   </span>
                 </div>
               </div>
 
               {/* Location */}
-              <div className="text-sm">
-                <span className={`text-xl leading-none mr-1 ${locked ? blur : ''}`}>{s.flag}</span>
-                <div className={`text-xs text-gray-600 mt-0.5 ${locked ? blur : ''}`}>{locked ? 'Madrid, Spain' : ([s.city, s.country].filter(Boolean).join(', ') || '—')}</div>
-                {!locked && s.nearby && <span className="inline-flex items-center gap-1 text-[10px] font-bold text-blue-600 mt-0.5">Near you</span>}
+              <div className="flex lg:block items-center gap-2">
+                <span className="lg:hidden text-[10px] font-bold uppercase text-gray-400 w-16 flex-shrink-0">Location</span>
+                <div>
+                  <div className={`flex items-center gap-1.5 ${locked ? blur : ''}`}>
+                    <span className="text-lg leading-none">{s.flag}</span>
+                    <span className="text-sm font-bold text-[#0B1F4D]">{locked ? 'ES' : (s.country ?? '—')}</span>
+                  </div>
+                  <p className={`text-[11px] text-gray-400 mt-0.5 ${locked ? blur : ''}`}>{locked ? 'Madrid' : (s.city ?? '')}</p>
+                  {!locked && s.nearby && <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-blue-600 mt-0.5"><MapPin className="w-2.5 h-2.5" />Near you</span>}
+                </div>
               </div>
 
-              {/* Offer details */}
-              <div className="text-xs text-gray-600 space-y-0.5">
-                {s.condition && <div><span className="text-gray-400">Condition:</span> <span className="font-semibold text-gray-800">{s.condition}</span></div>}
-                {s.region && <div><span className="text-gray-400">Region:</span> <span className="font-semibold text-gray-800">{s.region}</span></div>}
-                <div className={`font-semibold ${s.customsOk ? 'text-green-600' : 'text-amber-600'}`}>{s.customsNote}</div>
+              {/* Offer */}
+              <div className="flex lg:block items-start gap-2 text-xs">
+                <span className="lg:hidden text-[10px] font-bold uppercase text-gray-400 w-16 flex-shrink-0 pt-0.5">Offer</span>
+                <div className="space-y-0.5">
+                  {s.condition && <p className="text-gray-700"><span className="text-gray-400">Condition</span> · <span className="font-bold">{s.condition}</span></p>}
+                  {s.region && <p className="text-gray-700"><span className="text-gray-400">Region</span> · <span className="font-bold">{s.region}</span></p>}
+                  <span className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-bold ${s.customsOk ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'}`}>
+                    {s.customsOk ? <Check className="w-2.5 h-2.5" /> : '⚠'} {s.customsNote}
+                  </span>
+                </div>
               </div>
 
-              {/* Price details */}
-              <div className="text-xs space-y-0.5">
-                <div className="flex justify-between gap-2"><span className="text-gray-400">Product</span><span className="font-semibold text-gray-800">{money(s.productPriceCents, s.currency)}</span></div>
-                <div className="flex justify-between gap-2"><span className="text-gray-400">Shipping</span><span className="font-semibold text-gray-800">{s.shippingCents == null ? 'At checkout' : s.shippingCents === 0 ? 'Free' : money(s.shippingCents, s.currency)}</span></div>
-                <div className="flex justify-between gap-2 pt-0.5 border-t border-gray-100"><span className="text-gray-500 font-bold">Total</span><span className={`font-extrabold ${isBest ? 'text-green-600' : 'text-[#0B1F4D]'}`}>{money(s.totalCents, s.currency)}</span></div>
+              {/* Price */}
+              <div className="flex lg:block items-center gap-2">
+                <span className="lg:hidden text-[10px] font-bold uppercase text-gray-400 w-16 flex-shrink-0">Price</span>
+                <div className="w-full">
+                  <div className="flex items-baseline justify-between lg:justify-start gap-2">
+                    <span className={`text-lg font-extrabold ${isBest ? 'text-green-600' : 'text-[#0B1F4D]'}`}>{money(s.totalCents, s.currency)}</span>
+                    <span className="text-[10px] text-gray-400 font-medium">total</span>
+                  </div>
+                  <p className="text-[11px] text-gray-400 leading-tight">
+                    {money(s.productPriceCents, s.currency)} + {s.shippingCents == null ? 'shipping at checkout' : s.shippingCents === 0 ? 'free shipping' : money(s.shippingCents, s.currency) + ' ship'}
+                  </p>
+                </div>
               </div>
 
               {/* Delivery */}
-              <div className="text-xs">
-                <div className="inline-flex items-center gap-1 font-bold text-[#0B1F4D]"><Truck className="w-3.5 h-3.5" />{s.deliveryDays != null ? `${s.deliveryDays} day${s.deliveryDays === 1 ? '' : 's'}` : (s.leadTime || '—')}</div>
-                <div className={`mt-0.5 ${s.stock > 0 ? 'text-green-600' : 'text-red-500'} font-semibold`}>{s.stock > 0 ? `${s.stock} in stock` : 'Out of stock'}</div>
+              <div className="flex lg:block items-center gap-2">
+                <span className="lg:hidden text-[10px] font-bold uppercase text-gray-400 w-16 flex-shrink-0">Delivery</span>
+                <div>
+                  <span className="inline-flex items-center gap-1.5 rounded-lg bg-gray-100 px-2 py-1 text-xs font-bold text-[#0B1F4D]">
+                    <Truck className="w-3.5 h-3.5" />{s.deliveryDays != null ? `${s.deliveryDays} day${s.deliveryDays === 1 ? '' : 's'}` : (s.leadTime || '—')}
+                  </span>
+                  <p className={`flex items-center gap-1 text-[11px] font-semibold mt-1 ${s.stock > 0 ? 'text-green-600' : 'text-red-500'}`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${s.stock > 0 ? 'bg-green-500' : 'bg-red-500'}`} />
+                    {s.stock > 0 ? `${s.stock.toLocaleString('es-ES')} in stock` : 'Out of stock'}
+                  </p>
+                </div>
               </div>
 
               {/* Action */}
-              <div className="flex flex-col items-stretch lg:items-end gap-1.5">
+              <div className="flex flex-col items-stretch lg:items-end gap-1.5 lg:min-w-[130px]">
                 {locked ? (
-                  <Link href="/pricing" className="inline-flex items-center justify-center gap-1 rounded-lg bg-[#F5A623] text-[#0B1F4D] px-4 py-2 text-xs font-extrabold hover:bg-[#fbb93a] whitespace-nowrap">
-                    <Lock className="w-3 h-3" /> Unlock to order
+                  <Link href="/pricing" className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#F5A623] text-[#0B1F4D] px-4 py-2.5 text-sm font-extrabold hover:bg-[#fbb93a] transition-colors whitespace-nowrap shadow-sm">
+                    <Lock className="w-3.5 h-3.5" /> Unlock
                   </Link>
                 ) : (
                   <>
-                    <Link href={s.href} className="inline-flex items-center justify-center rounded-lg bg-[#0B1F4D] text-white px-4 py-2 text-xs font-extrabold hover:bg-[#162d6e] whitespace-nowrap">
+                    <Link href={s.href} className={`inline-flex items-center justify-center rounded-xl px-5 py-2.5 text-sm font-extrabold transition-colors whitespace-nowrap shadow-sm ${isBest ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-[#0B1F4D] text-white hover:bg-[#162d6e]'}`}>
                       View &amp; Order
                     </Link>
                     {(s.whatsapp || s.brandSlug) && (
                       <a
                         href={s.whatsapp ? `https://wa.me/${s.whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent('Hi! I am interested in: ' + productName)}` : `/brand/${s.brandSlug}`}
                         target={s.whatsapp ? '_blank' : undefined} rel="noreferrer"
-                        className="inline-flex items-center justify-center gap-1 text-[11px] font-bold text-[#2563eb] hover:underline"
+                        className="inline-flex items-center justify-center gap-1 text-[11px] font-bold text-gray-500 hover:text-[#2563eb] transition-colors"
                       >
-                        <MessageCircle className="w-3 h-3" /> Chat with Supplier
+                        <MessageCircle className="w-3 h-3" /> Chat with supplier
                       </a>
                     )}
                   </>
@@ -150,9 +187,9 @@ export function SellersTable({ sellers, productName, locked = false }: { sellers
       </div>
 
       {remaining > 0 && (
-        <div className="text-center mt-4">
-          <button onClick={() => setExpanded(true)} className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-5 py-2.5 text-sm font-bold text-[#0B1F4D] hover:border-[#0B1F4D]">
-            View More Suppliers ({remaining}) ▾
+        <div className="text-center mt-5">
+          <button onClick={() => setExpanded(true)} className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-6 py-2.5 text-sm font-bold text-[#0B1F4D] hover:border-[#0B1F4D] hover:shadow-sm transition-all">
+            View {remaining} more supplier{remaining === 1 ? '' : 's'} <ChevronDown className="w-4 h-4" />
           </button>
         </div>
       )}
