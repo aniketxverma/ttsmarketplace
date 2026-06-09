@@ -31,6 +31,7 @@ export default {
     my_canal: 'Mi canal',
     subscriptions: 'Suscripciones',
     points_of_sale: 'Puntos de venta',
+    sales_network: 'Red de Ventas',
     orders: 'Pedidos',
     messages: 'Mensajes',
     documents: 'Documentos',

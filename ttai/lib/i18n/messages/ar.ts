@@ -31,6 +31,7 @@ export default {
     my_canal: 'قناتي',
     subscriptions: 'الاشتراكات',
     points_of_sale: 'نقاط البيع',
+    sales_network: 'شبكة المبيعات',
     orders: 'الطلبات',
     messages: 'الرسائل',
     documents: 'المستندات',
