@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { Crown, ShieldCheck, Award, Store, ChevronLeft, Package, Users, ArrowRight } from 'lucide-react'
 import { ProductBuyArea } from './ProductBuyArea'
 import { ModelSelector } from './ModelSelector'
+import { CopyProductButton } from './CopyProductButton'
 import { unitsPerPallet, unitsPerTruck, cartonsPerTruck, unitsForShop, intersectUnits, retailCostBaseCents } from '@/lib/packaging'
 import { chainLevel, unitsForRole } from '@/lib/business-chain'
 import { useServerTranslations, getLocale } from '@/lib/i18n/server'
@@ -113,9 +114,13 @@ export default async function ProductPage({ params, searchParams }: { params: { 
   // distributors box+pallet+truck; suppliers/factories everything.
   const { data: { user } } = await supabase.auth.getUser()
   let viewer: any = null
+  let viewerSupplierId: string | null = null
   if (user) {
     const { data } = await supabase.from('profiles').select('role, business_type').eq('id', user.id).single()
     viewer = data
+    // Suppliers can one-click "Copy Existing Product" into their own catalogue.
+    const { data: sup } = await supabase.from('suppliers').select('id').eq('owner_id', user.id).maybeSingle()
+    viewerSupplierId = sup?.id ?? null
   }
   const level     = chainLevel(viewer?.role, (viewer as any)?.business_type)
   const roleUnits = unitsForRole(level)
@@ -328,6 +333,14 @@ export default async function ProductPage({ params, searchParams }: { params: { 
                 </div>
                 <ArrowRight className="w-4 h-4 text-gray-300 group-hover:text-[#0B1F4D] transition-colors flex-shrink-0" />
               </Link>
+            )}
+
+            {/* Supplier-only: clone this product into your own catalogue */}
+            {viewerSupplierId && viewerSupplierId !== supplier?.id && (
+              <div className="pt-1">
+                <CopyProductButton productId={product.id} productName={product.name} />
+                <p className="text-[11px] text-gray-400 text-center mt-1.5">Sell this too — copy its data, add your price &amp; stock.</p>
+              </div>
             )}
 
         </ProductBuyArea>

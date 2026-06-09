@@ -8,6 +8,7 @@ import { slugify } from '@/lib/utils'
 import { canSellUnit, requiredPlanLabel, SELL_PLAN_LABEL } from '@/lib/selling'
 import type { PurchaseUnit } from '@/lib/packaging'
 import { minRetailCents, addVatCents } from '@/lib/pricing-rules'
+import { CONDITIONS } from '@/lib/conditions'
 
 type TemplateField = { key: string; label: string; type?: 'text' | 'number' | 'select'; options?: string[] }
 
@@ -44,6 +45,7 @@ interface FormState {
   hsCode: string; catalogueUrl: string; videoUrl: string
   sellPiece: boolean; sellBox: boolean; sellPallet: boolean; sellTruck: boolean
   priceNegotiable: boolean; priceOnRequest: boolean
+  condition: string; warranty: string; warehouseLocation: string
   isPublished: boolean
 }
 
@@ -64,6 +66,7 @@ const INITIAL: FormState = {
   hsCode: '', catalogueUrl: '', videoUrl: '',
   sellPiece: true, sellBox: false, sellPallet: false, sellTruck: false,
   priceNegotiable: false, priceOnRequest: false,
+  condition: '', warranty: '', warehouseLocation: '',
   isPublished: false,
 }
 
@@ -194,6 +197,9 @@ export function ProductForm({
       truck_discount_pct:     form.truckDiscountPct  ? Math.min(100, Math.max(0, parseFloat(form.truckDiscountPct)  || 0)) : 0,
       price_negotiable:    form.priceNegotiable,
       price_on_request:    form.priceOnRequest,
+      condition:           form.condition || null,
+      warranty:            form.warranty.trim() || null,
+      warehouse_location:  form.warehouseLocation.trim() || null,
       specs:               specs,
       // Cap sell-by units to the seller's plan (locked units can't be enabled).
       sell_piece:          form.sellPiece  && canSellUnit(sellerTier, 'piece'),
@@ -208,7 +214,8 @@ export function ProductForm({
     // If a recently-added column (e.g. discount %) isn't migrated yet, drop those
     // keys and retry so saving still works.
     const OPTIONAL_KEYS = ['box_discount_pct', 'pallet_discount_pct', 'truck_discount_pct',
-      'brand_name', 'source_type', 'original_supplier_id', 'current_owner_id', 'created_by', 'price_on_request', 'specs']
+      'brand_name', 'source_type', 'original_supplier_id', 'current_owner_id', 'created_by', 'price_on_request', 'specs',
+      'condition', 'warranty', 'warehouse_location']
     const stripOptional = (obj: any) => { const o = { ...obj }; OPTIONAL_KEYS.forEach(k => delete o[k]); return o }
     const isMissingColumn = (msg?: string | null) => !!msg && /column|does not exist|discount_pct/i.test(msg)
 
@@ -494,6 +501,21 @@ export function ProductForm({
           <div className="space-y-1.5">
             <label className={labelCls}>Weight (grams)</label>
             <input className={inputCls} type="number" min="1" value={form.weightGrams} onChange={(e) => update('weightGrams', e.target.value)} placeholder="Optional" />
+          </div>
+          <div className="space-y-1.5">
+            <label className={labelCls}>Condition</label>
+            <select className={inputCls} value={form.condition} onChange={(e) => update('condition', e.target.value)}>
+              <option value="">—</option>
+              {CONDITIONS.map((c) => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </div>
+          <div className="space-y-1.5">
+            <label className={labelCls}>Warranty</label>
+            <input className={inputCls} value={form.warranty} onChange={(e) => update('warranty', e.target.value)} placeholder="e.g. 12 months" />
+          </div>
+          <div className="space-y-1.5">
+            <label className={labelCls}>Warehouse location</label>
+            <input className={inputCls} value={form.warehouseLocation} onChange={(e) => update('warehouseLocation', e.target.value)} placeholder="e.g. Madrid · Aisle 4" />
           </div>
 
           {/* Price type: Fixed / Negotiable / On request */}
