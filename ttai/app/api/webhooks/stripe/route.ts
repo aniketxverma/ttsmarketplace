@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
 
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object as {
-      id: string; metadata?: { order_id?: string; kind?: string; user_id?: string; tier?: string }
+      id: string; metadata?: { order_id?: string; order_ids?: string; kind?: string; user_id?: string; tier?: string }
       payment_intent?: string; customer?: string; subscription?: string
     }
 
@@ -93,6 +93,13 @@ export async function POST(req: NextRequest) {
       status: 'paid',
       stripe_payment_intent_id: session.payment_intent,
     }).eq('id', orderId)
+
+    // Multi-supplier cart: mark every order in the session paid.
+    const orderIdsCsv = session.metadata?.order_ids
+    if (orderIdsCsv) {
+      const ids = orderIdsCsv.split(',').filter(Boolean)
+      if (ids.length) await (admin.from('orders') as any).update({ status: 'paid', stripe_payment_intent_id: session.payment_intent }).in('id', ids)
+    }
 
     let brokerSharePct = 0, ttaiCommissionPct = 5, ttaiFixedCents = 0
     let brokerStripeAccountId: string | null = null

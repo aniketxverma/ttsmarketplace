@@ -4,6 +4,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { unitPrice, minUnitsFor, type PurchaseUnit } from '@/lib/packaging'
 import { determineTax, invoiceTreatment } from '@/lib/tax'
 import { getTaxConfig } from '@/lib/pricing-config'
+import { stripe } from '@/lib/stripe/client'
 import { z } from 'zod'
 
 const schema = z.object({
@@ -22,6 +23,7 @@ const schema = z.object({
     phone: z.string().optional(),
   }),
   vatNumber: z.string().optional(),
+  paymentMethod: z.enum(['bank_transfer', 'card', 'cod']).optional(),
 })
 
 export async function POST(req: NextRequest) {
@@ -36,6 +38,7 @@ export async function POST(req: NextRequest) {
   if (!parsed.success) return NextResponse.json({ error: parsed.error.errors[0].message }, { status: 400 })
 
   const { items, shippingAddress, vatNumber } = parsed.data
+  const paymentMethod = parsed.data.paymentMethod ?? 'bank_transfer'
   const admin = createAdminClient()
 
   // Buyer profile (read defensively — vat_number column may not be migrated yet).
@@ -104,6 +107,9 @@ export async function POST(req: NextRequest) {
   const supplierById = new Map<string, any>((suppliers as any[]).map((s) => [s.id, s]))
 
   const orderIds: string[] = []
+  const stripeLineItems: any[] = []
+  let cartTotalVat = 0
+  let cartCurrency = 'EUR'
 
   for (const [supplierId, supplierItems] of Array.from(supplierGroups.entries())) {
     const subtotalCents = supplierItems.reduce((sum: number, item: any) => {
@@ -141,23 +147,29 @@ export async function POST(req: NextRequest) {
 
     const currency = products.find(p => p.supplier_id === supplierId)?.currency_code ?? 'EUR'
 
-    const { data: order, error: orderError } = await admin
-      .from('orders')
-      .insert({
-        buyer_id: user.id,
-        supplier_id: supplierId,
-        status: 'paid',
-        marketplace_context: 'wholesale',
-        subtotal_cents: subtotalCents,
-        vat_cents: vatCents,
-        shipping_cents: 0,
-        total_cents: totalCents,
-        currency_code: currency,
-        shipping_address: shippingAddress,
-        idempotency_key: `demo-${user.id}-${supplierId}-${Date.now()}`,
-      })
-      .select('id')
-      .single()
+    // Orders start 'pending'. Card → marked 'paid' by the Stripe webhook; bank
+    // transfer / COD stay 'pending' until the supplier confirms receipt.
+    const orderRow: Record<string, any> = {
+      buyer_id: user.id,
+      supplier_id: supplierId,
+      status: 'pending',
+      marketplace_context: 'wholesale',
+      subtotal_cents: subtotalCents,
+      vat_cents: vatCents,
+      shipping_cents: 0,
+      total_cents: totalCents,
+      currency_code: currency,
+      shipping_address: shippingAddress,
+      payment_method: paymentMethod,
+      idempotency_key: `ord-${user.id}-${supplierId}-${Date.now()}`,
+    }
+    let orderRes = await (admin.from('orders') as any).insert(orderRow).select('id').single()
+    if (orderRes.error && /payment_method|column|does not exist/i.test(orderRes.error.message)) {
+      const { payment_method, ...noPm } = orderRow
+      orderRes = await (admin.from('orders') as any).insert(noPm).select('id').single()
+    }
+    const order = orderRes.data
+    const orderError = orderRes.error
 
     if (orderError || !order) {
       console.error('Order insert error:', orderError)
@@ -179,6 +191,17 @@ export async function POST(req: NextRequest) {
     })
 
     await (admin.from('order_items') as any).insert(orderItems)
+
+    // Collect Stripe line items (used only when paying by card).
+    for (const item of supplierItems as any[]) {
+      const product = products.find(p => p.id === item.productId)!
+      stripeLineItems.push({
+        price_data: { currency: currency.toLowerCase(), product_data: { name: product.name }, unit_amount: linePrice(product, item) },
+        quantity: item.quantity,
+      })
+    }
+    cartTotalVat += vatCents
+    cartCurrency = currency
 
     // ── Automatic invoice ───────────────────────────────────────────────────
     const invoiceNumber = `INV-${new Date().getFullYear()}-${Date.now().toString(36)}-${String(supplierId).slice(0, 4)}`.toUpperCase()
@@ -203,5 +226,30 @@ export async function POST(req: NextRequest) {
     orderIds.push(order.id)
   }
 
-  return NextResponse.json({ orderIds, primaryOrderId: orderIds[0] })
+  // ── Card: create a Stripe Checkout Session for the whole cart ───────────
+  if (paymentMethod === 'card') {
+    if (cartTotalVat > 0) {
+      stripeLineItems.push({
+        price_data: { currency: cartCurrency.toLowerCase(), product_data: { name: 'VAT' }, unit_amount: cartTotalVat },
+        quantity: 1,
+      })
+    }
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? ''
+    try {
+      const session = await stripe.checkout.sessions.create({
+        mode: 'payment',
+        line_items: stripeLineItems,
+        success_url: `${appUrl}/checkout/success?id=${orderIds[0]}`,
+        cancel_url: `${appUrl}/checkout`,
+        metadata: { order_ids: orderIds.join(','), order_id: orderIds[0] },
+        payment_method_types: ['card'],
+        billing_address_collection: 'required',
+      })
+      return NextResponse.json({ orderIds, primaryOrderId: orderIds[0], checkoutUrl: session.url })
+    } catch (e: any) {
+      return NextResponse.json({ error: `Card payment is not available right now (${e?.message ?? 'Stripe error'}). Try bank transfer.` }, { status: 500 })
+    }
+  }
+
+  return NextResponse.json({ orderIds, primaryOrderId: orderIds[0], paymentMethod })
 }

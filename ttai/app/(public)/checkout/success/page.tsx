@@ -9,7 +9,7 @@ function fmt(cents: number, currency: string) {
 export default async function CheckoutSuccessPage({
   searchParams,
 }: {
-  searchParams: { id?: string }
+  searchParams: { id?: string; m?: string }
 }) {
   const orderId = searchParams.id
   if (!orderId) notFound()
@@ -50,6 +50,8 @@ export default async function CheckoutSuccessPage({
     year: 'numeric', month: 'long', day: 'numeric',
   })
   const shortId = orderId.split('-')[0].toUpperCase()
+  const paid = order.status === 'paid'
+  const method = searchParams.m ?? (paid ? 'card' : 'bank_transfer')
 
   return (
     <div className="bg-gray-50 min-h-screen py-12">
@@ -62,9 +64,13 @@ export default async function CheckoutSuccessPage({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <h1 className="text-2xl font-extrabold text-[#0B1F4D]">Order Confirmed!</h1>
+          <h1 className="text-2xl font-extrabold text-[#0B1F4D]">{paid ? 'Payment Successful!' : 'Order Placed!'}</h1>
           <p className="text-gray-500 mt-2 text-sm">
-            Thank you for your order. You'll receive a confirmation email shortly.
+            {paid
+              ? 'Your payment was received and your order is confirmed.'
+              : method === 'cod'
+                ? 'Your order is placed — pay on delivery once it arrives.'
+                : 'Your order is placed. Complete the bank transfer to confirm it.'}
           </p>
         </div>
 
@@ -84,9 +90,9 @@ export default async function CheckoutSuccessPage({
               </div>
               <div>
                 <p className="text-xs text-blue-200 uppercase tracking-widest font-semibold">Status</p>
-                <span className="inline-flex items-center gap-1.5 mt-0.5 px-2.5 py-1 rounded-full bg-green-400/20 text-green-300 text-xs font-bold border border-green-400/30">
-                  <span className="w-1.5 h-1.5 rounded-full bg-green-400" />
-                  Confirmed
+                <span className={`inline-flex items-center gap-1.5 mt-0.5 px-2.5 py-1 rounded-full text-xs font-bold border ${paid ? 'bg-green-400/20 text-green-300 border-green-400/30' : 'bg-amber-400/20 text-amber-200 border-amber-400/30'}`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${paid ? 'bg-green-400' : 'bg-amber-300'}`} />
+                  {paid ? 'Paid' : 'Pending payment'}
                 </span>
               </div>
               <div className="text-right">
@@ -153,10 +159,13 @@ export default async function CheckoutSuccessPage({
                 </svg>
               </div>
               <div>
-                <p className="font-semibold text-[#0B1F4D] text-sm">Payment Instructions</p>
+                <p className="font-semibold text-[#0B1F4D] text-sm">{paid ? 'Payment received' : 'Payment instructions'}</p>
                 <p className="text-xs text-blue-700 mt-1 leading-relaxed">
-                  An invoice will be sent to your registered email within 24 hours.
-                  Please complete payment via bank transfer using the reference number on the invoice.
+                  {paid
+                    ? 'Your card payment was processed successfully — thank you. Your invoice is available below.'
+                    : method === 'cod'
+                      ? 'Pay the supplier in cash when your order is delivered. Your invoice is available below for reference.'
+                      : 'Your invoice (below) includes the supplier’s bank details and a payment reference. Complete the bank transfer within 24–48h to confirm your order.'}
                 </p>
               </div>
             </div>

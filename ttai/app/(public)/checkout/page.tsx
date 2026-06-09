@@ -15,6 +15,7 @@ export default function CheckoutPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [payMethod, setPayMethod] = useState<'card' | 'bank_transfer' | 'cod'>('card')
 
   const [form, setForm] = useState({
     fullName: '', line1: '', city: '', postalCode: '', country: 'ES', phone: '', vatNumber: '',
@@ -55,6 +56,7 @@ export default function CheckoutPage() {
         items: items.map(i => ({ productId: i.productId, quantity: i.quantity, unit: i.unit })),
         shippingAddress: { fullName: form.fullName, line1: form.line1, city: form.city, postalCode: form.postalCode, country: form.country, phone: form.phone },
         vatNumber: form.vatNumber || undefined,
+        paymentMethod: payMethod,
       }),
     })
 
@@ -66,8 +68,14 @@ export default function CheckoutPage() {
       return
     }
 
+    // Card → redirect to Stripe Checkout. Bank transfer / COD → confirmation page.
+    if (data.checkoutUrl) {
+      clearCart()
+      window.location.href = data.checkoutUrl
+      return
+    }
     clearCart()
-    router.push(`/checkout/success?id=${data.primaryOrderId}`)
+    router.push(`/checkout/success?id=${data.primaryOrderId}&m=${payMethod}`)
   }
 
   if (items.length === 0) {
@@ -188,16 +196,25 @@ export default function CheckoutPage() {
                   <div className="w-7 h-7 rounded-full bg-[#0B1F4D] text-white text-xs font-black flex items-center justify-center">2</div>
                   Payment
                 </h2>
-                <div className="flex items-center gap-3 p-4 rounded-xl bg-blue-50 border border-blue-100">
-                  <div className="w-10 h-10 rounded-xl bg-[#0B1F4D] flex items-center justify-center flex-shrink-0">
-                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="font-semibold text-[#0B1F4D] text-sm">Secure B2B Invoice Payment</p>
-                    <p className="text-xs text-blue-600 mt-0.5">Your order will be confirmed and an invoice sent within 24 hours. Payment via bank transfer.</p>
-                  </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                  {([
+                    { v: 'card', label: 'Card', sub: 'Visa · Mastercard', icon: 'M3 10h18M7 15h2m-5 4h16a1 1 0 001-1V6a1 1 0 00-1-1H4a1 1 0 00-1 1v12a1 1 0 001 1z' },
+                    { v: 'bank_transfer', label: 'Bank transfer', sub: 'Invoice · pay later', icon: 'M3 21h18M4 10h16M5 10V7l7-4 7 4v3M6 10v8m4-8v8m4-8v8m4-8v8' },
+                    { v: 'cod', label: 'Cash on delivery', sub: 'Pay on arrival', icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8V6m0 12v-2m0 0c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
+                  ] as const).map((m) => (
+                    <button key={m.v} type="button" onClick={() => setPayMethod(m.v)}
+                      className={`text-left rounded-xl border p-3 transition-all ${payMethod === m.v ? 'border-[#0B1F4D] bg-[#0B1F4D]/[0.04] ring-1 ring-[#0B1F4D]' : 'border-gray-200 hover:border-gray-300'}`}>
+                      <svg className={`w-5 h-5 mb-1 ${payMethod === m.v ? 'text-[#0B1F4D]' : 'text-gray-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d={m.icon} /></svg>
+                      <p className="font-bold text-[#0B1F4D] text-sm leading-tight">{m.label}</p>
+                      <p className="text-[11px] text-gray-400">{m.sub}</p>
+                    </button>
+                  ))}
+                </div>
+                <div className="mt-3 flex items-start gap-2 text-xs text-gray-500 bg-blue-50/60 border border-blue-100 rounded-xl px-3.5 py-2.5">
+                  <svg className="w-4 h-4 mt-0.5 text-[#0B1F4D] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                  {payMethod === 'card' && <span><span className="font-semibold text-[#0B1F4D]">Secure card payment.</span> You&apos;ll be redirected to Stripe to pay. Your order is confirmed instantly on payment.</span>}
+                  {payMethod === 'bank_transfer' && <span><span className="font-semibold text-[#0B1F4D]">Bank transfer.</span> We&apos;ll create your order &amp; invoice with the bank details — pay within 24–48h to confirm.</span>}
+                  {payMethod === 'cod' && <span><span className="font-semibold text-[#0B1F4D]">Cash on delivery.</span> Pay the supplier when your order arrives (subject to supplier approval).</span>}
                 </div>
               </div>
 
@@ -288,14 +305,14 @@ export default function CheckoutPage() {
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                         </svg>
-                        Placing Order...
+                        {payMethod === 'card' ? 'Redirecting to payment…' : 'Placing Order...'}
                       </>
                     ) : (
                       <>
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                         </svg>
-                        Place Order · {fmt(grandTotal, currency)}
+                        {payMethod === 'card' ? 'Pay' : 'Place Order'} · {fmt(grandTotal, currency)}
                       </>
                     )}
                   </button>
