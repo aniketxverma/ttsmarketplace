@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { ProductCard } from '@/components/marketplace/ProductCard'
 import { FamilyCard } from '@/components/marketplace/FamilyCard'
 import { groupIntoFamilies } from '@/lib/product-family'
+import { dedupeByMaster } from '@/lib/offers'
 import { ProductGrid } from '@/components/marketplace/ProductGrid'
 import { CategoryNav } from '@/components/marketplace/CategoryNav'
 import { SearchBar } from '@/components/marketplace/SearchBar'
@@ -123,15 +124,27 @@ export default async function MarketplacePage({
 
   const prodList = (allProducts ?? []) as any[]
 
-  // Phase 2 — attach brand (defensive: brand_name column may not be migrated yet).
+  // Phase 2 — attach brand + master link (defensive: columns may not be migrated yet).
   try {
     const ids = prodList.map((p) => p.id)
     if (ids.length) {
-      const { data } = await (supabase.from('products') as any).select('id, brand_name').in('id', ids)
-      const bMap = new Map((data ?? []).map((r: any) => [r.id, r.brand_name]))
-      for (const p of prodList) p.brand_name = bMap.get(p.id) ?? null
+      const { data } = await (supabase.from('products') as any).select('id, brand_name, master_product_id, delivery_days').in('id', ids)
+      const map = new Map((data ?? []).map((r: any) => [r.id, r]))
+      for (const p of prodList) {
+        const r: any = map.get(p.id)
+        p.brand_name = r?.brand_name ?? null
+        p.master_product_id = r?.master_product_id ?? null
+        p.delivery_days = r?.delivery_days ?? null
+        p.reliability_tier = p.suppliers?.reliability_tier ?? null // for offer ranking
+      }
     }
-  } catch { /* not migrated — no brands */ }
+  } catch { /* not migrated — no brands/master */ }
+
+  // One product, many suppliers — collapse offers that share a master_product_id
+  // into the single best-price representative so the marketplace shows ONE card.
+  const deduped = dedupeByMaster(prodList as any) as any[]
+  prodList.length = 0
+  prodList.push(...deduped)
 
   // Brand filter + the list of brands available (for the chips).
   const activeBrand = searchParams.brand ?? null
@@ -346,13 +359,16 @@ export default async function MarketplacePage({
               const sponsored = isSponsoredFam(fam)
               const brand = (fam.representative as any).brand_name ?? null
               const minOrderCents = supMin.get((fam.representative as any).supplier_id) ?? 0
+              const offerCount = (fam.representative as any)._offerCount ?? 0
               if (fam.members.length > 1) return <FamilyCard key={fam.key} family={fam} shop="market" brand={brand} sponsored={sponsored} minOrderCents={minOrderCents} />
               const p = fam.representative as any
               const supplier = p.suppliers as { legal_name: string; trade_name: string | null; reliability_tier: import('@/types/domain').ReliabilityTier }
               const mainImg = (p.product_images as { url: string; sort_order: number }[])?.sort((a, b) => a.sort_order - b.sort_order)[0]?.url
+              // Master group → the single deduped listing; otherwise the supplier's own page.
+              const href = p._masterId ? `/p/${p._masterId}` : `/product/${p.slug ?? p.id}`
               return (
                 <ProductCard key={p.id} product={p as Parameters<typeof ProductCard>[0]['product']}
-                  supplier={supplier} mainImageUrl={mainImg} href={`/product/${p.slug ?? p.id}`} shop="market" brand={brand} sponsored={sponsored} minOrderCents={minOrderCents} />
+                  supplier={supplier} mainImageUrl={mainImg} href={href} shop="market" brand={brand} sponsored={sponsored} minOrderCents={minOrderCents} offerCount={offerCount} />
               )
             }
 

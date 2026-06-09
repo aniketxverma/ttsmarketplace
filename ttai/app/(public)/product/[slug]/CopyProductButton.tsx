@@ -7,23 +7,31 @@ import { CONDITIONS } from '@/lib/conditions'
 
 const EMPTY = { price: '', stock: '', sku: '', condition: CONDITIONS[0] as string, warehouse: '', warranty: '', imei: '' }
 
-/** Lets a logged-in supplier clone this product (photos, description, specs, EAN,
- *  brand, model, capacity, color) into their own catalogue — they only add price/stock/SKU. */
-export function CopyProductButton({ productId, productName }: { productId: string; productName: string }) {
+/** Lets a logged-in supplier attach their own offer to a product/master (photos,
+ *  description, specs, EAN, brand, model, capacity, color are copied) — they only
+ *  add price/stock/SKU. Pass `masterId` to add an offer to a master, or `productId`
+ *  to copy an existing supplier's product. */
+export function CopyProductButton({ productId, masterId, productName }: { productId?: string; masterId?: string; productName: string }) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [form, setForm] = useState({ ...EMPTY })
   const [saving, setSaving] = useState(false)
 
+  const isOffer = !!masterId
+  const label = isOffer ? 'Add your offer' : 'Copy this product'
+
   async function copy() {
     setSaving(true)
+    const body = masterId
+      ? { action: 'import', masterId, price: parseFloat(form.price) || 0, stock: form.stock, sku: form.sku, condition: form.condition, warehouse: form.warehouse, warranty: form.warranty, imei: form.imei }
+      : { action: 'copyProduct', productId, price: parseFloat(form.price) || 0, stock: form.stock, sku: form.sku, condition: form.condition, warehouse: form.warehouse, warranty: form.warranty, imei: form.imei }
     const res = await fetch('/api/supplier/master', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'copyProduct', productId, price: parseFloat(form.price) || 0, stock: form.stock, sku: form.sku, condition: form.condition, warehouse: form.warehouse, warranty: form.warranty, imei: form.imei }),
+      body: JSON.stringify(body),
     })
     const j = await res.json().catch(() => ({}))
     setSaving(false)
-    if (!res.ok) { alert(j.error ?? 'Copy failed'); return }
+    if (!res.ok) { alert(j.error ?? 'Failed'); return }
     if (j.productId) router.push(`/supplier/products/${j.productId}/edit`)
   }
 
@@ -35,7 +43,7 @@ export function CopyProductButton({ productId, productName }: { productId: strin
         onClick={() => { setForm({ ...EMPTY }); setOpen(true) }}
         className="w-full flex items-center justify-center gap-2 rounded-xl border-2 border-[#0B1F4D] bg-white text-[#0B1F4D] py-2.5 text-sm font-extrabold hover:bg-[#0B1F4D] hover:text-white transition-colors"
       >
-        <Copy className="w-4 h-4" /> Copy this product
+        <Copy className="w-4 h-4" /> {label}
       </button>
 
       {open && (
@@ -43,7 +51,7 @@ export function CopyProductButton({ productId, productName }: { productId: strin
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 space-y-4 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-start justify-between">
               <div>
-                <p className="font-extrabold text-[#0B1F4D]">Copy to my catalogue</p>
+                <p className="font-extrabold text-[#0B1F4D]">{isOffer ? 'Add your offer' : 'Copy to my catalogue'}</p>
                 <p className="text-xs text-gray-400 line-clamp-1">{productName}</p>
               </div>
               <button onClick={() => setOpen(false)} className="text-gray-400 hover:text-gray-700"><X className="w-5 h-5" /></button>
@@ -63,7 +71,7 @@ export function CopyProductButton({ productId, productName }: { productId: strin
               <div className="space-y-1 col-span-2"><label className="text-xs font-bold text-gray-500 uppercase">Warehouse location</label><input value={form.warehouse} onChange={(e) => setForm({ ...form, warehouse: e.target.value })} placeholder="e.g. Madrid · Aisle 4" className={inputCls} /></div>
             </div>
             <button onClick={copy} disabled={saving} className="w-full rounded-xl bg-[#0B1F4D] text-white py-3 text-sm font-bold hover:bg-[#162d6e] disabled:opacity-50">
-              {saving ? <Loader2 className="w-4 h-4 animate-spin inline" /> : 'Copy to my catalogue'}
+              {saving ? <Loader2 className="w-4 h-4 animate-spin inline" /> : (isOffer ? 'Add my offer' : 'Copy to my catalogue')}
             </button>
           </div>
         </div>

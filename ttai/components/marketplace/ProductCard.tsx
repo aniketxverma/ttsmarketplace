@@ -30,6 +30,8 @@ interface ProductCardProps {
   brand?: string | null
   sponsored?: boolean
   minOrderCents?: number
+  /** When >1, this listing aggregates several suppliers' offers (master product). */
+  offerCount?: number
 }
 
 const TIER_STYLES: Record<ReliabilityTier, string> = {
@@ -43,7 +45,7 @@ function formatPrice(cents: number, currency: string) {
   return new Intl.NumberFormat('en-EU', { style: 'currency', currency, minimumFractionDigits: 2 }).format(cents / 100)
 }
 
-export function ProductCard({ product, supplier, mainImageUrl, href, retail = false, shop, brand, sponsored, minOrderCents }: ProductCardProps) {
+export function ProductCard({ product, supplier, mainImageUrl, href, retail = false, shop, brand, sponsored, minOrderCents, offerCount = 0 }: ProductCardProps) {
   // Retail surface (Online Store) OR a retail-only product → consumer presentation.
   const isRetail = retail || product.marketplace_context === 'retail'
   // Retail uses the dedicated online-shop price when set; otherwise the
@@ -72,6 +74,11 @@ export function ProductCard({ product, supplier, mainImageUrl, href, retail = fa
               ★ Sponsored
             </span>
           )}
+          {offerCount > 1 && (
+            <span className="absolute top-2 right-2 z-10 inline-flex items-center gap-1 rounded-full bg-green-600 text-white text-[10px] font-extrabold px-2 py-0.5 shadow">
+              {offerCount} suppliers
+            </span>
+          )}
           {mainImageUrl ? (
             <Image
               src={mainImageUrl}
@@ -98,6 +105,7 @@ export function ProductCard({ product, supplier, mainImageUrl, href, retail = fa
 
           <div className="flex items-center justify-between gap-2">
             <div>
+              {offerCount > 1 && <span className="text-[10px] text-muted-foreground mr-0.5">from</span>}
               <span className="font-semibold text-sm">{formatPrice(displayPrice, product.currency_code)}</span>
               {isRetail ? (
                 <span className="text-xs text-muted-foreground ml-1">inc. VAT</span>

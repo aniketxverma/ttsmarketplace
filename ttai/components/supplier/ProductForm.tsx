@@ -45,7 +45,7 @@ interface FormState {
   hsCode: string; catalogueUrl: string; videoUrl: string
   sellPiece: boolean; sellBox: boolean; sellPallet: boolean; sellTruck: boolean
   priceNegotiable: boolean; priceOnRequest: boolean
-  condition: string; warranty: string; warehouseLocation: string
+  condition: string; warranty: string; warehouseLocation: string; deliveryDays: string
   isPublished: boolean
 }
 
@@ -66,7 +66,7 @@ const INITIAL: FormState = {
   hsCode: '', catalogueUrl: '', videoUrl: '',
   sellPiece: true, sellBox: false, sellPallet: false, sellTruck: false,
   priceNegotiable: false, priceOnRequest: false,
-  condition: '', warranty: '', warehouseLocation: '',
+  condition: '', warranty: '', warehouseLocation: '', deliveryDays: '',
   isPublished: false,
 }
 
@@ -200,6 +200,7 @@ export function ProductForm({
       condition:           form.condition || null,
       warranty:            form.warranty.trim() || null,
       warehouse_location:  form.warehouseLocation.trim() || null,
+      delivery_days:       form.deliveryDays ? parseInt(form.deliveryDays) : null,
       specs:               specs,
       // Cap sell-by units to the seller's plan (locked units can't be enabled).
       sell_piece:          form.sellPiece  && canSellUnit(sellerTier, 'piece'),
@@ -215,7 +216,7 @@ export function ProductForm({
     // keys and retry so saving still works.
     const OPTIONAL_KEYS = ['box_discount_pct', 'pallet_discount_pct', 'truck_discount_pct',
       'brand_name', 'source_type', 'original_supplier_id', 'current_owner_id', 'created_by', 'price_on_request', 'specs',
-      'condition', 'warranty', 'warehouse_location']
+      'condition', 'warranty', 'warehouse_location', 'delivery_days']
     const stripOptional = (obj: any) => { const o = { ...obj }; OPTIONAL_KEYS.forEach(k => delete o[k]); return o }
     const isMissingColumn = (msg?: string | null) => !!msg && /column|does not exist|discount_pct/i.test(msg)
 
@@ -516,6 +517,11 @@ export function ProductForm({
           <div className="space-y-1.5">
             <label className={labelCls}>Warehouse location</label>
             <input className={inputCls} value={form.warehouseLocation} onChange={(e) => update('warehouseLocation', e.target.value)} placeholder="e.g. Madrid · Aisle 4" />
+          </div>
+          <div className="space-y-1.5">
+            <label className={labelCls}>Delivery time (days)</label>
+            <input className={inputCls} type="number" min="0" value={form.deliveryDays} onChange={(e) => update('deliveryDays', e.target.value)} placeholder="e.g. 3" />
+            <p className="text-xs text-gray-400">Used to rank your offer (fastest delivery wins ties).</p>
           </div>
 
           {/* Price type: Fixed / Negotiable / On request */}
