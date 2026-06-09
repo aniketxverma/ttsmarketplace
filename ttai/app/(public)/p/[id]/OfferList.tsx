@@ -38,6 +38,12 @@ function money(cents: number, currency: string) {
 export function OfferList({ offers }: { offers: Offer[] }) {
   const { addItem } = useCart()
 
+  // Lowest-price offer (badge follows the cheapest, regardless of sort order).
+  const bestId = offers.reduce<{ id: string | null; price: number }>(
+    (acc, o) => (o.priceCents < acc.price ? { id: o.productId, price: o.priceCents } : acc),
+    { id: null, price: Number.MAX_SAFE_INTEGER },
+  ).id
+
   function buy(o: Offer) {
     addItem({
       productId: o.productId,
@@ -54,8 +60,8 @@ export function OfferList({ offers }: { offers: Offer[] }) {
 
   return (
     <div className="space-y-3">
-      {offers.map((o, i) => {
-        const best = i === 0
+      {offers.map((o) => {
+        const best = o.productId === bestId
         const tier = TIER_BADGE[o.tier]
         return (
           <div key={o.productId}

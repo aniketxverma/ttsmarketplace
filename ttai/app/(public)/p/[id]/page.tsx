@@ -4,7 +4,8 @@ import Link from 'next/link'
 import { ChevronLeft, ImageOff, Users } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { sortOffers } from '@/lib/offers'
-import { OfferList, type Offer } from './OfferList'
+import { type Offer } from './OfferList'
+import { OfferBrowser } from './OfferBrowser'
 import { CopyProductButton } from '../../product/[slug]/CopyProductButton'
 
 export const revalidate = 60
@@ -151,7 +152,7 @@ export default async function MasterProductPage({ params, searchParams }: { para
         {offers.length === 0 ? (
           <p className="text-sm text-gray-400">No active offers for this product yet.</p>
         ) : (
-          <OfferList offers={offers} />
+          <OfferBrowser offers={offers} />
         )}
       </section>
 
