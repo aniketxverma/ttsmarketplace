@@ -16,16 +16,22 @@ const CHANNELS = [
     title: 'TTAI Retail Store', sub: 'Buy by Piece & Box',
     desc: 'For end users and retail customers.', cta: 'Shop Retail', href: '/store',
     grad: 'from-violet-600 to-purple-700', Icon: ShoppingCart, btn: 'text-violet-700',
+    badge: 'For Consumers', accent: '#8b5cf6',
+    tags: ['Single units', 'No minimums', 'Fast home delivery'],
   },
   {
     title: 'TTAI Business Shop', sub: 'Buy by Box & Pallet',
     desc: 'For shops, resellers and distributors.', cta: 'Shop Business', href: '/marketplace',
     grad: 'from-blue-600 to-[#0B1F4D]', Icon: Boxes, btn: 'text-blue-700',
+    badge: 'Most Popular', accent: '#2563eb',
+    tags: ['Wholesale pricing', 'Bulk & pallet orders', 'Trade accounts'],
   },
   {
     title: 'TTAI Trade Hub', sub: 'Buy by Pallet & Truck',
     desc: 'For wholesalers, importers, exporters and factories.', cta: 'Shop Trade', href: '/b2b',
     grad: 'from-amber-500 to-orange-600', Icon: Truck, btn: 'text-orange-700',
+    badge: 'For Wholesale', accent: '#f97316',
+    tags: ['Container loads', 'Direct from factory', 'Export ready'],
   },
 ] as const
 
@@ -141,25 +147,49 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
       </section>
 
       {/* ═══ CHOOSE YOUR MARKETPLACE ═══ */}
-      <section className="py-16 px-4 bg-gray-50">
+      <section className="py-20 px-4 bg-gradient-to-b from-white to-gray-50">
         <div className="container mx-auto max-w-6xl">
-          <div className="text-center mb-10">
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center gap-2 rounded-full bg-[#0B1F4D]/5 px-4 py-1.5 text-xs font-bold uppercase tracking-widest text-[#0B1F4D] mb-3">
+              <Zap className="w-4 h-4 text-[#F5A623]" /> Three Channels, One Login
+            </div>
             <h2 className="text-3xl sm:text-4xl font-extrabold text-[#0B1F4D]">Choose Your Marketplace</h2>
-            <p className="text-gray-400 mt-2">Three ways to trade. One powerful ecosystem.</p>
+            <p className="text-gray-400 mt-3 max-w-lg mx-auto">From a single piece to a full truckload — trade at any scale across one powerful ecosystem.</p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {CHANNELS.map((c, i) => (
               <Reveal key={c.title} from="up" delay={i * 90}>
-                <Link href={c.href} className={`group relative block overflow-hidden rounded-3xl bg-gradient-to-br ${c.grad} p-7 h-full shadow-lg hover:shadow-2xl hover:-translate-y-1 transition-all duration-300`}>
-                  <c.Icon className="absolute -bottom-6 -right-4 w-44 h-44 text-white/10 group-hover:scale-110 transition-transform duration-500" strokeWidth={1.25} />
-                  <div className="relative">
-                    <div className="w-12 h-12 rounded-2xl bg-white/15 border border-white/20 flex items-center justify-center mb-5">
-                      <c.Icon className="w-6 h-6 text-white" />
+                <Link href={c.href}
+                  className={`group relative flex h-full flex-col overflow-hidden rounded-3xl bg-gradient-to-br ${c.grad} p-7 shadow-lg ring-1 ring-white/10 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl`}>
+                  {/* giant ghost icon */}
+                  <c.Icon className="absolute -bottom-8 -right-5 w-48 h-48 text-white/10 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3" strokeWidth={1.25} />
+                  {/* hover sheen */}
+                  <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/15 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
+
+                  <div className="relative flex h-full flex-col">
+                    <div className="flex items-start justify-between mb-5">
+                      <div className="w-12 h-12 rounded-2xl bg-white/15 border border-white/25 backdrop-blur flex items-center justify-center shadow-inner">
+                        <c.Icon className="w-6 h-6 text-white" />
+                      </div>
+                      <span className="rounded-full bg-white/20 border border-white/25 px-3 py-1 text-[11px] font-bold text-white backdrop-blur">
+                        {c.badge}
+                      </span>
                     </div>
+
                     <h3 className="text-2xl font-extrabold text-white">{c.title}</h3>
                     <p className="text-white font-bold text-sm mt-0.5">{c.sub}</p>
-                    <p className="text-white/70 text-sm mt-2 mb-6 max-w-[15rem] leading-relaxed">{c.desc}</p>
-                    <span className={`inline-flex items-center gap-1.5 rounded-lg bg-white px-4 py-2.5 text-sm font-extrabold ${c.btn} group-hover:gap-2.5 transition-all`}>
+                    <p className="text-white/75 text-sm mt-2 leading-relaxed">{c.desc}</p>
+
+                    {/* feature list */}
+                    <ul className="mt-5 space-y-2">
+                      {c.tags.map((t) => (
+                        <li key={t} className="flex items-center gap-2 text-sm font-medium text-white/90">
+                          <CheckCircle2 className="w-4 h-4 text-white/80 flex-shrink-0" /> {t}
+                        </li>
+                      ))}
+                    </ul>
+
+                    <span className={`mt-7 inline-flex items-center justify-center gap-1.5 rounded-xl bg-white px-4 py-3 text-sm font-extrabold ${c.btn} shadow-sm group-hover:gap-2.5 transition-all`}>
                       {c.cta} <ArrowRight className="w-4 h-4" />
                     </span>
                   </div>
