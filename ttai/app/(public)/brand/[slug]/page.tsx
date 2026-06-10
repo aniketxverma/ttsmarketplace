@@ -5,7 +5,6 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { BrandTabs } from './BrandTabs'
 import { StatsBar } from './StatsBar'
-import { BrandSidebar } from '@/components/brand/BrandSidebar'
 import { BrandLogo } from '@/components/BrandLogo'
 import { canSeeB2B, tierRank } from '@/lib/business-chain'
 import { translateCached } from '@/lib/i18n/content'
@@ -401,35 +400,24 @@ export default async function BrandPage({ params }: { params: { slug: string } }
       </div>
 
       {/* ══ MAIN CONTENT ═════════════════════════════════════════════════════ */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-8 mt-5 pb-24 sm:pb-10 lg:grid lg:grid-cols-[minmax(0,1fr)_312px] lg:gap-8 lg:items-start">
-        <div className="min-w-0">
-          <BrandTabs
-            supplier={supplier as any}
-            products={products}
-            gallery={(galleryRes.data ?? []) as any[]}
-            certifications={(certsRes.data ?? []) as any[]}
-            reviews={reviews}
-            documents={(docsRes.data ?? []) as any[]}
-            avgRating={avgRating}
-            sectionVisibility={sv}
-            pos={(posRes.data ?? []) as any[]}
-            brandSlug={params.slug}
-            shareUrl={shareUrl}
-            channel={channel}
-            channelPosts={(channelPostsRes.data ?? []) as any[]}
-            isAuthenticated={isAuthenticated}
-            canSeeB2B={viewerCanSeeB2B}
-          />
-        </div>
-
-        {/* Desktop right rail — documents, videos, contact (screenshot layout) */}
-        <BrandSidebar
-          className="hidden lg:block lg:sticky lg:top-[120px] mt-8 lg:mt-0"
-          documents={(docsRes.data ?? []) as any[]}
-          videos={((galleryRes.data ?? []) as any[]).filter((g) => g.type === 'video').map((g) => ({ id: g.id, url: g.url, caption: g.caption }))}
+      <div className="max-w-6xl mx-auto px-4 sm:px-8 mt-5 pb-24 sm:pb-10">
+        <BrandTabs
           supplier={supplier as any}
-          contactUnlocked={contactUnlocked}
+          products={products}
+          gallery={(galleryRes.data ?? []) as any[]}
+          certifications={(certsRes.data ?? []) as any[]}
+          reviews={reviews}
+          documents={(docsRes.data ?? []) as any[]}
+          avgRating={avgRating}
+          sectionVisibility={sv}
+          pos={(posRes.data ?? []) as any[]}
+          brandSlug={params.slug}
+          shareUrl={shareUrl}
+          channel={channel}
+          channelPosts={(channelPostsRes.data ?? []) as any[]}
           isAuthenticated={isAuthenticated}
+          canSeeB2B={viewerCanSeeB2B}
+          contactUnlocked={contactUnlocked}
         />
       </div>
 

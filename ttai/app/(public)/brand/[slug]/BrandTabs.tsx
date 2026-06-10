@@ -15,6 +15,7 @@ import {
 import { createClient } from '@/lib/supabase/client'
 import { formatCents } from '@/lib/utils'
 import { useT } from '@/lib/i18n/client'
+import { BrandSidebar } from '@/components/brand/BrandSidebar'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface Supplier {
@@ -71,6 +72,7 @@ interface Props {
   channel?: Channel | null; channelPosts?: ChannelPost[]
   isAuthenticated?: boolean
   canSeeB2B?: boolean
+  contactUnlocked?: boolean
 }
 
 // ── WhatsApp icon ─────────────────────────────────────────────────────────────
@@ -409,8 +411,13 @@ export function BrandTabs({
   supplier, products, gallery, certifications, reviews, documents,
   avgRating, sectionVisibility, pos, brandSlug, shareUrl,
   channel, channelPosts = [], isAuthenticated = false, canSeeB2B = false,
+  contactUnlocked = false,
 }: Props) {
   const t = useT()
+  const sidebarVideos = useMemo(
+    () => gallery.filter((g) => g.type === 'video').map((g) => ({ id: g.id, url: g.url, caption: g.caption })),
+    [gallery]
+  )
   const NAV_ITEMS = NAV_ITEM_IDS.map(item => ({ ...item, label: t(item.msgKey) }))
 
   const [activeSection, setActiveSection] = useState('products')
@@ -693,8 +700,19 @@ export function BrandTabs({
               )}
             </div>
 
-            <div data-reveal>
-              <ProductBrowser products={products} wa={wa} />
+            <div data-reveal className="lg:grid lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-7 lg:items-start">
+              <div className="min-w-0">
+                <ProductBrowser products={products} wa={wa} />
+              </div>
+              {/* Right rail — documents, videos, contact (desktop only) */}
+              <BrandSidebar
+                className="hidden lg:block lg:sticky lg:top-[112px] mt-8 lg:mt-0"
+                documents={documents as any}
+                videos={sidebarVideos}
+                supplier={supplier as any}
+                contactUnlocked={contactUnlocked}
+                isAuthenticated={isAuthenticated}
+              />
             </div>
 
             {/* CTA banner */}
