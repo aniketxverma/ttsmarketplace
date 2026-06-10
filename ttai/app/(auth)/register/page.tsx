@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
@@ -173,6 +173,14 @@ export default function RegisterPage() {
   const [existingEmail, setExistingEmail] = useState(false)
   const submittingRef = useRef(false)
 
+  // Joining a sales network via an invite link → they're becoming a seller (sales point),
+  // so pre-select "Supplier" and show a banner. Read from the URL (avoids Suspense issues).
+  const [fromInvite, setFromInvite] = useState(false)
+  useEffect(() => {
+    const next = new URLSearchParams(window.location.search).get('next') ?? ''
+    if (next.includes('/join/')) { setFromInvite(true); setForm(p => (p.role ? p : { ...p, role: 'supplier' })) }
+  }, [])
+
   function set(k: keyof FormData, v: string) { setForm(p => ({ ...p, [k]: v })) }
 
   function onAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -314,11 +322,21 @@ export default function RegisterPage() {
           <p className="text-gray-400 text-sm">Choose how you&apos;ll use the platform</p>
         </div>
 
+        {fromInvite && (
+          <div className="rounded-2xl border-2 border-[#0B1F4D]/15 bg-[#0B1F4D]/[0.03] px-4 py-3.5 text-sm text-[#0B1F4D] flex items-start gap-3">
+            <span className="text-xl leading-none">🤝</span>
+            <span>
+              <span className="font-extrabold">You&apos;re joining a sales network.</span> Choose <span className="font-extrabold">Supplier / Brand</span> below — that gives you your own store so you can sell. (You can still buy too.)
+            </span>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
           {ROLES.map((r, i) => (
             <button key={r.value} type="button" onClick={() => { set('role', r.value); set('businessType', ''); setStep(1) }}
               style={{ animationDelay: `${i * 90}ms` }}
-              className="group relative bg-white rounded-2xl border-2 border-gray-100 p-5 text-left hover:border-[#0B1F4D] hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden animate-fade-in-up">
+              className={`group relative bg-white rounded-2xl border-2 p-5 text-left hover:border-[#0B1F4D] hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden animate-fade-in-up ${fromInvite && r.value === 'supplier' ? 'border-[#0B1F4D] ring-2 ring-[#0B1F4D]/20' : 'border-gray-100'}`}>
+              {fromInvite && r.value === 'supplier' && <span className="absolute top-2 right-2 z-10 text-[9px] font-extrabold bg-[#0B1F4D] text-white px-2 py-0.5 rounded-full">Recommended</span>}
               {/* Glow wash on hover */}
               <div className={`absolute -inset-px rounded-2xl bg-gradient-to-br ${r.color} opacity-0 group-hover:opacity-[0.04] transition-opacity duration-300 pointer-events-none`} />
               <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${r.color} scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-300`} />

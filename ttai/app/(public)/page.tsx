@@ -2,6 +2,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { redirect } from 'next/navigation'
 import { Reveal } from '@/components/Reveal'
+import { RegionChooser } from '@/components/home/RegionChooser'
 import {
   ShieldCheck, Globe2, Headphones, Clock, ArrowRight, ShoppingCart, Boxes, Truck,
   MessageSquare, Share2, BarChart3, Lock, Factory, User, Building2, Store, Users,
@@ -168,6 +169,9 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
           </div>
         </div>
       </section>
+
+      {/* ═══ SHOP BY REGION ═══ */}
+      <RegionChooser />
 
       {/* ═══ WHY TTAI EMA ═══ */}
       <section className="py-16 px-4 bg-white">
