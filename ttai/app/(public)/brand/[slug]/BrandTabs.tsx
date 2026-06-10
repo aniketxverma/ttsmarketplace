@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import {
@@ -10,6 +10,7 @@ import {
   ExternalLink, Download, Play, X, BadgeCheck, ChevronRight, ChevronLeft, Reply,
   Radio, Users, FileText, Bell, Tag, Megaphone, LogIn, Loader, UserMinus, ArrowRight,
   FileSpreadsheet, FileImage, File as FileIcon,
+  LayoutGrid, List as ListIcon, Search,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { formatCents } from '@/lib/utils'
@@ -197,79 +198,175 @@ function ProductCard({ product, wa }: { product: Product; wa: string | null }) {
   )
 }
 
-// ── Category slider — mobile: 2-row scroll slider | desktop: auto-fill grid ───
-function CategorySlider({ name, products, wa }: { name: string; products: Product[]; wa: string | null }) {
-  const mobileRef = useRef<HTMLDivElement>(null)
-  const rows = products.length >= 6 ? 2 : 1
-  const cardW = 188
+// ── Product browser — left category rail + sortable/paginated grid ────────────
+const PAGE_SIZE = 12
+type SortKey = 'popular' | 'price_asc' | 'price_desc' | 'name'
 
-  const scroll = (dir: 'left' | 'right') => {
-    const amount = (cardW + 12) * (rows === 2 ? 2 : 3)
-    mobileRef.current?.scrollBy({ left: dir === 'right' ? amount : -amount, behavior: 'smooth' })
+function ProductRow({ product, wa }: { product: Product; wa: string | null }) {
+  const href = `/product/${product.slug ?? product.id}`
+  return (
+    <Link href={href} className="group flex items-center gap-4 bg-white rounded-xl border border-gray-100 p-3 shadow-sm hover:shadow-md hover:border-[#0B1F4D]/20 transition-all">
+      <div className="relative w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden bg-[#F5F5F3]">
+        {product.thumb
+          ? <Image src={product.thumb} alt={product.name} fill className="object-cover" sizes="80px" />
+          : <div className="w-full h-full flex items-center justify-center"><Images className="w-6 h-6 text-gray-200" /></div>}
+      </div>
+      <div className="flex-1 min-w-0">
+        {product.category_name && <p className="text-[10px] text-[#F5A623] font-bold uppercase tracking-wide truncate">{product.category_name}</p>}
+        <h3 className="text-sm font-semibold text-gray-800 line-clamp-2 leading-snug">{product.name}</h3>
+        {product.min_order_qty && product.marketplace_context !== 'retail' && (
+          <p className="text-[11px] text-gray-400 mt-0.5">MOQ {product.min_order_qty}</p>
+        )}
+      </div>
+      <div className="flex-shrink-0 text-right">
+        <span className="block text-sm font-extrabold text-[#0B1F4D]">
+          {product.price_cents > 0 ? formatCents(product.price_cents, product.currency_code) : <span className="text-gray-400 font-normal italic text-[11px]">On request</span>}
+        </span>
+        <span className="inline-flex items-center gap-1 mt-1 text-[11px] font-bold text-[#0B1F4D] group-hover:gap-1.5 transition-all">View <ChevronRight className="w-3 h-3" /></span>
+      </div>
+    </Link>
+  )
+}
+
+function ProductBrowser({ products, wa }: { products: Product[]; wa: string | null }) {
+  const [activeCat, setActiveCat] = useState<string>('all')
+  const [sort, setSort] = useState<SortKey>('popular')
+  const [view, setView] = useState<'grid' | 'list'>('grid')
+  const [query, setQuery] = useState('')
+  const [page, setPage] = useState(1)
+
+  const categories = useMemo(() => {
+    const counts = new Map<string, number>()
+    products.forEach((p) => {
+      const c = p.category_name ?? 'Other'
+      counts.set(c, (counts.get(c) ?? 0) + 1)
+    })
+    return Array.from(counts.entries()).sort((a, b) => b[1] - a[1])
+  }, [products])
+
+  const filtered = useMemo(() => {
+    let list = products
+    if (activeCat !== 'all') list = list.filter((p) => (p.category_name ?? 'Other') === activeCat)
+    if (query.trim()) {
+      const q = query.trim().toLowerCase()
+      list = list.filter((p) => p.name.toLowerCase().includes(q))
+    }
+    const sorted = [...list]
+    if (sort === 'price_asc') sorted.sort((a, b) => (a.price_cents || Infinity) - (b.price_cents || Infinity))
+    else if (sort === 'price_desc') sorted.sort((a, b) => (b.price_cents || 0) - (a.price_cents || 0))
+    else if (sort === 'name') sorted.sort((a, b) => a.name.localeCompare(b.name))
+    return sorted
+  }, [products, activeCat, query, sort])
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+  const safePage = Math.min(page, totalPages)
+  const pageItems = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE)
+
+  // Reset to page 1 whenever the filter set changes
+  useEffect(() => { setPage(1) }, [activeCat, query, sort])
+
+  const CatButton = ({ id, label, count }: { id: string; label: string; count: number }) => {
+    const active = activeCat === id
+    return (
+      <button onClick={() => setActiveCat(id)}
+        className={`flex-shrink-0 lg:w-full flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-[13px] font-semibold transition-colors ${
+          active ? 'bg-[#0B1F4D] text-white shadow-sm' : 'text-gray-600 hover:bg-gray-100'}`}>
+        <span className="truncate">{label}</span>
+        <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded-full ${active ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-400'}`}>{count}</span>
+      </button>
+    )
   }
 
+  const pageNumbers = useMemo(() => {
+    const out: (number | '…')[] = []
+    for (let i = 1; i <= totalPages; i++) {
+      if (i === 1 || i === totalPages || Math.abs(i - safePage) <= 1) out.push(i)
+      else if (out[out.length - 1] !== '…') out.push('…')
+    }
+    return out
+  }, [totalPages, safePage])
+
   return (
-    <div>
-      {/* Header row */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2.5">
-          <span className="text-[15px] font-extrabold text-[#0B1F4D]">{name}</span>
-          <span className="text-[11px] bg-[#0B1F4D]/8 text-[#0B1F4D] font-bold px-2 py-0.5 rounded-full border border-[#0B1F4D]/10">
-            {products.length}
-          </span>
-          {rows === 2 && (
-            <span className="sm:hidden text-[10px] bg-amber-50 text-amber-700 font-bold px-2 py-0.5 rounded-full border border-amber-200 uppercase tracking-wide">
-              2 rows
-            </span>
-          )}
+    <div className="flex flex-col lg:flex-row gap-5 lg:gap-6">
+      {/* ── Left category rail ── */}
+      <aside className="lg:w-48 flex-shrink-0">
+        <p className="hidden lg:block text-[11px] font-black uppercase tracking-widest text-gray-400 mb-2 px-1">Categories</p>
+        <div className="flex lg:flex-col gap-1.5 overflow-x-auto lg:overflow-visible pb-1 lg:pb-0" style={{ scrollbarWidth: 'none' }}>
+          <CatButton id="all" label="All Products" count={products.length} />
+          {categories.map(([cat, count]) => <CatButton key={cat} id={cat} label={cat} count={count} />)}
         </div>
-        {/* Scroll arrows — mobile only */}
-        <div className="flex items-center gap-1.5 sm:hidden">
-          <button onClick={() => scroll('left')}
-            className="w-8 h-8 rounded-full border border-gray-200 bg-white flex items-center justify-center text-gray-400 hover:bg-[#0B1F4D] hover:text-white hover:border-[#0B1F4D] transition-all duration-150 shadow-sm">
-            <ChevronLeft className="w-4 h-4" />
-          </button>
-          <button onClick={() => scroll('right')}
-            className="w-8 h-8 rounded-full border border-gray-200 bg-white flex items-center justify-center text-gray-400 hover:bg-[#0B1F4D] hover:text-white hover:border-[#0B1F4D] transition-all duration-150 shadow-sm">
-            <ChevronRight className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
+      </aside>
 
-      {/* ── MOBILE: 2-row horizontal scroll slider ── */}
-      <div className="relative sm:hidden">
-        <div
-          ref={mobileRef}
-          className="overflow-x-auto pb-2"
-          style={{
-            display: 'grid',
-            gridTemplateRows: `repeat(${rows}, auto)`,
-            gridAutoFlow: 'column',
-            gridAutoColumns: `${cardW}px`,
-            gap: '12px',
-            scrollSnapType: 'x mandatory',
-            scrollbarWidth: 'none',
-            WebkitOverflowScrolling: 'touch' as any,
-          }}
-        >
-          {products.map((p, i) => (
-            <div key={p.id} style={{ scrollSnapAlign: i % rows === 0 ? 'start' : 'none' }}>
-              <ProductCard product={p} wa={wa} />
+      {/* ── Center: toolbar + grid + pagination ── */}
+      <div className="flex-1 min-w-0">
+        {/* Toolbar */}
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+          <p className="text-sm text-gray-500">
+            {filtered.length === 0 ? 'No products' : <>Showing <span className="font-bold text-gray-700">{(safePage - 1) * PAGE_SIZE + 1}–{Math.min(safePage * PAGE_SIZE, filtered.length)}</span> of {filtered.length}</>}
+          </p>
+          <div className="flex items-center gap-2">
+            <div className="relative hidden sm:block">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-300" />
+              <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search…"
+                className="w-36 rounded-lg border border-gray-200 pl-8 pr-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-[#0B1F4D]/20" />
             </div>
-          ))}
-          <div style={{ width: 8, gridRow: `span ${rows}` }} />
+            <select value={sort} onChange={(e) => setSort(e.target.value as SortKey)}
+              className="rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-medium text-gray-600 focus:outline-none focus:ring-2 focus:ring-[#0B1F4D]/20">
+              <option value="popular">Sort by: Popular</option>
+              <option value="price_asc">Price: Low to High</option>
+              <option value="price_desc">Price: High to Low</option>
+              <option value="name">Name: A–Z</option>
+            </select>
+            <div className="flex items-center rounded-lg border border-gray-200 overflow-hidden">
+              <button onClick={() => setView('grid')} aria-label="Grid view"
+                className={`p-1.5 ${view === 'grid' ? 'bg-[#0B1F4D] text-white' : 'text-gray-400 hover:bg-gray-50'}`}>
+                <LayoutGrid className="w-4 h-4" />
+              </button>
+              <button onClick={() => setView('list')} aria-label="List view"
+                className={`p-1.5 ${view === 'list' ? 'bg-[#0B1F4D] text-white' : 'text-gray-400 hover:bg-gray-50'}`}>
+                <ListIcon className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
         </div>
-        {/* Right fade hint */}
-        <div className="pointer-events-none absolute top-0 right-0 bottom-2 w-16 rounded-r-xl"
-          style={{ background: 'linear-gradient(to right, transparent, rgba(247,248,250,0.95))' }} />
-      </div>
 
-      {/* ── DESKTOP: Auto-fill responsive grid (4-5 cols) ── */}
-      <div className="hidden sm:grid gap-4"
-        style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(185px, 1fr))' }}>
-        {products.map((p) => (
-          <ProductCard key={p.id} product={p} wa={wa} />
-        ))}
+        {/* Grid / list */}
+        {pageItems.length > 0 ? (
+          view === 'grid' ? (
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
+              {pageItems.map((p) => <ProductCard key={p.id} product={p} wa={wa} />)}
+            </div>
+          ) : (
+            <div className="space-y-2.5">
+              {pageItems.map((p) => <ProductRow key={p.id} product={p} wa={wa} />)}
+            </div>
+          )
+        ) : (
+          <div className="bg-white rounded-2xl border border-dashed border-gray-200 p-12 text-center text-gray-400 text-sm">
+            No products match your filters.
+          </div>
+        )}
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-1.5 mt-8">
+            <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={safePage === 1}
+              className="w-9 h-9 rounded-lg border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed">
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            {pageNumbers.map((n, i) => n === '…'
+              ? <span key={`e${i}`} className="px-1.5 text-gray-300">…</span>
+              : <button key={n} onClick={() => setPage(n)}
+                  className={`min-w-9 h-9 px-3 rounded-lg text-sm font-bold transition-colors ${
+                    n === safePage ? 'bg-[#0B1F4D] text-white' : 'border border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
+                  {n}
+                </button>)}
+            <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={safePage === totalPages}
+              className="w-9 h-9 rounded-lg border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed">
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )
@@ -328,17 +425,6 @@ export function BrandTabs({
   const wa = supplier.whatsapp ? `https://wa.me/${supplier.whatsapp.replace(/\D/g,'')}` : null
   const country = supplier.countries as any as { name: string } | null
   const city    = supplier.cities   as any as { name: string } | null
-
-  // Group products by category
-  const productsByCategory = useMemo(() => {
-    const map = new Map<string, Product[]>()
-    products.forEach(p => {
-      const cat = p.category_name ?? 'Products'
-      if (!map.has(cat)) map.set(cat, [])
-      map.get(cat)!.push(p)
-    })
-    return Array.from(map.entries())
-  }, [products])
 
   // "Why choose us" — data-driven trust highlights (top 4 available)
   const sup = supplier as any
@@ -591,7 +677,7 @@ export function BrandTabs({
               </button>
             )}
 
-            {/* ── Catalogue preview ── */}
+            {/* ── Catalogue: left categories rail + sortable/paginated grid ── */}
             <div data-reveal className="flex items-center justify-between mb-5">
               <div className="flex items-center gap-2.5">
                 <Package className="w-5 h-5 text-[#0B1F4D]" />
@@ -607,12 +693,8 @@ export function BrandTabs({
               )}
             </div>
 
-            <div className="space-y-12">
-              {productsByCategory.map(([cat, prods], idx) => (
-                <div key={cat} data-reveal style={{ transitionDelay: `${idx * 60}ms` }}>
-                  <CategorySlider name={cat} products={prods} wa={wa} />
-                </div>
-              ))}
+            <div data-reveal>
+              <ProductBrowser products={products} wa={wa} />
             </div>
 
             {/* CTA banner */}
