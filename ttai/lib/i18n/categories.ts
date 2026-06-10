@@ -10,10 +10,13 @@ const sha = (s: string) => createHash('sha256').update(s.trim()).digest('hex')
  * to the original name when no translation exists. No-op for the default locale.
  */
 export async function localizeCategoryNames<T extends { name?: string | null }>(cats: T[], locale: string): Promise<T[]> {
-  if (!locale || locale === 'en' || !cats?.length) return cats
+  // Always return a NEW array — callers may replace their list in place
+  // (`list.length = 0; list.push(...result)`), which would self-empty if we
+  // returned the same reference on the no-op path.
+  if (!locale || locale === 'en' || !cats?.length) return cats.slice()
   try {
     const names = Array.from(new Set(cats.map((c) => (c.name ?? '').trim()).filter(Boolean)))
-    if (!names.length) return cats
+    if (!names.length) return cats.slice()
     const hashes = names.map(sha)
     const admin = createAdminClient()
     const { data } = await (admin.from('content_translations') as any)
@@ -25,7 +28,7 @@ export async function localizeCategoryNames<T extends { name?: string | null }>(
       return tr ? { ...c, name: tr } : c
     })
   } catch {
-    return cats
+    return cats.slice()
   }
 }
 

@@ -2,19 +2,20 @@ import Link from 'next/link'
 import { REGIONS } from '@/lib/regions-data'
 import { ArrowRight, Globe2, MapPin } from 'lucide-react'
 
-/**
- * Homepage "Shop by region" — pick a region, which opens its dedicated page
- * (/regions/[id]) to choose a country. Server component (just links).
- */
-export function RegionChooser() {
+export const metadata = {
+  title: 'Shop by Region — Global Trade Network · TTAI EMA',
+  description: 'Explore verified suppliers and curated product collections by region and country.',
+}
+
+export default function RegionsIndexPage() {
   return (
-    <section className="py-16 bg-gradient-to-b from-white to-gray-50">
-      <div className="container mx-auto px-4 max-w-6xl">
+    <div className="bg-gradient-to-b from-white to-gray-50 min-h-screen">
+      <div className="container mx-auto px-4 max-w-6xl py-12">
         <div className="text-center mb-9">
           <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#F5A623] mb-2">
             <Globe2 className="w-4 h-4" /> Global Trade Network
           </div>
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-[#0B1F4D]">Shop by region</h2>
+          <h1 className="text-3xl font-extrabold text-[#0B1F4D]">Shop by region</h1>
           <p className="text-gray-500 text-sm mt-2 max-w-xl mx-auto">Pick your market — then choose a country to explore its verified suppliers and curated collections.</p>
         </div>
 
@@ -39,13 +40,7 @@ export function RegionChooser() {
             </Link>
           ))}
         </div>
-
-        <div className="text-center mt-8">
-          <Link href="/regions" className="inline-flex items-center gap-1.5 text-sm font-bold text-[#0B1F4D] hover:underline">
-            See all regions &amp; countries <ArrowRight className="w-4 h-4" />
-          </Link>
-        </div>
       </div>
-    </section>
+    </div>
   )
 }
