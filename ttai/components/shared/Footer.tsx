@@ -21,10 +21,10 @@ const LINKS = {
     { label: 'Become a Seller',  href: '/register' },
   ],
   Company: [
-    { label: 'About Us',         href: '/' },
-    { label: 'Contact',          href: '/' },
-    { label: 'Privacy Policy',   href: '/' },
-    { label: 'Terms of Service', href: '/' },
+    { label: 'About Us',         href: '/about' },
+    { label: 'Contact',          href: '/contact' },
+    { label: 'Privacy Policy',   href: '/privacy' },
+    { label: 'Terms of Service', href: '/terms' },
   ],
 }
 
@@ -71,6 +71,15 @@ export function Footer() {
                   </svg>
                 </button>
               ))}
+            </div>
+
+            {/* Legal entity */}
+            <div className="pt-4 mt-1 border-t border-white/10 text-xs text-blue-300/70 leading-relaxed space-y-0.5">
+              <p className="font-bold text-blue-200">FULL SOFTRONIC S.L.</p>
+              <p>CIF: B52038130</p>
+              <p>Calle Sor Alegría, 4 - Local 1, 52002 Melilla, Spain</p>
+              <p><a href="mailto:info@ttaiema.com" className="hover:text-white transition-colors">info@ttaiema.com</a></p>
+              <p className="flex gap-2"><a href="https://www.ttaiema.com" className="hover:text-white transition-colors">ttaiema.com</a><span>·</span><a href="https://www.ttai.es" className="hover:text-white transition-colors">ttai.es</a></p>
             </div>
           </div>
 
@@ -122,10 +131,10 @@ export function Footer() {
       {/* Bottom bar */}
       <div className="border-t border-white/10 bg-black/20">
         <div className="container mx-auto px-4 py-5 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <p className="text-xs text-blue-300/80">© {new Date().getFullYear()} TTAI EMA. All rights reserved.</p>
+          <p className="text-xs text-blue-300/80">© {new Date().getFullYear()} TTAI EMA — FULL SOFTRONIC S.L. All rights reserved.</p>
           <div className="flex items-center gap-5">
-            {['Privacy', 'Terms', 'Cookies'].map((label) => (
-              <Link key={label} href="/" className="text-xs text-blue-300/80 hover:text-white transition-colors">{label}</Link>
+            {[['Privacy', '/privacy'], ['Terms', '/terms'], ['Contact', '/contact']].map(([label, href]) => (
+              <Link key={label} href={href} className="text-xs text-blue-300/80 hover:text-white transition-colors">{label}</Link>
             ))}
             <span className="text-xs text-blue-400 flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
