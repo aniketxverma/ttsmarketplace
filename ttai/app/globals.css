@@ -150,6 +150,32 @@
   to   { stroke-dashoffset: 0; }
 }
 
+/* ── Ambient aurora blobs — slow drifting gradient orbs ─────────────────── */
+@keyframes auroraDrift {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33%      { transform: translate(36px, -28px) scale(1.12); }
+  66%      { transform: translate(-30px, 22px) scale(0.92); }
+}
+@keyframes auroraDrift2 {
+  0%, 100% { transform: translate(0, 0) scale(1.05); }
+  50%      { transform: translate(-44px, -20px) scale(0.9); }
+}
+/* slow horizontal scroll of a dotted grid */
+@keyframes gridScroll {
+  from { background-position: 0 0; }
+  to   { background-position: 70px 70px; }
+}
+/* twinkling particles */
+@keyframes twinkle {
+  0%, 100% { opacity: 0.15; transform: scale(0.8); }
+  50%      { opacity: 0.9;  transform: scale(1.25); }
+}
+/* gradient sheen sweep across the heading */
+@keyframes sheen {
+  0%   { background-position: -200% center; }
+  100% { background-position:  200% center; }
+}
+
 @layer utilities {
   .animate-fade-in-up   { animation: fadeInUp 0.65s ease both; }
   .animate-fade-in      { animation: fadeIn 0.65s ease both; }
@@ -180,5 +206,26 @@
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+  }
+
+  .animate-aurora       { animation: auroraDrift 16s ease-in-out infinite; }
+  .animate-aurora-2     { animation: auroraDrift2 20s ease-in-out infinite; }
+  .animate-twinkle      { animation: twinkle 3.5s ease-in-out infinite; }
+
+  /* dotted grid that slowly scrolls */
+  .bg-region-grid {
+    background-image: radial-gradient(rgba(255,255,255,0.10) 1px, transparent 1px);
+    background-size: 35px 35px;
+    animation: gridScroll 22s linear infinite;
+  }
+
+  /* animated gradient sheen text */
+  .text-sheen {
+    background: linear-gradient(100deg, #fff 30%, #F5A623 50%, #fff 70%);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: sheen 5s linear infinite;
   }
 }
