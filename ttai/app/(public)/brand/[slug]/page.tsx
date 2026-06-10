@@ -1,16 +1,23 @@
 import { notFound } from 'next/navigation'
 import Image from 'next/image'
-import { Crown, ShieldCheck, Award, Store } from 'lucide-react'
+import {
+  Crown, ShieldCheck, Award, Store, Lock, Heart, Share2, MapPin, Calendar,
+  Package, Globe2, MessageCircle, UserPlus, Mail, Headphones,
+} from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { BrandTabs } from './BrandTabs'
-import { StatsBar } from './StatsBar'
 import { BrandLogo } from '@/components/BrandLogo'
 import { canSeeB2B, tierRank } from '@/lib/business-chain'
 import { translateCached } from '@/lib/i18n/content'
 import { getLocale } from '@/lib/i18n/server'
 import Link from 'next/link'
-import { Lock } from 'lucide-react'
+
+/** 2-letter ISO country code → flag emoji. */
+const isoFlag = (iso?: string | null) =>
+  iso && iso.length === 2
+    ? iso.toUpperCase().replace(/./g, (c) => String.fromCodePoint(127397 + c.charCodeAt(0)))
+    : ''
 
 export const revalidate = 60
 
@@ -53,21 +60,6 @@ const TIER_CONFIG: Record<string, {
   UNVERIFIED: { label: 'Supplier',          bg: 'bg-white/20',  text: 'text-white/80', dot: 'bg-gray-400', Icon: Store },
 }
 
-function StarRating({ rating, count }: { rating: number; count: number }) {
-  return (
-    <div className="flex items-center gap-1.5">
-      <div className="flex items-center gap-0.5">
-        {[1, 2, 3, 4, 5].map((i) => (
-          <svg key={i} className={`w-4 h-4 ${i <= Math.round(rating) ? 'text-amber-400' : 'text-white/30'}`} fill="currentColor" viewBox="0 0 20 20">
-            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-          </svg>
-        ))}
-      </div>
-      <span className="text-sm font-semibold text-white/90">{rating.toFixed(1)}</span>
-      {count > 0 && <span className="text-sm text-white/60">({count})</span>}
-    </div>
-  )
-}
 
 export default async function BrandPage({ params }: { params: { slug: string } }) {
   const supabase = createClient()
@@ -179,7 +171,6 @@ export default async function BrandPage({ params }: { params: { slug: string } }
   const city    = supplier.cities   as any as { name: string } | null
   const tier    = TIER_CONFIG[supplier.reliability_tier] ?? TIER_CONFIG.UNVERIFIED
   const sv      = (supplier.section_visibility ?? {}) as Record<string, boolean>
-  const badges  = (supplier.badges ?? []) as string[]
 
   // Fall back to the owner's account profile so an uploaded avatar / real name
   // still shows when the brand logo or trade name haven't been set yet.
@@ -233,170 +224,88 @@ export default async function BrandPage({ params }: { params: { slug: string } }
   return (
     <div className="min-h-screen bg-[#F7F8FA]">
 
-      {/* ══ HERO BANNER ══════════════════════════════════════════════════════ */}
-      <style>{`
-        @keyframes brandKenBurns { from { transform: scale(1) translateY(0); } to { transform: scale(1.09) translateY(-1.5%); } }
-        .brand-kenburns { animation: brandKenBurns 22s ease-in-out infinite alternate; will-change: transform; }
-        @keyframes brandHeroIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
-        .brand-hero-in { animation: brandHeroIn 0.7s cubic-bezier(0.16,1,0.3,1) both; }
-      `}</style>
-      <div className="relative h-80 sm:h-[440px] overflow-hidden">
-        {supplier.banner_image ? (
-          <Image src={supplier.banner_image} alt="" fill className="object-cover brand-kenburns" sizes="100vw" priority />
-        ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-[#0B1F4D] via-[#1a3a7a] to-[#0d2d5e] brand-kenburns" />
-        )}
-        {/* Gradient — stronger at bottom for text, lighter at top */}
-        <div className="absolute inset-0" style={{
-          background: 'linear-gradient(to top, rgba(5,15,40,0.92) 0%, rgba(5,15,40,0.55) 45%, rgba(5,15,40,0.12) 100%)'
-        }} />
-        {/* Subtle top sheen */}
-        <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-white/10 to-transparent pointer-events-none" />
-
-        {/* Featured badge */}
-        {supplier.is_featured && (
-          <div className="absolute top-4 right-4 flex items-center gap-1.5 bg-[#F5A623] text-[#0B1F4D] px-3 py-1.5 rounded-full text-xs font-extrabold shadow-lg">
-            <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-            </svg>
-            Featured Supplier
-          </div>
-        )}
-
-        {/* Hero content — bottom of cover */}
-        <div className="absolute bottom-0 left-0 right-0 px-4 sm:px-8 pb-6 brand-hero-in">
-          <div className="max-w-6xl mx-auto flex items-end justify-between gap-5">
-
-            {/* Left: logo + name + tagline + badges */}
-            <div className="flex items-end gap-4 flex-1 min-w-0">
-              {/* Logo */}
-              <div className="flex-shrink-0 relative mb-1">
-                <div className="w-[72px] h-[72px] sm:w-[88px] sm:h-[88px] rounded-2xl border-[3px] border-white/80 shadow-2xl overflow-hidden bg-white">
-                  <BrandLogo
-                    src={supplier.logo_url}
-                    name={supplier.trade_name ?? supplier.legal_name ?? 'S'}
-                    size={88}
-                    textClass="text-3xl"
-                  />
-                </div>
-                {supplier.reliability_tier !== 'UNVERIFIED' && (
-                  <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full ${tier.dot} border-2 border-white flex items-center justify-center`}>
-                    <svg className="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                )}
-              </div>
-
-              {/* Text */}
-              <div className="pb-1 min-w-0">
-                <div className="flex flex-wrap items-center gap-2 mb-1">
-                  <h1 className="text-2xl sm:text-[32px] font-extrabold text-white leading-none drop-shadow">
-                    {supplier.trade_name ?? supplier.legal_name}
-                  </h1>
-                  <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-extrabold ${tier.bg} ${tier.text} shadow-md whitespace-nowrap`}>
-                    <tier.Icon className="w-3 h-3" />{tier.label}
-                  </span>
-                </div>
-                {supplier.tagline && (
-                  <p className="text-white/75 text-sm sm:text-[15px] leading-snug mb-2 line-clamp-1">{supplier.tagline}</p>
-                )}
-                {/* Inline meta: stars · location · badges */}
-                <div className="flex flex-wrap items-center gap-2">
-                  {reviews.length > 0 && <StarRating rating={avgRating} count={reviews.length} />}
-                  {(city || country) && (
-                    <span className="flex items-center gap-1 text-white/60 text-xs">
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                      </svg>
-                      {city ? `${city.name}, ` : ''}{country?.name}
-                    </span>
-                  )}
-                  {badges.slice(0, 3).map((b: string) => (
-                    <span key={b} className="hidden sm:inline-flex items-center gap-1 bg-white/15 border border-white/25 text-white/85 text-[11px] font-semibold px-2 py-0.5 rounded-full backdrop-blur-sm">
-                      <svg className="w-2.5 h-2.5 text-[#F5A623] flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                      </svg>
-                      {b}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Right: CTA buttons — desktop only */}
-            <div className="hidden sm:flex items-center gap-2 flex-shrink-0 mb-1">
-              {waHref && (
-                <a href={waHref} target="_blank" rel="noopener noreferrer"
-                  className="flex items-center gap-2 bg-green-500 hover:bg-green-400 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-lg transition-colors">
-                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-                  </svg>
-                  WhatsApp
-                </a>
-              )}
-              {supplier.phone && (
-                <a href={`tel:${supplier.phone}`}
-                  className="flex items-center gap-2 bg-white/15 hover:bg-white/25 border border-white/30 text-white px-4 py-2.5 rounded-xl text-sm font-bold backdrop-blur-sm transition-colors">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                  </svg>
-                  Call
-                </a>
-              )}
-              {supplier.business_email && (
-                <a href={`mailto:${supplier.business_email}`}
-                  className="flex items-center gap-2 bg-white/15 hover:bg-white/25 border border-white/30 text-white px-4 py-2.5 rounded-xl text-sm font-bold backdrop-blur-sm transition-colors">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                  </svg>
-                  Email
-                </a>
-              )}
-              {!contactUnlocked && (
-                <Link href={isAuthenticated ? '/pricing' : '/register'}
-                  className="flex items-center gap-2 bg-[#F5A623] hover:bg-[#fbb93a] text-[#0B1F4D] px-5 py-2.5 rounded-xl text-sm font-extrabold shadow-lg transition-colors">
-                  <Lock className="w-4 h-4" /> Unlock contact
-                </Link>
-              )}
-            </div>
-
+      {/* ══ BREADCRUMB + ACTIONS ════════════════════════════════════════════ */}
+      <div className="bg-white border-b border-gray-100">
+        <div className="max-w-6xl mx-auto px-4 sm:px-8 py-3 flex items-center justify-between gap-3">
+          <nav className="flex items-center gap-1.5 text-sm text-gray-400 min-w-0">
+            <Link href="/" className="hover:text-[#0B1F4D] transition-colors">Home</Link>
+            <span>/</span>
+            <Link href="/suppliers" className="hover:text-[#0B1F4D] transition-colors">Suppliers</Link>
+            <span>/</span>
+            <span className="text-gray-700 font-semibold truncate">{supplier.trade_name}</span>
+          </nav>
+          <div className="hidden sm:flex items-center gap-4 flex-shrink-0 text-sm text-gray-500">
+            <span className="flex items-center gap-1.5"><Heart className="w-4 h-4" /> Add to Favorites</span>
+            <span className="flex items-center gap-1.5"><Share2 className="w-4 h-4" /> Share</span>
           </div>
         </div>
       </div>
 
-      {/* ══ COMPACT STATS + NAV ANCHOR (sticky) ══════════════════════════════ */}
-      <div className="bg-white border-b border-gray-100 shadow-sm sticky top-16 z-30">
-        <div className="max-w-6xl mx-auto px-4 sm:px-8 h-12 flex items-center justify-between gap-4 overflow-hidden">
-          {/* Animated stats bar */}
-          <StatsBar
-            yearsExp={supplier.years_experience}
-            productCount={products.length}
-            employeeCount={supplier.employee_count}
-            countriesServed={supplier.countries_served}
-          />
-          {/* Mobile-only quick CTAs */}
-          <div className="flex gap-2 sm:hidden flex-shrink-0">
-            {waHref && (
-              <a href={waHref} target="_blank" rel="noopener noreferrer"
-                className="flex items-center gap-1.5 bg-green-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold">
-                <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-                </svg>
-                Chat
-              </a>
-            )}
-            {supplier.phone && (
-              <a href={`tel:${supplier.phone}`}
-                className="flex items-center gap-1.5 bg-[#0B1F4D] text-white px-3 py-1.5 rounded-lg text-xs font-bold">
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                </svg>
-                Call
-              </a>
-            )}
+      {/* ══ SUPPLIER HEADER CARD ═════════════════════════════════════════════ */}
+      <div className="max-w-6xl mx-auto px-4 sm:px-8 pt-5">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 sm:p-6">
+          <div className="flex flex-col lg:flex-row lg:items-start gap-5">
+            {/* Logo + identity */}
+            <div className="flex items-start gap-4 flex-1 min-w-0">
+              <div className="w-[72px] h-[72px] sm:w-[84px] sm:h-[84px] rounded-2xl border border-gray-100 shadow-sm overflow-hidden bg-white flex-shrink-0">
+                <BrandLogo src={supplier.logo_url} name={supplier.trade_name ?? supplier.legal_name ?? 'S'} size={84} textClass="text-3xl" />
+              </div>
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h1 className="text-xl sm:text-[26px] font-extrabold text-[#0B1F4D] leading-tight">{supplier.trade_name ?? supplier.legal_name}</h1>
+                  {supplier.reliability_tier !== 'UNVERIFIED' && (
+                    <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-xs font-bold px-2.5 py-1 rounded-full">
+                      <ShieldCheck className="w-3.5 h-3.5" /> {tier.label}
+                    </span>
+                  )}
+                </div>
+                {/* Meta chips */}
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mt-2 text-[13px] text-gray-500">
+                  {country && <span className="flex items-center gap-1.5">{isoFlag((country as any).iso_code) || '🌍'} {(country as any).name}</span>}
+                  {city && <span className="flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5 text-gray-400" /> {(city as any).name}</span>}
+                  {supplier.founded_year && <span className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5 text-gray-400" /> Since {supplier.founded_year}</span>}
+                  <span className="flex items-center gap-1.5"><Package className="w-3.5 h-3.5 text-gray-400" /> {products.length} Products</span>
+                  {supplier.countries_served && <span className="flex items-center gap-1.5"><Globe2 className="w-3.5 h-3.5 text-gray-400" /> {supplier.countries_served}+ Countries</span>}
+                </div>
+                {(supplier.tagline || supplier.description) && (
+                  <p className="text-sm text-gray-500 mt-2.5 line-clamp-2 max-w-2xl">{supplier.tagline ?? supplier.description}</p>
+                )}
+              </div>
+            </div>
+
+            {/* Office image + actions */}
+            <div className="flex items-stretch gap-3 flex-shrink-0">
+              {supplier.banner_image && (
+                <div className="hidden md:block relative w-44 h-[88px] rounded-xl overflow-hidden border border-gray-100">
+                  <Image src={supplier.banner_image} alt="" fill className="object-cover" sizes="176px" />
+                </div>
+              )}
+              <div className="flex flex-col gap-2 justify-center w-full sm:w-auto sm:min-w-[160px]">
+                <Link href={isAuthenticated ? '/marketplace?supplier=' + supplier.id : '/register'}
+                  className="flex items-center justify-center gap-2 bg-[#0B1F4D] hover:bg-[#16306b] text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-sm transition-colors">
+                  <UserPlus className="w-4 h-4" /> Follow Shop
+                </Link>
+                {contactUnlocked && waHref ? (
+                  <a href={waHref} target="_blank" rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2 border border-gray-200 hover:bg-gray-50 text-[#0B1F4D] px-5 py-2.5 rounded-xl text-sm font-bold transition-colors">
+                    <MessageCircle className="w-4 h-4" /> Contact Supplier
+                  </a>
+                ) : contactUnlocked && supplier.business_email ? (
+                  <a href={`mailto:${supplier.business_email}`}
+                    className="flex items-center justify-center gap-2 border border-gray-200 hover:bg-gray-50 text-[#0B1F4D] px-5 py-2.5 rounded-xl text-sm font-bold transition-colors">
+                    <Mail className="w-4 h-4" /> Contact Supplier
+                  </a>
+                ) : (
+                  <Link href={isAuthenticated ? '/pricing' : '/register'}
+                    className="flex items-center justify-center gap-2 border border-gray-200 hover:bg-gray-50 text-[#0B1F4D] px-5 py-2.5 rounded-xl text-sm font-bold transition-colors">
+                    <Lock className="w-4 h-4" /> Contact Supplier
+                  </Link>
+                )}
+              </div>
+            </div>
           </div>
         </div>
+        <p className="text-sm text-gray-400 mt-2.5 px-1">{products.length} products</p>
       </div>
 
       {/* ══ MAIN CONTENT ═════════════════════════════════════════════════════ */}
@@ -419,6 +328,29 @@ export default async function BrandPage({ params }: { params: { slug: string } }
           canSeeB2B={viewerCanSeeB2B}
           contactUnlocked={contactUnlocked}
         />
+      </div>
+
+      {/* ══ TRUST BAR ════════════════════════════════════════════════════════ */}
+      <div className="bg-white border-t border-gray-100">
+        <div className="max-w-6xl mx-auto px-4 sm:px-8 py-7 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-5">
+          {[
+            { Icon: ShieldCheck, title: 'Verified Supplier', sub: 'Identity & business verified' },
+            { Icon: Lock,        title: 'Secure Payments',   sub: '100% secure & protected' },
+            { Icon: Globe2,      title: 'Worldwide Shipping', sub: 'Fast & reliable delivery' },
+            { Icon: Award,       title: 'Quality Guarantee', sub: '100% product quality' },
+            { Icon: Headphones,  title: '24/7 Support',      sub: 'We are here to help' },
+          ].map((t) => (
+            <div key={t.title} className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-[#0B1F4D]/5 flex items-center justify-center flex-shrink-0">
+                <t.Icon className="w-5 h-5 text-[#0B1F4D]" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-bold text-[#0B1F4D] leading-tight">{t.title}</p>
+                <p className="text-xs text-gray-400 truncate">{t.sub}</p>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* ══ MOBILE STICKY CTA ════════════════════════════════════════════════ */}

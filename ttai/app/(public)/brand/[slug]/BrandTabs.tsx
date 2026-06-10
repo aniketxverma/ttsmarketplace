@@ -10,7 +10,7 @@ import {
   ExternalLink, Download, Play, X, BadgeCheck, ChevronRight, ChevronLeft, Reply,
   Radio, Users, FileText, Bell, Tag, Megaphone, LogIn, Loader, UserMinus, ArrowRight,
   FileSpreadsheet, FileImage, File as FileIcon,
-  LayoutGrid, List as ListIcon, Search,
+  LayoutGrid, List as ListIcon, Search, Heart, Sparkles,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { formatCents } from '@/lib/utils'
@@ -144,58 +144,70 @@ function SectionHeading({
 }
 
 // ── Product card ──────────────────────────────────────────────────────────────
-function ProductCard({ product, wa }: { product: Product; wa: string | null }) {
+function ProductCard({ product, wa, canSeeB2B = true, supplierId = '' }: { product: Product; wa: string | null; canSeeB2B?: boolean; supplierId?: string }) {
   const productHref = `/product/${product.slug ?? product.id}`
+  const hasPrice = product.price_cents > 0
   return (
-    <div className="group bg-white rounded-xl border border-gray-100 overflow-hidden flex flex-col h-full"
-      style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.07)', transition: 'box-shadow 0.25s ease, transform 0.25s cubic-bezier(0.16,1,0.3,1)' }}
-      onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.boxShadow = '0 8px 24px rgba(0,0,0,0.13)'; el.style.transform = 'translateY(-3px)' }}
-      onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.boxShadow = '0 1px 4px rgba(0,0,0,0.07)'; el.style.transform = '' }}>
-      {/* Image — clickable to product page */}
-      <Link href={productHref} className="relative overflow-hidden flex-shrink-0 block" style={{ aspectRatio: '1/1', background: '#F5F5F3' }}>
-        {product.thumb ? (
-          <Image src={product.thumb} alt={product.name} fill className="object-cover"
-            style={{ transition: 'transform 0.4s cubic-bezier(0.16,1,0.3,1)' }}
-            sizes="220px"
-            onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.06)')}
-            onMouseLeave={e => (e.currentTarget.style.transform = '')} />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <Images className="w-8 h-8 text-gray-200" />
-          </div>
+    <div className="group bg-white rounded-xl border border-gray-200 overflow-hidden flex flex-col h-full hover:shadow-lg hover:border-[#0B1F4D]/25 transition-all duration-200">
+      {/* Image */}
+      <div className="relative">
+        <Link href={productHref} className="block overflow-hidden" style={{ aspectRatio: '1/1', background: '#F7F7F5' }}>
+          {product.thumb ? (
+            <Image src={product.thumb} alt={product.name} fill className="object-cover group-hover:scale-[1.04] transition-transform duration-300" sizes="240px" />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center"><Images className="w-8 h-8 text-gray-200" /></div>
+          )}
+        </Link>
+        <button aria-label="Save" className="absolute top-2 right-2 w-8 h-8 rounded-full bg-white/95 shadow-sm flex items-center justify-center text-gray-300 hover:text-red-500 transition-colors">
+          <Heart className="w-4 h-4" />
+        </button>
+      </div>
+
+      {/* Info */}
+      <div className="p-3 flex flex-col flex-1">
+        <Link href={productHref}>
+          <h3 className="text-[13.5px] font-bold text-gray-800 leading-snug line-clamp-1 hover:text-[#0B1F4D] transition-colors">{product.name}</h3>
+        </Link>
+        {product.category_name && (
+          <p className="text-[11px] text-gray-400 mt-0.5 truncate">{product.category_name}</p>
         )}
-        {/* MOQ — wholesale only; the online shop sells by the piece */}
-        {product.min_order_qty && product.marketplace_context !== 'retail' && (
-          <div className="absolute bottom-2 left-2 bg-[#0B1F4D]/90 text-white text-[10px] font-bold px-2 py-0.5 rounded-full backdrop-blur-sm">
-            MOQ {product.min_order_qty}
-          </div>
-        )}
-        {/* Hover overlay — View + Enquire */}
-        <div className="absolute inset-0 bg-[#0B1F4D]/75 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-end p-2.5 gap-2">
-          <span className="flex-1 flex items-center justify-center py-1.5 bg-white text-[#0B1F4D] rounded-lg text-[11px] font-bold">
-            View Details
-          </span>
-          {wa && (
-            <a href={`${wa}?text=Hi! I'm interested in: ${product.name}`}
-              target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
-              className="flex-1 flex items-center justify-center py-1.5 bg-[#F5A623] text-[#0B1F4D] rounded-lg text-[11px] font-bold hover:bg-amber-400 transition-colors">
-              Enquire
-            </a>
+
+        <div className="mt-2">
+          {hasPrice ? (
+            <p className="text-[15px] font-extrabold text-[#0B1F4D]">
+              {formatCents(product.price_cents, product.currency_code)}
+              <span className="text-[11px] font-medium text-gray-400"> / Unit</span>
+            </p>
+          ) : (
+            <p className="text-[12px] italic text-gray-400 font-medium">Price on request</p>
+          )}
+          {product.min_order_qty && product.marketplace_context !== 'retail' && (
+            <p className="text-[11px] text-gray-400 mt-0.5">MOQ {product.min_order_qty} Units</p>
+          )}
+          <p className="flex items-center gap-1 text-[11px] font-bold text-green-600 mt-1">
+            <Check className="w-3 h-3" /> In Stock
+          </p>
+        </div>
+
+        {/* Our two channels — Online Shop (retail) + B2B (wholesale) */}
+        <div className={`grid ${canSeeB2B ? 'grid-cols-2' : 'grid-cols-1'} gap-1.5 mt-2.5`}>
+          <Link href={`/store?supplier=${supplierId}`}
+            className="flex items-center justify-center gap-1 rounded-md border border-purple-200 bg-purple-50 text-purple-700 text-[11px] font-bold py-1.5 hover:bg-purple-100 transition-colors">
+            <ShoppingBag className="w-3 h-3" /> Online
+          </Link>
+          {canSeeB2B && (
+            <Link href={productHref}
+              className="flex items-center justify-center gap-1 rounded-md border border-blue-200 bg-blue-50 text-blue-700 text-[11px] font-bold py-1.5 hover:bg-blue-100 transition-colors">
+              <Building2 className="w-3 h-3" /> B2B
+            </Link>
           )}
         </div>
-      </Link>
-      {/* Info — also clickable */}
-      <Link href={productHref} className="p-3 flex-1 flex flex-col hover:bg-gray-50/60 transition-colors">
-        {product.category_name && (
-          <p className="text-[10px] text-[#F5A623] font-bold uppercase tracking-wide mb-0.5 truncate">{product.category_name}</p>
-        )}
-        <h3 className="text-[13px] font-semibold text-gray-800 line-clamp-2 leading-snug flex-1 mb-1.5">{product.name}</h3>
-        <span className="text-[13px] font-extrabold text-[#0B1F4D]">
-          {product.price_cents > 0
-            ? formatCents(product.price_cents, product.currency_code)
-            : <span className="text-gray-400 font-normal italic text-[11px]">Price on request</span>}
-        </span>
-      </Link>
+
+        <Link href={productHref}
+          className="mt-2 block text-center bg-[#0B1F4D] hover:bg-[#16306b] text-white rounded-lg py-2 text-[12px] font-bold transition-colors">
+          View Product
+        </Link>
+      </div>
     </div>
   )
 }
@@ -230,7 +242,7 @@ function ProductRow({ product, wa }: { product: Product; wa: string | null }) {
   )
 }
 
-function ProductBrowser({ products, wa }: { products: Product[]; wa: string | null }) {
+function ProductBrowser({ products, wa, supplierId, canSeeB2B = true }: { products: Product[]; wa: string | null; supplierId: string; canSeeB2B?: boolean }) {
   const [activeCat, setActiveCat] = useState<string>('all')
   const [sort, setSort] = useState<SortKey>('popular')
   const [view, setView] = useState<'grid' | 'list'>('grid')
@@ -291,12 +303,27 @@ function ProductBrowser({ products, wa }: { products: Product[]; wa: string | nu
   return (
     <div className="flex flex-col lg:flex-row gap-5 lg:gap-6">
       {/* ── Left category rail ── */}
-      <aside className="lg:w-48 flex-shrink-0">
-        <p className="hidden lg:block text-[11px] font-black uppercase tracking-widest text-gray-400 mb-2 px-1">Categories</p>
-        <div className="flex lg:flex-col gap-1.5 overflow-x-auto lg:overflow-visible pb-1 lg:pb-0" style={{ scrollbarWidth: 'none' }}>
-          <CatButton id="all" label="All Products" count={products.length} />
-          {categories.map(([cat, count]) => <CatButton key={cat} id={cat} label={cat} count={count} />)}
+      <aside className="lg:w-52 flex-shrink-0 space-y-4">
+        <div className="lg:bg-white lg:rounded-2xl lg:border lg:border-gray-100 lg:shadow-sm lg:p-3">
+          <p className="hidden lg:block text-[11px] font-black uppercase tracking-widest text-gray-400 mb-2 px-1">Categories</p>
+          <div className="flex lg:flex-col gap-1.5 overflow-x-auto lg:overflow-visible pb-1 lg:pb-0" style={{ scrollbarWidth: 'none' }}>
+            <CatButton id="all" label="All Products" count={products.length} />
+            {categories.map(([cat, count]) => <CatButton key={cat} id={cat} label={cat} count={count} />)}
+          </div>
         </div>
+
+        {/* Need custom products card */}
+        {wa && (
+          <div className="hidden lg:block bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-center">
+            <Sparkles className="w-6 h-6 text-[#F5A623] mx-auto mb-1.5" />
+            <p className="text-sm font-extrabold text-[#0B1F4D]">Need Custom Products?</p>
+            <p className="text-xs text-gray-400 mt-0.5 mb-3">We can source it for you.</p>
+            <a href={`${wa}?text=Hi! I'd like to request a custom product / quote.`} target="_blank" rel="noopener noreferrer"
+              className="flex items-center justify-center gap-1.5 w-full rounded-xl border border-[#0B1F4D]/15 text-[#0B1F4D] text-xs font-bold py-2 hover:bg-[#0B1F4D] hover:text-white transition-colors">
+              <ArrowRight className="w-3.5 h-3.5" /> Request Custom Offer
+            </a>
+          </div>
+        )}
       </aside>
 
       {/* ── Center: toolbar + grid + pagination ── */}
@@ -336,7 +363,7 @@ function ProductBrowser({ products, wa }: { products: Product[]; wa: string | nu
         {pageItems.length > 0 ? (
           view === 'grid' ? (
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
-              {pageItems.map((p) => <ProductCard key={p.id} product={p} wa={wa} />)}
+              {pageItems.map((p) => <ProductCard key={p.id} product={p} wa={wa} supplierId={supplierId} canSeeB2B={canSeeB2B} />)}
             </div>
           ) : (
             <div className="space-y-2.5">
@@ -702,7 +729,7 @@ export function BrandTabs({
 
             <div data-reveal className="lg:grid lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-7 lg:items-start">
               <div className="min-w-0">
-                <ProductBrowser products={products} wa={wa} />
+                <ProductBrowser products={products} wa={wa} supplierId={supplier.id} canSeeB2B={canSeeB2B} />
               </div>
               {/* Right rail — documents, videos, contact (desktop only) */}
               <BrandSidebar
