@@ -15,18 +15,6 @@ export function RegionChooser() {
         <div className="animate-aurora absolute -top-24 -left-16 h-[28rem] w-[28rem] rounded-full bg-[#F5A623]/20 blur-[120px]" />
         <div className="animate-aurora-2 absolute top-10 right-0 h-[26rem] w-[26rem] rounded-full bg-[#2563eb]/25 blur-[120px]" />
         <div className="animate-aurora absolute -bottom-28 left-1/3 h-[30rem] w-[30rem] rounded-full bg-[#0ea5e9]/15 blur-[130px]" />
-        {/* scrolling dotted grid */}
-        <div className="bg-region-grid absolute inset-0 opacity-60" />
-        {/* twinkling particles */}
-        {[
-          { l: '12%', t: '24%', d: '0s' }, { l: '28%', t: '70%', d: '1.1s' },
-          { l: '47%', t: '18%', d: '0.5s' }, { l: '63%', t: '60%', d: '1.8s' },
-          { l: '78%', t: '30%', d: '0.9s' }, { l: '88%', t: '74%', d: '2.3s' },
-          { l: '38%', t: '44%', d: '1.5s' }, { l: '70%', t: '12%', d: '0.3s' },
-        ].map((p, i) => (
-          <span key={i} className="animate-twinkle absolute h-1.5 w-1.5 rounded-full bg-white"
-            style={{ left: p.l, top: p.t, animationDelay: p.d }} />
-        ))}
         {/* fade edges into the page */}
         <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-[#070f24] to-transparent" />
         <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[#070f24] to-transparent" />
@@ -45,10 +33,10 @@ export function RegionChooser() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="flex flex-wrap justify-center gap-5">
           {REGIONS.map((r, i) => (
             <Link key={r.id} href={`/regions/${r.id}`}
-              className="group animate-fade-in-up relative h-60 overflow-hidden rounded-3xl shadow-lg ring-1 ring-white/10 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-2xl hover:ring-white/30"
+              className="group animate-fade-in-up relative h-60 w-full overflow-hidden rounded-3xl shadow-lg ring-1 ring-white/10 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-2xl hover:ring-white/30 sm:w-[calc(50%-0.625rem)] lg:w-[calc(33.333%-0.834rem)]"
               style={{ animationDelay: `${i * 90}ms` }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={r.image} alt={r.name}
