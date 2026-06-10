@@ -119,10 +119,20 @@ export default async function BrandPage({ params }: { params: { slug: string } }
       .select('id, rating, comment, verified_purchase, supplier_reply, created_at, profiles(full_name)')
       .eq('supplier_id', supplier.id)
       .order('created_at', { ascending: false }),
-    supabase
-      .from('supplier_documents')
-      .select('id, doc_type, file_url, uploaded_at')
-      .eq('supplier_id', supplier.id),
+    // Public catalogs / price lists (migration 0052). Fall back to legacy shape.
+    (async () => {
+      const full = await supabase
+        .from('supplier_documents')
+        .select('id, doc_type, file_url, uploaded_at, title, file_name, file_size_bytes, is_public')
+        .eq('supplier_id', supplier.id)
+        .eq('is_public', true)
+        .order('sort_order', { ascending: true })
+      if (!full.error) return full
+      return supabase
+        .from('supplier_documents')
+        .select('id, doc_type, file_url, uploaded_at')
+        .eq('supplier_id', supplier.id)
+    })(),
     // Try with shop columns (migration 0015); fallback to basic query if columns missing
     (async () => {
       const full = await (supabase.from('supplier_pos' as any) as any)

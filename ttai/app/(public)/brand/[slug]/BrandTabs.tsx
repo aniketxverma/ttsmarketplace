@@ -9,6 +9,7 @@ import {
   Calendar, Globe, Share2, Check, Phone, Mail, Clock, Navigation,
   ExternalLink, Download, Play, X, BadgeCheck, ChevronRight, ChevronLeft, Reply,
   Radio, Users, FileText, Bell, Tag, Megaphone, LogIn, Loader, UserMinus, ArrowRight,
+  FileSpreadsheet, FileImage, File as FileIcon,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { formatCents } from '@/lib/utils'
@@ -33,7 +34,28 @@ interface Product {
 interface GalleryItem { id: string; url: string; type: 'image'|'video'; caption: string | null; sort_order: number }
 interface Certification { id: string; title: string; issuer: string | null; issued_date: string | null; expiry_date: string | null; image_url: string | null }
 interface Review { id: string; rating: number; comment: string | null; verified_purchase: boolean; supplier_reply: string | null; created_at: string; profiles: { full_name: string | null } | null }
-interface Document { id: string; doc_type: string; file_url: string; uploaded_at: string }
+interface Document { id: string; doc_type: string; file_url: string; uploaded_at: string; title?: string | null; file_name?: string | null; file_size_bytes?: number | null }
+
+const DOC_TYPE_LABELS: Record<string, string> = {
+  price_list: 'Price List', catalog: 'Product Catalog', brochure: 'Brochure',
+  tax_certificate: 'Tax Certificate', business_license: 'Business License',
+  vat_certificate: 'VAT Certificate', bank_proof: 'Bank Proof',
+}
+function docFileIcon(name: string) {
+  const ext = name.split('.').pop()?.toLowerCase() ?? ''
+  if (['xls', 'xlsx', 'csv'].includes(ext)) return { Icon: FileSpreadsheet, color: 'text-green-600', bg: 'from-green-50 to-green-100' }
+  if (ext === 'pdf') return { Icon: FileText, color: 'text-red-500', bg: 'from-red-50 to-red-100' }
+  if (['png', 'jpg', 'jpeg', 'webp', 'gif'].includes(ext)) return { Icon: FileImage, color: 'text-blue-500', bg: 'from-blue-50 to-blue-100' }
+  if (['doc', 'docx'].includes(ext)) return { Icon: FileText, color: 'text-blue-700', bg: 'from-blue-50 to-blue-100' }
+  return { Icon: FileIcon, color: 'text-gray-500', bg: 'from-gray-50 to-gray-100' }
+}
+function fmtFileSize(bytes?: number | null) {
+  if (!bytes || bytes <= 0) return ''
+  const units = ['B', 'KB', 'MB', 'GB']
+  let i = 0, n = bytes
+  while (n >= 1024 && i < units.length - 1) { n /= 1024; i++ }
+  return `${n.toFixed(n < 10 && i > 0 ? 1 : 0)} ${units[i]}`
+}
 interface Channel {
   id: string; name: string; description: string | null; whatsapp: string | null
   member_count: number; post_count: number
@@ -950,23 +972,26 @@ export function BrandTabs({
               <div data-reveal>
                 <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">{t('brand.documents')}</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {documents.map(doc => (
-                    <a key={doc.id} href={doc.file_url} target="_blank" rel="noopener noreferrer"
-                      className="flex items-center gap-4 bg-white rounded-2xl border border-gray-100 p-4 shadow-sm hover:shadow-md transition-all group hover:border-amber-200 hover:-translate-y-0.5">
-                      <div className="w-11 h-11 flex-shrink-0 rounded-xl bg-gradient-to-br from-red-50 to-red-100 flex items-center justify-center shadow-sm">
-                        <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                        </svg>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold text-gray-800 capitalize group-hover:text-[#B45309] transition-colors">{doc.doc_type.replace(/_/g, ' ')}</p>
-                        <p className="text-xs text-gray-400">{new Date(doc.uploaded_at).toLocaleDateString('en', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
-                      </div>
-                      <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-amber-50 group-hover:bg-amber-500 flex items-center justify-center transition-colors">
-                        <Download className="w-4 h-4 text-amber-500 group-hover:text-white transition-colors" />
-                      </div>
-                    </a>
-                  ))}
+                  {documents.map(doc => {
+                    const { Icon, color, bg } = docFileIcon(doc.file_name ?? doc.file_url)
+                    const label = doc.title || DOC_TYPE_LABELS[doc.doc_type] || doc.doc_type.replace(/_/g, ' ')
+                    const meta = [fmtFileSize(doc.file_size_bytes), new Date(doc.uploaded_at).toLocaleDateString('en', { day: 'numeric', month: 'short', year: 'numeric' })].filter(Boolean).join(' · ')
+                    return (
+                      <a key={doc.id} href={doc.file_url} target="_blank" rel="noopener noreferrer" download
+                        className="flex items-center gap-4 bg-white rounded-2xl border border-gray-100 p-4 shadow-sm hover:shadow-md transition-all group hover:border-amber-200 hover:-translate-y-0.5">
+                        <div className={`w-11 h-11 flex-shrink-0 rounded-xl bg-gradient-to-br ${bg} flex items-center justify-center shadow-sm`}>
+                          <Icon className={`w-5 h-5 ${color}`} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-bold text-gray-800 capitalize truncate group-hover:text-[#B45309] transition-colors">{label}</p>
+                          <p className="text-xs text-gray-400">{meta}</p>
+                        </div>
+                        <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-amber-50 group-hover:bg-amber-500 flex items-center justify-center transition-colors">
+                          <Download className="w-4 h-4 text-amber-500 group-hover:text-white transition-colors" />
+                        </div>
+                      </a>
+                    )
+                  })}
                 </div>
               </div>
             )}
