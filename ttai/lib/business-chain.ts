@@ -124,28 +124,38 @@ export function entityKind(role?: string | null, businessType?: string | null): 
 }
 
 export interface DirectoryAccess {
-  suppliers: boolean     // may browse the Suppliers directory
-  distributors: boolean  // may browse the Distributors directory
-  factories: boolean     // may browse the Factories directory
+  suppliers: boolean     // may browse the Suppliers directory (full)
+  distributors: boolean  // may browse the Distributors directory (full)
+  factories: boolean     // may browse the Factories directory (full)
+  /** "Watcher": may see the listing as a preview, but contact / sourcing
+   *  opportunities stay locked until they upgrade. */
+  watch: { suppliers?: boolean; distributors?: boolean; factories?: boolean }
 }
 
-/** What counterpart directories a viewer may browse, by chain level + paid tier. */
+/** What counterpart directories a viewer may browse, by chain level + paid tier.
+ *  Retail rule (client): distributors are FREE (their direct upstream); the
+ *  factories zone is a FREE watcher (browse-only, opportunities locked); and
+ *  suppliers + factory/supplier opportunities require a PAID plan. */
 export function directoryAccess(level: ChainLevel, tier?: string | null): DirectoryAccess {
   const r = tierRank(tier)
   switch (level) {
     case 'admin':
-      return { suppliers: true, distributors: true, factories: true }
+      return { suppliers: true, distributors: true, factories: true, watch: {} }
     case 'consumer':
-      return { suppliers: false, distributors: false, factories: false }
+      return { suppliers: false, distributors: false, factories: false, watch: {} }
     case 'retail':
-      // Shops climb the chain as they pay more.
-      return { suppliers: r >= 1, distributors: r >= 2, factories: r >= 3 }
+      return {
+        suppliers:    r >= 1,   // pay to be presented suppliers + their opportunities
+        distributors: true,     // free: all distributors (direct upstream)
+        factories:    true,     // free: watch the factories zone
+        watch: { factories: r < 1 }, // factories are watch-only until they upgrade
+      }
     case 'distributor':
       // Suppliers & distributors are presented Factories (any paid tier).
-      return { suppliers: false, distributors: false, factories: r >= 1 }
+      return { suppliers: false, distributors: false, factories: r >= 1, watch: {} }
     case 'factory':
       // Factories are presented Suppliers & Distributors (any paid tier).
-      return { suppliers: r >= 1, distributors: r >= 1, factories: false }
+      return { suppliers: r >= 1, distributors: r >= 1, factories: false, watch: {} }
   }
 }
 
@@ -175,9 +185,12 @@ export function unitsForRole(level: ChainLevel): PurchaseUnit[] | undefined {
   }
 }
 
+/** The three browsable directories (excludes the `watch` meta field). */
+export type DirectoryBucket = 'suppliers' | 'distributors' | 'factories'
+
 /** Can this viewer browse a listing of the given kind, at their tier? */
 export function canBrowseEntity(
   kind: EntityKind, role?: string | null, businessType?: string | null, tier?: string | null,
 ): boolean {
-  return accessFor(role, businessType, tier)[`${kind === 'factory' ? 'factories' : kind + 's'}` as keyof DirectoryAccess]
+  return accessFor(role, businessType, tier)[`${kind === 'factory' ? 'factories' : kind + 's'}` as DirectoryBucket]
 }

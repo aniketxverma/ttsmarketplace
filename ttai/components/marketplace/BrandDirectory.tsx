@@ -3,7 +3,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import {
   accessFor, chainLevel, directoryAccess, entityKind,
-  type ChainLevel, type EntityKind, type DirectoryAccess,
+  type ChainLevel, type EntityKind, type DirectoryBucket,
 } from '@/lib/business-chain'
 
 const RELIABILITY: Record<string, { label: string; cls: string; dot: string }> = {
@@ -15,7 +15,7 @@ const RELIABILITY: Record<string, { label: string; cls: string; dot: string }> =
 
 // Per-directory copy + the access bucket it maps to.
 const KIND_CONFIG: Record<EntityKind, {
-  bucket: keyof DirectoryAccess; eyebrow: string; title: string; blurb: string; kindLabel: string
+  bucket: DirectoryBucket; eyebrow: string; title: string; blurb: string; kindLabel: string
 }> = {
   supplier: {
     bucket: 'suppliers', eyebrow: 'Suppliers network', title: 'Discover Trusted Suppliers',
@@ -81,10 +81,11 @@ export async function BrandDirectory({
       .select('role, business_type, tier').eq('id', user.id).single()
     viewer = data
   }
-  const level   = chainLevel(viewer?.role, viewer?.business_type)
-  const access  = accessFor(viewer?.role, viewer?.business_type, viewer?.tier)
-  const granted = access[cfg.bucket]
-  const gate    = directoryGate(kind, level)
+  const level    = chainLevel(viewer?.role, viewer?.business_type)
+  const access   = accessFor(viewer?.role, viewer?.business_type, viewer?.tier)
+  const granted  = access[cfg.bucket]
+  const watching = granted && !!access.watch?.[cfg.bucket] // browse-only preview
+  const gate     = directoryGate(kind, level)
 
   // ── Listings (only when granted) ───────────────────────────────────────
   let suppliers: any[] = []
@@ -217,6 +218,16 @@ export async function BrandDirectory({
           </div>
         ) : total > 0 ? (
           <>
+            {watching && (
+              <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <p className="text-sm text-amber-800">
+                  <strong>Watcher mode.</strong> You can browse {cfg.kindLabel.toLowerCase()} profiles. Upgrade to unlock contact &amp; sourcing opportunities from {cfg.kindLabel.toLowerCase()}s.
+                </p>
+                <Link href="/pricing" className="flex-shrink-0 inline-flex items-center gap-1.5 rounded-lg bg-[#0B1F4D] text-white px-4 py-2 text-xs font-bold hover:bg-[#162d6e] transition-colors">
+                  Upgrade plan
+                </Link>
+              </div>
+            )}
             <div className="flex items-center justify-between mb-6">
               <span className="text-sm text-gray-400">{total} {cfg.kindLabel.toLowerCase()}{total !== 1 ? 's' : ''}</span>
               {searchParams.q && (
