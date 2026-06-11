@@ -13,13 +13,13 @@ export default async function EditProductPage({ params }: { params: { id: string
 
   const { data: supplier } = await (supabase
     .from('suppliers') as any)
-    .select('id, status, business_type')
+    .select('id, status, marketplace_context')
     .eq('owner_id', user.id)
     .single()
 
-  const { data: prof } = await (supabase.from('profiles') as any).select('tier, business_type').eq('id', user.id).single()
+  const { data: prof } = await (supabase.from('profiles') as any).select('tier').eq('id', user.id).single()
   const sellerTier = prof?.tier ?? 'free'
-  const businessType = (supplier as any)?.business_type ?? prof?.business_type ?? null
+  const homeChannel = (supplier as any)?.marketplace_context === 'retail' ? 'retail' : 'wholesale'
   const pricing = await getPricingConfig()
 
   if (!supplier) redirect('/supplier/onboarding')
@@ -75,7 +75,7 @@ export default async function EditProductPage({ params }: { params: { id: string
           mode="edit"
           productId={product.id}
           sellerTier={sellerTier}
-          businessType={businessType}
+          homeChannel={homeChannel}
           minMarginPct={pricing.minMarginPct}
           vatPct={pricing.vatPct}
           vatEnabled={pricing.vatEnabled}

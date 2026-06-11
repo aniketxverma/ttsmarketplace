@@ -6,7 +6,7 @@ import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import { slugify } from '@/lib/utils'
 import { canSellUnit, requiredPlanLabel, SELL_PLAN_LABEL } from '@/lib/selling'
-import { tierRank, freeSalesChannel } from '@/lib/business-chain'
+import { tierRank } from '@/lib/business-chain'
 import type { PurchaseUnit } from '@/lib/packaging'
 import { minRetailCents, addVatCents } from '@/lib/pricing-rules'
 import { CONDITIONS } from '@/lib/conditions'
@@ -32,8 +32,8 @@ interface ProductFormProps {
   initialSpecs?: Record<string, any>
   /** Seller's plan tier — gates which units they can sell by. */
   sellerTier?: string
-  /** Seller's business type — decides their free sales channel (B2B vs retail). */
-  businessType?: string | null
+  /** Seller's chosen free shop channel (from their Shop Type setting). */
+  homeChannel?: 'wholesale' | 'retail'
   /** Marketplace pricing rules (admin-configured). */
   minMarginPct?: number
   vatPct?: number
@@ -89,16 +89,16 @@ const INITIAL: FormState = {
 const CURRENCIES = ['EUR', 'USD', 'GBP', 'AED', 'SAR', 'MAD']
 
 export function ProductForm({
-  supplierId, mode, productId, initialData, initialSpecs, sellerTier, businessType,
+  supplierId, mode, productId, initialData, initialSpecs, sellerTier, homeChannel,
   minMarginPct = 30, vatPct = 21, vatEnabled = true,
 }: ProductFormProps) {
   const router = useRouter()
   const t = useT()
 
-  // Free sales channel: your home channel is free; the other channel (or both)
-  // needs a paid plan. B2B businesses sell B2B free; retail/sales-points sell retail free.
+  // Free sales channel: your chosen home channel is free; the other channel (or
+  // both) needs a paid plan. Home channel comes from the supplier's Shop Type.
   const paidChannels = tierRank(sellerTier) >= 1
-  const freeChannel = freeSalesChannel(businessType)                       // 'wholesale' | 'retail'
+  const freeChannel = homeChannel === 'retail' ? 'retail' : 'wholesale'    // 'wholesale' | 'retail'
   const lockedChannel = freeChannel === 'wholesale' ? 'retail' : 'wholesale'
 
   const [form, setForm] = useState<FormState>({

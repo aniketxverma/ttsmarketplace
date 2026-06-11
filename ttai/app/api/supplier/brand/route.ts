@@ -19,6 +19,8 @@ const ALLOWED = new Set([
   'min_order_value_cents',
   // Retail local commerce location (Phase 5)
   'province_id', 'city_id', 'town_id', 'neighborhood_id', 'delivery_radius_km',
+  // Free sales channel (B2B vs retail)
+  'marketplace_context',
 ])
 
 export async function POST(req: NextRequest) {

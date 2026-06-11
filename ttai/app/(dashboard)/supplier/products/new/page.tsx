@@ -10,7 +10,7 @@ export default async function NewProductPage() {
 
   const { data: supplier } = await (supabase
     .from('suppliers') as any)
-    .select('id, status, business_type')
+    .select('id, status, marketplace_context')
     .eq('owner_id', user.id)
     .single()
 
@@ -19,9 +19,9 @@ export default async function NewProductPage() {
   // accounts are blocked. Verification gates public visibility, not management.
   if (supplier.status === 'SUSPENDED') redirect('/supplier')
 
-  const { data: prof } = await (supabase.from('profiles') as any).select('tier, business_type').eq('id', user.id).single()
+  const { data: prof } = await (supabase.from('profiles') as any).select('tier').eq('id', user.id).single()
   const sellerTier = prof?.tier ?? 'free'
-  const businessType = supplier.business_type ?? prof?.business_type ?? null
+  const homeChannel = supplier.marketplace_context === 'retail' ? 'retail' : 'wholesale'
   const pricing = await getPricingConfig()
 
   return (
@@ -31,7 +31,7 @@ export default async function NewProductPage() {
         <p className="text-muted-foreground text-sm mt-0.5">Products start as drafts — publish when ready</p>
       </div>
       <div className="rounded-xl border bg-card p-6">
-        <ProductForm supplierId={supplier.id} mode="create" sellerTier={sellerTier} businessType={businessType}
+        <ProductForm supplierId={supplier.id} mode="create" sellerTier={sellerTier} homeChannel={homeChannel}
           minMarginPct={pricing.minMarginPct} vatPct={pricing.vatPct} vatEnabled={pricing.vatEnabled} />
       </div>
     </div>

@@ -3,6 +3,8 @@ import { requireAuth } from '@/lib/auth/rbac'
 import { redirect } from 'next/navigation'
 import { ProfileEditForm } from '@/app/(dashboard)/account/ProfileEditForm'
 import { LocationEditor } from '@/components/supplier/LocationEditor'
+import { ShopTypeChooser } from '@/components/supplier/ShopTypeChooser'
+import { tierRank } from '@/lib/business-chain'
 
 export default async function SupplierSettingsPage() {
   const user = await requireAuth()
@@ -16,10 +18,10 @@ export default async function SupplierSettingsPage() {
     // Location columns may be missing pre-migration — fall back to id-only.
     (async () => {
       const full = await (supabase.from('suppliers') as any)
-        .select('id, country_id, province_id, city_id, town_id, neighborhood_id, delivery_radius_km, countries(name)')
+        .select('id, marketplace_context, country_id, province_id, city_id, town_id, neighborhood_id, delivery_radius_km, countries(name)')
         .eq('owner_id', user.id).single()
       if (!full.error) return full
-      return supabase.from('suppliers').select('id').eq('owner_id', user.id).single()
+      return supabase.from('suppliers').select('id, marketplace_context').eq('owner_id', user.id).single()
     })(),
   ])
 
@@ -27,13 +29,17 @@ export default async function SupplierSettingsPage() {
 
   const profile = profileRes.data
   const sup = supplierRes.data as any
+  const paid = tierRank((profile as any)?.tier) >= 1
 
   return (
-    <div className="space-y-2">
-      <div className="mb-6">
+    <div className="space-y-4">
+      <div className="mb-2">
         <h1 className="text-2xl font-extrabold text-[#0B1F4D]">Edit Profile</h1>
         <p className="text-sm text-gray-400 mt-1">Update your public profile information</p>
       </div>
+
+      <ShopTypeChooser initial={(sup.marketplace_context as any) ?? 'wholesale'} paid={paid} />
+
       <ProfileEditForm
         profile={{
           ...(profile as any),
