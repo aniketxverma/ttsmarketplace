@@ -10,8 +10,25 @@ import {
   ExternalLink, Download, Play, X, BadgeCheck, ChevronRight, ChevronLeft, Reply,
   Radio, Users, FileText, Bell, Tag, Megaphone, LogIn, Loader, UserMinus, ArrowRight,
   FileSpreadsheet, FileImage, File as FileIcon,
-  LayoutGrid, List as ListIcon, Search, Heart, Sparkles,
+  LayoutGrid, List as ListIcon, Search, Heart, Sparkles, Zap,
+  Cpu, Smartphone, Headphones, Cable, Speaker, Watch, BatteryCharging, Tablet, Laptop,
 } from 'lucide-react'
+
+// Best-effort icon per category name (XO-style left rail).
+function catIcon(name: string) {
+  const n = name.toLowerCase()
+  if (/phone|mobile/.test(n)) return Smartphone
+  if (/laptop|notebook/.test(n)) return Laptop
+  if (/tablet|ipad/.test(n)) return Tablet
+  if (/watch/.test(n)) return Watch
+  if (/head|earbud|earphone|audio/.test(n)) return Headphones
+  if (/speaker|sound/.test(n)) return Speaker
+  if (/cable|charg/.test(n)) return Cable
+  if (/power|battery/.test(n)) return BatteryCharging
+  if (/tech|electronic|computer/.test(n)) return Cpu
+  if (/accessor/.test(n)) return Watch
+  return Package
+}
 import { createClient } from '@/lib/supabase/client'
 import { formatCents } from '@/lib/utils'
 import { useT } from '@/lib/i18n/client'
@@ -182,39 +199,23 @@ function ProductCard({ product, wa, canSeeB2B = true, supplierId = '' }: { produ
             <p className="text-[12px] italic text-gray-400 font-medium">Price on request</p>
           )}
           {product.min_order_qty && product.marketplace_context !== 'retail' && (
-            <p className="text-[11px] text-gray-400 mt-0.5">MOQ {product.min_order_qty} Units</p>
+            <p className="text-[11px] text-gray-400 mt-0.5">MOQ: {product.min_order_qty} Units</p>
           )}
           <p className="flex items-center gap-1 text-[11px] font-bold text-green-600 mt-1">
-            <Check className="w-3 h-3" /> In Stock
+            <Zap className="w-3 h-3" fill="currentColor" /> In Stock
           </p>
         </div>
 
-        {/* Channels this product actually sells on (per its marketplace_context) */}
-        {(() => {
-          const ctx = product.marketplace_context ?? 'wholesale'
-          const showRetail = ctx === 'retail' || ctx === 'both'
-          const showB2B = (ctx === 'wholesale' || ctx === 'both') && canSeeB2B
-          if (!showRetail && !showB2B) return null
-          return (
-            <div className={`grid ${showRetail && showB2B ? 'grid-cols-2' : 'grid-cols-1'} gap-1.5 mt-2.5`}>
-              {showRetail && (
-                <Link href={`/store?supplier=${supplierId}`}
-                  className="flex items-center justify-center gap-1 rounded-md border border-purple-200 bg-purple-50 text-purple-700 text-[11px] font-bold py-1.5 hover:bg-purple-100 transition-colors">
-                  <ShoppingBag className="w-3 h-3" /> Online
-                </Link>
-              )}
-              {showB2B && (
-                <Link href={productHref}
-                  className="flex items-center justify-center gap-1 rounded-md border border-blue-200 bg-blue-50 text-blue-700 text-[11px] font-bold py-1.5 hover:bg-blue-100 transition-colors">
-                  <Building2 className="w-3 h-3" /> B2B
-                </Link>
-              )}
-            </div>
-          )
-        })()}
+        {/* Purchase units — wholesale */}
+        {product.marketplace_context !== 'retail' && (
+          <div className="grid grid-cols-2 gap-1.5 mt-2.5">
+            <span className="text-center rounded-md border border-gray-200 text-gray-500 text-[11px] font-semibold py-1.5">Box</span>
+            <span className="text-center rounded-md border border-gray-200 text-gray-500 text-[11px] font-semibold py-1.5">Pallet</span>
+          </div>
+        )}
 
         <Link href={productHref}
-          className="mt-2 block text-center bg-[#0B1F4D] hover:bg-[#16306b] text-white rounded-lg py-2 text-[12px] font-bold transition-colors">
+          className="mt-2 block text-center bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-2 text-[12px] font-bold transition-colors">
           View Product
         </Link>
       </div>
@@ -289,14 +290,15 @@ function ProductBrowser({ products, wa, supplierId, canSeeB2B = true }: { produc
   // Reset to page 1 whenever the filter set changes
   useEffect(() => { setPage(1) }, [activeCat, query, sort])
 
-  const CatButton = ({ id, label, count }: { id: string; label: string; count: number }) => {
+  const CatButton = ({ id, label }: { id: string; label: string; count?: number }) => {
     const active = activeCat === id
+    const Icon = id === 'all' ? LayoutGrid : catIcon(label)
     return (
       <button onClick={() => setActiveCat(id)}
-        className={`flex-shrink-0 lg:w-full flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-[13px] font-semibold transition-colors ${
-          active ? 'bg-[#0B1F4D] text-white shadow-sm' : 'text-gray-600 hover:bg-gray-100'}`}>
-        <span className="truncate">{label}</span>
-        <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded-full ${active ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-400'}`}>{count}</span>
+        className={`flex-shrink-0 lg:w-full flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-semibold transition-colors ${
+          active ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-50'}`}>
+        <Icon className="w-4 h-4 flex-shrink-0" />
+        <span className="truncate flex-1 text-left">{label}</span>
       </button>
     )
   }
@@ -338,11 +340,14 @@ function ProductBrowser({ products, wa, supplierId, canSeeB2B = true }: { produc
 
       {/* ── Center: toolbar + grid + pagination ── */}
       <div className="flex-1 min-w-0">
-        {/* Toolbar */}
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-          <p className="text-sm text-gray-500">
-            {filtered.length === 0 ? 'No products' : <>Showing <span className="font-bold text-gray-700">{(safePage - 1) * PAGE_SIZE + 1}–{Math.min(safePage * PAGE_SIZE, filtered.length)}</span> of {filtered.length}</>}
-          </p>
+        {/* Heading + toolbar */}
+        <div className="flex flex-wrap items-end justify-between gap-3 mb-4">
+          <div>
+            <h2 className="text-xl font-extrabold text-[#0B1F4D] capitalize">{activeCat === 'all' ? 'All Products' : activeCat}</h2>
+            <p className="text-sm text-gray-400 mt-0.5">
+              {filtered.length === 0 ? 'No products' : <>Showing {(safePage - 1) * PAGE_SIZE + 1} – {Math.min(safePage * PAGE_SIZE, filtered.length)} of {filtered.length} products</>}
+            </p>
+          </div>
           <div className="flex items-center gap-2">
             <div className="relative hidden sm:block">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-300" />
@@ -358,11 +363,11 @@ function ProductBrowser({ products, wa, supplierId, canSeeB2B = true }: { produc
             </select>
             <div className="flex items-center rounded-lg border border-gray-200 overflow-hidden">
               <button onClick={() => setView('grid')} aria-label="Grid view"
-                className={`p-1.5 ${view === 'grid' ? 'bg-[#0B1F4D] text-white' : 'text-gray-400 hover:bg-gray-50'}`}>
+                className={`p-1.5 ${view === 'grid' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-50'}`}>
                 <LayoutGrid className="w-4 h-4" />
               </button>
               <button onClick={() => setView('list')} aria-label="List view"
-                className={`p-1.5 ${view === 'list' ? 'bg-[#0B1F4D] text-white' : 'text-gray-400 hover:bg-gray-50'}`}>
+                className={`p-1.5 ${view === 'list' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-50'}`}>
                 <ListIcon className="w-4 h-4" />
               </button>
             </div>
@@ -397,7 +402,7 @@ function ProductBrowser({ products, wa, supplierId, canSeeB2B = true }: { produc
               ? <span key={`e${i}`} className="px-1.5 text-gray-300">…</span>
               : <button key={n} onClick={() => setPage(n)}
                   className={`min-w-9 h-9 px-3 rounded-lg text-sm font-bold transition-colors ${
-                    n === safePage ? 'bg-[#0B1F4D] text-white' : 'border border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
+                    n === safePage ? 'bg-blue-600 text-white' : 'border border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
                   {n}
                 </button>)}
             <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={safePage === totalPages}

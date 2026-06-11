@@ -282,7 +282,7 @@ export default async function BrandPage({ params }: { params: { slug: string } }
               )}
               <div className="flex flex-col gap-2 justify-center w-full sm:w-auto sm:min-w-[160px]">
                 <Link href={isAuthenticated ? '/marketplace?supplier=' + supplier.id : '/register'}
-                  className="flex items-center justify-center gap-2 bg-[#0B1F4D] hover:bg-[#16306b] text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-sm transition-colors">
+                  className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-sm transition-colors">
                   <UserPlus className="w-4 h-4" /> Follow Shop
                 </Link>
                 {contactUnlocked && waHref ? (

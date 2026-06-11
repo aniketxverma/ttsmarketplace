@@ -141,7 +141,7 @@ export function BrandSidebar({ documents, videos, supplier, contactUnlocked, isA
               )}
               {wa && (
                 <a href={`https://wa.me/${wa}?text=${catalogMsg}`} target="_blank" rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-2 w-full rounded-xl bg-[#0B1F4D] hover:bg-[#162d6e] text-white py-2.5 text-sm font-bold transition-colors">
+                  className="flex items-center justify-center gap-2 w-full rounded-xl bg-blue-600 hover:bg-blue-700 text-white py-2.5 text-sm font-bold transition-colors">
                   <Download className="w-4 h-4" /> Request Full Catalog
                 </a>
               )}
