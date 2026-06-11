@@ -2,6 +2,8 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { requireAuth } from '@/lib/auth/rbac'
 import { SourcingClient } from './SourcingClient'
+import { UpgradeGate } from '@/components/supplier/UpgradeGate'
+import { tierRank } from '@/lib/business-chain'
 
 type Sup = { id: string; name: string }
 
@@ -11,6 +13,24 @@ export default async function SourcingPage() {
 
   const { data: supplier } = await supabase.from('suppliers').select('id, status').eq('owner_id', user.id).single()
   if (!supplier) redirect('/supplier/onboarding')
+
+  const { data: prof } = await (supabase.from('profiles') as any).select('tier').eq('id', user.id).single()
+  const paid = tierRank(prof?.tier) >= 1
+  if (!paid) {
+    return (
+      <div className="max-w-5xl space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold">Sourcing &amp; catalogue sharing</h1>
+          <p className="text-muted-foreground text-sm mt-0.5">Import products from partner suppliers and share your catalogue.</p>
+        </div>
+        <UpgradeGate
+          title="Sourcing & Catalogue Sharing"
+          description="Import products from suppliers who share their catalogue with you, and share yours with partners. Available on paid plans."
+          perks={['Import partner catalogues into your shop', 'Share your catalogue with related suppliers', 'Every import keeps a link to its source']}
+        />
+      </div>
+    )
+  }
 
   // Active suppliers (for granting + name lookup)
   const { data: allSup } = await (supabase.from('suppliers') as any)

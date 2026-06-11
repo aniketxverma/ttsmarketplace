@@ -2,6 +2,8 @@ import { createClient } from '@/lib/supabase/server'
 import { requireAuth } from '@/lib/auth/rbac'
 import { redirect } from 'next/navigation'
 import { ImportWizard } from './ImportWizard'
+import { UpgradeGate } from '@/components/supplier/UpgradeGate'
+import { tierRank } from '@/lib/business-chain'
 
 export default async function ImportProductsPage() {
   const user = await requireAuth()
@@ -9,6 +11,9 @@ export default async function ImportProductsPage() {
 
   const { data: supplier } = await supabase.from('suppliers').select('id, status').eq('owner_id', user.id).single()
   if (!supplier) redirect('/supplier/onboarding')
+
+  const { data: prof } = await (supabase.from('profiles') as any).select('tier').eq('id', user.id).single()
+  const paid = tierRank(prof?.tier) >= 1
 
   const { data: categories } = await supabase
     .from('categories').select('id, name, parent_id').order('sort_order')
@@ -32,12 +37,22 @@ export default async function ImportProductsPage() {
         </a>
       </div>
 
-      <div className="rounded-xl border border-blue-100 bg-blue-50/60 px-4 py-3 text-xs text-blue-800">
-        <span className="font-bold">Recommended columns:</span> Product Name* · Product Photo · Package Photo · Color ·
-        Barcode (EAN) · MOQ (PC) · EXW Price (USD) · EXW Price (RMB) · QTY/CTN · Carton Size (cm) · Weight/PC (g) · Product Description.
-        Headers can vary — we match them automatically. <span className="font-semibold">Paste each product&apos;s photo into its Photo cell.</span>
-      </div>
-      <ImportWizard categories={(categories ?? []) as { id: string; name: string; parent_id: string | null }[]} />
+      {paid ? (
+        <>
+          <div className="rounded-xl border border-blue-100 bg-blue-50/60 px-4 py-3 text-xs text-blue-800">
+            <span className="font-bold">Recommended columns:</span> Product Name* · Product Photo · Package Photo · Color ·
+            Barcode (EAN) · MOQ (PC) · EXW Price (USD) · EXW Price (RMB) · QTY/CTN · Carton Size (cm) · Weight/PC (g) · Product Description.
+            Headers can vary — we match them automatically. <span className="font-semibold">Paste each product&apos;s photo into its Photo cell.</span>
+          </div>
+          <ImportWizard categories={(categories ?? []) as { id: string; name: string; parent_id: string | null }[]} />
+        </>
+      ) : (
+        <UpgradeGate
+          title="Bulk Excel Import"
+          description="Upload a whole price list and create products in bulk — with embedded photos auto-extracted. Available on paid plans."
+          perks={['Import hundreds of products from one .xlsx', 'Automatic column matching', 'Embedded product photos pulled in for you']}
+        />
+      )}
     </div>
   )
 }
