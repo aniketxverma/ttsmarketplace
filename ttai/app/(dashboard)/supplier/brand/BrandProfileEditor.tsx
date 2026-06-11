@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { ImageUpload } from '@/components/ImageUpload'
+import { CatalogueManager } from '@/components/supplier/CatalogueManager'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface Supplier {
@@ -65,6 +66,7 @@ const TABS = [
   { id: 'basic',    label: 'Basic Info' },
   { id: 'about',    label: 'About' },
   { id: 'gallery',  label: 'Gallery & Media' },
+  { id: 'catalogues', label: 'Catalogues & Docs' },
   { id: 'certs',    label: 'Certifications' },
   { id: 'contact',  label: 'Contact' },
   { id: 'social',   label: 'Social Links' },
@@ -417,6 +419,11 @@ export function BrandProfileEditor({ supplier, gallery: initialGallery, certific
               <p className="text-sm text-gray-400 text-center py-6">No media added yet</p>
             )}
           </div>
+        )}
+
+        {/* ── Catalogues & Docs ── */}
+        {tab === 'catalogues' && (
+          <CatalogueManager supplierId={supplier.id} />
         )}
 
         {/* ── Certifications ── */}
