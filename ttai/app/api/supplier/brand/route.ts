@@ -17,6 +17,8 @@ const ALLOWED = new Set([
   'instagram', 'facebook', 'linkedin', 'twitter', 'youtube',
   'seo_title', 'seo_description', 'seo_keywords', 'og_image', 'section_visibility',
   'min_order_value_cents',
+  // Retail local commerce location (Phase 5)
+  'province_id', 'city_id', 'town_id', 'neighborhood_id', 'delivery_radius_km',
 ])
 
 export async function POST(req: NextRequest) {
