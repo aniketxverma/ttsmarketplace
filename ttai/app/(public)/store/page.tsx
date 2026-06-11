@@ -10,8 +10,9 @@ import { CategoryNav } from '@/components/marketplace/CategoryNav'
 import { SearchBar } from '@/components/marketplace/SearchBar'
 import { Pagination } from '@/components/marketplace/Pagination'
 import { RetailLocationBar } from '@/components/store/RetailLocationBar'
+import { ShopCard, type ShopCardData } from '@/components/marketplace/ShopCard'
 import Link from 'next/link'
-import { ShoppingBag, Zap, Shield, Truck, Star } from 'lucide-react'
+import { ShoppingBag, Zap, Shield, Truck, Star, Package, Store } from 'lucide-react'
 import type { Category } from '@/types/domain'
 
 const PAGE_SIZE = 24
@@ -25,10 +26,11 @@ export default async function StorePage({
   searchParams,
 }: {
   searchParams: { category?: string; q?: string; page?: string; supplier?: string
-    market?: string; country?: string }
+    market?: string; country?: string; view?: string }
 }) {
   const supabase = createClient()
   const page = parseInt(searchParams.page ?? '1')
+  const activeView: 'products' | 'shops' = searchParams.view === 'shops' ? 'shops' : 'products'
 
   // ── Retail location filter (Phases 6, 9) — Region → Country ──
   const activeMarket = searchParams.market ?? ''
@@ -111,6 +113,48 @@ export default async function StorePage({
   const from = (page - 1) * PAGE_SIZE
   const pageFamilies = families.slice(from, from + PAGE_SIZE)
 
+  // ── Retail SHOPS view — verified sellers whose shop type is retail or both ──
+  let shops: ShopCardData[] = []
+  if (activeView === 'shops') {
+    const safe = async (q: any) => { try { const { data } = await q; return (data ?? []) as any[] } catch { return [] } }
+    let supQ = (supabase.from('suppliers') as any)
+      .select('id, legal_name, trade_name, logo_url, brand_slug, reliability_tier, tagline, description, business_type, country_id, countries(name)')
+      .eq('status', 'ACTIVE').in('marketplace_context', ['retail', 'both'])
+    if (localSupplierIds) supQ = supQ.in('id', localSupplierIds)
+    let list = await safe(supQ.limit(200))
+    // fall back without business_type if that column isn't migrated
+    if (list.length === 0) list = await safe((supabase.from('suppliers') as any)
+      .select('id, legal_name, trade_name, logo_url, brand_slug, reliability_tier, tagline, description, country_id, countries(name)')
+      .eq('status', 'ACTIVE').in('marketplace_context', ['retail', 'both']).limit(200))
+    if (searchParams.category) {
+      const cat = allCats.find((c) => c.slug === searchParams.category)
+      if (cat) {
+        const catIds = [cat.id, ...allCats.filter((c) => c.parent_id === cat.id).map((c) => c.id)]
+        const pr = await safe((supabase.from('products') as any).select('supplier_id').eq('is_published', true).in('category_id', catIds))
+        const allowed = new Set(pr.map((r: any) => r.supplier_id))
+        list = list.filter((s: any) => allowed.has(s.id))
+      }
+    }
+    shops = list.map((s: any) => ({
+      id: s.id, legal_name: s.legal_name, trade_name: s.trade_name, logo_url: s.logo_url,
+      brand_slug: s.brand_slug, reliability_tier: s.reliability_tier,
+      tagline: s.tagline ?? s.description ?? null,
+      country_name: (s.countries as any)?.name ?? null,
+      business_type: s.business_type ?? 'retail',
+    }))
+  }
+
+  const mkViewHref = (view: 'products' | 'shops') => {
+    const p = new URLSearchParams()
+    if (searchParams.category) p.set('category', searchParams.category)
+    if (searchParams.q) p.set('q', searchParams.q)
+    if (activeMarket) p.set('market', activeMarket)
+    if (activeCountryIso) p.set('country', activeCountryIso)
+    if (view === 'shops') p.set('view', 'shops')
+    const qs = p.toString()
+    return qs ? `/store?${qs}` : '/store'
+  }
+
   return (
     <div className="min-h-screen bg-background">
 
@@ -165,6 +209,31 @@ export default async function StorePage({
           <RetailLocationBar activeMarket={activeMarket} activeCountry={activeCountryIso} />
         )}
 
+        {/* Products | Shops toggle */}
+        {!searchParams.supplier && (
+          <div className="flex items-center gap-1 bg-gray-100 rounded-xl p-1 w-max mb-6">
+            {([{ id: 'products', label: 'Products', Icon: Package }, { id: 'shops', label: 'Shops', Icon: Store }] as const).map(({ id, label, Icon }) => (
+              <Link key={id} href={mkViewHref(id)}
+                className={`flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-bold transition-colors ${activeView === id ? 'bg-white text-purple-700 shadow-sm' : 'text-gray-500 hover:text-purple-700'}`}>
+                <Icon className="w-4 h-4" /> {label}
+              </Link>
+            ))}
+          </div>
+        )}
+
+        {activeView === 'shops' ? (
+          shops.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {shops.map((s) => <ShopCard key={s.id} shop={s} />)}
+            </div>
+          ) : (
+            <div className="text-center py-20 text-muted-foreground">
+              <Store className="w-12 h-12 mx-auto mb-4 opacity-20" />
+              <p className="text-lg font-semibold">No shops found</p>
+              <p className="text-sm mt-1">Try a different category or area</p>
+            </div>
+          )
+        ) : (
         <div className="flex gap-8">
           {/* Category sidebar */}
           <aside className="hidden md:block w-48 flex-shrink-0">
@@ -224,6 +293,7 @@ export default async function StorePage({
             )}
           </div>
         </div>
+        )}
       </div>
     </div>
   )

@@ -264,6 +264,8 @@ export default async function MarketplacePage({
     // business_type (migration 0053) may not be applied yet — fall back without it.
     const buildSupQ = (cols: string) => {
       let q = (supabase.from('suppliers') as any).select(cols).eq('status', 'ACTIVE')
+        // B2B directory — only sellers whose shop type is wholesale or both.
+        .in('marketplace_context', ['wholesale', 'both'])
       if (activeCountryId) q = q.eq('country_id', activeCountryId)
       return q.limit(200)
     }
