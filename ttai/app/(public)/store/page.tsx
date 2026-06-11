@@ -25,17 +25,21 @@ export default async function StorePage({
   searchParams,
 }: {
   searchParams: { category?: string; q?: string; page?: string; supplier?: string
-    province?: string; city?: string; town?: string; neighborhood?: string }
+    market?: string; country?: string; province?: string; city?: string; town?: string; neighborhood?: string }
 }) {
   const supabase = createClient()
   const page = parseInt(searchParams.page ?? '1')
 
-  // ── Retail local hierarchy (Phases 5–6) — Country → Province → City → Town → Neighborhood ──
-  // Country is fixed to the rollout market (Spain) for now. Geo tables are public-read.
-  const RETAIL_ISO = 'ES'
-  const { data: retailCountry } = await (supabase.from('countries') as any)
-    .select('id, name').eq('iso_code', RETAIL_ISO).maybeSingle()
-  const retailCountryId: string | null = retailCountry?.id ?? null
+  // ── Retail local hierarchy (Phases 5–6, 9) — Region → Country → Province → City → Town → Neighborhood ──
+  const activeMarket = searchParams.market ?? ''
+  const activeCountryIso = (searchParams.country ?? '').toUpperCase()
+
+  let retailCountryId: string | null = null
+  if (activeCountryIso) {
+    const { data: c } = await (supabase.from('countries') as any)
+      .select('id').eq('iso_code', activeCountryIso).maybeSingle()
+    retailCountryId = c?.id ?? '00000000-0000-0000-0000-000000000000'
+  }
 
   const sel = {
     province: searchParams.province, city: searchParams.city,
@@ -54,9 +58,10 @@ export default async function StorePage({
     sel.town ? safeList((supabase.from('neighborhoods') as any).select('id, name').eq('town_id', sel.town).order('name')) : Promise.resolve([]),
   ])
 
-  // Resolve the selected location to a set of seller ids (products inherit seller location).
+  // Resolve the selection to a set of seller ids (products inherit seller location).
+  // Deepest chosen level wins: neighborhood > town > city > province > country.
   let localSupplierIds: string[] | null = null
-  if (!searchParams.supplier && (sel.neighborhood || sel.town || sel.city || sel.province)) {
+  if (!searchParams.supplier && (sel.neighborhood || sel.town || sel.city || sel.province || retailCountryId)) {
     const supSel = (col: string, val: string) =>
       safeList((supabase.from('suppliers') as any).select('id').eq(col, val).neq('status', 'SUSPENDED'))
     let rows: { id: string }[] = []
@@ -64,11 +69,12 @@ export default async function StorePage({
     else if (sel.town)      rows = await supSel('town_id', sel.town)
     else if (sel.city)      rows = await supSel('city_id', sel.city)
     else if (sel.province) {
-      // Province → sellers whose city is in that province, or province set directly.
       const cityIds = (await safeList((supabase.from('cities') as any).select('id').eq('province_id', sel.province))).map((c) => c.id)
       const byProv = await supSel('province_id', sel.province)
       const byCity = cityIds.length ? await safeList((supabase.from('suppliers') as any).select('id').in('city_id', cityIds).neq('status', 'SUSPENDED')) : []
       rows = [...byProv, ...byCity]
+    } else if (retailCountryId) {
+      rows = await supSel('country_id', retailCountryId)
     }
     localSupplierIds = Array.from(new Set(rows.map((r) => r.id)))
     if (localSupplierIds.length === 0) localSupplierIds = ['00000000-0000-0000-0000-000000000000']
@@ -186,10 +192,10 @@ export default async function StorePage({
           <SearchBar defaultValue={searchParams.q} />
         </div>
 
-        {/* Local commerce selector — Country → Province → City → Town → Neighborhood */}
-        {!searchParams.supplier && retailCountryId && (
+        {/* Local commerce selector — Region → Country → Province → City → Town → Neighborhood */}
+        {!searchParams.supplier && (
           <RetailLocationBar
-            countryName={retailCountry?.name ?? 'Spain'}
+            activeMarket={activeMarket} activeCountry={activeCountryIso}
             provinces={provinces} cities={cities} towns={towns} neighborhoods={neighborhoods}
             selected={sel}
           />
