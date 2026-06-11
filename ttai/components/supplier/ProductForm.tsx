@@ -57,6 +57,7 @@ interface FormState {
   sellPiece: boolean; sellBox: boolean; sellPallet: boolean; sellTruck: boolean
   priceNegotiable: boolean; priceOnRequest: boolean
   condition: string; warranty: string; warehouseLocation: string; deliveryDays: string; shipping: string
+  retailAvailable: boolean; deliveryScope: string
   isPublished: boolean
 }
 
@@ -78,6 +79,7 @@ const INITIAL: FormState = {
   sellPiece: true, sellBox: false, sellPallet: false, sellTruck: false,
   priceNegotiable: false, priceOnRequest: false,
   condition: '', warranty: '', warehouseLocation: '', deliveryDays: '', shipping: '',
+  retailAvailable: true, deliveryScope: 'city',
   isPublished: false,
 }
 
@@ -215,6 +217,9 @@ export function ProductForm({
       warehouse_location:  form.warehouseLocation.trim() || null,
       delivery_days:       form.deliveryDays ? parseInt(form.deliveryDays) : null,
       shipping_cents:      form.shipping && parseFloat(form.shipping) >= 0 && form.shipping !== '' ? Math.round(parseFloat(form.shipping) * 100) : null,
+      // Retail Shop local availability (Phase 6)
+      retail_available:    form.retailAvailable,
+      delivery_scope:      form.deliveryScope || 'city',
       specs:               specs,
       // Cap sell-by units to the seller's plan (locked units can't be enabled).
       sell_piece:          form.sellPiece  && canSellUnit(sellerTier, 'piece'),
@@ -230,7 +235,8 @@ export function ProductForm({
     // keys and retry so saving still works.
     const OPTIONAL_KEYS = ['box_discount_pct', 'pallet_discount_pct', 'truck_discount_pct',
       'brand_name', 'source_type', 'original_supplier_id', 'current_owner_id', 'created_by', 'price_on_request', 'specs',
-      'condition', 'warranty', 'warehouse_location', 'delivery_days', 'shipping_cents']
+      'condition', 'warranty', 'warehouse_location', 'delivery_days', 'shipping_cents',
+      'retail_available', 'delivery_scope']
     const stripOptional = (obj: any) => { const o = { ...obj }; OPTIONAL_KEYS.forEach(k => delete o[k]); return o }
     const isMissingColumn = (msg?: string | null) => !!msg && /column|does not exist|discount_pct/i.test(msg)
 
@@ -799,6 +805,33 @@ export function ProductForm({
           <div className="space-y-1.5"><label className={labelCls}>…or discount %</label><input className={inputCls} type="number" min="0" max="100" step="0.5" value={form.truckDiscountPct} onChange={(e) => update('truckDiscountPct', e.target.value)} placeholder="e.g. 30" disabled={!!form.pricePerTruck} /></div>
         </div>
         <p className="text-xs text-gray-400 mt-3">For each volume tier: type an exact price, <strong>or</strong> leave it blank and set a discount % off the base wholesale price. Single pieces always use the retail price.</p>
+      </div>
+
+      {/* Retail Shop — local availability & delivery reach */}
+      <div className="rounded-xl border border-gray-200 p-4 space-y-4">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <p className="font-semibold text-sm text-gray-900">Available in the local Retail Shop</p>
+            <p className="text-xs text-gray-500 mt-0.5">Show this product to nearby buyers in your area.</p>
+          </div>
+          <button type="button" onClick={() => update('retailAvailable', !form.retailAvailable)}
+            className={`relative w-12 h-6 rounded-full transition-colors flex-shrink-0 ${form.retailAvailable ? 'bg-purple-500' : 'bg-gray-300'}`}>
+            <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${form.retailAvailable ? 'translate-x-6' : ''}`} />
+          </button>
+        </div>
+        {form.retailAvailable && (
+          <div className="space-y-1.5 max-w-xs">
+            <label className={labelCls}>Delivery reach</label>
+            <select className={inputCls} value={form.deliveryScope} onChange={(e) => update('deliveryScope', e.target.value)}>
+              <option value="neighborhood">Neighborhood only</option>
+              <option value="town">Town</option>
+              <option value="city">City</option>
+              <option value="province">Province</option>
+              <option value="country">Whole country</option>
+            </select>
+            <p className="text-xs text-gray-400">How far you deliver this product from your location.</p>
+          </div>
+        )}
       </div>
 
       {/* Publish toggle */}

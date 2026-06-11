@@ -2,31 +2,25 @@
 
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import { Package, Store } from 'lucide-react'
-
-/** Europe rollout — the country banner. Future regions reuse the same component. */
-const EUROPE_COUNTRIES = [
-  { iso: '',   name: 'All Countries', flag: '🌍' },
-  { iso: 'ES', name: 'Spain',          flag: '🇪🇸' },
-  { iso: 'DE', name: 'Germany',        flag: '🇩🇪' },
-  { iso: 'FR', name: 'France',         flag: '🇫🇷' },
-  { iso: 'IT', name: 'Italy',          flag: '🇮🇹' },
-  { iso: 'BE', name: 'Belgium',        flag: '🇧🇪' },
-  { iso: 'NL', name: 'Netherlands',    flag: '🇳🇱' },
-  { iso: 'GB', name: 'United Kingdom', flag: '🇬🇧' },
-]
+import { MARKET_REGIONS, getRegion } from '@/lib/market-regions'
 
 export function MarketplaceTopBar({
   activeView,
   activeCountry,
+  activeMarket,
   categoryLabel,
 }: {
   activeView: 'products' | 'shops'
   activeCountry: string
+  activeMarket: string
   categoryLabel: string | null
 }) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
+
+  const region = getRegion(activeMarket)
+  const countries = [{ iso: '', name: 'All Countries', flag: '🌍' }, ...region.countries]
 
   // Soft client-side navigation — updates the query, re-renders content, never reloads.
   const navigate = (changes: Record<string, string | null>) => {
@@ -40,7 +34,9 @@ export function MarketplaceTopBar({
     router.push(qs ? `${pathname}?${qs}` : pathname, { scroll: false })
   }
 
-  const bannerTitle = categoryLabel ? `${categoryLabel.toUpperCase()} IN EUROPE` : 'EUROPE MARKET'
+  const bannerTitle = categoryLabel
+    ? `${categoryLabel.toUpperCase()} IN ${region.name.toUpperCase()}`
+    : `${region.name.toUpperCase()} MARKET`
 
   return (
     <div className="mb-6">
@@ -61,17 +57,33 @@ export function MarketplaceTopBar({
         })}
       </div>
 
-      {/* ── Europe market banner + country flags ── */}
+      {/* ── Market banner: region switcher + country flags ── */}
       <div className="rounded-2xl border border-gray-100 bg-gradient-to-r from-[#0B1F4D] to-[#1a3a7a] overflow-hidden">
         <div className="px-5 sm:px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-widest text-[#F5A623]">Europe Market</p>
+            <p className="text-[11px] font-bold uppercase tracking-widest text-[#F5A623]">{region.name} Market</p>
             <h2 className="text-lg sm:text-xl font-extrabold text-white leading-tight">{bannerTitle}</h2>
           </div>
-          <span className="text-[11px] text-blue-200/80 font-medium">More regions coming soon</span>
+          {/* Region switcher — enabled regions are clickable; others show "soon" */}
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {MARKET_REGIONS.map((r) => {
+              const active = region.id === r.id
+              if (!r.enabled) return (
+                <span key={r.id} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold text-white/35 cursor-not-allowed">
+                  {r.name}<span className="text-[9px] uppercase tracking-wide bg-white/10 px-1 py-0.5 rounded">soon</span>
+                </span>
+              )
+              return (
+                <button key={r.id} onClick={() => navigate({ market: r.id === 'europe' ? null : r.id, country: null })}
+                  className={`px-3 py-1 rounded-full text-xs font-bold transition-colors ${active ? 'bg-[#F5A623] text-[#0B1F4D]' : 'text-white/80 hover:bg-white/10'}`}>
+                  {r.name}
+                </button>
+              )
+            })}
+          </div>
         </div>
         <div className="bg-white/[0.06] border-t border-white/10 px-3 sm:px-4 py-2.5 flex items-center gap-2 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
-          {EUROPE_COUNTRIES.map((c) => {
+          {countries.map((c) => {
             const active = (activeCountry || '') === c.iso
             return (
               <button key={c.iso || 'all'} onClick={() => navigate({ country: c.iso || null })}

@@ -138,6 +138,8 @@ export default async function EditProductPage({ params }: { params: { id: string
             sellBox:            (product as any).sell_box ?? false,
             sellPallet:         (product as any).sell_pallet ?? false,
             sellTruck:          (product as any).sell_truck ?? false,
+            retailAvailable:    (product as any).retail_available ?? true,
+            deliveryScope:      (product as any).delivery_scope ?? 'city',
             isPublished:        product.is_published ?? false,
           }}
         />

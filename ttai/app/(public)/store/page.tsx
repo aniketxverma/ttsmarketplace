@@ -110,6 +110,7 @@ export default async function StorePage({
     productQuery = productQuery
       .eq('suppliers.status', 'ACTIVE')
       .in('marketplace_context', ['retail', 'both'])
+      .neq('retail_available', false) // exclude products a seller turned off for retail
   }
 
   // Local retail filter — restrict to sellers in the chosen area.

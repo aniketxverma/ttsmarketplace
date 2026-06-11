@@ -36,13 +36,14 @@ const CAT_ACCENT: Record<string, string> = {
 export default async function MarketplacePage({
   searchParams,
 }: {
-  searchParams: { category?: string; q?: string; page?: string; region?: string; supplier?: string; brand?: string; view?: string; country?: string }
+  searchParams: { category?: string; q?: string; page?: string; region?: string; supplier?: string; brand?: string; view?: string; country?: string; market?: string }
 }) {
   const supabase = createClient()
   const page = parseInt(searchParams.page || '1')
   const activeRegion = searchParams.region ?? null
   const activeSupplier = searchParams.supplier ?? null
   const activeView: 'products' | 'shops' = searchParams.view === 'shops' ? 'shops' : 'products'
+  const activeMarket = searchParams.market ?? 'europe'
   const activeCountryIso = (searchParams.country ?? '').toUpperCase()
 
   // Europe country banner → resolve the chosen ISO to a country_id (used to filter
@@ -352,7 +353,7 @@ export default async function MarketplacePage({
       )}
 
       {/* ── Products | Shops tabs + Europe country banner (dynamic, no reload) ── */}
-      <MarketplaceTopBar activeView={activeView} activeCountry={activeCountryIso} categoryLabel={categoryLabel} />
+      <MarketplaceTopBar activeView={activeView} activeCountry={activeCountryIso} activeMarket={activeMarket} categoryLabel={categoryLabel} />
 
       <PromotionBanner promotions={promotions} />
 
