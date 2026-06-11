@@ -13,6 +13,7 @@ const ROLES = [
     label: 'Buyer',
     sub: 'Import & purchase products',
     color: 'from-green-500 to-emerald-600',
+    disabled: true,
     icon: (
       <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.6}
@@ -52,6 +53,7 @@ const ROLES = [
     label: 'Broker',
     sub: 'Mediate deals & earn commissions',
     color: 'from-purple-500 to-violet-600',
+    disabled: true,
     icon: (
       <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.6}
@@ -312,6 +314,14 @@ export default function RegisterPage() {
   if (step === 0) {
     return (
       <div className="space-y-6">
+        {/* Sign-in — top right */}
+        <div className="flex justify-end -mb-2 animate-fade-in">
+          <span className="text-sm text-gray-400">
+            Already have an account?{' '}
+            <Link href="/login" className="text-[#0B1F4D] font-bold hover:underline">Sign in</Link>
+          </span>
+        </div>
+
         {/* Animated header */}
         <div className="text-center space-y-2 pb-1 animate-fade-in-up">
           <div className="inline-flex items-center gap-2 bg-[#0B1F4D]/5 border border-[#0B1F4D]/10 rounded-full px-3.5 py-1.5 text-[11px] font-bold text-[#0B1F4D] uppercase tracking-widest mb-1">
@@ -332,18 +342,31 @@ export default function RegisterPage() {
         )}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-          {ROLES.map((r, i) => (
-            <button key={r.value} type="button" onClick={() => { set('role', r.value); set('businessType', ''); setStep(1) }}
+          {ROLES.map((r, i) => {
+            const disabled = (r as any).disabled as boolean | undefined
+            return (
+            <button key={r.value} type="button" disabled={disabled}
+              onClick={() => { if (disabled) return; set('role', r.value); set('businessType', ''); setStep(1) }}
               style={{ animationDelay: `${i * 90}ms` }}
-              className={`group relative bg-white rounded-2xl border-2 p-5 text-left hover:border-[#0B1F4D] hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden animate-fade-in-up ${fromInvite && r.value === 'supplier' ? 'border-[#0B1F4D] ring-2 ring-[#0B1F4D]/20' : 'border-gray-100'}`}>
-              {fromInvite && r.value === 'supplier' && <span className="absolute top-2 right-2 z-10 text-[9px] font-extrabold bg-[#0B1F4D] text-white px-2 py-0.5 rounded-full">Recommended</span>}
-              {/* Glow wash on hover */}
-              <div className={`absolute -inset-px rounded-2xl bg-gradient-to-br ${r.color} opacity-0 group-hover:opacity-[0.04] transition-opacity duration-300 pointer-events-none`} />
-              <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${r.color} scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-300`} />
-              <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${r.color} flex items-center justify-center text-white mb-3 shadow-md group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300`}>{r.icon}</div>
-              <p className="font-extrabold text-[#0B1F4D] text-base">{r.label}</p>
-              <p className="text-xs text-gray-500 mt-0.5 mb-3">{r.sub}</p>
-              <div className="space-y-1.5">
+              aria-disabled={disabled}
+              className={`group relative bg-white rounded-2xl border-2 p-5 text-left transition-all duration-300 overflow-hidden animate-fade-in-up ${
+                disabled
+                  ? 'border-gray-100 opacity-60 cursor-not-allowed'
+                  : `hover:border-[#0B1F4D] hover:shadow-xl hover:-translate-y-1 ${fromInvite && r.value === 'supplier' ? 'border-[#0B1F4D] ring-2 ring-[#0B1F4D]/20' : 'border-gray-100'}`}`}>
+
+              {/* Themed background wash + glow */}
+              <div className={`absolute inset-0 bg-gradient-to-br ${r.color} opacity-[0.05] pointer-events-none`} />
+              <div className={`absolute -top-10 -right-10 w-32 h-32 rounded-full bg-gradient-to-br ${r.color} opacity-10 blur-2xl pointer-events-none`} />
+              <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${r.color} ${disabled ? 'opacity-30' : 'scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-300'}`} />
+
+              {disabled
+                ? <span className="absolute top-2.5 right-2.5 z-10 text-[9px] font-extrabold bg-gray-200 text-gray-500 px-2 py-0.5 rounded-full uppercase tracking-wide">Coming soon</span>
+                : fromInvite && r.value === 'supplier' && <span className="absolute top-2 right-2 z-10 text-[9px] font-extrabold bg-[#0B1F4D] text-white px-2 py-0.5 rounded-full">Recommended</span>}
+
+              <div className={`relative w-12 h-12 rounded-xl bg-gradient-to-br ${r.color} flex items-center justify-center text-white mb-3 shadow-md ${disabled ? '' : 'group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300'}`}>{r.icon}</div>
+              <p className="relative font-extrabold text-[#0B1F4D] text-base">{r.label}</p>
+              <p className="relative text-xs text-gray-500 mt-0.5 mb-3">{r.sub}</p>
+              <div className="relative space-y-1.5">
                 {r.perks.map(p => (
                   <div key={p} className="flex items-center gap-1.5 text-xs text-gray-500">
                     <svg className="w-3 h-3 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
@@ -353,17 +376,14 @@ export default function RegisterPage() {
                   </div>
                 ))}
               </div>
-              <div className="mt-4 flex items-center gap-1 text-xs font-bold text-[#0B1F4D] group-hover:gap-2.5 transition-all">
-                Join as {r.label}
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
+              <div className={`relative mt-4 flex items-center gap-1 text-xs font-bold ${disabled ? 'text-gray-400' : 'text-[#0B1F4D] group-hover:gap-2.5 transition-all'}`}>
+                {disabled ? 'Coming soon' : <>Join as {r.label}
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg></>}
               </div>
             </button>
-          ))}
+            )
+          })}
         </div>
-        <p className="text-center text-sm text-gray-400 animate-fade-in delay-400">
-          Already have an account?{' '}
-          <Link href="/login" className="text-[#0B1F4D] font-bold hover:underline">Sign in</Link>
-        </p>
       </div>
     )
   }
