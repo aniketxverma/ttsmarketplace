@@ -9,6 +9,7 @@ import { ProductGrid } from '@/components/marketplace/ProductGrid'
 import { CategoryNav } from '@/components/marketplace/CategoryNav'
 import { SearchBar } from '@/components/marketplace/SearchBar'
 import { Pagination } from '@/components/marketplace/Pagination'
+import { RetailLocationBar } from '@/components/store/RetailLocationBar'
 import Link from 'next/link'
 import { ShoppingBag, Zap, Shield, Truck, Star } from 'lucide-react'
 import type { Category } from '@/types/domain'
@@ -23,10 +24,55 @@ export const metadata = {
 export default async function StorePage({
   searchParams,
 }: {
-  searchParams: { category?: string; q?: string; page?: string; supplier?: string }
+  searchParams: { category?: string; q?: string; page?: string; supplier?: string
+    province?: string; city?: string; town?: string; neighborhood?: string }
 }) {
   const supabase = createClient()
   const page = parseInt(searchParams.page ?? '1')
+
+  // ── Retail local hierarchy (Phases 5–6) — Country → Province → City → Town → Neighborhood ──
+  // Country is fixed to the rollout market (Spain) for now. Geo tables are public-read.
+  const RETAIL_ISO = 'ES'
+  const { data: retailCountry } = await (supabase.from('countries') as any)
+    .select('id, name').eq('iso_code', RETAIL_ISO).maybeSingle()
+  const retailCountryId: string | null = retailCountry?.id ?? null
+
+  const sel = {
+    province: searchParams.province, city: searchParams.city,
+    town: searchParams.town, neighborhood: searchParams.neighborhood,
+  }
+
+  // Load each level's options based on the current selection (defensive — tables
+  // may be empty until seeded; never throw).
+  const safeList = async (q: any): Promise<{ id: string; name: string }[]> => {
+    try { const { data } = await q; return (data ?? []) as any[] } catch { return [] }
+  }
+  const [provinces, cities, towns, neighborhoods] = await Promise.all([
+    retailCountryId ? safeList((supabase.from('provinces') as any).select('id, name').eq('country_id', retailCountryId).order('name')) : Promise.resolve([]),
+    sel.province ? safeList((supabase.from('cities') as any).select('id, name').eq('province_id', sel.province).order('name')) : Promise.resolve([]),
+    sel.city ? safeList((supabase.from('towns') as any).select('id, name').eq('city_id', sel.city).order('name')) : Promise.resolve([]),
+    sel.town ? safeList((supabase.from('neighborhoods') as any).select('id, name').eq('town_id', sel.town).order('name')) : Promise.resolve([]),
+  ])
+
+  // Resolve the selected location to a set of seller ids (products inherit seller location).
+  let localSupplierIds: string[] | null = null
+  if (!searchParams.supplier && (sel.neighborhood || sel.town || sel.city || sel.province)) {
+    const supSel = (col: string, val: string) =>
+      safeList((supabase.from('suppliers') as any).select('id').eq(col, val).neq('status', 'SUSPENDED'))
+    let rows: { id: string }[] = []
+    if (sel.neighborhood)   rows = await supSel('neighborhood_id', sel.neighborhood)
+    else if (sel.town)      rows = await supSel('town_id', sel.town)
+    else if (sel.city)      rows = await supSel('city_id', sel.city)
+    else if (sel.province) {
+      // Province → sellers whose city is in that province, or province set directly.
+      const cityIds = (await safeList((supabase.from('cities') as any).select('id').eq('province_id', sel.province))).map((c) => c.id)
+      const byProv = await supSel('province_id', sel.province)
+      const byCity = cityIds.length ? await safeList((supabase.from('suppliers') as any).select('id').in('city_id', cityIds).neq('status', 'SUSPENDED')) : []
+      rows = [...byProv, ...byCity]
+    }
+    localSupplierIds = Array.from(new Set(rows.map((r) => r.id)))
+    if (localSupplierIds.length === 0) localSupplierIds = ['00000000-0000-0000-0000-000000000000']
+  }
 
   const categoriesRes = await supabase.from('categories').select('*').order('sort_order')
   const allCats = await localizeCategoryNames(categoriesRes.data ?? [], await getLocale())
@@ -65,6 +111,9 @@ export default async function StorePage({
       .eq('suppliers.status', 'ACTIVE')
       .in('marketplace_context', ['retail', 'both'])
   }
+
+  // Local retail filter — restrict to sellers in the chosen area.
+  if (localSupplierIds) productQuery = productQuery.in('supplier_id', localSupplierIds)
 
   if (searchParams.category) {
     const cat = allCats.find((c) => c.slug === searchParams.category)
@@ -135,6 +184,15 @@ export default async function StorePage({
         <div className="mb-6">
           <SearchBar defaultValue={searchParams.q} />
         </div>
+
+        {/* Local commerce selector — Country → Province → City → Town → Neighborhood */}
+        {!searchParams.supplier && retailCountryId && (
+          <RetailLocationBar
+            countryName={retailCountry?.name ?? 'Spain'}
+            provinces={provinces} cities={cities} towns={towns} neighborhoods={neighborhoods}
+            selected={sel}
+          />
+        )}
 
         <div className="flex gap-8">
           {/* Category sidebar */}
