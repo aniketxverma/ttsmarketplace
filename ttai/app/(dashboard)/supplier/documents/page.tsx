@@ -77,12 +77,12 @@ export default function SupplierDocumentsPage() {
 
     const file = fileRef.current.files[0]
     const supabase = createClient()
-    const path = `${supplierId}/${Date.now()}-${file.name}`
+    const path = `documents/${supplierId}/${Date.now()}-${file.name}`
 
-    const { error: uploadError } = await supabase.storage.from('supplier-documents').upload(path, file)
+    const { error: uploadError } = await supabase.storage.from('brand-assets').upload(path, file)
     if (uploadError) { alert(uploadError.message); setUploading(false); return }
 
-    const { data: urlData } = supabase.storage.from('supplier-documents').getPublicUrl(path)
+    const { data: urlData } = supabase.storage.from('brand-assets').getPublicUrl(path)
 
     const row: Record<string, unknown> = {
       supplier_id: supplierId,

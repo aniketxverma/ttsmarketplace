@@ -45,10 +45,10 @@ export function CatalogueManager({ supplierId }: { supplierId: string }) {
     if (!fileRef.current?.files?.[0]) return
     setUploading(true)
     const file = fileRef.current.files[0]
-    const path = `${supplierId}/${Date.now()}-${file.name}`
-    const { error: upErr } = await supabase.storage.from('supplier-documents').upload(path, file)
+    const path = `documents/${supplierId}/${Date.now()}-${file.name}`
+    const { error: upErr } = await supabase.storage.from('brand-assets').upload(path, file)
     if (upErr) { alert(upErr.message); setUploading(false); return }
-    const { data: urlData } = supabase.storage.from('supplier-documents').getPublicUrl(path)
+    const { data: urlData } = supabase.storage.from('brand-assets').getPublicUrl(path)
 
     const row: Record<string, unknown> = {
       supplier_id: supplierId, doc_type: docType, file_url: urlData.publicUrl,
