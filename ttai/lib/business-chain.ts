@@ -124,38 +124,36 @@ export function entityKind(role?: string | null, businessType?: string | null): 
 }
 
 export interface DirectoryAccess {
-  suppliers: boolean     // may browse the Suppliers directory (full)
-  distributors: boolean  // may browse the Distributors directory (full)
-  factories: boolean     // may browse the Factories directory (full)
-  /** "Watcher": may see the listing as a preview, but contact / sourcing
-   *  opportunities stay locked until they upgrade. */
-  watch: { suppliers?: boolean; distributors?: boolean; factories?: boolean }
+  suppliers: boolean     // may browse the Suppliers directory
+  distributors: boolean  // may browse the Distributors directory
+  factories: boolean     // may browse the Factories directory
 }
 
 /** What counterpart directories a viewer may browse, by chain level + paid tier.
- *  Retail rule (client): distributors are FREE (their direct upstream); the
- *  factories zone is a FREE watcher (browse-only, opportunities locked); and
- *  suppliers + factory/supplier opportunities require a PAID plan. */
+ *
+ *  Client rule — each level has ONE direct (free) relationship; reaching any
+ *  OTHER level requires a paid plan:
+ *    • Factory  ↔ Supplier     → factory sees Suppliers free
+ *    • Distributor ↔ Retail    → retail sees Distributors free
+ *    • Retail   ↔ End user
+ *  Everything else (factories/suppliers for retail, etc.) is paid (r >= 1). */
 export function directoryAccess(level: ChainLevel, tier?: string | null): DirectoryAccess {
   const r = tierRank(tier)
+  const paid = r >= 1
   switch (level) {
     case 'admin':
-      return { suppliers: true, distributors: true, factories: true, watch: {} }
+      return { suppliers: true, distributors: true, factories: true }
     case 'consumer':
-      return { suppliers: false, distributors: false, factories: false, watch: {} }
+      return { suppliers: false, distributors: false, factories: false }
     case 'retail':
-      return {
-        suppliers:    r >= 1,   // pay to be presented suppliers + their opportunities
-        distributors: true,     // free: all distributors (direct upstream)
-        factories:    true,     // free: watch the factories zone
-        watch: { factories: r < 1 }, // factories are watch-only until they upgrade
-      }
+      // Direct = Distributors (free). Suppliers & Factories require payment.
+      return { suppliers: paid, distributors: true, factories: paid }
     case 'distributor':
-      // Suppliers & distributors are presented Factories (any paid tier).
-      return { suppliers: false, distributors: false, factories: r >= 1, watch: {} }
+      // Direct = Retail (downstream, no directory). Source upstream → pay.
+      return { suppliers: paid, distributors: false, factories: paid }
     case 'factory':
-      // Factories are presented Suppliers & Distributors (any paid tier).
-      return { suppliers: r >= 1, distributors: r >= 1, factories: false, watch: {} }
+      // Direct = Suppliers (free). Distributors require payment.
+      return { suppliers: true, distributors: paid, factories: false }
   }
 }
 
