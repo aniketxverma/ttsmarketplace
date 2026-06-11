@@ -11,14 +11,15 @@ export default async function EditProductPage({ params }: { params: { id: string
   const user = await requireAuth()
   const supabase = createClient()
 
-  const { data: supplier } = await supabase
-    .from('suppliers')
-    .select('id, status')
+  const { data: supplier } = await (supabase
+    .from('suppliers') as any)
+    .select('id, status, business_type')
     .eq('owner_id', user.id)
     .single()
 
-  const { data: prof } = await (supabase.from('profiles') as any).select('tier').eq('id', user.id).single()
+  const { data: prof } = await (supabase.from('profiles') as any).select('tier, business_type').eq('id', user.id).single()
   const sellerTier = prof?.tier ?? 'free'
+  const businessType = (supplier as any)?.business_type ?? prof?.business_type ?? null
   const pricing = await getPricingConfig()
 
   if (!supplier) redirect('/supplier/onboarding')
@@ -74,6 +75,7 @@ export default async function EditProductPage({ params }: { params: { id: string
           mode="edit"
           productId={product.id}
           sellerTier={sellerTier}
+          businessType={businessType}
           minMarginPct={pricing.minMarginPct}
           vatPct={pricing.vatPct}
           vatEnabled={pricing.vatEnabled}

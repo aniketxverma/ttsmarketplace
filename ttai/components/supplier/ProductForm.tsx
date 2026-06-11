@@ -6,6 +6,7 @@ import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import { slugify } from '@/lib/utils'
 import { canSellUnit, requiredPlanLabel, SELL_PLAN_LABEL } from '@/lib/selling'
+import { tierRank, freeSalesChannel } from '@/lib/business-chain'
 import type { PurchaseUnit } from '@/lib/packaging'
 import { minRetailCents, addVatCents } from '@/lib/pricing-rules'
 import { CONDITIONS } from '@/lib/conditions'
@@ -31,6 +32,8 @@ interface ProductFormProps {
   initialSpecs?: Record<string, any>
   /** Seller's plan tier — gates which units they can sell by. */
   sellerTier?: string
+  /** Seller's business type — decides their free sales channel (B2B vs retail). */
+  businessType?: string | null
   /** Marketplace pricing rules (admin-configured). */
   minMarginPct?: number
   vatPct?: number
@@ -86,12 +89,24 @@ const INITIAL: FormState = {
 const CURRENCIES = ['EUR', 'USD', 'GBP', 'AED', 'SAR', 'MAD']
 
 export function ProductForm({
-  supplierId, mode, productId, initialData, initialSpecs, sellerTier,
+  supplierId, mode, productId, initialData, initialSpecs, sellerTier, businessType,
   minMarginPct = 30, vatPct = 21, vatEnabled = true,
 }: ProductFormProps) {
   const router = useRouter()
   const t = useT()
-  const [form, setForm] = useState<FormState>({ ...INITIAL, ...initialData })
+
+  // Free sales channel: your home channel is free; the other channel (or both)
+  // needs a paid plan. B2B businesses sell B2B free; retail/sales-points sell retail free.
+  const paidChannels = tierRank(sellerTier) >= 1
+  const freeChannel = freeSalesChannel(businessType)                       // 'wholesale' | 'retail'
+  const lockedChannel = freeChannel === 'wholesale' ? 'retail' : 'wholesale'
+
+  const [form, setForm] = useState<FormState>({
+    ...INITIAL,
+    // Default a free seller's product to their free channel.
+    marketplaceContext: paidChannels ? INITIAL.marketplaceContext : freeChannel,
+    ...initialData,
+  })
   const [specs, setSpecs] = useState<Record<string, string>>(() => (initialSpecs ?? {}) as Record<string, string>)
   const [categories, setCategories] = useState<{ id: string; name: string; slug: string; template_fields?: TemplateField[] }[]>([])
   const [cities, setCities] = useState<{ id: string; name: string }[]>([])
@@ -160,7 +175,8 @@ export function ProductForm({
 
     const payload = {
       category_id:         form.categoryId,
-      marketplace_context: form.marketplaceContext,
+      // Enforce the free-channel rule even if the field was tampered with.
+      marketplace_context: !paidChannels && form.marketplaceContext !== freeChannel ? freeChannel : form.marketplaceContext,
       city_id:             form.cityId || null,
       name:                form.name.trim(),
       slug:                form.slug.trim(),
@@ -394,12 +410,31 @@ export function ProductForm({
           </div>
           <div className="space-y-1.5">
             <label className={labelCls}>{t('pform.sell_shop')}</label>
-            <select className={inputCls} value={form.marketplaceContext} onChange={(e) => update('marketplaceContext', e.target.value as FormState['marketplaceContext'])}>
-              <option value="wholesale">{t('pform.shop_b2b')}</option>
-              <option value="retail">{t('pform.shop_retail')}</option>
-              <option value="both">{t('pform.shop_both')}</option>
+            <select className={inputCls} value={form.marketplaceContext}
+              onChange={(e) => {
+                const v = e.target.value as FormState['marketplaceContext']
+                // Block the locked channel / both for free sellers.
+                if (!paidChannels && v !== freeChannel) return
+                update('marketplaceContext', v)
+              }}>
+              <option value="wholesale" disabled={!paidChannels && lockedChannel === 'wholesale'}>
+                {t('pform.shop_b2b')}{!paidChannels && lockedChannel === 'wholesale' ? ' 🔒' : ''}
+              </option>
+              <option value="retail" disabled={!paidChannels && lockedChannel === 'retail'}>
+                {t('pform.shop_retail')}{!paidChannels && lockedChannel === 'retail' ? ' 🔒' : ''}
+              </option>
+              <option value="both" disabled={!paidChannels}>
+                {t('pform.shop_both')}{!paidChannels ? ' 🔒' : ''}
+              </option>
             </select>
-            <p className="text-[11px] text-gray-400">Controls where this product appears: your B2B (wholesale) shop, your Online (retail) shop, or both.</p>
+            {paidChannels ? (
+              <p className="text-[11px] text-gray-400">Controls where this product appears: your B2B (wholesale) shop, your Online (retail) shop, or both.</p>
+            ) : (
+              <p className="text-[11px] text-amber-600">
+                Your plan sells on the <strong>{freeChannel === 'wholesale' ? 'B2B (wholesale)' : 'Online (retail)'}</strong> shop for free.{' '}
+                <a href="/pricing" className="font-bold underline">Upgrade</a> to also sell on the {freeChannel === 'wholesale' ? 'Online (retail)' : 'B2B (wholesale)'} shop.
+              </p>
+            )}
           </div>
           {needsCity && (
             <div className="space-y-1.5">

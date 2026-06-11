@@ -89,6 +89,21 @@ export function tierRank(tier?: string | null): number {
   return TIER_RANK[(tier as Tier)] ?? 0
 }
 
+// ── Free vs paid sales channel ───────────────────────────────────────────────
+// Each business sells on ONE channel for free, decided by its type:
+//   • Retail businesses (sales points / shops) → free RETAIL shop.
+//   • Everyone else (factory / manufacturer / supplier / distributor) → free B2B.
+// Selling on the OTHER channel (or both) requires a paid plan.
+export type SalesChannel = 'wholesale' | 'retail'
+const RETAIL_BUSINESS_TYPES = new Set([
+  'retail', 'retailer', 'retail_shop', 'sales_point', 'salespoint', 'shop', 'store', 'point_of_sale',
+])
+export function freeSalesChannel(businessType?: string | null): SalesChannel {
+  return businessType && RETAIL_BUSINESS_TYPES.has(businessType.toLowerCase().replace(/\s+/g, '_'))
+    ? 'retail'
+    : 'wholesale'
+}
+
 /** Which directory bucket a *business/listing* belongs to, for presentation. */
 export type EntityKind = 'factory' | 'distributor' | 'supplier'
 
