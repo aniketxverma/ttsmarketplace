@@ -13,7 +13,8 @@ import { Pagination } from '@/components/marketplace/Pagination'
 import { PromotionBanner } from '@/components/marketplace/PromotionBanner'
 import { SupplierMiniCard, type MiniSupplier } from '@/components/marketplace/SupplierMiniCard'
 import { ShoppingChannels } from '@/components/marketplace/ShoppingChannels'
-import { REGIONS } from '@/lib/regions-data'
+import { MarketplaceTopBar } from '@/components/marketplace/MarketplaceTopBar'
+import { ShopCard, type ShopCardData } from '@/components/marketplace/ShopCard'
 import type { Category } from '@/types/domain'
 
 const PAGE_SIZE = 24
@@ -35,12 +36,23 @@ const CAT_ACCENT: Record<string, string> = {
 export default async function MarketplacePage({
   searchParams,
 }: {
-  searchParams: { category?: string; q?: string; page?: string; region?: string; supplier?: string; brand?: string }
+  searchParams: { category?: string; q?: string; page?: string; region?: string; supplier?: string; brand?: string; view?: string; country?: string }
 }) {
   const supabase = createClient()
   const page = parseInt(searchParams.page || '1')
   const activeRegion = searchParams.region ?? null
   const activeSupplier = searchParams.supplier ?? null
+  const activeView: 'products' | 'shops' = searchParams.view === 'shops' ? 'shops' : 'products'
+  const activeCountryIso = (searchParams.country ?? '').toUpperCase()
+
+  // Europe country banner → resolve the chosen ISO to a country_id (used to filter
+  // both products and shops by the supplier's inherited country — Phase 7).
+  let activeCountryId: string | null = null
+  if (activeCountryIso) {
+    const { data: c } = await (supabase.from('countries') as any)
+      .select('id').eq('iso_code', activeCountryIso).maybeSingle()
+    activeCountryId = c?.id ?? '00000000-0000-0000-0000-000000000000'
+  }
 
   const [categoriesRes, promotionsRes] = await Promise.all([
     supabase.from('categories').select('*').order('sort_order'),
@@ -88,6 +100,9 @@ export default async function MarketplacePage({
 
   // Scoped to a single supplier (e.g. arriving from a brand's "Shop B2B")
   if (activeSupplier) productQuery = productQuery.eq('supplier_id', activeSupplier)
+
+  // Europe country banner — filter by the supplier's country (inherited per product).
+  if (activeCountryId) productQuery = productQuery.eq('suppliers.country_id', activeCountryId)
 
   if (searchParams.category) {
     const cat = allCats.find((c) => c.slug === searchParams.category)
@@ -242,6 +257,50 @@ export default async function MarketplacePage({
       .slice(0, 9)
   }
 
+  // ── SHOPS view (Phase 1) — verified business profiles, filtered by category + country ──
+  let shops: ShopCardData[] = []
+  if (activeView === 'shops') {
+    let supQ = (supabase.from('suppliers') as any)
+      .select('id, legal_name, trade_name, logo_url, brand_slug, reliability_tier, tagline, description, country_id, countries(name)')
+      .eq('status', 'ACTIVE')
+    if (activeCountryId) supQ = supQ.eq('country_id', activeCountryId)
+    const { data: supRows } = await supQ.limit(200)
+    let list = (supRows ?? []) as any[]
+
+    // Category filter — only shops that carry a product in the chosen category.
+    if (activeCat) {
+      const catIds = [activeCat.id, ...allCats.filter((c) => c.parent_id === activeCat.id).map((c) => c.id)]
+      const { data: pr } = await supabase.from('products').select('supplier_id').eq('is_published', true).in('category_id', catIds)
+      const allowed = new Set((pr ?? []).map((r: any) => r.supplier_id))
+      list = list.filter((s) => allowed.has(s.id))
+    }
+
+    // Product counts + top categories per shop (single query).
+    const ids = list.map((s) => s.id)
+    const counts = new Map<string, number>()
+    const catNames = new Map<string, Set<string>>()
+    if (ids.length) {
+      const { data: pc } = await supabase.from('products').select('supplier_id, categories(name)').eq('is_published', true).in('supplier_id', ids).limit(2000)
+      for (const r of (pc ?? []) as any[]) {
+        counts.set(r.supplier_id, (counts.get(r.supplier_id) ?? 0) + 1)
+        const nm = (r.categories as any)?.name
+        if (nm) { if (!catNames.has(r.supplier_id)) catNames.set(r.supplier_id, new Set()); catNames.get(r.supplier_id)!.add(nm) }
+      }
+    }
+    shops = list.map((s) => ({
+      id: s.id, legal_name: s.legal_name, trade_name: s.trade_name, logo_url: s.logo_url,
+      brand_slug: s.brand_slug, reliability_tier: s.reliability_tier,
+      tagline: s.tagline ?? s.description ?? null,
+      country_name: (s.countries as any)?.name ?? null,
+      business_type: null,
+      categories: Array.from(catNames.get(s.id) ?? []),
+      product_count: counts.get(s.id) ?? 0,
+    }))
+    shops.sort((a, b) => (b.product_count ?? 0) - (a.product_count ?? 0))
+  }
+
+  const categoryLabel = activeCat?.name ?? null
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-6">
@@ -289,32 +348,8 @@ export default async function MarketplacePage({
         </div>
       )}
 
-      {/* ── Region filter — pick a region after choosing your category ── */}
-      <div className="mb-6 flex items-center gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
-        <span className="text-xs font-bold text-gray-400 uppercase tracking-wide flex-shrink-0 mr-1 flex items-center gap-1">
-          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-          Region:
-        </span>
-        {[{ id: '', name: 'All Regions' }, ...REGIONS.map((r) => ({ id: r.id, name: r.name }))].map((r) => {
-          const params = new URLSearchParams()
-          if (searchParams.category) params.set('category', searchParams.category)
-          if (searchParams.q) params.set('q', searchParams.q)
-          if (activeSupplier) params.set('supplier', activeSupplier)
-          if (r.id) params.set('region', r.id)
-          const href = `/marketplace${params.toString() ? `?${params.toString()}` : ''}`
-          // A country key (europe:spain) keeps its parent region pill (europe) highlighted,
-          // so an arriving buyer sees the region is already chosen — no need to pick again.
-          const isActive = (activeRegion ?? '') === r.id || (activeRegion ?? '').split(':')[0] === r.id
-          return (
-            <Link key={r.id || 'all'} href={href}
-              className={`px-3.5 py-1.5 rounded-full text-sm font-semibold whitespace-nowrap transition-colors flex-shrink-0 ${
-                isActive ? 'bg-[#0B1F4D] text-white shadow-sm' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}>
-              {r.name}
-            </Link>
-          )
-        })}
-      </div>
+      {/* ── Products | Shops tabs + Europe country banner (dynamic, no reload) ── */}
+      <MarketplaceTopBar activeView={activeView} activeCountry={activeCountryIso} categoryLabel={categoryLabel} />
 
       <PromotionBanner promotions={promotions} />
 
@@ -324,6 +359,19 @@ export default async function MarketplacePage({
         </aside>
 
         <div className="flex-1 min-w-0">
+          {activeView === 'shops' ? (
+            shops.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {shops.map((s) => <ShopCard key={s.id} shop={s} />)}
+              </div>
+            ) : (
+              <div className="text-center py-20 text-muted-foreground">
+                <p className="text-lg">No shops found</p>
+                <p className="text-sm mt-1">Try a different category or country</p>
+              </div>
+            )
+          ) : (
+          <>
           {/* Three ways to shop this collection */}
           {activeCat && (
             <div className="mb-8">
@@ -433,6 +481,8 @@ export default async function MarketplacePage({
               </div>
             )
           })()}
+          </>
+          )}
         </div>
       </div>
     </div>
