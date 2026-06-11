@@ -384,6 +384,10 @@ export default function RegisterPage() {
             )
           })}
         </div>
+        <p className="text-center text-sm text-gray-400 animate-fade-in delay-400">
+          Already have an account?{' '}
+          <Link href="/login" className="text-[#0B1F4D] font-bold hover:underline">Sign in</Link>
+        </p>
       </div>
     )
   }
