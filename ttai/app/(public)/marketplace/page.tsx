@@ -260,12 +260,15 @@ export default async function MarketplacePage({
   // ── SHOPS view (Phase 1) — verified business profiles, filtered by category + country ──
   let shops: ShopCardData[] = []
   if (activeView === 'shops') {
-    let supQ = (supabase.from('suppliers') as any)
-      .select('id, legal_name, trade_name, logo_url, brand_slug, reliability_tier, tagline, description, country_id, countries(name)')
-      .eq('status', 'ACTIVE')
-    if (activeCountryId) supQ = supQ.eq('country_id', activeCountryId)
-    const { data: supRows } = await supQ.limit(200)
-    let list = (supRows ?? []) as any[]
+    // business_type (migration 0053) may not be applied yet — fall back without it.
+    const buildSupQ = (cols: string) => {
+      let q = (supabase.from('suppliers') as any).select(cols).eq('status', 'ACTIVE')
+      if (activeCountryId) q = q.eq('country_id', activeCountryId)
+      return q.limit(200)
+    }
+    let supRes = await buildSupQ('id, legal_name, trade_name, logo_url, brand_slug, reliability_tier, tagline, description, country_id, business_type, countries(name)')
+    if (supRes.error) supRes = await buildSupQ('id, legal_name, trade_name, logo_url, brand_slug, reliability_tier, tagline, description, country_id, countries(name)')
+    let list = (supRes.data ?? []) as any[]
 
     // Category filter — only shops that carry a product in the chosen category.
     if (activeCat) {
@@ -292,7 +295,7 @@ export default async function MarketplacePage({
       brand_slug: s.brand_slug, reliability_tier: s.reliability_tier,
       tagline: s.tagline ?? s.description ?? null,
       country_name: (s.countries as any)?.name ?? null,
-      business_type: null,
+      business_type: s.business_type ?? null,
       categories: Array.from(catNames.get(s.id) ?? []),
       product_count: counts.get(s.id) ?? 0,
     }))
