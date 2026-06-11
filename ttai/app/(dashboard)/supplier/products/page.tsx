@@ -21,6 +21,9 @@ export default async function SupplierProductsPage() {
 
   if (!supplier) redirect('/supplier/onboarding')
 
+  // Suppliers manage their shop while pending review; only suspended accounts lose access.
+  const canManage = supplier.status !== 'SUSPENDED'
+
   const { data: products } = await (supabase
     .from('products') as any)
     .select('id, name, price_cents, currency_code, is_published, stock_qty, min_order_qty, sku, price_negotiable, categories(name), product_images(url, sort_order)')
@@ -34,7 +37,7 @@ export default async function SupplierProductsPage() {
           <h1 className="text-2xl font-extrabold text-[#0B1F4D]">Products</h1>
           <p className="text-gray-500 text-sm mt-0.5">{products?.length ?? 0} product{products?.length !== 1 ? 's' : ''} total</p>
         </div>
-        {supplier.status === 'ACTIVE' ? (
+        {canManage ? (
           <div className="flex items-center gap-2">
             <Link
               href="/supplier/master-catalog"
@@ -64,7 +67,7 @@ export default async function SupplierProductsPage() {
           </div>
         ) : (
           <div className="rounded-xl bg-yellow-50 border border-yellow-200 px-4 py-2 text-xs text-yellow-800 font-medium">
-            Account verification required to add products
+            Your account is suspended — product management is disabled
           </div>
         )}
       </div>
@@ -78,11 +81,11 @@ export default async function SupplierProductsPage() {
           </div>
           <h3 className="font-bold text-gray-900 mb-1">No products yet</h3>
           <p className="text-sm text-gray-500 mb-4">
-            {supplier.status === 'ACTIVE'
-              ? 'Add your first product to start selling on the marketplace.'
-              : 'Your account must be verified before you can add products.'}
+            {canManage
+              ? 'Add your first product to start building your shop. It goes live once your account is verified.'
+              : 'Your account is suspended — product management is disabled.'}
           </p>
-          {supplier.status === 'ACTIVE' && (
+          {canManage && (
             <Link
               href="/supplier/products/new"
               className="inline-flex items-center gap-2 rounded-xl bg-[#0B1F4D] text-white px-6 py-2.5 text-sm font-bold hover:bg-[#162d6e] transition-colors"

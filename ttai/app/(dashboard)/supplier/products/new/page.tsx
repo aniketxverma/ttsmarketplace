@@ -15,7 +15,9 @@ export default async function NewProductPage() {
     .single()
 
   if (!supplier) redirect('/supplier/onboarding')
-  if (supplier.status !== 'ACTIVE') redirect('/supplier')
+  // Suppliers can build their shop while still pending review — only suspended
+  // accounts are blocked. Verification gates public visibility, not management.
+  if (supplier.status === 'SUSPENDED') redirect('/supplier')
 
   const { data: prof } = await (supabase.from('profiles') as any).select('tier').eq('id', user.id).single()
   const sellerTier = prof?.tier ?? 'free'

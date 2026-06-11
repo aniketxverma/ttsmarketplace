@@ -247,7 +247,7 @@ export default async function SupplierDashboardPage() {
           <div className="rounded-2xl border border-gray-100 bg-white p-5">
             <h2 className="font-bold text-[#0B1F4D] mb-4">Quick Actions</h2>
             <div className="space-y-2">
-              {supplier.status === 'ACTIVE' ? (
+              {supplier.status !== 'SUSPENDED' ? (
                 <>
                   <Link
                     href="/supplier/products/new"
