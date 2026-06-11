@@ -47,12 +47,18 @@ function directoryGate(kind: EntityKind, level: ChainLevel): { title: string; bo
     }
   }
   if (!everUnlockable) {
-    // Not this viewer's lane — point them at their counterpart directory.
-    const laneHref = level === 'distributor' ? '/factories' : '/suppliers'
-    const laneName = level === 'distributor' ? 'Factories' : 'Suppliers & Distributors'
+    // Not this viewer's lane — point them at their direct counterpart directory.
+    const laneHref = level === 'supplier' ? '/factories'
+      : level === 'factory' ? '/suppliers'
+      : level === 'distributor' ? '/factories'
+      : '/suppliers'
+    const laneName = level === 'supplier' ? 'Factories'
+      : level === 'factory' ? 'Suppliers'
+      : level === 'distributor' ? 'Factories'
+      : 'Suppliers'
     return {
       title: `Your membership presents you ${laneName}`,
-      body: `Matchmaking is directional — as a ${level === 'factory' ? 'manufacturer' : level}, your counterpart isn't ${kind}s. Head to the part of the chain meant for you.`,
+      body: `Matchmaking is directional — as a ${level === 'factory' ? 'manufacturer' : level}, your direct counterpart isn't ${kind}s. Head to the part of the chain meant for you.`,
       cta: `Go to ${laneName}`, href: laneHref,
     }
   }

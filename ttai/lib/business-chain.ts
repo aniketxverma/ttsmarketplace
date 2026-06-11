@@ -13,7 +13,7 @@
 
 import type { PurchaseUnit } from '@/lib/packaging'
 
-export type ChainLevel = 'consumer' | 'retail' | 'distributor' | 'factory' | 'admin'
+export type ChainLevel = 'consumer' | 'retail' | 'distributor' | 'supplier' | 'factory' | 'admin'
 
 const FACTORY_TYPES     = ['Manufacturer', 'Brand Owner', 'OEM Producer']
 const DISTRIBUTOR_TYPES = ['Distributor', 'Trader / Wholesaler', 'Export Agent', 'Wholesaler', 'Importer']
@@ -24,8 +24,9 @@ export function chainLevel(role?: string | null, businessType?: string | null): 
   if (role === 'admin') return 'admin'
 
   if (role === 'supplier') {
-    if (businessType && DISTRIBUTOR_TYPES.includes(businessType)) return 'distributor'
-    return 'factory' // manufacturers, brand owners, OEM — top of the chain
+    if (businessType && FACTORY_TYPES.includes(businessType)) return 'factory'        // makes products
+    if (businessType && DISTRIBUTOR_TYPES.includes(businessType)) return 'distributor' // moves at scale
+    return 'supplier' // wholesalers / traders / generic suppliers
   }
   if (role === 'broker') return 'distributor' // intermediary — sources from factories, supplies retail
 
@@ -50,9 +51,11 @@ const MATRIX: Record<ChainLevel, Visibility> = {
   consumer:    { onlineShop: true, b2b: false, supplierDirectory: false, factoryProfiles: false, wholesalePricing: false },
   // Retail shop — buys from suppliers/distributors/factories to stock & resell
   retail:      { onlineShop: true, b2b: true,  supplierDirectory: true,  factoryProfiles: true,  wholesalePricing: true  },
-  // Supplier/Distributor — sources from factories
+  // Distributor — moves products at scale, sources from suppliers/factories
   distributor: { onlineShop: true, b2b: true,  supplierDirectory: true,  factoryProfiles: true,  wholesalePricing: true  },
-  // Factory — sells through the ecosystem to distributors & suppliers
+  // Supplier — wholesales products, sources from factories
+  supplier:    { onlineShop: true, b2b: true,  supplierDirectory: true,  factoryProfiles: true,  wholesalePricing: true  },
+  // Factory — sells through the ecosystem to suppliers & distributors
   factory:     { onlineShop: true, b2b: true,  supplierDirectory: true,  factoryProfiles: true,  wholesalePricing: true  },
   // Admin — full visibility
   admin:       { onlineShop: true, b2b: true,  supplierDirectory: true,  factoryProfiles: true,  wholesalePricing: true  },
@@ -133,10 +136,10 @@ export interface DirectoryAccess {
  *
  *  Client rule — each level has ONE direct (free) relationship; reaching any
  *  OTHER level requires a paid plan:
- *    • Factory  ↔ Supplier     → factory sees Suppliers free
- *    • Distributor ↔ Retail    → retail sees Distributors free
+ *    • Factory  ↔ Supplier
+ *    • Distributor ↔ Retail
  *    • Retail   ↔ End user
- *  Everything else (factories/suppliers for retail, etc.) is paid (r >= 1). */
+ *  Everything else is paid (r >= 1). */
 export function directoryAccess(level: ChainLevel, tier?: string | null): DirectoryAccess {
   const r = tierRank(tier)
   const paid = r >= 1
@@ -151,6 +154,9 @@ export function directoryAccess(level: ChainLevel, tier?: string | null): Direct
     case 'distributor':
       // Direct = Retail (downstream, no directory). Source upstream → pay.
       return { suppliers: paid, distributors: false, factories: paid }
+    case 'supplier':
+      // Direct = Factories (free). Distributors require payment.
+      return { suppliers: false, distributors: paid, factories: true }
     case 'factory':
       // Direct = Suppliers (free). Distributors require payment.
       return { suppliers: true, distributors: paid, factories: false }
