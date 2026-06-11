@@ -189,19 +189,29 @@ function ProductCard({ product, wa, canSeeB2B = true, supplierId = '' }: { produ
           </p>
         </div>
 
-        {/* Our two channels — Online Shop (retail) + B2B (wholesale) */}
-        <div className={`grid ${canSeeB2B ? 'grid-cols-2' : 'grid-cols-1'} gap-1.5 mt-2.5`}>
-          <Link href={`/store?supplier=${supplierId}`}
-            className="flex items-center justify-center gap-1 rounded-md border border-purple-200 bg-purple-50 text-purple-700 text-[11px] font-bold py-1.5 hover:bg-purple-100 transition-colors">
-            <ShoppingBag className="w-3 h-3" /> Online
-          </Link>
-          {canSeeB2B && (
-            <Link href={productHref}
-              className="flex items-center justify-center gap-1 rounded-md border border-blue-200 bg-blue-50 text-blue-700 text-[11px] font-bold py-1.5 hover:bg-blue-100 transition-colors">
-              <Building2 className="w-3 h-3" /> B2B
-            </Link>
-          )}
-        </div>
+        {/* Channels this product actually sells on (per its marketplace_context) */}
+        {(() => {
+          const ctx = product.marketplace_context ?? 'wholesale'
+          const showRetail = ctx === 'retail' || ctx === 'both'
+          const showB2B = (ctx === 'wholesale' || ctx === 'both') && canSeeB2B
+          if (!showRetail && !showB2B) return null
+          return (
+            <div className={`grid ${showRetail && showB2B ? 'grid-cols-2' : 'grid-cols-1'} gap-1.5 mt-2.5`}>
+              {showRetail && (
+                <Link href={`/store?supplier=${supplierId}`}
+                  className="flex items-center justify-center gap-1 rounded-md border border-purple-200 bg-purple-50 text-purple-700 text-[11px] font-bold py-1.5 hover:bg-purple-100 transition-colors">
+                  <ShoppingBag className="w-3 h-3" /> Online
+                </Link>
+              )}
+              {showB2B && (
+                <Link href={productHref}
+                  className="flex items-center justify-center gap-1 rounded-md border border-blue-200 bg-blue-50 text-blue-700 text-[11px] font-bold py-1.5 hover:bg-blue-100 transition-colors">
+                  <Building2 className="w-3 h-3" /> B2B
+                </Link>
+              )}
+            </div>
+          )
+        })()}
 
         <Link href={productHref}
           className="mt-2 block text-center bg-[#0B1F4D] hover:bg-[#16306b] text-white rounded-lg py-2 text-[12px] font-bold transition-colors">
@@ -445,6 +455,12 @@ export function BrandTabs({
     () => gallery.filter((g) => g.type === 'video').map((g) => ({ id: g.id, url: g.url, caption: g.caption })),
     [gallery]
   )
+
+  // Which channels this supplier actually sells on — so we never show an empty shop.
+  const hasB2BProducts    = useMemo(() => products.some((p) => { const c = p.marketplace_context ?? 'wholesale'; return c === 'wholesale' || c === 'both' }), [products])
+  const hasRetailProducts = useMemo(() => products.some((p) => p.marketplace_context === 'retail' || p.marketplace_context === 'both'), [products])
+  const showB2BShop    = canSeeB2B && hasB2BProducts
+  const showRetailShop = hasRetailProducts
   const NAV_ITEMS = NAV_ITEM_IDS.map(item => ({ ...item, label: t(item.msgKey) }))
 
   const [activeSection, setActiveSection] = useState('products')
@@ -633,10 +649,11 @@ export function BrandTabs({
               />
             </div>
 
-            {/* ── Shops: Online always; B2B only for business viewers (privacy) ── */}
-            <div data-reveal className={`grid grid-cols-1 ${canSeeB2B ? 'sm:grid-cols-2' : ''} gap-4 mb-14`}>
-              {/* Shop B2B — hidden from end customers / consumers */}
-              {canSeeB2B && (
+            {/* ── Shops: only the channels this supplier actually sells on ── */}
+            {(showB2BShop || showRetailShop) && (
+            <div data-reveal className={`grid grid-cols-1 ${showB2BShop && showRetailShop ? 'sm:grid-cols-2' : ''} gap-4 mb-14`}>
+              {/* Shop B2B — hidden from consumers & when no wholesale products */}
+              {showB2BShop && (
               <Link href={`/marketplace?supplier=${supplier.id}`}
                 className="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col">
                 <div className="relative overflow-hidden bg-gradient-to-br from-[#0B1F4D] to-[#1a3a7a] px-5 py-4 flex items-center justify-between">
@@ -663,7 +680,8 @@ export function BrandTabs({
               </Link>
               )}
 
-              {/* Online Shop */}
+              {/* Online Shop — only when they have retail products */}
+              {showRetailShop && (
               <Link href={`/store?supplier=${supplier.id}`}
                 className="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col">
                 <div className="relative overflow-hidden bg-gradient-to-br from-purple-600 to-violet-800 px-5 py-4 flex items-center justify-between">
@@ -688,7 +706,9 @@ export function BrandTabs({
                   </span>
                 </div>
               </Link>
+              )}
             </div>
+            )}
 
             {/* ── Canal subscribe banner (when supplier has a channel) ── */}
             {channel && (
