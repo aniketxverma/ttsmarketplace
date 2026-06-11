@@ -314,14 +314,6 @@ export default function RegisterPage() {
   if (step === 0) {
     return (
       <div className="space-y-6">
-        {/* Sign-in — top right */}
-        <div className="flex justify-end -mb-2 animate-fade-in">
-          <span className="text-sm text-gray-400">
-            Already have an account?{' '}
-            <Link href="/login" className="text-[#0B1F4D] font-bold hover:underline">Sign in</Link>
-          </span>
-        </div>
-
         {/* Animated header */}
         <div className="text-center space-y-2 pb-1 animate-fade-in-up">
           <div className="inline-flex items-center gap-2 bg-[#0B1F4D]/5 border border-[#0B1F4D]/10 rounded-full px-3.5 py-1.5 text-[11px] font-bold text-[#0B1F4D] uppercase tracking-widest mb-1">
