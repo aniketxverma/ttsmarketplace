@@ -13,6 +13,8 @@ const LOCALE_LABELS: Record<Locale, { label: string; flag: string }> = {
   fr: { label: 'Français',   flag: '🇫🇷' },
   de: { label: 'Deutsch',    flag: '🇩🇪' },
   pt: { label: 'Português',  flag: '🇵🇹' },
+  ru: { label: 'Русский',    flag: '🇷🇺' },
+  fa: { label: 'فارسی',      flag: '🇮🇷' },
 }
 
 export function LocaleSwitcher({ variant = 'dark' }: { variant?: 'dark' | 'light' }) {

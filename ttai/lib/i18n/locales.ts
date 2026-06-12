@@ -1,6 +1,6 @@
-export type Locale = 'en' | 'es' | 'ar' | 'fr' | 'de' | 'pt'
+export type Locale = 'en' | 'es' | 'ar' | 'fr' | 'de' | 'pt' | 'ru' | 'fa'
 
-export const SUPPORTED_LOCALES: Locale[] = ['en', 'es', 'ar', 'fr', 'de', 'pt']
+export const SUPPORTED_LOCALES: Locale[] = ['en', 'es', 'ar', 'fr', 'de', 'pt', 'ru', 'fa']
 
 export const DEFAULT_LOCALE: Locale = 'en'
 
@@ -33,6 +33,12 @@ export const COUNTRY_TO_LOCALE: Record<string, Locale> = {
   PT: 'pt', BR: 'pt', AO: 'pt', MZ: 'pt', CV: 'pt',
   GW: 'pt', ST: 'pt', TL: 'pt',
   // GQ (Equatorial Guinea) → Spanish (official); Portuguese spoken too but ES more common
+
+  // Russian
+  RU: 'ru', BY: 'ru', KZ: 'ru', KG: 'ru', TJ: 'ru',
+
+  // Persian (Farsi / Dari)
+  IR: 'fa', AF: 'fa',
 }
 
 /** Parse Accept-Language header and return best matching locale */
@@ -50,6 +56,8 @@ export function parseAcceptLanguage(header: string | null): Locale | null {
     if (short === 'fr') return 'fr'
     if (short === 'de') return 'de'
     if (short === 'pt') return 'pt'
+    if (short === 'ru') return 'ru'
+    if (short === 'fa') return 'fa'
     if (short === 'en') return 'en'
   }
   return null

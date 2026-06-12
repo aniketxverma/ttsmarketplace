@@ -40,6 +40,8 @@ export async function getMessages(locale: Locale): Promise<Messages> {
     case 'fr': return (await import('./messages/fr')).default as unknown as Messages
     case 'de': return (await import('./messages/de')).default as unknown as Messages
     case 'pt': return (await import('./messages/pt')).default as unknown as Messages
+    case 'ru': return (await import('./messages/ru')).default as unknown as Messages
+    case 'fa': return (await import('./messages/fa')).default as unknown as Messages
     default:   return (await import('./messages/en')).default as Messages
   }
 }

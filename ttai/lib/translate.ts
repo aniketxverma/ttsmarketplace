@@ -14,6 +14,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 
 const LANG_NAME: Record<string, string> = {
   en: 'English', fr: 'French', es: 'Spanish', de: 'German', pt: 'Portuguese', ar: 'Arabic',
+  ru: 'Russian', fa: 'Persian (Farsi)',
 }
 
 export type Provider = 'openai' | 'anthropic' | 'deepl'
