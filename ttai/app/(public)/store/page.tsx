@@ -11,6 +11,8 @@ import { SearchBar } from '@/components/marketplace/SearchBar'
 import { Pagination } from '@/components/marketplace/Pagination'
 import { RetailLocationBar } from '@/components/store/RetailLocationBar'
 import { ShopCard, type ShopCardData } from '@/components/marketplace/ShopCard'
+import { getMarketplaceOpen } from '@/lib/marketplace-phase'
+import { OpeningSoon } from '@/components/OpeningSoon'
 import Link from 'next/link'
 import { ShoppingBag, Zap, Shield, Truck, Star, Package, Store } from 'lucide-react'
 import type { Category } from '@/types/domain'
@@ -29,6 +31,16 @@ export default async function StorePage({
     market?: string; country?: string; view?: string }
 }) {
   const supabase = createClient()
+
+  // Pre-Opening: the public retail store opens on launch day (admins preview; a
+  // direct supplier link still works so shops can be shared/previewed).
+  if (!searchParams.supplier && !(await getMarketplaceOpen())) {
+    const { data: { user } } = await supabase.auth.getUser()
+    let role: string | null = null
+    if (user) { const { data } = await (supabase.from('profiles') as any).select('role').eq('id', user.id).single(); role = data?.role ?? null }
+    if (role !== 'admin') return <OpeningSoon />
+  }
+
   const page = parseInt(searchParams.page ?? '1')
   const activeView: 'products' | 'shops' = searchParams.view === 'shops' ? 'shops' : 'products'
 

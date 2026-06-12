@@ -15,6 +15,8 @@ import { SupplierMiniCard, type MiniSupplier } from '@/components/marketplace/Su
 import { ShoppingChannels } from '@/components/marketplace/ShoppingChannels'
 import { MarketplaceTopBar } from '@/components/marketplace/MarketplaceTopBar'
 import { ShopCard, type ShopCardData } from '@/components/marketplace/ShopCard'
+import { getMarketplaceOpen } from '@/lib/marketplace-phase'
+import { OpeningSoon } from '@/components/OpeningSoon'
 import type { Category } from '@/types/domain'
 
 const PAGE_SIZE = 24
@@ -39,6 +41,15 @@ export default async function MarketplacePage({
   searchParams: { category?: string; q?: string; page?: string; region?: string; supplier?: string; brand?: string; view?: string; country?: string; market?: string }
 }) {
   const supabase = createClient()
+
+  // Pre-Opening: the open marketplace browse is gated to launch day (admins preview).
+  if (!(await getMarketplaceOpen())) {
+    const { data: { user } } = await supabase.auth.getUser()
+    let role: string | null = null
+    if (user) { const { data } = await (supabase.from('profiles') as any).select('role').eq('id', user.id).single(); role = data?.role ?? null }
+    if (role !== 'admin') return <OpeningSoon />
+  }
+
   const page = parseInt(searchParams.page || '1')
   const activeRegion = searchParams.region ?? null
   const activeSupplier = searchParams.supplier ?? null
