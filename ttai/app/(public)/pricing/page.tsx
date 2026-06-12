@@ -27,12 +27,18 @@ export default async function PricingPage() {
             Matchmaking membership
           </div>
           <h1 className="text-4xl sm:text-5xl font-extrabold mb-4 leading-tight">
-            Pay for the chain you reach
+            Reach the partners that grow your business
           </h1>
           <p className="text-blue-200 text-lg max-w-2xl mx-auto">
-            TTAI EMA presents each business its counterpart in the supply chain. The more you
-            unlock, the further up the chain you reach — from suppliers to distributors to factories.
+            TTAI EMA connects you directly to your counterpart in the supply chain — suppliers,
+            distributors and factories. Start free, then unlock the partners you want to reach.
+            Every member is verified.
           </p>
+          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 mt-7 text-sm text-blue-200/90">
+            <span className="inline-flex items-center gap-1.5"><Check className="w-4 h-4 text-[#F5A623]" strokeWidth={3} /> Free plan, no card needed</span>
+            <span className="inline-flex items-center gap-1.5"><Check className="w-4 h-4 text-[#F5A623]" strokeWidth={3} /> Verified in 48 hours</span>
+            <span className="inline-flex items-center gap-1.5"><Check className="w-4 h-4 text-[#F5A623]" strokeWidth={3} /> Cancel anytime</span>
+          </div>
         </div>
       </div>
 
@@ -58,10 +64,13 @@ export default async function PricingPage() {
               </div>
               <p className="text-sm text-gray-400 mb-4 min-h-[40px]">{p.tagline}</p>
 
-              <div className="flex items-end gap-1 mb-5">
+              <div className="flex items-end gap-1 mb-1.5">
                 <span className="text-4xl font-extrabold text-[#0B1F4D]">{p.price}</span>
                 {p.period && <span className="text-gray-400 text-sm mb-1.5">{p.period}</span>}
               </div>
+              <p className="text-[11px] font-semibold uppercase tracking-wide mb-5" style={{ color: p.accent }}>
+                {p.bestFor}
+              </p>
 
               <ul className="space-y-2.5 mb-6 flex-1">
                 {p.features.map((f) => (
@@ -106,7 +115,13 @@ export default async function PricingPage() {
           ))}
         </div>
 
-        <p className="text-center text-xs text-gray-400 mt-6">
+        <div className="flex flex-wrap items-center justify-center gap-x-7 gap-y-2 mt-8 text-sm text-gray-500">
+          <span className="inline-flex items-center gap-1.5"><Check className="w-4 h-4 text-green-600" strokeWidth={3} /> No setup fee</span>
+          <span className="inline-flex items-center gap-1.5"><Check className="w-4 h-4 text-green-600" strokeWidth={3} /> Upgrade or downgrade anytime</span>
+          <span className="inline-flex items-center gap-1.5"><Check className="w-4 h-4 text-green-600" strokeWidth={3} /> Every member verified</span>
+          <span className="inline-flex items-center gap-1.5"><Check className="w-4 h-4 text-green-600" strokeWidth={3} /> Cancel anytime</span>
+        </div>
+        <p className="text-center text-xs text-gray-400 mt-5">
           Paid plans are activated by our team after onboarding. Prices shown are indicative — contact us to confirm your plan.
         </p>
       </div>

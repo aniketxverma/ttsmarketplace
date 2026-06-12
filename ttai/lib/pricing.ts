@@ -12,6 +12,7 @@ export interface Plan {
   price: string        // display price
   period: string       // e.g. '/mo'
   tagline: string
+  bestFor: string      // one-line "who it's for"
   features: string[]
   highlight?: boolean  // visually featured ("Most popular")
   accent: string       // tailwind-ish hex for the accent
@@ -22,14 +23,16 @@ export const PLANS: Plan[] = [
     tier: 'free',
     name: 'Free',
     price: '€0',
-    period: '',
-    tagline: 'Get listed and explore the ecosystem.',
+    period: 'forever',
+    tagline: 'List your business and start getting found — no card needed.',
+    bestFor: 'New businesses setting up',
     accent: '#64748b',
     features: [
-      'Business profile & brand page',
-      'Browse the Online Shop',
-      'Appear in regional discovery',
-      'Receive enquiries via Canales',
+      'Verified business profile & branded page',
+      'One sales channel free (B2B or retail)',
+      'Appear in regional & category discovery',
+      'Receive buyer enquiries through Canales',
+      'Browse the consumer Online Shop',
     ],
   },
   {
@@ -37,13 +40,15 @@ export const PLANS: Plan[] = [
     name: 'Standard',
     price: '€49',
     period: '/mo',
-    tagline: 'Reach the first link in your chain.',
+    tagline: 'Unlock your first trading partner and real wholesale pricing.',
+    bestFor: 'Shops & buyers ready to source',
     accent: '#2563eb',
     features: [
       'Everything in Free',
-      'Browse the Suppliers network',
-      'Wholesale pricing & MOQ access',
-      'Direct contact with suppliers',
+      'Reach the next link in your supply chain',
+      'See wholesale prices, MOQ & bulk terms',
+      'Message & request quotes directly',
+      'Sell on both channels — B2B + retail',
     ],
   },
   {
@@ -51,28 +56,32 @@ export const PLANS: Plan[] = [
     name: 'Pro',
     price: '€99',
     period: '/mo',
-    tagline: 'Go deeper — add distributors.',
+    tagline: 'Reach deeper into the chain and get seen before everyone else.',
+    bestFor: 'Growing businesses scaling sourcing',
     accent: '#7c3aed',
     highlight: true,
     features: [
       'Everything in Standard',
-      'Browse the Distributors network',
+      'Browse the full Distributors network',
       'Priority placement in discovery',
       'Multi-region matchmaking',
+      'Featured supplier badge',
     ],
   },
   {
     tier: 'full',
-    name: 'Full pack',
+    name: 'Full Pack',
     price: '€199',
     period: '/mo',
-    tagline: 'The complete supply chain, end to end.',
+    tagline: 'The whole supply chain, factory to shelf — with a manager on call.',
+    bestFor: 'Importers & high-volume traders',
     accent: '#d97706',
     features: [
       'Everything in Pro',
-      'Browse the Factories network',
-      'Source direct from manufacturers',
+      'Source direct from the Factories network',
+      'Top placement across every region',
       'Dedicated account manager',
+      'Early access to new suppliers & deals',
     ],
   },
 ]
