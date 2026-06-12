@@ -41,7 +41,7 @@ interface ProductFormProps {
 }
 
 interface FormState {
-  name: string; slug: string; categoryId: string; marketplaceContext: 'wholesale' | 'retail' | 'both'
+  name: string; slug: string; categoryId: string; mainCategoryId: string; familyName: string; marketplaceContext: 'wholesale' | 'retail' | 'both'
   productLine: string; isFamilyCover: boolean; brandName: string
   cityId: string; description: string; sku: string
   priceDisplay: string       // wholesale / B2B price, converted to cents on save
@@ -65,7 +65,7 @@ interface FormState {
 }
 
 const INITIAL: FormState = {
-  name: '', slug: '', categoryId: '', marketplaceContext: 'wholesale',
+  name: '', slug: '', categoryId: '', mainCategoryId: '', familyName: '', marketplaceContext: 'wholesale',
   productLine: '', isFamilyCover: false, brandName: '',
   cityId: '', description: '', sku: '',
   priceDisplay: '', retailPriceDisplay: '', currencyCode: 'EUR',
@@ -108,7 +108,7 @@ export function ProductForm({
     ...initialData,
   })
   const [specs, setSpecs] = useState<Record<string, string>>(() => (initialSpecs ?? {}) as Record<string, string>)
-  const [categories, setCategories] = useState<{ id: string; name: string; slug: string; template_fields?: TemplateField[] }[]>([])
+  const [categories, setCategories] = useState<{ id: string; name: string; slug: string; parent_id: string | null; template_fields?: TemplateField[] }[]>([])
   const [cities, setCities] = useState<{ id: string; name: string }[]>([])
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -122,9 +122,18 @@ export function ProductForm({
 
   useEffect(() => {
     const supabase = createClient()
-    supabase.from('categories').select('id, name, slug, template_fields').order('name').then(({ data }) => setCategories((data as any) ?? []))
+    supabase.from('categories').select('id, name, slug, parent_id, template_fields').order('name').then(({ data }) => setCategories((data as any) ?? []))
     supabase.from('cities').select('id, name').eq('retail_active', true).order('name').then(({ data }) => setCities(data ?? []))
   }, [])
+
+  // Edit mode: split the stored category into Main Category + Family for the UI.
+  useEffect(() => {
+    if (!categories.length || !form.categoryId || form.mainCategoryId) return
+    const cat = categories.find((c) => c.id === form.categoryId)
+    if (!cat) return
+    if (cat.parent_id) setForm((f) => ({ ...f, mainCategoryId: cat.parent_id as string, familyName: cat.name }))
+    else setForm((f) => ({ ...f, mainCategoryId: cat.id }))
+  }, [categories, form.categoryId, form.mainCategoryId])
 
   function update(field: keyof FormState, value: string | boolean) {
     setForm((prev) => {
@@ -152,8 +161,28 @@ export function ProductForm({
     setLoading(true)
 
     if (!form.name.trim()) { setError('Product name is required'); setLoading(false); return }
-    if (!form.categoryId) { setError('Category is required'); setLoading(false); return }
+    if (!form.mainCategoryId) { setError('Main category is required'); setLoading(false); return }
     if (!form.slug.trim()) { setError('Slug is required'); setLoading(false); return }
+
+    // Resolve Main Category + Family → the product's category_id. A typed family
+    // is created (or reused) under the main category via the server endpoint.
+    let resolvedCategoryId = form.mainCategoryId
+    if (form.familyName.trim()) {
+      const existing = categories.find((c) => c.parent_id === form.mainCategoryId && c.name.toLowerCase() === form.familyName.trim().toLowerCase())
+      if (existing) {
+        resolvedCategoryId = existing.id
+      } else {
+        try {
+          const res = await fetch('/api/supplier/family', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ rootId: form.mainCategoryId, name: form.familyName.trim() }),
+          })
+          const json = await res.json()
+          if (res.ok && json.category?.id) resolvedCategoryId = json.category.id
+          else { setError(json.error || 'Could not create family'); setLoading(false); return }
+        } catch { setError('Could not create family'); setLoading(false); return }
+      }
+    }
 
     const priceFloat = parseFloat(form.priceDisplay)
     if (!form.priceDisplay || isNaN(priceFloat) || priceFloat <= 0) {
@@ -174,7 +203,7 @@ export function ProductForm({
     const finalRetailCents = enteredRetail > 0 ? enteredRetail : floorRetail
 
     const payload = {
-      category_id:         form.categoryId,
+      category_id:         resolvedCategoryId,
       // Enforce the free-channel rule even if the field was tampered with.
       marketplace_context: !paidChannels && form.marketplaceContext !== freeChannel ? freeChannel : form.marketplaceContext,
       city_id:             form.cityId || null,
@@ -385,11 +414,23 @@ export function ProductForm({
             <p className="text-xs text-gray-400">Brand, OEM or private label — used for filtering &amp; future sponsored positions.</p>
           </div>
           <div className="space-y-1.5">
-            <label className={labelCls}>{t('pform.category')} *</label>
-            <select className={inputCls} value={form.categoryId} onChange={(e) => update('categoryId', e.target.value)} required>
+            <label className={labelCls}>Main Category *</label>
+            <select className={inputCls} value={form.mainCategoryId}
+              onChange={(e) => { update('mainCategoryId', e.target.value); update('familyName', '') }} required>
               <option value="">{t('pform.select_category')}</option>
-              {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+              {categories.filter((c) => !c.parent_id).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
+          </div>
+          <div className="space-y-1.5">
+            <label className={labelCls}>Family / Product Type</label>
+            <input className={inputCls} list="family-options" value={form.familyName}
+              onChange={(e) => update('familyName', e.target.value)}
+              placeholder={form.mainCategoryId ? 'e.g. Juices — pick or type a new one' : 'Choose a main category first'}
+              disabled={!form.mainCategoryId} />
+            <datalist id="family-options">
+              {categories.filter((c) => c.parent_id === form.mainCategoryId).map((c) => <option key={c.id} value={c.name} />)}
+            </datalist>
+            <p className="text-xs text-gray-400">Pick an existing family or type a new one — it’s created automatically and appears in your shop under the main category.</p>
           </div>
           <div className="space-y-1.5 sm:col-span-2">
             <label className={labelCls}>{t('pform.product_line')}</label>
@@ -478,7 +519,8 @@ export function ProductForm({
 
       {/* Specifications — dynamic fields from the category template */}
       {(() => {
-        const template = (categories.find((c) => c.id === form.categoryId)?.template_fields ?? []) as TemplateField[]
+        const tmplCatId = (form.familyName.trim() && categories.find((c) => c.parent_id === form.mainCategoryId && c.name.toLowerCase() === form.familyName.trim().toLowerCase())?.id) || form.mainCategoryId
+        const template = (categories.find((c) => c.id === tmplCatId)?.template_fields ?? []) as TemplateField[]
         if (!template.length) return null
         return (
           <div>
