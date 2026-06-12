@@ -133,6 +133,13 @@ export default async function B2BPage({
     productQuery = productQuery
       .eq('suppliers.status', 'ACTIVE')
       .in('marketplace_context', ['wholesale', 'both'])
+    // Phase 1: the Trade Hub sells under TTAI EMA only. Restrict to house sellers
+    // when one is designated (defensive — column may not be migrated yet).
+    try {
+      const { data: houseRows } = await (supabase.from('suppliers') as any).select('id').eq('is_house', true)
+      const houseIds = (houseRows ?? []).map((r: any) => r.id)
+      if (houseIds.length) productQuery = productQuery.in('supplier_id', houseIds)
+    } catch { /* is_house not migrated — show all wholesale (transition) */ }
   }
 
   if (searchParams.category) {

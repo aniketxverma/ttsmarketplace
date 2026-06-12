@@ -56,7 +56,23 @@ export default function AdminSupplierDetailPage() {
           <h1 className="text-2xl font-bold">{supplier.legal_name as string}</h1>
           {(supplier.trade_name as string) && <p className="text-muted-foreground text-sm">{supplier.trade_name as string}</p>}
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
+          {/* Trade Hub house seller (TTAI EMA) toggle */}
+          <button
+            onClick={async () => {
+              const next = !(supplier.is_house as boolean)
+              const res = await fetch(`/api/admin/suppliers/${id}/house`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ isHouse: next }),
+              })
+              if (res.ok) setSupplier((prev) => prev ? { ...prev, is_house: next } : prev)
+              else alert('Could not update')
+            }}
+            className={`rounded-md px-3 py-1.5 text-xs font-bold border transition-colors ${
+              supplier.is_house ? 'border-[#F5A623] bg-amber-50 text-amber-800' : 'border-gray-300 text-gray-600 hover:bg-gray-50'
+            }`}>
+            {supplier.is_house ? '★ TTAI EMA House Seller (Trade Hub)' : 'Set as House Seller'}
+          </button>
           <StatusBadge status={status} />
           <div className="flex gap-2">
             {allowed.map((target) => (
