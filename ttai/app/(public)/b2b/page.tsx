@@ -119,7 +119,7 @@ export default async function B2BPage({
   let productQuery = (supabase
     .from('products') as any)
     .select(
-      `id, name, slug, price_cents, currency_code, min_order_qty, marketplace_context, vat_rate,
+      `id, name, slug, price_cents, currency_code, min_order_qty, marketplace_context, vat_rate, brand_name,
       suppliers!supplier_id!inner(legal_name, trade_name, reliability_tier, status),
       product_images(url, sort_order)`
     )
@@ -217,6 +217,7 @@ export default async function B2BPage({
                           mainImageUrl={mainImg}
                           href={`/product/${p.slug ?? p.id}?shop=b2b`}
                           shop="b2b"
+                          brand={(p as any).brand_name ?? null}
                         />
                       )
                     })}

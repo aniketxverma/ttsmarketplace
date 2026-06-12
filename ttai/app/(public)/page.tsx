@@ -16,14 +16,14 @@ const CHANNELS = [
     title: 'TTAI Retail Store', sub: 'Buy by Piece & Box',
     desc: 'For end users and retail customers.', cta: 'Shop Retail', href: '/store',
     grad: 'from-violet-600 to-purple-700', Icon: ShoppingCart, btn: 'text-violet-700',
-    badge: 'For Consumers', accent: '#8b5cf6',
+    badge: 'For Consumers', accent: '#8b5cf6', locked: true,
     tags: ['Single units', 'No minimums', 'Fast home delivery'],
   },
   {
     title: 'TTAI Business Shop', sub: 'Buy by Box & Pallet',
     desc: 'For shops, resellers and distributors.', cta: 'Shop Business', href: '/marketplace',
     grad: 'from-blue-600 to-[#0B1F4D]', Icon: Boxes, btn: 'text-blue-700',
-    badge: 'Most Popular', accent: '#2563eb',
+    badge: 'Most Popular', accent: '#2563eb', locked: true,
     tags: ['Wholesale pricing', 'Bulk & pallet orders', 'Trade accounts'],
   },
   {
@@ -157,14 +157,13 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
             <p className="text-gray-400 mt-3 max-w-lg mx-auto">From a single piece to a full truckload — trade at any scale across one powerful ecosystem.</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {CHANNELS.map((c, i) => (
-              <Reveal key={c.title} from="up" delay={i * 90}>
-                <Link href={c.href}
-                  className={`group relative flex h-full flex-col overflow-hidden rounded-3xl bg-gradient-to-br ${c.grad} p-7 shadow-lg ring-1 ring-white/10 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl`}>
+            {CHANNELS.map((c, i) => {
+              const locked = (c as any).locked as boolean | undefined
+              const inner = (
+                <>
                   {/* giant ghost icon */}
                   <c.Icon className="absolute -bottom-8 -right-5 w-48 h-48 text-white/10 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3" strokeWidth={1.25} />
-                  {/* hover sheen */}
-                  <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/15 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
+                  {!locked && <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/15 to-transparent transition-transform duration-700 group-hover:translate-x-full" />}
 
                   <div className="relative flex h-full flex-col">
                     <div className="flex items-start justify-between mb-5">
@@ -172,7 +171,7 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
                         <c.Icon className="w-6 h-6 text-white" />
                       </div>
                       <span className="rounded-full bg-white/20 border border-white/25 px-3 py-1 text-[11px] font-bold text-white backdrop-blur">
-                        {c.badge}
+                        {locked ? 'Coming Soon' : c.badge}
                       </span>
                     </div>
 
@@ -180,7 +179,6 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
                     <p className="text-white font-bold text-sm mt-0.5">{c.sub}</p>
                     <p className="text-white/75 text-sm mt-2 leading-relaxed">{c.desc}</p>
 
-                    {/* feature list */}
                     <ul className="mt-5 space-y-2">
                       {c.tags.map((t) => (
                         <li key={t} className="flex items-center gap-2 text-sm font-medium text-white/90">
@@ -189,13 +187,21 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
                       ))}
                     </ul>
 
-                    <span className={`mt-7 inline-flex items-center justify-center gap-1.5 rounded-xl bg-white px-4 py-3 text-sm font-extrabold ${c.btn} shadow-sm group-hover:gap-2.5 transition-all`}>
-                      {c.cta} <ArrowRight className="w-4 h-4" />
+                    <span className={`mt-7 inline-flex items-center justify-center gap-1.5 rounded-xl px-4 py-3 text-sm font-extrabold shadow-sm transition-all ${locked ? 'bg-white/20 text-white/80 border border-white/25' : `bg-white ${c.btn} group-hover:gap-2.5`}`}>
+                      {locked ? <>🔒 Coming Soon</> : <>{c.cta} <ArrowRight className="w-4 h-4" /></>}
                     </span>
                   </div>
-                </Link>
-              </Reveal>
-            ))}
+                </>
+              )
+              const base = `group relative flex h-full flex-col overflow-hidden rounded-3xl bg-gradient-to-br ${c.grad} p-7 shadow-lg ring-1 ring-white/10 transition-all duration-300`
+              return (
+                <Reveal key={c.title} from="up" delay={i * 90}>
+                  {locked
+                    ? <div className={`${base} opacity-70 cursor-not-allowed`} aria-disabled>{inner}</div>
+                    : <Link href={c.href} className={`${base} hover:-translate-y-2 hover:shadow-2xl`}>{inner}</Link>}
+                </Reveal>
+              )
+            })}
           </div>
         </div>
       </section>
