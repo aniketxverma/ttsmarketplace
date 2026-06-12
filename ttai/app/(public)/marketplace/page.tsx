@@ -121,7 +121,7 @@ export default async function MarketplacePage({
     .select(
       `id, name, slug, price_cents, retail_price_cents, currency_code, min_order_qty, marketplace_context, vat_rate,
       supplier_id, category_id, product_line, is_family_cover,
-      suppliers!supplier_id!inner(legal_name, trade_name, reliability_tier, status),
+      suppliers!supplier_id!inner(legal_name, trade_name, reliability_tier, status, countries(name, iso_code)),
       categories(name, slug),
       product_images(url, sort_order)`
     )
@@ -454,7 +454,8 @@ export default async function MarketplacePage({
               const offerCount = (fam.representative as any)._offerCount ?? 0
               if (fam.members.length > 1) return <FamilyCard key={fam.key} family={fam} shop="market" brand={brand} sponsored={sponsored} minOrderCents={minOrderCents} />
               const p = fam.representative as any
-              const supplier = p.suppliers as { legal_name: string; trade_name: string | null; reliability_tier: import('@/types/domain').ReliabilityTier }
+              const sup = p.suppliers as { legal_name: string; trade_name: string | null; reliability_tier: import('@/types/domain').ReliabilityTier; countries?: { name: string; iso_code: string } | null }
+              const supplier = { ...sup, country_name: sup.countries?.name ?? null, country_iso: sup.countries?.iso_code ?? null }
               const mainImg = (p.product_images as { url: string; sort_order: number }[])?.sort((a, b) => a.sort_order - b.sort_order)[0]?.url
               // Deduped card → the best offer's product page (which lists all sellers).
               const href = `/product/${p.slug ?? p.id}`

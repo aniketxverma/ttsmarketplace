@@ -20,6 +20,8 @@ interface ProductCardProps {
     legal_name: string
     trade_name: string | null
     reliability_tier: ReliabilityTier
+    country_name?: string | null
+    country_iso?: string | null
   }
   mainImageUrl?: string
   href: string
@@ -43,6 +45,13 @@ const TIER_STYLES: Record<ReliabilityTier, string> = {
 
 function formatPrice(cents: number, currency: string) {
   return new Intl.NumberFormat('en-EU', { style: 'currency', currency, minimumFractionDigits: 2 }).format(cents / 100)
+}
+
+/** 2-letter ISO country code → flag emoji. */
+function isoFlag(iso?: string | null) {
+  return iso && iso.length === 2
+    ? iso.toUpperCase().replace(/./g, (c) => String.fromCodePoint(127397 + c.charCodeAt(0)))
+    : ''
 }
 
 export function ProductCard({ product, supplier, mainImageUrl, href, retail = false, shop, brand, sponsored, minOrderCents, offerCount = 0 }: ProductCardProps) {
@@ -69,6 +78,16 @@ export function ProductCard({ product, supplier, mainImageUrl, href, retail = fa
     <Link href={finalHref} className="group block">
       <div className="bg-card rounded-xl border overflow-hidden hover:shadow-md transition-shadow">
         <div className="aspect-square relative bg-muted overflow-hidden">
+          {/* Origin country — so buyers instantly see where a product ships from */}
+          {(supplier.country_iso || supplier.country_name) && (
+            <span className={cn(
+              'absolute left-2 z-10 inline-flex items-center gap-1 rounded-full bg-white/95 text-gray-800 text-[10px] font-bold px-2 py-0.5 shadow',
+              sponsored ? 'top-9' : 'top-2',
+            )}>
+              <span className="text-[12px] leading-none">{isoFlag(supplier.country_iso)}</span>
+              <span className="max-w-[90px] truncate">{supplier.country_name ?? supplier.country_iso}</span>
+            </span>
+          )}
           {sponsored && (
             <span className="absolute top-2 left-2 z-10 inline-flex items-center gap-1 rounded-full bg-[#F5A623] text-[#0B1F4D] text-[10px] font-extrabold px-2 py-0.5 shadow">
               ★ Sponsored
