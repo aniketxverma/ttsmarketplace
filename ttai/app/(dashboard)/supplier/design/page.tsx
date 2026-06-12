@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { requireAuth } from '@/lib/auth/rbac'
 import { redirect } from 'next/navigation'
 import { tierRank } from '@/lib/business-chain'
+import { BrandColorEditor } from '@/components/supplier/BrandColorEditor'
 import {
   Palette, Image as ImageIcon, Sparkles, Megaphone, TrendingUp,
   Lock, Check, ArrowRight, PaintBucket, Crown,
@@ -34,7 +35,13 @@ const GROUPS = [
 export default async function ShopDesignPage() {
   const user = await requireAuth()
   const supabase = createClient()
-  const { data: supplier } = await supabase.from('suppliers').select('id').eq('owner_id', user.id).single()
+  // brand_color column may not be migrated yet — fall back to id-only.
+  const supRes = await (async () => {
+    const full = await (supabase.from('suppliers') as any).select('id, brand_color').eq('owner_id', user.id).single()
+    if (!full.error) return full
+    return supabase.from('suppliers').select('id').eq('owner_id', user.id).single()
+  })()
+  const supplier = supRes.data as any
   if (!supplier) redirect('/supplier/onboarding')
 
   const { data: prof } = await (supabase.from('profiles') as any).select('tier').eq('id', user.id).single()
@@ -74,6 +81,9 @@ export default async function ShopDesignPage() {
           </div>
         </div>
       )}
+
+      {/* First live premium editor — Brand Color (paid only) */}
+      {paid && <BrandColorEditor initial={supplier.brand_color ?? null} />}
 
       {/* Feature groups */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

@@ -76,6 +76,13 @@ export default async function BrandPage({ params }: { params: { slug: string } }
 
   if (!supplier) notFound()
 
+  // Premium brand accent colour (Shop Design) — defensive: column may not be migrated.
+  let brandAccent = '#0B1F4D'
+  try {
+    const { data: bc } = await (supabase.from('suppliers') as any).select('brand_color').eq('id', supplier.id).maybeSingle()
+    if (bc?.brand_color) brandAccent = bc.brand_color
+  } catch { /* not migrated */ }
+
   // Check auth state — authenticated users see wholesale-only POS contacts
   const { data: { user } } = await supabase.auth.getUser()
   const isAuthenticated = !!user
@@ -270,7 +277,9 @@ export default async function BrandPage({ params }: { params: { slug: string } }
 
       {/* ══ SUPPLIER HEADER CARD ═════════════════════════════════════════════ */}
       <div className="max-w-6xl mx-auto px-4 sm:px-8 pt-5">
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 sm:p-6">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+         <div className="h-1.5 w-full" style={{ backgroundColor: brandAccent }} />
+         <div className="p-5 sm:p-6">
           <div className="flex flex-col lg:flex-row lg:items-start gap-5">
             {/* Logo + identity */}
             <div className="flex items-start gap-4 flex-1 min-w-0">
@@ -309,7 +318,8 @@ export default async function BrandPage({ params }: { params: { slug: string } }
               )}
               <div className="flex flex-col gap-2 justify-center w-full sm:w-auto sm:min-w-[160px]">
                 <Link href={isAuthenticated ? '/marketplace?supplier=' + supplier.id : '/register'}
-                  className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-sm transition-colors">
+                  style={{ backgroundColor: brandAccent }}
+                  className="flex items-center justify-center gap-2 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-sm hover:opacity-90 transition-opacity">
                   <UserPlus className="w-4 h-4" /> Follow Shop
                 </Link>
                 {contactUnlocked && waHref ? (
@@ -331,6 +341,7 @@ export default async function BrandPage({ params }: { params: { slug: string } }
               </div>
             </div>
           </div>
+        </div>
         </div>
         <p className="text-sm text-gray-400 mt-2.5 px-1">{products.length} products</p>
       </div>

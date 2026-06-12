@@ -21,6 +21,8 @@ const ALLOWED = new Set([
   'province_id', 'city_id', 'town_id', 'neighborhood_id', 'delivery_radius_km',
   // Free sales channel (B2B vs retail)
   'marketplace_context',
+  // Premium Shop Design
+  'brand_color',
 ])
 
 export async function POST(req: NextRequest) {
