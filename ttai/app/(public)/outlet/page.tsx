@@ -17,25 +17,45 @@ function isoFlag(iso?: string | null) {
   return iso && iso.length === 2 ? iso.toUpperCase().replace(/./g, (c) => String.fromCodePoint(127397 + c.charCodeAt(0))) : ''
 }
 
-export default async function OutletPage({ searchParams }: { searchParams: { source?: string } }) {
+export default async function OutletPage({ searchParams }: { searchParams: { source?: string; category?: string; country?: string } }) {
   const supabase = createClient()
   const marketplaceOpen = await getMarketplaceOpen()
 
-  // Outlet lots (defensive — is_outlet column from migration 0060).
-  let products: any[] = []
+  // Outlet lots (defensive — is_outlet column from migration 0060). Fetch once,
+  // then build the filter chips + filter in memory (category / country / source).
+  let all: any[] = []
   try {
-    let q = (supabase.from('products') as any)
+    const { data } = await (supabase.from('products') as any)
       .select(`id, name, slug, price_cents, currency_code, min_order_qty, outlet_source, lot_type,
+        categories(name, slug),
         suppliers!supplier_id!inner(trade_name, legal_name, brand_slug, status, countries(name, iso_code)),
         product_images(url, sort_order)`)
       .eq('is_outlet', true).eq('is_published', true).eq('suppliers.status', 'ACTIVE')
-      .order('created_at', { ascending: false }).limit(120)
-    if (searchParams.source) q = q.ilike('outlet_source', `%${searchParams.source}%`)
-    const { data } = await q
-    products = (data ?? []) as any[]
-  } catch { products = [] }
+      .order('created_at', { ascending: false }).limit(200)
+    all = (data ?? []) as any[]
+  } catch { all = [] }
 
-  const sources = Array.from(new Set(products.map((p) => p.outlet_source).filter(Boolean))) as string[]
+  const catOf = (p: any) => p.categories as { name: string; slug: string } | null
+  const countryOf = (p: any) => (p.suppliers as any)?.countries as { name: string; iso_code: string } | null
+
+  const sources = Array.from(new Set(all.map((p) => p.outlet_source).filter(Boolean))) as string[]
+  const categories = Array.from(new Map(all.map((p) => catOf(p)).filter(Boolean).map((c) => [c!.slug, c!])).values())
+  const countries = Array.from(new Map(all.map((p) => countryOf(p)).filter(Boolean).map((c) => [c!.iso_code, c!])).values())
+
+  const products = all.filter((p) =>
+    (!searchParams.source || p.outlet_source === searchParams.source) &&
+    (!searchParams.category || catOf(p)?.slug === searchParams.category) &&
+    (!searchParams.country || countryOf(p)?.iso_code === searchParams.country)
+  )
+
+  // Build a href preserving the other active filters.
+  const chipHref = (patch: Record<string, string | undefined>) => {
+    const params = new URLSearchParams()
+    const merged = { source: searchParams.source, category: searchParams.category, country: searchParams.country, ...patch }
+    for (const [k, v] of Object.entries(merged)) if (v) params.set(k, v)
+    const qs = params.toString()
+    return qs ? `/outlet?${qs}` : '/outlet'
+  }
 
   return (
     <div className="min-h-screen bg-[#F4F6FB]">
@@ -73,16 +93,36 @@ export default async function OutletPage({ searchParams }: { searchParams: { sou
       )}
 
       <div className="max-w-6xl mx-auto px-4 sm:px-8 py-8">
-        {/* Source filter */}
-        {sources.length > 0 && (
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 mb-6" style={{ scrollbarWidth: 'none' }}>
-            <Link href="/outlet" className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-bold ${!searchParams.source ? 'bg-[#0B1F4D] text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}>All sources</Link>
-            {sources.map((s) => (
-              <Link key={s} href={`/outlet?source=${encodeURIComponent(s)}`}
-                className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-bold ${searchParams.source === s ? 'bg-[#0B1F4D] text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}>{s}</Link>
-            ))}
-          </div>
-        )}
+        {/* Filters: Category · Country · Source */}
+        <div className="space-y-2.5 mb-6">
+          {categories.length > 0 && (
+            <div className="flex items-center gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+              <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wide flex-shrink-0 mr-1">Category</span>
+              <Link href={chipHref({ category: undefined })} className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-bold ${!searchParams.category ? 'bg-[#0B1F4D] text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}>All</Link>
+              {categories.map((c) => (
+                <Link key={c.slug} href={chipHref({ category: c.slug })} className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-bold ${searchParams.category === c.slug ? 'bg-[#0B1F4D] text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}>{c.name}</Link>
+              ))}
+            </div>
+          )}
+          {countries.length > 0 && (
+            <div className="flex items-center gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+              <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wide flex-shrink-0 mr-1">Country</span>
+              <Link href={chipHref({ country: undefined })} className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-bold ${!searchParams.country ? 'bg-[#0B1F4D] text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}>All</Link>
+              {countries.map((c) => (
+                <Link key={c.iso_code} href={chipHref({ country: c.iso_code })} className={`flex-shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold ${searchParams.country === c.iso_code ? 'bg-[#0B1F4D] text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}>{isoFlag(c.iso_code)} {c.name}</Link>
+              ))}
+            </div>
+          )}
+          {sources.length > 0 && (
+            <div className="flex items-center gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+              <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wide flex-shrink-0 mr-1">Source</span>
+              <Link href={chipHref({ source: undefined })} className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-bold ${!searchParams.source ? 'bg-[#0B1F4D] text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}>All</Link>
+              {sources.map((s) => (
+                <Link key={s} href={chipHref({ source: s })} className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-bold ${searchParams.source === s ? 'bg-[#0B1F4D] text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}>{s}</Link>
+              ))}
+            </div>
+          )}
+        </div>
 
         {products.length === 0 ? (
           <div className="text-center py-24 bg-white rounded-2xl border border-gray-100">
