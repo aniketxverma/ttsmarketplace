@@ -127,6 +127,7 @@ export default {
     canales: 'القنوات',
     brokers: 'الوسطاء',
     users: 'المستخدمون',
+    registrations: 'التسجيلات',
     plans_access: 'الخطط والوصول',
     pricing_rules: 'قواعد التسعير',
     sponsorships: 'مُموّلة',

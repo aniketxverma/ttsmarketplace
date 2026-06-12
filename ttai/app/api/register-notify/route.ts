@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import React from 'react'
 import { sendEmailFireAndForget } from '@/lib/email/send'
+import { createAdminClient } from '@/lib/supabase/admin'
 
 /**
  * Central registration inbox. Every registration (TTAI EMA, TTAIMA, supplier,
@@ -70,6 +71,16 @@ export async function POST(req: NextRequest) {
     subject: `New ${b.accountType || 'registration'} — ${b.companyName || b.fullName || b.email || 'unknown'} · ${source}`,
     react: body as any,
   })
+
+  // Persist so the admin dashboard has the full list (table from migration 0058).
+  try {
+    await (createAdminClient().from('registration_requests') as any).insert({
+      full_name: b.fullName || null, company_name: b.companyName || null, email: b.email || null,
+      phone: b.phone || null, country_name: b.countryName || null, city: b.city || null,
+      account_type: b.accountType || null, business_type: b.businessType || null,
+      message: b.message || null, source_platform: source,
+    })
+  } catch { /* table not migrated yet — email still sent */ }
 
   return NextResponse.json({ ok: true }, { headers: CORS })
 }

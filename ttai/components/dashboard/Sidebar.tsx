@@ -54,6 +54,7 @@ const BUYER_NAV: NavItem[] = [
 
 const ADMIN_NAV: NavItem[] = [
   { key: 'dashboard',    href: '/admin',              icon: <GridIcon /> },
+  { key: 'registrations', href: '/admin/registrations', icon: <UserIcon /> },
   { key: 'suppliers',    href: '/admin/suppliers',    icon: <BoxIcon /> },
   { key: 'brokers',      href: '/admin/brokers',      icon: <StarIcon /> },
   { key: 'users',        href: '/admin/users',        icon: <UserIcon /> },

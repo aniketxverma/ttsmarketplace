@@ -127,6 +127,7 @@ export default {
     canales: 'Canaux',
     brokers: 'Courtiers',
     users: 'Utilisateurs',
+    registrations: 'Inscriptions',
     plans_access: 'Plans & Accès',
     pricing_rules: 'Règles de prix',
     sponsorships: 'Sponsorisés',
