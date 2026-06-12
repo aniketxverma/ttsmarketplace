@@ -178,9 +178,14 @@ export default function RegisterPage() {
   // Joining a sales network via an invite link → they're becoming a seller (sales point),
   // so pre-select "Supplier" and show a banner. Read from the URL (avoids Suspense issues).
   const [fromInvite, setFromInvite] = useState(false)
+  // Source platform — so the central inbox knows where each registration came from.
+  const [sourcePlatform, setSourcePlatform] = useState('TTAI EMA')
   useEffect(() => {
-    const next = new URLSearchParams(window.location.search).get('next') ?? ''
+    const sp = new URLSearchParams(window.location.search)
+    const next = sp.get('next') ?? ''
     if (next.includes('/join/')) { setFromInvite(true); setForm(p => (p.role ? p : { ...p, role: 'supplier' })) }
+    const src = (sp.get('source') ?? '').toLowerCase()
+    if (src === 'ttaima') setSourcePlatform('TTAIMA')
   }, [])
 
   function set(k: keyof FormData, v: string) { setForm(p => ({ ...p, [k]: v })) }
@@ -296,6 +301,17 @@ export default function RegisterPage() {
 
       // Profile update failure is non-fatal — metadata was saved in signUp options
       if (profileErr) console.warn('Profile update error (non-fatal):', profileErr.message)
+
+      // Notify the central admin inbox of the new registration (fire-and-forget).
+      fetch('/api/register-notify', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fullName: form.fullName, companyName: form.companyName, email: form.email,
+          phone: form.phone, countryName: form.countryName, city: form.city,
+          accountType: roleObj?.label ?? form.role, businessType: form.businessType,
+          message: form.bio, sourcePlatform,
+        }),
+      }).catch(() => {})
 
       // New flow: land on the role dashboard immediately. Account stays "pending"
       // (admin reviews details + approves) — marketplace unlocks after approval.
