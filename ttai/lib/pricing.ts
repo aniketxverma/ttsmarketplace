@@ -87,55 +87,129 @@ export const PLANS: Plan[] = [
 ]
 
 /**
- * Flagship program — TTAI ON · Business Growth.
- * Annual membership (€350/yr) delivering up to €8,500 in program value:
- * an international business-development program with hands-on support.
- * High-touch (subject to availability) → "Talk to our team" CTA.
+ * Flagship programs — TTAI ON.
+ *   • Business Growth (€350/yr, up to €8,500 value): logistics hub + sales team.
+ *   • Global Expansion (€35,000/yr, by application, bank transfer): adds a fully
+ *     managed exhibitor stand at international fairs (IFA, GITEX…).
+ * Both are high-touch — shown for now, enquiries by email to info@ttaiema.com.
  */
 export interface Flagship {
+  id: string
   name: string
   subtitle: string
-  fee: string          // membership fee customer pays
-  feePeriod: string    // e.g. '/year'
-  valueNote: string    // value anchor
+  fee: string            // headline fee customer pays
+  feePeriod: string      // e.g. '/year'
+  feeNote?: string       // e.g. 'By application'
+  valueNote: string      // value anchor / badge
   tagline: string
-  included: string[]   // Included Services
-  support: string[]    // Business Support
+  highlights: { title: string; desc: string }[]  // the "special letter" callouts
+  included?: string[]    // Included Services
+  fairs?: string[]       // Trade Fair Program
+  support?: string[]     // Business Support / Premium Benefits
+  supportLabel?: string  // section title for `support` (default 'Business support')
+  includesNote?: string  // e.g. 'Includes the complete Business Growth program'
   disclaimer: string
   accent: string
 }
 
-export const FLAGSHIP: Flagship = {
-  name: 'TTAI ON',
-  subtitle: 'Business Growth · International Business Development Program',
-  fee: '€350',
-  feePeriod: '/year',
-  valueNote: 'Up to €8,500 in program value',
-  tagline: 'For startups, retailers, wholesalers and entrepreneurs ready to grow — with professional support, networking and real international trade opportunities.',
-  accent: '#F5A623',
-  included: [
-    'Company registration support',
-    'Marketplace access',
-    'Business profile creation',
-    'Logistics hub access',
-    'Supplier & buyer connections',
-    'Sales team support',
-    'Business networking opportunities',
-    'Marketplace marketing support',
-    'International trade opportunities',
-    'Import & export guidance',
-    'Access to selected TTAIEMA projects',
-  ],
-  support: [
-    'Business development guidance',
-    'Market expansion support',
-    'International partner search',
-    'Product & service promotion',
-    'Distribution opportunities',
-    'Business matching services',
-  ],
-  disclaimer: 'Participation, consulting services, business opportunities and project access are subject to availability, project scope and agreed business objectives.',
-}
+export const FLAGSHIPS: Flagship[] = [
+  {
+    id: 'business-growth',
+    name: 'TTAI ON — Business Growth',
+    subtitle: 'International Business Development Program',
+    fee: '€350',
+    feePeriod: '/year',
+    valueNote: 'Up to €8,500 in program value',
+    tagline: 'For startups, retailers, wholesalers and entrepreneurs ready to grow — with professional support, networking and real international trade opportunities.',
+    accent: '#F5A623',
+    highlights: [
+      {
+        title: 'Logistics Hub — 1 full year, free',
+        desc: 'Store your goods with us at no cost. Keep up to two full trucks of stock in the TTAI EMA warehouse for a whole year, ready to ship the moment orders come in — no storage fees.',
+      },
+      {
+        title: 'Your own sales team',
+        desc: 'A dedicated TTAI EMA team works for you — promoting and selling your products across our network and to international buyers, as if they were their own.',
+      },
+    ],
+    included: [
+      'Company registration support',
+      'Marketplace access',
+      'Business profile creation',
+      'Logistics hub access',
+      'Supplier & buyer connections',
+      'Sales team support',
+      'Business networking opportunities',
+      'Marketplace marketing support',
+      'International trade opportunities',
+      'Import & export guidance',
+      'Access to selected TTAIEMA projects',
+    ],
+    support: [
+      'Business development guidance',
+      'Market expansion support',
+      'International partner search',
+      'Product & service promotion',
+      'Distribution opportunities',
+      'Business matching services',
+    ],
+    disclaimer: 'Participation, consulting services, business opportunities and project access are subject to availability, project scope and agreed business objectives.',
+  },
+  {
+    id: 'the-fair',
+    name: 'TTAI ON — The Fair',
+    subtitle: 'International Business Expansion & Trade Fair Program',
+    fee: '€350',
+    feePeriod: '/year',
+    feeNote: 'By application',
+    valueNote: 'Up to €35,000 in program value',
+    tagline: 'A premium program to expand internationally through consulting, trade fairs, logistics, networking, sales support and strategic partnerships.',
+    accent: '#C9A84C',
+    highlights: [
+      {
+        title: 'Your own stand at world fairs',
+        desc: 'We design, rent and run a complete exhibitor stand for you at major international fairs such as IFA Berlin and GITEX Global. Booth, setup, logistics and shipping are handled by TTAI EMA.',
+      },
+      {
+        title: 'Everything in Business Growth',
+        desc: 'Includes the full Business Growth program — logistics hub, dedicated sales team, marketplace, networking and international trade support.',
+      },
+    ],
+    included: [
+      'International business consulting',
+      'Marketplace access',
+      'Logistics hub access',
+      'Warehouse network access',
+      'Sales team support',
+      'International business networking',
+      'Supplier & buyer connections',
+      'Import & export support',
+      'Franchise development opportunities',
+      'Distribution network development',
+      'Marketplace marketing support',
+      'Business matchmaking services',
+      'Access to selected TTAIEMA projects',
+    ],
+    fairs: [
+      'IFA Berlin (Germany)',
+      'GITEX Global (Dubai)',
+      'Mobile World Congress (Barcelona)',
+      'International trade fairs in Spain',
+      'International trade fairs in Italy',
+      'European business exhibitions',
+    ],
+    support: [
+      'Business development support',
+      'International expansion strategy',
+      'Market entry consulting',
+      'Partner & distributor search',
+      'Access to shared exhibition stand opportunities',
+      'Project evaluation & growth planning',
+    ],
+    supportLabel: 'Premium benefits',
+    disclaimer: 'Participation, consulting services, trade fair opportunities and project access are subject to availability, project scope and agreed business objectives.',
+  },
+]
 
 /** What each *role* is presented at a paid tier — the directional model. */
 export const PRESENTED_BY_ROLE: { role: string; presented: string }[] = [

@@ -1,6 +1,6 @@
 import Link from 'next/link'
-import { Check, ArrowRight, Sparkles, Crown } from 'lucide-react'
-import { PLANS, PRESENTED_BY_ROLE, FLAGSHIP } from '@/lib/pricing'
+import { Check, ArrowRight, Sparkles, Crown, Star, Warehouse } from 'lucide-react'
+import { PLANS, PRESENTED_BY_ROLE, FLAGSHIPS } from '@/lib/pricing'
 import { createClient } from '@/lib/supabase/server'
 import { SubscribeButton } from './SubscribeButton'
 
@@ -126,71 +126,119 @@ export default async function PricingPage() {
         </p>
       </div>
 
-      {/* ── Flagship: TTAI ON · Business Growth ────────────────────────────── */}
-      <div className="container mx-auto max-w-6xl px-4 pt-8 pb-4">
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0B1F4D] via-[#13306e] to-[#0a1733] text-white p-8 sm:p-10">
-          <div className="absolute -top-16 -right-10 w-72 h-72 rounded-full bg-[#F5A623]/20 blur-3xl pointer-events-none" />
-
-          {/* Header */}
-          <div className="relative grid md:grid-cols-[1.5fr_1fr] gap-8 items-start">
-            <div>
-              <div className="inline-flex items-center gap-2 rounded-full bg-[#F5A623]/15 border border-[#F5A623]/30 text-[#F5A623] px-4 py-1.5 text-xs font-extrabold uppercase tracking-widest mb-4">
-                <Crown className="w-3.5 h-3.5" /> Flagship program
-              </div>
-              <h2 className="text-3xl sm:text-4xl font-extrabold">{FLAGSHIP.name}</h2>
-              <p className="text-[#F5A623] font-semibold text-sm mt-1">{FLAGSHIP.subtitle}</p>
-              <p className="text-blue-200 text-base mt-3 max-w-xl">{FLAGSHIP.tagline}</p>
-            </div>
-
-            {/* Price box */}
-            <div className="rounded-2xl bg-white/[0.06] border border-white/10 p-6 md:text-right">
-              <span className="inline-block rounded-full bg-[#F5A623] text-[#0B1F4D] text-[11px] font-extrabold uppercase tracking-wide px-3 py-1 mb-3">
-                {FLAGSHIP.valueNote}
-              </span>
-              <div className="flex md:justify-end items-end gap-1">
-                <span className="text-5xl font-extrabold">{FLAGSHIP.fee}</span>
-                <span className="text-blue-300 text-lg mb-1.5">{FLAGSHIP.feePeriod}</span>
-              </div>
-              <p className="text-blue-300/90 text-sm mt-1">Annual membership fee</p>
-              <a href="mailto:info@ttaiema.com?subject=TTAI%20ON%20%E2%80%93%20Business%20Growth%20enquiry&body=Hi%20TTAI%20EMA%20team%2C%0A%0AI%27m%20interested%20in%20the%20TTAI%20ON%20%E2%80%93%20Business%20Growth%20program.%20Please%20get%20in%20touch.%0A%0ACompany%3A%0ACountry%3A%0APhone%3A%0A"
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#F5A623] hover:bg-[#fbb93a] text-[#0B1F4D] px-7 py-3.5 text-sm font-extrabold transition-colors mt-5 w-full">
-                Talk to our team <ArrowRight className="w-4 h-4" />
-              </a>
-            </div>
-          </div>
-
-          {/* Services */}
-          <div className="relative grid sm:grid-cols-2 gap-x-10 gap-y-8 mt-9 pt-8 border-t border-white/10">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-widest text-blue-300/80 mb-3">Included services</p>
-              <ul className="space-y-2.5">
-                {FLAGSHIP.included.map((f) => (
-                  <li key={f} className="flex items-start gap-2 text-sm text-blue-100">
-                    <span className="mt-0.5 w-4 h-4 rounded-full bg-[#F5A623]/20 flex items-center justify-center flex-shrink-0">
-                      <Check className="w-2.5 h-2.5 text-[#F5A623]" strokeWidth={3.5} />
-                    </span>
-                    {f}
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <p className="text-xs font-bold uppercase tracking-widest text-blue-300/80 mb-3">Business support</p>
-              <ul className="space-y-2.5">
-                {FLAGSHIP.support.map((f) => (
-                  <li key={f} className="flex items-start gap-2 text-sm text-blue-100">
-                    <span className="mt-0.5 w-4 h-4 rounded-full bg-[#F5A623]/20 flex items-center justify-center flex-shrink-0">
-                      <Check className="w-2.5 h-2.5 text-[#F5A623]" strokeWidth={3.5} />
-                    </span>
-                    {f}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-
-          <p className="relative text-blue-300/60 text-xs mt-8 max-w-3xl">{FLAGSHIP.disclaimer}</p>
+      {/* ── Flagship programs: TTAI ON ─────────────────────────────────────── */}
+      <div className="container mx-auto max-w-6xl px-4 pt-10">
+        <div className="text-center mb-7">
+          <p className="text-[#F5A623] text-xs font-bold uppercase tracking-widest mb-2">Premium programs</p>
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-[#0B1F4D]">TTAI ON — fully managed growth</h2>
+          <p className="text-gray-400 text-sm mt-2 max-w-xl mx-auto">
+            Hands-on programs where our team does the heavy lifting — logistics, sales and international fairs.
+          </p>
         </div>
+      </div>
+
+      <div className="container mx-auto max-w-6xl px-4 pb-4 space-y-6">
+        {FLAGSHIPS.map((fp) => {
+          const mailto = `mailto:info@ttaiema.com?subject=${encodeURIComponent(fp.name + ' enquiry')}&body=${encodeURIComponent(`Hi TTAI EMA team,\n\nI'm interested in the ${fp.name} program. Please get in touch.\n\nCompany:\nCountry:\nPhone:\n`)}`
+          return (
+          <div key={fp.id} className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0B1F4D] via-[#13306e] to-[#0a1733] text-white p-8 sm:p-10">
+            <div className="absolute -top-16 -right-10 w-72 h-72 rounded-full bg-[#F5A623]/20 blur-3xl pointer-events-none" />
+
+            {/* Header + price */}
+            <div className="relative grid md:grid-cols-[1.5fr_1fr] gap-8 items-start">
+              <div>
+                <div className="inline-flex items-center gap-2 rounded-full bg-[#F5A623]/15 border border-[#F5A623]/30 text-[#F5A623] px-4 py-1.5 text-xs font-extrabold uppercase tracking-widest mb-4">
+                  <Crown className="w-3.5 h-3.5" /> Flagship program
+                </div>
+                <h3 className="text-3xl sm:text-4xl font-extrabold">{fp.name}</h3>
+                <p className="text-[#F5A623] font-semibold text-sm mt-1">{fp.subtitle}</p>
+                <p className="text-blue-200 text-base mt-3 max-w-xl">{fp.tagline}</p>
+              </div>
+
+              <div className="rounded-2xl bg-white/[0.06] border border-white/10 p-6 md:text-right">
+                <span className="inline-block rounded-full bg-[#F5A623] text-[#0B1F4D] text-[11px] font-extrabold uppercase tracking-wide px-3 py-1 mb-3">
+                  {fp.valueNote}
+                </span>
+                <div className="flex md:justify-end items-end gap-1">
+                  <span className="text-5xl font-extrabold">{fp.fee}</span>
+                  <span className="text-blue-300 text-lg mb-1.5">{fp.feePeriod}</span>
+                </div>
+                <p className="text-blue-300/90 text-sm mt-1">Annual membership fee{fp.feeNote ? ` · ${fp.feeNote}` : ''}</p>
+                <a href={mailto}
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#F5A623] hover:bg-[#fbb93a] text-[#0B1F4D] px-7 py-3.5 text-sm font-extrabold transition-colors mt-5 w-full">
+                  Talk to our team <ArrowRight className="w-4 h-4" />
+                </a>
+              </div>
+            </div>
+
+            {/* Special highlights — the logistics hub / sales team / fair stand */}
+            <div className="relative grid sm:grid-cols-2 gap-4 mt-8">
+              {fp.highlights.map((h, i) => (
+                <div key={h.title} className="rounded-2xl bg-white/[0.05] border border-[#F5A623]/20 p-5">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="w-8 h-8 rounded-xl bg-[#F5A623]/15 flex items-center justify-center flex-shrink-0">
+                      {i === 0 ? <Warehouse className="w-4 h-4 text-[#F5A623]" /> : <Star className="w-4 h-4 text-[#F5A623]" />}
+                    </span>
+                    <p className="font-extrabold text-white text-sm">{h.title}</p>
+                  </div>
+                  <p className="text-blue-100/90 text-sm leading-relaxed">{h.desc}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Services / fairs / benefits */}
+            <div className="relative grid sm:grid-cols-2 lg:grid-cols-3 gap-x-10 gap-y-8 mt-9 pt-8 border-t border-white/10">
+              {fp.included && (
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-widest text-blue-300/80 mb-3">Included services</p>
+                  <ul className="space-y-2.5">
+                    {fp.included.map((f) => (
+                      <li key={f} className="flex items-start gap-2 text-sm text-blue-100">
+                        <span className="mt-0.5 w-4 h-4 rounded-full bg-[#F5A623]/20 flex items-center justify-center flex-shrink-0">
+                          <Check className="w-2.5 h-2.5 text-[#F5A623]" strokeWidth={3.5} />
+                        </span>
+                        {f}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {fp.fairs && (
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-widest text-blue-300/80 mb-3">Trade fair program</p>
+                  <ul className="space-y-2.5">
+                    {fp.fairs.map((f) => (
+                      <li key={f} className="flex items-start gap-2 text-sm text-blue-100">
+                        <span className="mt-0.5 w-4 h-4 rounded-full bg-[#F5A623]/20 flex items-center justify-center flex-shrink-0">
+                          <Star className="w-2.5 h-2.5 text-[#F5A623]" strokeWidth={3} />
+                        </span>
+                        {f}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {fp.support && (
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-widest text-blue-300/80 mb-3">{fp.supportLabel ?? 'Business support'}</p>
+                  <ul className="space-y-2.5">
+                    {fp.support.map((f) => (
+                      <li key={f} className="flex items-start gap-2 text-sm text-blue-100">
+                        <span className="mt-0.5 w-4 h-4 rounded-full bg-[#F5A623]/20 flex items-center justify-center flex-shrink-0">
+                          <Check className="w-2.5 h-2.5 text-[#F5A623]" strokeWidth={3.5} />
+                        </span>
+                        {f}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+
+            <p className="relative text-blue-300/60 text-xs mt-8 max-w-3xl">{fp.disclaimer}</p>
+          </div>
+          )
+        })}
       </div>
 
       {/* ── How presentation works by role ────────────────────────────────── */}
