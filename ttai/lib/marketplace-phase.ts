@@ -22,7 +22,24 @@ export async function getMarketplaceOpen(): Promise<boolean> {
   return open
 }
 
-export function clearMarketplacePhaseCache() { _c = null }
+export function clearMarketplacePhaseCache() { _c = null; _ld = null }
+
+// ── Launch date (countdown target) ───────────────────────────────────────────
+export const DEFAULT_LAUNCH_DATE = '2026-07-09T09:00:00Z'
+let _ld: { date: string; at: number } | null = null
+
+export async function getLaunchDate(): Promise<string> {
+  if (_ld && Date.now() - _ld.at < 30_000) return _ld.date
+  let date = DEFAULT_LAUNCH_DATE
+  try {
+    const admin = createAdminClient()
+    const { data } = await (admin.from('app_settings') as any)
+      .select('value').eq('key', 'launch_date').maybeSingle()
+    if (data?.value) date = data.value
+  } catch { /* fall back to default */ }
+  _ld = { date, at: Date.now() }
+  return date
+}
 
 export const PRE_OPENING_NOTICE =
   'This business is registered on TTAI EMA Marketplace. Verification, marketplace integration and promotional eligibility will be reviewed after the official marketplace opening.'

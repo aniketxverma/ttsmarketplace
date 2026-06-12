@@ -3,7 +3,8 @@ import Image from 'next/image'
 import { redirect } from 'next/navigation'
 import { Reveal } from '@/components/Reveal'
 import { RegionChooser } from '@/components/home/RegionChooser'
-import { getMarketplaceOpen } from '@/lib/marketplace-phase'
+import { LaunchCountdown } from '@/components/home/LaunchCountdown'
+import { getMarketplaceOpen, getLaunchDate } from '@/lib/marketplace-phase'
 import {
   ShieldCheck, Globe2, Headphones, Clock, ArrowRight, ShoppingCart, Boxes, Truck,
   MessageSquare, Share2, BarChart3, Lock, Factory, User, Building2, Store, Users,
@@ -110,6 +111,7 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
   if (searchParams.code) redirect(`/auth/callback?code=${searchParams.code}`)
 
   const marketplaceOpen = await getMarketplaceOpen()
+  const launchDate = marketplaceOpen ? null : await getLaunchDate()
 
   return (
     <>
@@ -166,6 +168,9 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
           </div>
         </div>
       </section>
+
+      {/* ═══ LAUNCH COUNTDOWN (pre-opening) ═══ */}
+      {launchDate && <LaunchCountdown target={launchDate} />}
 
       {/* ═══ CHOOSE YOUR MARKETPLACE ═══ */}
       <section className="py-20 px-4 bg-gradient-to-b from-white to-gray-50">
