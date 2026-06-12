@@ -9,6 +9,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { BrandTabs } from './BrandTabs'
 import { BrandLogo } from '@/components/BrandLogo'
 import { canSeeB2B, tierRank } from '@/lib/business-chain'
+import { getMarketplaceOpen, PRE_OPENING_NOTICE } from '@/lib/marketplace-phase'
 import { translateCached } from '@/lib/i18n/content'
 import { getLocale } from '@/lib/i18n/server'
 import Link from 'next/link'
@@ -76,12 +77,19 @@ export default async function BrandPage({ params }: { params: { slug: string } }
 
   if (!supplier) notFound()
 
-  // Premium brand accent colour (Shop Design) — defensive: column may not be migrated.
+  // Pre-Opening phase: before launch, no shop is "verified" or promoted.
+  const marketplaceOpen = await getMarketplaceOpen()
+
+  // Premium brand accent colour (Shop Design) + house flag — defensive (may not be migrated).
   let brandAccent = '#0B1F4D'
+  let isHouse = false
   try {
-    const { data: bc } = await (supabase.from('suppliers') as any).select('brand_color').eq('id', supplier.id).maybeSingle()
+    const { data: bc } = await (supabase.from('suppliers') as any).select('brand_color, is_house').eq('id', supplier.id).maybeSingle()
     if (bc?.brand_color) brandAccent = bc.brand_color
+    isHouse = !!bc?.is_house
   } catch { /* not migrated */ }
+  // Only the TTAI EMA hub is "verified" before opening; every other shop is pending.
+  const showVerified = marketplaceOpen || isHouse
 
   // Check auth state — authenticated users see wholesale-only POS contacts
   const { data: { user } } = await supabase.auth.getUser()
@@ -260,6 +268,19 @@ export default async function BrandPage({ params }: { params: { slug: string } }
   return (
     <div className="min-h-screen bg-[#F7F8FA]">
 
+      {/* ══ PRE-OPENING NOTICE ══════════════════════════════════════════════ */}
+      {!showVerified && (
+        <div className="bg-amber-50 border-b border-amber-200">
+          <div className="max-w-7xl mx-auto px-4 sm:px-8 py-2.5 flex items-start sm:items-center gap-2.5 text-amber-800">
+            <Lock className="w-4 h-4 flex-shrink-0 mt-0.5 sm:mt-0" />
+            <p className="text-[12.5px] leading-snug">
+              <span className="font-bold">Pre-Opening Supplier · Independent Shop — Verification Pending.</span>{' '}
+              {PRE_OPENING_NOTICE}
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* ══ BREADCRUMB + ACTIONS ════════════════════════════════════════════ */}
       <div className="bg-white border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-8 py-3 flex items-center justify-between gap-3">
@@ -291,7 +312,11 @@ export default async function BrandPage({ params }: { params: { slug: string } }
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
                   <h1 className="text-xl sm:text-[26px] font-extrabold text-[#0B1F4D] leading-tight">{supplier.trade_name ?? supplier.legal_name}</h1>
-                  {supplier.reliability_tier !== 'UNVERIFIED' && (
+                  {!showVerified ? (
+                    <span className="inline-flex items-center gap-1 bg-amber-50 text-amber-700 text-xs font-bold px-2.5 py-1 rounded-full">
+                      <Lock className="w-3.5 h-3.5" /> Verification Pending
+                    </span>
+                  ) : supplier.reliability_tier !== 'UNVERIFIED' && (
                     <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-xs font-bold px-2.5 py-1 rounded-full">
                       <ShieldCheck className="w-3.5 h-3.5" /> {tier.label}
                     </span>

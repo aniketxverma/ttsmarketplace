@@ -3,6 +3,7 @@ import Image from 'next/image'
 import { redirect } from 'next/navigation'
 import { Reveal } from '@/components/Reveal'
 import { RegionChooser } from '@/components/home/RegionChooser'
+import { getMarketplaceOpen } from '@/lib/marketplace-phase'
 import {
   ShieldCheck, Globe2, Headphones, Clock, ArrowRight, ShoppingCart, Boxes, Truck,
   MessageSquare, Share2, BarChart3, Lock, Factory, User, Building2, Store, Users,
@@ -107,8 +108,27 @@ const GROW = [
 export default async function HomePage({ searchParams }: { searchParams: { code?: string } }) {
   if (searchParams.code) redirect(`/auth/callback?code=${searchParams.code}`)
 
+  const marketplaceOpen = await getMarketplaceOpen()
+
   return (
     <>
+      {/* ═══ OPENING SOON ANNOUNCEMENT (pre-opening) ═══ */}
+      {!marketplaceOpen && (
+        <div className="bg-gradient-to-r from-[#F5A623] to-[#fbbf24] text-[#0B1F4D]">
+          <div className="container mx-auto max-w-6xl px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-center gap-x-3 gap-y-1 text-center sm:text-left">
+            <span className="inline-flex items-center gap-1.5 font-extrabold text-sm">
+              <span className="w-2 h-2 rounded-full bg-[#0B1F4D] animate-pulse" /> OPENING SOON
+            </span>
+            <span className="text-[13px] font-medium leading-snug">
+              TTAI EMA is a global B2B trade marketplace launching soon. Businesses can <strong>register now and build their shop</strong> ahead of opening — verification, B2B access and promotions start on launch day.
+            </span>
+            <Link href="/register" className="flex-shrink-0 inline-flex items-center gap-1 rounded-lg bg-[#0B1F4D] text-white px-3 py-1.5 text-xs font-bold hover:bg-[#162d6e] transition-colors mx-auto sm:mx-0">
+              Reserve your shop →
+            </Link>
+          </div>
+        </div>
+      )}
+
       {/* ═══ HERO ═══ */}
       <section className="relative overflow-hidden bg-[#0a1733]">
         <div className="absolute inset-y-0 right-0 w-full lg:w-3/5">

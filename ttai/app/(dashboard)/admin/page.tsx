@@ -5,6 +5,8 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { requireRole } from '@/lib/auth/rbac'
 import { formatCents } from '@/lib/utils'
 import { ApprovalChanger } from './users/ApprovalChanger'
+import { MarketplacePhaseToggle } from '@/components/admin/MarketplacePhaseToggle'
+import { getMarketplaceOpen } from '@/lib/marketplace-phase'
 
 const ROLE_COLORS: Record<string, string> = {
   admin:           'bg-red-100 text-red-700',
@@ -18,6 +20,7 @@ export default async function AdminDashboardPage() {
   await requireRole('admin')
   const supabase = createClient()
   const adminDb = createAdminClient()
+  const marketplaceOpen = await getMarketplaceOpen()
 
   const [
     pendingCount, activeCount, transactionsRes, disputesCount,
@@ -65,6 +68,9 @@ export default async function AdminDashboardPage() {
         <h1 className="text-2xl font-bold">Admin Dashboard</h1>
         <p className="text-muted-foreground text-sm mt-0.5">Platform overview</p>
       </div>
+
+      {/* ── Marketplace phase (Pre-Opening / Opening Day) ───────────────── */}
+      <MarketplacePhaseToggle initial={marketplaceOpen} />
 
       {/* ── Applications awaiting review ─────────────────────────────────── */}
       <div className="rounded-2xl border border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50/50 overflow-hidden">
