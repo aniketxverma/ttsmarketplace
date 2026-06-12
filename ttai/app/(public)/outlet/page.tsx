@@ -2,7 +2,9 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/server'
 import { getMarketplaceOpen, PRE_OPENING_NOTICE } from '@/lib/marketplace-phase'
-import { FileSpreadsheet, PlayCircle, Truck, Warehouse, MessageCircle, Package, ArrowRight, Lock, MapPin } from 'lucide-react'
+import { MARKET_REGIONS } from '@/lib/market-regions'
+import { ShopCard, type ShopCardData } from '@/components/marketplace/ShopCard'
+import { FileSpreadsheet, PlayCircle, Truck, Warehouse, MessageCircle, Package, ArrowRight, Lock } from 'lucide-react'
 
 export const metadata = {
   title: 'Outlet & Return Goods Hub · TTAI EMA',
@@ -17,18 +19,19 @@ function isoFlag(iso?: string | null) {
   return iso && iso.length === 2 ? iso.toUpperCase().replace(/./g, (c) => String.fromCodePoint(127397 + c.charCodeAt(0))) : ''
 }
 
-export default async function OutletPage({ searchParams }: { searchParams: { source?: string; category?: string; country?: string } }) {
+export default async function OutletPage({ searchParams }: { searchParams: { source?: string; category?: string; country?: string; market?: string; view?: string } }) {
   const supabase = createClient()
   const marketplaceOpen = await getMarketplaceOpen()
+  const activeView: 'products' | 'shops' = searchParams.view === 'shops' ? 'shops' : 'products'
 
   // Outlet lots (defensive — is_outlet column from migration 0060). Fetch once,
-  // then build the filter chips + filter in memory (category / country / source).
+  // then build the filter chips + filter in memory (region / category / country / source).
   let all: any[] = []
   try {
     const { data } = await (supabase.from('products') as any)
       .select(`id, name, slug, price_cents, currency_code, min_order_qty, outlet_source, lot_type,
         categories(name, slug),
-        suppliers!supplier_id!inner(trade_name, legal_name, brand_slug, status, countries(name, iso_code)),
+        suppliers!supplier_id!inner(id, trade_name, legal_name, brand_slug, logo_url, reliability_tier, tagline, status, countries(name, iso_code)),
         product_images(url, sort_order)`)
       .eq('is_outlet', true).eq('is_published', true).eq('suppliers.status', 'ACTIVE')
       .order('created_at', { ascending: false }).limit(200)
@@ -38,20 +41,48 @@ export default async function OutletPage({ searchParams }: { searchParams: { sou
   const catOf = (p: any) => p.categories as { name: string; slug: string } | null
   const countryOf = (p: any) => (p.suppliers as any)?.countries as { name: string; iso_code: string } | null
 
+  // Region (zone) filter via the market-regions config.
+  const region = MARKET_REGIONS.find((r) => r.id === searchParams.market && r.enabled) ?? null
+  const regionIsos = region ? new Set(region.countries.map((c) => c.iso)) : null
+
   const sources = Array.from(new Set(all.map((p) => p.outlet_source).filter(Boolean))) as string[]
   const categories = Array.from(new Map(all.map((p) => catOf(p)).filter(Boolean).map((c) => [c!.slug, c!])).values())
   const countries = Array.from(new Map(all.map((p) => countryOf(p)).filter(Boolean).map((c) => [c!.iso_code, c!])).values())
+  const regions = MARKET_REGIONS.filter((r) => r.enabled)
 
   const products = all.filter((p) =>
     (!searchParams.source || p.outlet_source === searchParams.source) &&
     (!searchParams.category || catOf(p)?.slug === searchParams.category) &&
-    (!searchParams.country || countryOf(p)?.iso_code === searchParams.country)
+    (!searchParams.country || countryOf(p)?.iso_code === searchParams.country) &&
+    (!regionIsos || (countryOf(p) ? regionIsos.has(countryOf(p)!.iso_code) : false))
   )
+
+  // Shops view — unique outlet sellers from the filtered lots.
+  const shopMap = new Map<string, ShopCardData & { lots: number; cats: Set<string> }>()
+  for (const p of products) {
+    const s = p.suppliers as any
+    if (!s?.id) continue
+    let e = shopMap.get(s.id)
+    if (!e) {
+      e = {
+        id: s.id, legal_name: s.legal_name, trade_name: s.trade_name, logo_url: s.logo_url,
+        brand_slug: s.brand_slug, reliability_tier: s.reliability_tier, tagline: s.tagline ?? null,
+        country_name: countryOf(p)?.name ?? null, business_type: 'Outlet seller',
+        lots: 0, cats: new Set<string>(),
+      }
+      shopMap.set(s.id, e)
+    }
+    e.lots++
+    if (catOf(p)?.name) e.cats.add(catOf(p)!.name)
+  }
+  const shops: ShopCardData[] = Array.from(shopMap.values())
+    .map((e) => ({ ...e, product_count: e.lots, categories: Array.from(e.cats) }))
+    .sort((a, b) => (b.product_count ?? 0) - (a.product_count ?? 0))
 
   // Build a href preserving the other active filters.
   const chipHref = (patch: Record<string, string | undefined>) => {
     const params = new URLSearchParams()
-    const merged = { source: searchParams.source, category: searchParams.category, country: searchParams.country, ...patch }
+    const merged = { source: searchParams.source, category: searchParams.category, country: searchParams.country, market: searchParams.market, view: searchParams.view, ...patch }
     for (const [k, v] of Object.entries(merged)) if (v) params.set(k, v)
     const qs = params.toString()
     return qs ? `/outlet?${qs}` : '/outlet'
@@ -93,8 +124,27 @@ export default async function OutletPage({ searchParams }: { searchParams: { sou
       )}
 
       <div className="max-w-6xl mx-auto px-4 sm:px-8 py-8">
-        {/* Filters: Category · Country · Source */}
+        {/* Products | Shops toggle */}
+        <div className="flex items-center gap-1 bg-gray-100 rounded-xl p-1 w-max mb-5">
+          {([{ id: 'products', label: 'Lots', Icon: Package }, { id: 'shops', label: 'Shops', Icon: Warehouse }] as const).map(({ id, label, Icon }) => (
+            <Link key={id} href={chipHref({ view: id === 'products' ? undefined : id })}
+              className={`flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-bold transition-colors ${activeView === id ? 'bg-white text-[#0B1F4D] shadow-sm' : 'text-gray-500 hover:text-[#0B1F4D]'}`}>
+              <Icon className="w-4 h-4" /> {label}
+            </Link>
+          ))}
+        </div>
+
+        {/* Filters: Region · Category · Country · Source */}
         <div className="space-y-2.5 mb-6">
+          {regions.length > 0 && (
+            <div className="flex items-center gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+              <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wide flex-shrink-0 mr-1">Region</span>
+              <Link href={chipHref({ market: undefined, country: undefined })} className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-bold ${!searchParams.market ? 'bg-[#0B1F4D] text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}>All</Link>
+              {regions.map((r) => (
+                <Link key={r.id} href={chipHref({ market: r.id, country: undefined })} className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-bold ${searchParams.market === r.id ? 'bg-[#0B1F4D] text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}>{r.name}</Link>
+              ))}
+            </div>
+          )}
           {categories.length > 0 && (
             <div className="flex items-center gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
               <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wide flex-shrink-0 mr-1">Category</span>
@@ -124,7 +174,19 @@ export default async function OutletPage({ searchParams }: { searchParams: { sou
           )}
         </div>
 
-        {products.length === 0 ? (
+        {activeView === 'shops' ? (
+          shops.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {shops.map((s) => <ShopCard key={s.id} shop={s} />)}
+            </div>
+          ) : (
+            <div className="text-center py-24 bg-white rounded-2xl border border-gray-100">
+              <Warehouse className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+              <p className="text-gray-600 font-semibold text-lg">No outlet shops found</p>
+              <p className="text-gray-400 text-sm mt-1">Try a different region or filter.</p>
+            </div>
+          )
+        ) : products.length === 0 ? (
           <div className="text-center py-24 bg-white rounded-2xl border border-gray-100">
             <Warehouse className="w-12 h-12 text-gray-300 mx-auto mb-3" />
             <p className="text-gray-600 font-semibold text-lg">No outlet lots listed yet</p>
