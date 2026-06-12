@@ -12,7 +12,9 @@ import { createAdminClient } from '@/lib/supabase/admin'
  *   ADMIN_NOTIFY_EMAIL — where notifications land (the central inbox)
  *   RESEND_API_KEY + EMAIL_FROM — required for actual delivery (else dev-logs only)
  */
-const ADMIN_EMAIL = process.env.ADMIN_NOTIFY_EMAIL || process.env.EMAIL_FROM || 'info@ttaiema.com'
+// Central inbox for client registrations. EMAIL_FROM is the sender, never the
+// recipient — so notifications always reach info@ttaiema.com unless overridden.
+const ADMIN_EMAIL = process.env.ADMIN_NOTIFY_EMAIL || 'info@ttaiema.com'
 
 // Allow the separate TTAIMA website (different origin) to post registrations here.
 const CORS: Record<string, string> = {

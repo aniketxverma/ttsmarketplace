@@ -5,7 +5,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { slugify } from '@/lib/utils'
 import { sendEmailFireAndForget } from '@/lib/email/send'
 
-const ADMIN_EMAIL = process.env.ADMIN_NOTIFY_EMAIL || process.env.EMAIL_FROM || 'info@ttaiema.com'
+const ADMIN_EMAIL = process.env.ADMIN_NOTIFY_EMAIL || 'info@ttaiema.com'
 
 /**
  * A supplier requests a NEW main category. Created as `pending` (admin-only RLS,
