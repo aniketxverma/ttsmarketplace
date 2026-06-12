@@ -196,13 +196,14 @@ export default async function BrandPage({ params }: { params: { slug: string } }
 
   // Category tree → resolve each product's family (its category) + root (main category)
   // so the shop's left rail can show expandable Category → Family sections.
-  const { data: allCats } = await supabase.from('categories').select('id, name, parent_id, sort_order')
-  const catById = new Map<string, { id: string; name: string; parent_id: string | null }>(
+  const { data: allCats } = await supabase.from('categories').select('id, name, parent_id, sort_order, status')
+  const catById = new Map<string, { id: string; name: string; parent_id: string | null; status?: string }>(
     (allCats ?? []).map((c: any) => [c.id, c])
   )
-  // Fixed list of MAIN categories (roots) — always shown in the shop, even when empty.
+  const isActiveCat = (c: any) => !c || (c.status ?? 'active') === 'active'
+  // Fixed list of MAIN categories (roots) — always shown in the shop (pending ones hidden).
   const categoryRoots = (allCats ?? [])
-    .filter((c: any) => !c.parent_id)
+    .filter((c: any) => !c.parent_id && isActiveCat(c))
     .sort((a: any, b: any) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
     .map((c: any) => ({ id: c.id, name: c.name }))
   const rootOf = (catId?: string | null) => {
@@ -215,14 +216,15 @@ export default async function BrandPage({ params }: { params: { slug: string } }
     const imgs = ((p.product_images ?? []) as { url: string; sort_order: number }[]).sort((a, b) => a.sort_order - b.sort_order)
     const leaf = p.category_id ? catById.get(p.category_id) : undefined
     const root = rootOf(p.category_id)
-    // family = the product's own category when it sits under a main category; null when it IS the root.
-    const family = leaf && root && leaf.id !== root.id ? { id: leaf.id, name: leaf.name } : null
+    // Pending (unapproved) categories don't group the product in the shop yet.
+    const activeRoot = root && isActiveCat(root) ? root : null
+    const family = leaf && activeRoot && leaf.id !== activeRoot.id ? { id: leaf.id, name: leaf.name } : null
     return {
       ...p,
       thumb: imgs[0]?.url ?? null,
       category_name: (p.categories as any)?.name ?? null,
       family,
-      root: root ? { id: root.id, name: root.name } : null,
+      root: activeRoot ? { id: activeRoot.id, name: activeRoot.name } : null,
     }
   })
 

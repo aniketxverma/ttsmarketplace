@@ -3,6 +3,7 @@ import { requireRole } from '@/lib/auth/rbac'
 import { AddCategoryForm } from './AddCategoryForm'
 import { DeleteCategory } from './DeleteCategory'
 import { CategoryTemplateEditor } from './CategoryTemplateEditor'
+import { PendingCategories } from './PendingCategories'
 
 type Cat = {
   id: string
@@ -12,6 +13,8 @@ type Cat = {
   marketplace_context: string
   sort_order: number
   parent_id: string | null
+  status?: string
+  requested_by?: string | null
   template_fields?: { key: string; label: string; type: 'text' | 'number' | 'select'; options?: string[] }[]
 }
 
@@ -19,17 +22,38 @@ export default async function AdminCategoriesPage() {
   await requireRole('admin')
   const supabase = createClient()
 
-  const { data: categories } = await (supabase
-    .from('categories') as any)
-    .select('id, name, slug, depth, marketplace_context, sort_order, parent_id, template_fields')
-    .order('depth', { ascending: true })
-    .order('sort_order', { ascending: true })
-    .order('name', { ascending: true }) as { data: Cat[] | null }
+  // Select status/requested_by defensively (columns from migration 0057).
+  let categories: Cat[] | null = null
+  {
+    const full = await (supabase.from('categories') as any)
+      .select('id, name, slug, depth, marketplace_context, sort_order, parent_id, status, requested_by, template_fields')
+      .order('depth', { ascending: true }).order('sort_order', { ascending: true }).order('name', { ascending: true })
+    if (!full.error) categories = full.data
+    else {
+      const basic = await (supabase.from('categories') as any)
+        .select('id, name, slug, depth, marketplace_context, sort_order, parent_id, template_fields')
+        .order('depth', { ascending: true }).order('sort_order', { ascending: true }).order('name', { ascending: true })
+      categories = basic.data
+    }
+  }
+
+  // Pending requests (supplier-created) — resolve who requested them.
+  const pendingRaw = (categories ?? []).filter((c) => c.status === 'pending')
+  const reqSupIds = Array.from(new Set(pendingRaw.map((c) => c.requested_by).filter(Boolean))) as string[]
+  const supNames = new Map<string, string>()
+  if (reqSupIds.length) {
+    const { data: sups } = await (supabase.from('suppliers') as any).select('id, legal_name, trade_name').in('id', reqSupIds)
+    for (const s of (sups ?? []) as any[]) supNames.set(s.id, s.trade_name ?? s.legal_name ?? 'Supplier')
+  }
+  const pending = pendingRaw.map((c) => ({ id: c.id, name: c.name, requested_by_name: c.requested_by ? supNames.get(c.requested_by) ?? null : null }))
+
+  // The live tree shows active categories only (pending appear in the section above).
+  const liveCats = (categories ?? []).filter((c) => (c.status ?? 'active') === 'active')
 
   // Group: root first, then children
-  const roots = categories?.filter((c) => !c.parent_id) ?? []
+  const roots = liveCats.filter((c) => !c.parent_id) ?? []
   const childrenByParent: Record<string, Cat[]> = {}
-  categories?.filter((c) => c.parent_id).forEach((c) => {
+  liveCats.filter((c) => c.parent_id).forEach((c) => {
     if (!childrenByParent[c.parent_id!]) childrenByParent[c.parent_id!] = []
     childrenByParent[c.parent_id!].push(c)
   })
@@ -48,6 +72,9 @@ export default async function AdminCategoriesPage() {
           <p className="text-muted-foreground text-sm mt-0.5">{categories?.length ?? 0} categories total</p>
         </div>
       </div>
+
+      {/* Supplier-requested categories awaiting review */}
+      <PendingCategories pending={pending} roots={roots.map((r) => ({ id: r.id, name: r.name }))} />
 
       {/* Add new category form */}
       <AddCategoryForm rootCategories={roots.map((r) => ({ id: r.id, name: r.name }))} />

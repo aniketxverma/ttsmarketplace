@@ -41,7 +41,7 @@ interface ProductFormProps {
 }
 
 interface FormState {
-  name: string; slug: string; categoryId: string; mainCategoryId: string; familyName: string; marketplaceContext: 'wholesale' | 'retail' | 'both'
+  name: string; slug: string; categoryId: string; mainCategoryId: string; familyName: string; requestCategoryName: string; marketplaceContext: 'wholesale' | 'retail' | 'both'
   productLine: string; isFamilyCover: boolean; brandName: string
   cityId: string; description: string; sku: string
   priceDisplay: string       // wholesale / B2B price, converted to cents on save
@@ -65,7 +65,7 @@ interface FormState {
 }
 
 const INITIAL: FormState = {
-  name: '', slug: '', categoryId: '', mainCategoryId: '', familyName: '', marketplaceContext: 'wholesale',
+  name: '', slug: '', categoryId: '', mainCategoryId: '', familyName: '', requestCategoryName: '', marketplaceContext: 'wholesale',
   productLine: '', isFamilyCover: false, brandName: '',
   cityId: '', description: '', sku: '',
   priceDisplay: '', retailPriceDisplay: '', currencyCode: 'EUR',
@@ -108,7 +108,7 @@ export function ProductForm({
     ...initialData,
   })
   const [specs, setSpecs] = useState<Record<string, string>>(() => (initialSpecs ?? {}) as Record<string, string>)
-  const [categories, setCategories] = useState<{ id: string; name: string; slug: string; parent_id: string | null; template_fields?: TemplateField[] }[]>([])
+  const [categories, setCategories] = useState<{ id: string; name: string; slug: string; parent_id: string | null; status?: string; template_fields?: TemplateField[] }[]>([])
   const [cities, setCities] = useState<{ id: string; name: string }[]>([])
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -122,7 +122,12 @@ export function ProductForm({
 
   useEffect(() => {
     const supabase = createClient()
-    supabase.from('categories').select('id, name, slug, parent_id, template_fields').order('name').then(({ data }) => setCategories((data as any) ?? []))
+    supabase.from('categories').select('id, name, slug, parent_id, status, template_fields').order('name')
+      .then(({ data, error }) => {
+        if (!error) { setCategories((data as any) ?? []); return }
+        // status column not migrated yet — fall back.
+        supabase.from('categories').select('id, name, slug, parent_id, template_fields').order('name').then(({ data: d2 }) => setCategories((d2 as any) ?? []))
+      })
     supabase.from('cities').select('id, name').eq('retail_active', true).order('name').then(({ data }) => setCities(data ?? []))
   }, [])
 
@@ -164,18 +169,33 @@ export function ProductForm({
     if (!form.mainCategoryId) { setError('Main category is required'); setLoading(false); return }
     if (!form.slug.trim()) { setError('Slug is required'); setLoading(false); return }
 
+    // "Request a new category" → create it as pending and use its id.
+    let mainId = form.mainCategoryId
+    if (mainId === '__request__') {
+      if (!form.requestCategoryName.trim()) { setError('Enter the new category name'); setLoading(false); return }
+      try {
+        const res = await fetch('/api/supplier/category-request', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: form.requestCategoryName.trim() }),
+        })
+        const j = await res.json()
+        if (res.ok && j.category?.id) mainId = j.category.id
+        else { setError(j.error || 'Could not request category'); setLoading(false); return }
+      } catch { setError('Could not request category'); setLoading(false); return }
+    }
+
     // Resolve Main Category + Family → the product's category_id. A typed family
     // is created (or reused) under the main category via the server endpoint.
-    let resolvedCategoryId = form.mainCategoryId
+    let resolvedCategoryId = mainId
     if (form.familyName.trim()) {
-      const existing = categories.find((c) => c.parent_id === form.mainCategoryId && c.name.toLowerCase() === form.familyName.trim().toLowerCase())
+      const existing = categories.find((c) => c.parent_id === mainId && c.name.toLowerCase() === form.familyName.trim().toLowerCase())
       if (existing) {
         resolvedCategoryId = existing.id
       } else {
         try {
           const res = await fetch('/api/supplier/family', {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ rootId: form.mainCategoryId, name: form.familyName.trim() }),
+            body: JSON.stringify({ rootId: mainId, name: form.familyName.trim() }),
           })
           const json = await res.json()
           if (res.ok && json.category?.id) resolvedCategoryId = json.category.id
@@ -418,8 +438,16 @@ export function ProductForm({
             <select className={inputCls} value={form.mainCategoryId}
               onChange={(e) => { update('mainCategoryId', e.target.value); update('familyName', '') }} required>
               <option value="">{t('pform.select_category')}</option>
-              {categories.filter((c) => !c.parent_id).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+              {categories.filter((c) => !c.parent_id && (c.status ?? 'active') === 'active').map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+              <option value="__request__">➕ Request a new category…</option>
             </select>
+            {form.mainCategoryId === '__request__' && (
+              <div className="mt-2 rounded-xl border border-amber-200 bg-amber-50/60 p-3 space-y-1.5">
+                <input className={inputCls} value={form.requestCategoryName} onChange={(e) => update('requestCategoryName', e.target.value)}
+                  placeholder="New category name — e.g. Pet Supplies" />
+                <p className="text-[11px] text-amber-700">Submitted for admin approval. Your product saves under it and goes live once approved.</p>
+              </div>
+            )}
           </div>
           <div className="space-y-1.5">
             <label className={labelCls}>Family / Product Type</label>

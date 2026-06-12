@@ -76,10 +76,12 @@ export default async function MarketplacePage({
       .select('trade_name, legal_name').eq('id', activeSupplier).maybeSingle()
     scopedSupplierName = s?.trade_name ?? s?.legal_name ?? null
   }
-  const roots = allCats.filter((c) => c.parent_id === null) as Category[]
+  // Pending (supplier-requested, not yet approved) categories stay hidden publicly.
+  const isActiveCat = (c: any) => (c.status ?? 'active') === 'active'
+  const roots = allCats.filter((c) => c.parent_id === null && isActiveCat(c)) as Category[]
   const childMap: Record<string, Category[]> = {}
   allCats.forEach((c) => {
-    if (c.parent_id) {
+    if (c.parent_id && isActiveCat(c)) {
       if (!childMap[c.parent_id]) childMap[c.parent_id] = []
       childMap[c.parent_id].push(c as Category)
     }
