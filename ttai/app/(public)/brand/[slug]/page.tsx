@@ -95,7 +95,7 @@ export default async function BrandPage({ params }: { params: { slug: string } }
   const [productsRes, galleryRes, certsRes, reviewsRes, docsRes, posRes, channelRes] = await Promise.all([
     supabase
       .from('products')
-      .select('id, name, slug, price_cents, currency_code, min_order_qty, marketplace_context, description, product_images(url, sort_order), categories(name)')
+      .select('id, name, slug, price_cents, currency_code, min_order_qty, marketplace_context, description, category_id, product_images(url, sort_order), categories(id, name, parent_id)')
       .eq('supplier_id', supplier.id)
       .eq('is_published', true)
       .order('created_at', { ascending: false })
@@ -187,9 +187,31 @@ export default async function BrandPage({ params }: { params: { slug: string } }
     supplier.trade_name || supplier.legal_name || 'Supplier'
   if (!supplier.logo_url && owner?.avatar_url) supplier.logo_url = owner.avatar_url
 
+  // Category tree → resolve each product's family (its category) + root (main category)
+  // so the shop's left rail can show expandable Category → Family sections.
+  const { data: allCats } = await supabase.from('categories').select('id, name, parent_id')
+  const catById = new Map<string, { id: string; name: string; parent_id: string | null }>(
+    (allCats ?? []).map((c: any) => [c.id, c])
+  )
+  const rootOf = (catId?: string | null) => {
+    let cur = catId ? catById.get(catId) : undefined
+    for (let i = 0; cur?.parent_id && i < 8; i++) cur = catById.get(cur.parent_id) ?? cur
+    return cur ?? null
+  }
+
   const products = (productsRes.data ?? []).map((p: any) => {
     const imgs = ((p.product_images ?? []) as { url: string; sort_order: number }[]).sort((a, b) => a.sort_order - b.sort_order)
-    return { ...p, thumb: imgs[0]?.url ?? null, category_name: (p.categories as any)?.name ?? null }
+    const leaf = p.category_id ? catById.get(p.category_id) : undefined
+    const root = rootOf(p.category_id)
+    // family = the product's own category when it sits under a main category; null when it IS the root.
+    const family = leaf && root && leaf.id !== root.id ? { id: leaf.id, name: leaf.name } : null
+    return {
+      ...p,
+      thumb: imgs[0]?.url ?? null,
+      category_name: (p.categories as any)?.name ?? null,
+      family,
+      root: root ? { id: root.id, name: root.name } : null,
+    }
   })
 
   const shareUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? ''}/brand/${params.slug}`

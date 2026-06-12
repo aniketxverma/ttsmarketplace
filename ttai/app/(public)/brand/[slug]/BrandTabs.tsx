@@ -10,7 +10,7 @@ import {
   ExternalLink, Download, Play, X, BadgeCheck, ChevronRight, ChevronLeft, Reply,
   Radio, Users, FileText, Bell, Tag, Megaphone, LogIn, Loader, UserMinus, ArrowRight,
   FileSpreadsheet, FileImage, File as FileIcon,
-  LayoutGrid, List as ListIcon, Search, Heart, Sparkles, Zap,
+  LayoutGrid, List as ListIcon, Search, Heart, Sparkles, Zap, ChevronDown,
   Cpu, Smartphone, Headphones, Cable, Speaker, Watch, BatteryCharging, Tablet, Laptop,
 } from 'lucide-react'
 
@@ -49,6 +49,8 @@ interface Product {
   id: string; name: string; slug: string; price_cents: number; currency_code: string
   min_order_qty: number | null; thumb: string | null; category_name: string | null; description?: string | null
   marketplace_context?: string | null
+  family?: { id: string; name: string } | null
+  root?: { id: string; name: string } | null
 }
 interface GalleryItem { id: string; url: string; type: 'image'|'video'; caption: string | null; sort_order: number }
 interface Certification { id: string; title: string; issuer: string | null; issued_date: string | null; expiry_date: string | null; image_url: string | null }
@@ -254,24 +256,53 @@ function ProductRow({ product, wa }: { product: Product; wa: string | null }) {
 }
 
 function ProductBrowser({ products, wa, supplierId, canSeeB2B = true }: { products: Product[]; wa: string | null; supplierId: string; canSeeB2B?: boolean }) {
-  const [activeCat, setActiveCat] = useState<string>('all')
+  // activeKey: 'all' | `root:<id>` | `family:<id>`
+  const [activeKey, setActiveKey] = useState<string>('all')
+  const [expanded, setExpanded] = useState<Set<string>>(new Set())
   const [sort, setSort] = useState<SortKey>('popular')
   const [view, setView] = useState<'grid' | 'list'>('grid')
   const [query, setQuery] = useState('')
   const [page, setPage] = useState(1)
 
-  const categories = useMemo(() => {
-    const counts = new Map<string, number>()
-    products.forEach((p) => {
-      const c = p.category_name ?? 'Other'
-      counts.set(c, (counts.get(c) ?? 0) + 1)
-    })
-    return Array.from(counts.entries()).sort((a, b) => b[1] - a[1])
+  // Build the Category → Family tree from the products. Only categories and
+  // families that actually have products appear (empty ones are hidden).
+  const tree = useMemo(() => {
+    const roots = new Map<string, { id: string; name: string; count: number; families: Map<string, { id: string; name: string; count: number }> }>()
+    for (const p of products) {
+      const root = p.root ?? { id: 'other', name: p.category_name ?? 'Other' }
+      let r = roots.get(root.id)
+      if (!r) { r = { id: root.id, name: root.name, count: 0, families: new Map() }; roots.set(root.id, r) }
+      r.count++
+      if (p.family) {
+        let f = r.families.get(p.family.id)
+        if (!f) { f = { id: p.family.id, name: p.family.name, count: 0 }; r.families.set(p.family.id, f) }
+        f.count++
+      }
+    }
+    return Array.from(roots.values())
+      .map((r) => ({ ...r, families: Array.from(r.families.values()).sort((a, b) => a.name.localeCompare(b.name)) }))
+      .sort((a, b) => b.count - a.count)
   }, [products])
+
+  const activeLabel = useMemo(() => {
+    if (activeKey === 'all') return 'All Products'
+    const [type, id] = activeKey.split(':')
+    for (const r of tree) {
+      if (type === 'root' && r.id === id) return r.name
+      const f = r.families.find((f) => f.id === id)
+      if (type === 'family' && f) return f.name
+    }
+    return 'Products'
+  }, [activeKey, tree])
 
   const filtered = useMemo(() => {
     let list = products
-    if (activeCat !== 'all') list = list.filter((p) => (p.category_name ?? 'Other') === activeCat)
+    if (activeKey !== 'all') {
+      const [type, id] = activeKey.split(':')
+      list = type === 'family'
+        ? list.filter((p) => p.family?.id === id)
+        : list.filter((p) => (p.root?.id ?? 'other') === id)
+    }
     if (query.trim()) {
       const q = query.trim().toLowerCase()
       list = list.filter((p) => p.name.toLowerCase().includes(q))
@@ -281,27 +312,18 @@ function ProductBrowser({ products, wa, supplierId, canSeeB2B = true }: { produc
     else if (sort === 'price_desc') sorted.sort((a, b) => (b.price_cents || 0) - (a.price_cents || 0))
     else if (sort === 'name') sorted.sort((a, b) => a.name.localeCompare(b.name))
     return sorted
-  }, [products, activeCat, query, sort])
+  }, [products, activeKey, query, sort])
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const safePage = Math.min(page, totalPages)
   const pageItems = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE)
 
   // Reset to page 1 whenever the filter set changes
-  useEffect(() => { setPage(1) }, [activeCat, query, sort])
+  useEffect(() => { setPage(1) }, [activeKey, query, sort])
 
-  const CatButton = ({ id, label }: { id: string; label: string; count?: number }) => {
-    const active = activeCat === id
-    const Icon = id === 'all' ? LayoutGrid : catIcon(label)
-    return (
-      <button onClick={() => setActiveCat(id)}
-        className={`flex-shrink-0 lg:w-full flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-semibold transition-colors ${
-          active ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-50'}`}>
-        <Icon className="w-4 h-4 flex-shrink-0" />
-        <span className="truncate flex-1 text-left">{label}</span>
-      </button>
-    )
-  }
+  const toggleRoot = (id: string) => setExpanded((prev) => {
+    const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next
+  })
 
   const pageNumbers = useMemo(() => {
     const out: (number | '…')[] = []
@@ -317,10 +339,55 @@ function ProductBrowser({ products, wa, supplierId, canSeeB2B = true }: { produc
       {/* ── Left category rail ── */}
       <aside className="lg:w-52 flex-shrink-0 space-y-4">
         <div className="lg:bg-white lg:rounded-2xl lg:border lg:border-gray-100 lg:shadow-sm lg:p-3">
-          <p className="hidden lg:block text-[11px] font-black uppercase tracking-widest text-gray-400 mb-2 px-1">Categories</p>
-          <div className="flex lg:flex-col gap-1.5 overflow-x-auto lg:overflow-visible pb-1 lg:pb-0" style={{ scrollbarWidth: 'none' }}>
-            <CatButton id="all" label="All Products" count={products.length} />
-            {categories.map(([cat, count]) => <CatButton key={cat} id={cat} label={cat} count={count} />)}
+          <p className="text-[11px] font-black uppercase tracking-widest text-gray-400 mb-2 px-1">Categories</p>
+          <div className="space-y-0.5">
+            {/* All products */}
+            <button onClick={() => setActiveKey('all')}
+              className={`w-full flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-semibold transition-colors ${activeKey === 'all' ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-50'}`}>
+              <LayoutGrid className="w-4 h-4 flex-shrink-0" />
+              <span className="truncate flex-1 text-left">All Products</span>
+              <span className="text-[11px] text-gray-400">{products.length}</span>
+            </button>
+
+            {/* Main category → families (only those with products) */}
+            {tree.map((r) => {
+              const Icon = catIcon(r.name)
+              const isOpen = expanded.has(r.id)
+              const rootActive = activeKey === `root:${r.id}`
+              return (
+                <div key={r.id}>
+                  <div className={`flex items-center rounded-lg transition-colors ${rootActive ? 'bg-blue-50' : 'hover:bg-gray-50'}`}>
+                    <button onClick={() => setActiveKey(`root:${r.id}`)}
+                      className={`flex items-center gap-2.5 px-3 py-2 text-[13px] font-semibold flex-1 min-w-0 ${rootActive ? 'text-blue-700' : 'text-gray-700'}`}>
+                      <Icon className="w-4 h-4 flex-shrink-0" />
+                      <span className="truncate flex-1 text-left">{r.name}</span>
+                      <span className="text-[11px] text-gray-400 flex-shrink-0">{r.count}</span>
+                    </button>
+                    {r.families.length > 0 && (
+                      <button onClick={() => toggleRoot(r.id)} aria-label="Toggle families"
+                        className="px-2 py-2 text-gray-400 hover:text-gray-700 flex-shrink-0">
+                        <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                      </button>
+                    )}
+                  </div>
+                  {/* Families */}
+                  {isOpen && r.families.length > 0 && (
+                    <div className="ml-3 pl-3 border-l border-gray-100 space-y-0.5 py-0.5">
+                      {r.families.map((f) => {
+                        const famActive = activeKey === `family:${f.id}`
+                        return (
+                          <button key={f.id} onClick={() => setActiveKey(`family:${f.id}`)}
+                            className={`w-full flex items-center gap-2 rounded-lg px-3 py-1.5 text-[12.5px] transition-colors ${famActive ? 'bg-blue-50 text-blue-700 font-semibold' : 'text-gray-500 hover:bg-gray-50'}`}>
+                            <span className="truncate flex-1 text-left">{f.name}</span>
+                            <span className="text-[11px] text-gray-400">{f.count}</span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
           </div>
         </div>
 
@@ -343,7 +410,7 @@ function ProductBrowser({ products, wa, supplierId, canSeeB2B = true }: { produc
         {/* Heading + toolbar */}
         <div className="flex flex-wrap items-end justify-between gap-3 mb-4">
           <div>
-            <h2 className="text-xl font-extrabold text-[#0B1F4D] capitalize">{activeCat === 'all' ? 'All Products' : activeCat}</h2>
+            <h2 className="text-xl font-extrabold text-[#0B1F4D] capitalize">{activeLabel}</h2>
             <p className="text-sm text-gray-400 mt-0.5">
               {filtered.length === 0 ? 'No products' : <>Showing {(safePage - 1) * PAGE_SIZE + 1} – {Math.min(safePage * PAGE_SIZE, filtered.length)} of {filtered.length} products</>}
             </p>
