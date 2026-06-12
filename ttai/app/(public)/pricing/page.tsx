@@ -163,7 +163,7 @@ export default async function PricingPage() {
                   <span className="text-5xl font-extrabold">{fp.fee}</span>
                   <span className="text-blue-300 text-lg mb-1.5">{fp.feePeriod}</span>
                 </div>
-                <p className="text-blue-300/90 text-sm mt-1">Annual membership fee{fp.feeNote ? ` · ${fp.feeNote}` : ''}</p>
+                <p className="text-blue-300/90 text-sm mt-1">{fp.feeLabel ?? 'Program fee'}{fp.feeNote ? ` · ${fp.feeNote}` : ''}</p>
                 <a href={mailto}
                   className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#F5A623] hover:bg-[#fbb93a] text-[#0B1F4D] px-7 py-3.5 text-sm font-extrabold transition-colors mt-5 w-full">
                   Talk to our team <ArrowRight className="w-4 h-4" />

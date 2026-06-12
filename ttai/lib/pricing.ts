@@ -99,8 +99,9 @@ export interface Flagship {
   subtitle: string
   fee: string            // headline fee customer pays
   feePeriod: string      // e.g. '/year'
+  feeLabel?: string      // label under the price (default 'Program fee')
   feeNote?: string       // e.g. 'By application'
-  valueNote: string      // value anchor / badge
+  valueNote: string      // headline benefit badge
   tagline: string
   highlights: { title: string; desc: string }[]  // the "special letter" callouts
   included?: string[]    // Included Services
@@ -117,9 +118,11 @@ export const FLAGSHIPS: Flagship[] = [
     id: 'business-growth',
     name: 'TTAI ON — Business Growth',
     subtitle: 'International Business Development Program',
-    fee: '€350',
-    feePeriod: '/year',
-    valueNote: 'Up to €8,500 in program value',
+    fee: '€8,500',
+    feePeriod: '',
+    feeLabel: 'One-time program fee',
+    feeNote: '1 year · 1 shop',
+    valueNote: 'Logistics hub + sales team',
     tagline: 'For startups, retailers, wholesalers and entrepreneurs ready to grow — with professional support, networking and real international trade opportunities.',
     accent: '#F5A623',
     highlights: [
@@ -159,10 +162,11 @@ export const FLAGSHIPS: Flagship[] = [
     id: 'the-fair',
     name: 'TTAI ON — The Fair',
     subtitle: 'International Business Expansion & Trade Fair Program',
-    fee: '€350',
+    fee: '€35,000',
     feePeriod: '/year',
-    feeNote: 'By application',
-    valueNote: 'Up to €35,000 in program value',
+    feeLabel: 'Annual program fee',
+    feeNote: 'By application · payment by bank transfer',
+    valueNote: 'International fairs included',
     tagline: 'A premium program to expand internationally through consulting, trade fairs, logistics, networking, sales support and strategic partnerships.',
     accent: '#C9A84C',
     highlights: [
