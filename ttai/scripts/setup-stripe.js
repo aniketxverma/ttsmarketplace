@@ -73,6 +73,7 @@ async function ensurePlan(plan) {
     unit_amount: plan.amount_eur * 100,
     recurring: { interval: 'month' },
     lookup_key: lookupKey,
+    transfer_lookup_key: true, // steal the key from any archived/old price so re-runs work
     metadata: { ttai_tier: plan.tier },
   })
   console.log(`  ✓ ${plan.tier.padEnd(9)} create ${price.id}  (€${plan.amount_eur}/mo)`)
