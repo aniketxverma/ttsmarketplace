@@ -472,7 +472,7 @@ function ProductBrowser({ products, wa, supplierId, canSeeB2B = true, categoryRo
         {/* Grid / list */}
         {pageItems.length > 0 ? (
           view === 'grid' ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
               {pageItems.map((p) => <ProductCard key={p.id} product={p} wa={wa} supplierId={supplierId} canSeeB2B={canSeeB2B} />)}
             </div>
           ) : (
@@ -847,20 +847,27 @@ export function BrandTabs({
               )}
             </div>
 
-            <div data-reveal className="lg:grid lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-7 lg:items-start">
-              <div className="min-w-0">
+            {/* Right rail only when it has real content (docs/videos) — otherwise
+                the catalogue uses the full width instead of leaving an empty column. */}
+            {(documents.length > 0 || sidebarVideos.length > 0) ? (
+              <div data-reveal className="lg:grid lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-7 lg:items-start">
+                <div className="min-w-0">
+                  <ProductBrowser products={products} wa={wa} supplierId={supplier.id} canSeeB2B={canSeeB2B} categoryRoots={categoryRoots} />
+                </div>
+                <BrandSidebar
+                  className="hidden lg:block lg:sticky lg:top-[112px] mt-8 lg:mt-0"
+                  documents={documents as any}
+                  videos={sidebarVideos}
+                  supplier={supplier as any}
+                  contactUnlocked={contactUnlocked}
+                  isAuthenticated={isAuthenticated}
+                />
+              </div>
+            ) : (
+              <div data-reveal>
                 <ProductBrowser products={products} wa={wa} supplierId={supplier.id} canSeeB2B={canSeeB2B} categoryRoots={categoryRoots} />
               </div>
-              {/* Right rail — documents, videos, contact (desktop only) */}
-              <BrandSidebar
-                className="hidden lg:block lg:sticky lg:top-[112px] mt-8 lg:mt-0"
-                documents={documents as any}
-                videos={sidebarVideos}
-                supplier={supplier as any}
-                contactUnlocked={contactUnlocked}
-                isAuthenticated={isAuthenticated}
-              />
-            </div>
+            )}
 
             {/* CTA banner */}
             {wa && (

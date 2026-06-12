@@ -262,7 +262,7 @@ export default async function BrandPage({ params }: { params: { slug: string } }
 
       {/* ══ BREADCRUMB + ACTIONS ════════════════════════════════════════════ */}
       <div className="bg-white border-b border-gray-100">
-        <div className="max-w-6xl mx-auto px-4 sm:px-8 py-3 flex items-center justify-between gap-3">
+        <div className="max-w-7xl mx-auto px-4 sm:px-8 py-3 flex items-center justify-between gap-3">
           <nav className="flex items-center gap-1.5 text-sm text-gray-400 min-w-0">
             <Link href="/" className="hover:text-[#0B1F4D] transition-colors">Home</Link>
             <span>/</span>
@@ -278,7 +278,7 @@ export default async function BrandPage({ params }: { params: { slug: string } }
       </div>
 
       {/* ══ SUPPLIER HEADER CARD ═════════════════════════════════════════════ */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-8 pt-5">
+      <div className="max-w-7xl mx-auto px-4 sm:px-8 pt-5">
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
          <div className="h-1.5 w-full" style={{ backgroundColor: brandAccent }} />
          <div className="p-5 sm:p-6">
@@ -349,7 +349,7 @@ export default async function BrandPage({ params }: { params: { slug: string } }
       </div>
 
       {/* ══ MAIN CONTENT ═════════════════════════════════════════════════════ */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-8 mt-5 pb-24 sm:pb-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-8 mt-5 pb-24 sm:pb-10">
         <BrandTabs
           supplier={supplier as any}
           products={products}
@@ -373,7 +373,7 @@ export default async function BrandPage({ params }: { params: { slug: string } }
 
       {/* ══ TRUST BAR ════════════════════════════════════════════════════════ */}
       <div className="bg-white border-t border-gray-100">
-        <div className="max-w-6xl mx-auto px-4 sm:px-8 py-7 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-5">
+        <div className="max-w-7xl mx-auto px-4 sm:px-8 py-7 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-5">
           {[
             { Icon: ShieldCheck, title: 'Verified Supplier', sub: 'Identity & business verified' },
             { Icon: Lock,        title: 'Secure Payments',   sub: '100% secure & protected' },
