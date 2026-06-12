@@ -13,6 +13,17 @@ import { sendEmailFireAndForget } from '@/lib/email/send'
  */
 const ADMIN_EMAIL = process.env.ADMIN_NOTIFY_EMAIL || process.env.EMAIL_FROM || 'info@ttaiema.com'
 
+// Allow the separate TTAIMA website (different origin) to post registrations here.
+const CORS: Record<string, string> = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type',
+}
+
+export async function OPTIONS() {
+  return new NextResponse(null, { status: 204, headers: CORS })
+}
+
 export async function POST(req: NextRequest) {
   const b = (await req.json().catch(() => ({}))) as Record<string, string>
   const source = b.sourcePlatform || 'TTAI EMA'
@@ -60,5 +71,5 @@ export async function POST(req: NextRequest) {
     react: body as any,
   })
 
-  return NextResponse.json({ ok: true })
+  return NextResponse.json({ ok: true }, { headers: CORS })
 }

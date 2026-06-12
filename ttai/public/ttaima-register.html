@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Register · TTAIMA</title>
+<!--
+  Self-contained TTAIMA registration form. Host this anywhere (it's a separate site).
+  It posts every registration to the SAME central inbox as TTAI EMA, tagged
+  Source Platform = TTAIMA.
+
+  ► Set API_BASE below to your TTAI EMA domain (the platform that owns the API).
+-->
+<style>
+  :root { --navy:#0B1F4D; --gold:#F5A623; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: -apple-system, Segoe UI, Roboto, Arial, sans-serif; background:#f4f6fb; color:#0f172a; }
+  .wrap { max-width: 560px; margin: 0 auto; padding: 32px 18px 64px; }
+  .brand { text-align:center; margin-bottom: 22px; }
+  .logo { display:inline-flex; align-items:center; gap:10px; font-weight:800; font-size:22px; color:var(--navy); }
+  .logo .b { background:var(--navy); color:#fff; width:38px; height:38px; border-radius:10px; display:grid; place-items:center; }
+  .sub { color:#64748b; font-size:14px; margin-top:6px; }
+  .card { background:#fff; border:1px solid #e7ebf3; border-radius:18px; padding:24px; box-shadow:0 6px 24px rgba(11,31,77,.05); }
+  h1 { font-size:20px; margin:0 0 4px; color:var(--navy); }
+  .hint { color:#64748b; font-size:13px; margin:0 0 18px; }
+  label { display:block; font-size:12px; font-weight:700; color:#475569; text-transform:uppercase; letter-spacing:.04em; margin:14px 0 6px; }
+  input, select, textarea { width:100%; padding:11px 12px; border:1px solid #d8dee9; border-radius:10px; font-size:14px; font-family:inherit; outline:none; }
+  input:focus, select:focus, textarea:focus { border-color:var(--navy); box-shadow:0 0 0 3px rgba(11,31,77,.10); }
+  textarea { min-height:88px; resize:vertical; }
+  .row { display:flex; gap:12px; }
+  .row > div { flex:1; }
+  .req { color:#ef4444; }
+  button { width:100%; margin-top:22px; background:var(--navy); color:#fff; border:0; padding:13px; border-radius:12px; font-size:15px; font-weight:800; cursor:pointer; }
+  button:hover { background:#13306e; }
+  button:disabled { opacity:.6; cursor:not-allowed; }
+  .ok { display:none; text-align:center; padding:14px 0; }
+  .ok h2 { color:#16a34a; margin:0 0 6px; }
+  .err { display:none; background:#fef2f2; border:1px solid #fecaca; color:#b91c1c; font-size:13px; padding:10px 12px; border-radius:10px; margin-top:14px; }
+  .tag { text-align:center; font-size:12px; color:#94a3b8; margin-top:16px; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="brand">
+      <span class="logo"><span class="b">T</span> TTAI<span style="color:var(--gold)">MA</span></span>
+      <div class="sub">Free to join · 24h approval</div>
+    </div>
+
+    <div class="card">
+      <div id="form">
+        <h1>Create your account</h1>
+        <p class="hint">Tell us about your business — our team reviews every request.</p>
+
+        <label>Account type <span class="req">*</span></label>
+        <select id="accountType" required>
+          <option value="">Select account type…</option>
+          <option>Buyer / Client</option>
+          <option>Supplier</option>
+          <option>Distributor</option>
+          <option>Retail Shop</option>
+          <option>Broker / Sales Agent</option>
+          <option>Logistics Partner</option>
+          <option>Business Partner</option>
+          <option>Investor</option>
+        </select>
+
+        <label>Full name <span class="req">*</span></label>
+        <input id="fullName" required placeholder="e.g. John Smith" />
+
+        <label>Company name</label>
+        <input id="companyName" placeholder="e.g. Acme Trading SL" />
+
+        <label>Email <span class="req">*</span></label>
+        <input id="email" type="email" required placeholder="you@company.com" />
+
+        <label>Phone / WhatsApp</label>
+        <input id="phone" placeholder="+34 600 000 000" />
+
+        <div class="row">
+          <div>
+            <label>Country</label>
+            <input id="countryName" placeholder="Spain" />
+          </div>
+          <div>
+            <label>City</label>
+            <input id="city" placeholder="Madrid" />
+          </div>
+        </div>
+
+        <label>Message / notes</label>
+        <textarea id="message" placeholder="What are you looking for? Products, markets, partnership…"></textarea>
+
+        <div id="err" class="err"></div>
+        <button id="submit" onclick="submitForm()">Submit registration</button>
+      </div>
+
+      <div id="ok" class="ok">
+        <h2>✓ Registration received</h2>
+        <p class="hint">Thank you! Our team will get back to you within 24 hours.</p>
+      </div>
+    </div>
+
+    <p class="tag">Source: TTAIMA · connected to TTAI EMA</p>
+  </div>
+
+<script>
+  // ► CHANGE THIS to your TTAI EMA domain (the platform that owns the API).
+  const API_BASE = 'https://ttsmarketplace.vercel.app';
+
+  async function submitForm() {
+    const $ = (id) => document.getElementById(id);
+    const err = $('err');
+    err.style.display = 'none';
+
+    const accountType = $('accountType').value.trim();
+    const fullName = $('fullName').value.trim();
+    const email = $('email').value.trim();
+    if (!accountType || !fullName || !email) {
+      err.textContent = 'Please fill account type, full name and email.';
+      err.style.display = 'block';
+      return;
+    }
+
+    const btn = $('submit');
+    btn.disabled = true; btn.textContent = 'Submitting…';
+
+    try {
+      const res = await fetch(API_BASE + '/api/register-notify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          accountType, fullName, email,
+          companyName: $('companyName').value.trim(),
+          phone: $('phone').value.trim(),
+          countryName: $('countryName').value.trim(),
+          city: $('city').value.trim(),
+          message: $('message').value.trim(),
+          sourcePlatform: 'TTAIMA',
+        }),
+      });
+      if (!res.ok) throw new Error('bad status');
+      $('form').style.display = 'none';
+      $('ok').style.display = 'block';
+    } catch (e) {
+      err.textContent = 'Something went wrong. Please try again.';
+      err.style.display = 'block';
+      btn.disabled = false; btn.textContent = 'Submit registration';
+    }
+  }
+</script>
+</body>
+</html>
