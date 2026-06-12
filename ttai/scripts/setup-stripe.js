@@ -42,6 +42,32 @@ const PLANS = [
   { tier: 'full',     name: 'TTAI EMA — Full Pack', amount_eur: 199, env: 'STRIPE_PRICE_FULL' },
 ]
 
+// The 2 flagship TTAI ON programs. These get a product + recurring price AND a
+// shareable Stripe Payment Link (a hosted checkout URL you can put on a button),
+// since they have no in-app checkout flow.
+//   • Business Growth: €2,125 every 4 months (€8,500 total over the 4 installments)
+//   • The Fair:        €35,000 per year (note: normally paid by bank transfer)
+const FLAGSHIPS = [
+  {
+    key: 'business_growth',
+    name: 'TTAI ON — Business Growth',
+    amount_eur: 2125,
+    interval: 'month',
+    interval_count: 4,
+    lookup: 'ttai_business_growth',
+    env: 'STRIPE_PRICE_BUSINESS_GROWTH',
+  },
+  {
+    key: 'the_fair',
+    name: 'TTAI ON — The Fair',
+    amount_eur: 35000,
+    interval: 'year',
+    interval_count: 1,
+    lookup: 'ttai_the_fair',
+    env: 'STRIPE_PRICE_THE_FAIR',
+  },
+]
+
 // Webhook events the app's /api/webhooks/stripe route handles.
 const WEBHOOK_EVENTS = [
   'customer.subscription.created',
@@ -80,6 +106,45 @@ async function ensurePlan(plan) {
   return { env: plan.env, priceId: price.id }
 }
 
+async function ensureFlagship(fp) {
+  // 1. Price (reuse by lookup_key, else create product + recurring price).
+  let priceId
+  const existing = await stripe.prices.list({ lookup_keys: [fp.lookup], active: true, limit: 1 })
+  if (existing.data.length) {
+    priceId = existing.data[0].id
+    console.log(`  ↺ ${fp.key.padEnd(16)} reuse  ${priceId}`)
+  } else {
+    const product = await stripe.products.create({ name: fp.name, metadata: { ttai_plan: fp.key } })
+    const price = await stripe.prices.create({
+      product: product.id,
+      currency: 'eur',
+      unit_amount: fp.amount_eur * 100,
+      recurring: { interval: fp.interval, interval_count: fp.interval_count },
+      lookup_key: fp.lookup,
+      transfer_lookup_key: true,
+      metadata: { ttai_plan: fp.key },
+    })
+    priceId = price.id
+    const every = fp.interval_count > 1 ? `${fp.interval_count} ${fp.interval}s` : fp.interval
+    console.log(`  ✓ ${fp.key.padEnd(16)} create ${priceId}  (€${fp.amount_eur.toLocaleString()}/${every})`)
+  }
+
+  // 2. Payment Link (reuse one tagged with this plan's metadata, else create).
+  const links = await stripe.paymentLinks.list({ limit: 100 })
+  let link = links.data.find((l) => l.active && l.metadata && l.metadata.ttai_plan === fp.key)
+  if (!link) {
+    link = await stripe.paymentLinks.create({
+      line_items: [{ price: priceId, quantity: 1 }],
+      metadata: { ttai_plan: fp.key },
+    })
+    console.log(`     + payment link ${link.url}`)
+  } else {
+    console.log(`     ↺ payment link ${link.url}`)
+  }
+
+  return { env: fp.env, priceId, url: link.url }
+}
+
 async function ensureWebhook() {
   const url = `${APP_URL}/api/webhooks/stripe`
   const list = await stripe.webhookEndpoints.list({ limit: 100 })
@@ -103,9 +168,13 @@ async function main() {
   try { await stripe.balance.retrieve() }
   catch (e) { console.error('❌ Stripe key rejected:', e.message, '\n'); process.exit(1) }
 
-  console.log('Plans:')
+  console.log('Membership plans:')
   const results = []
   for (const plan of PLANS) results.push(await ensurePlan(plan))
+
+  console.log('\nFlagship programs (TTAI ON):')
+  const flagshipResults = []
+  for (const fp of FLAGSHIPS) flagshipResults.push(await ensureFlagship(fp))
 
   console.log('\nWebhook:')
   const whSecret = await ensureWebhook()
@@ -116,11 +185,18 @@ async function main() {
   console.log('────────────────────────────────────────────────────────────')
   console.log(`STRIPE_SECRET_KEY=${KEY.slice(0, 12)}…   (your full key — keep it secret)`)
   for (const r of results) console.log(`${r.env}=${r.priceId}`)
+  for (const r of flagshipResults) console.log(`${r.env}=${r.priceId}`)
   if (whSecret) console.log(`STRIPE_WEBHOOK_SECRET=${whSecret}`)
   else console.log(`STRIPE_WEBHOOK_SECRET=<existing — see note above>`)
   console.log(`NEXT_PUBLIC_APP_URL=${APP_URL}`)
   console.log('────────────────────────────────────────────────────────────')
-  console.log('\n✅ Done. After pasting into Vercel, redeploy so the vars take effect.\n')
+
+  // ── Flagship payment links (put these on the TTAI ON buttons) ─────────────
+  console.log('\n  TTAI ON payment links (share or put on the “Buy / Join” buttons):')
+  for (const r of flagshipResults) console.log(`    ${r.env.replace('STRIPE_PRICE_', '').toLowerCase().padEnd(16)} ${r.url}`)
+  console.log('  Note: The Fair is normally paid by bank transfer — its link is optional.')
+
+  console.log('\n✅ Done. Paste the env block into Vercel and redeploy.\n')
 }
 
 main().catch((e) => { console.error('\n❌ Setup failed:', e.message, '\n'); process.exit(1) })
