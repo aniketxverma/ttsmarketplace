@@ -189,10 +189,15 @@ export default async function BrandPage({ params }: { params: { slug: string } }
 
   // Category tree → resolve each product's family (its category) + root (main category)
   // so the shop's left rail can show expandable Category → Family sections.
-  const { data: allCats } = await supabase.from('categories').select('id, name, parent_id')
+  const { data: allCats } = await supabase.from('categories').select('id, name, parent_id, sort_order')
   const catById = new Map<string, { id: string; name: string; parent_id: string | null }>(
     (allCats ?? []).map((c: any) => [c.id, c])
   )
+  // Fixed list of MAIN categories (roots) — always shown in the shop, even when empty.
+  const categoryRoots = (allCats ?? [])
+    .filter((c: any) => !c.parent_id)
+    .sort((a: any, b: any) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+    .map((c: any) => ({ id: c.id, name: c.name }))
   const rootOf = (catId?: string | null) => {
     let cur = catId ? catById.get(catId) : undefined
     for (let i = 0; cur?.parent_id && i < 8; i++) cur = catById.get(cur.parent_id) ?? cur
@@ -349,6 +354,7 @@ export default async function BrandPage({ params }: { params: { slug: string } }
           isAuthenticated={isAuthenticated}
           canSeeB2B={viewerCanSeeB2B}
           contactUnlocked={contactUnlocked}
+          categoryRoots={categoryRoots}
         />
       </div>
 

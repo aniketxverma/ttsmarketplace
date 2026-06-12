@@ -92,6 +92,7 @@ interface Props {
   isAuthenticated?: boolean
   canSeeB2B?: boolean
   contactUnlocked?: boolean
+  categoryRoots?: { id: string; name: string }[]
 }
 
 // ── WhatsApp icon ─────────────────────────────────────────────────────────────
@@ -255,7 +256,7 @@ function ProductRow({ product, wa }: { product: Product; wa: string | null }) {
   )
 }
 
-function ProductBrowser({ products, wa, supplierId, canSeeB2B = true }: { products: Product[]; wa: string | null; supplierId: string; canSeeB2B?: boolean }) {
+function ProductBrowser({ products, wa, supplierId, canSeeB2B = true, categoryRoots = [] }: { products: Product[]; wa: string | null; supplierId: string; canSeeB2B?: boolean; categoryRoots?: { id: string; name: string }[] }) {
   // activeKey: 'all' | `root:<id>` | `family:<id>`
   const [activeKey, setActiveKey] = useState<string>('all')
   const [expanded, setExpanded] = useState<Set<string>>(new Set())
@@ -283,6 +284,22 @@ function ProductBrowser({ products, wa, supplierId, canSeeB2B = true }: { produc
       .map((r) => ({ ...r, families: Array.from(r.families.values()).sort((a, b) => a.name.localeCompare(b.name)) }))
       .sort((a, b) => b.count - a.count)
   }, [products])
+
+  // Always show the fixed list of MAIN categories. Ones with products are active;
+  // ones without are locked ("Coming soon"). Extra product-roots (not in the fixed
+  // list) are appended so nothing is hidden.
+  const displayRoots = useMemo(() => {
+    const treeById = new Map(tree.map((r) => [r.id, r]))
+    const out: Array<{ id: string; name: string; count: number; families: { id: string; name: string; count: number }[]; locked: boolean }> = []
+    const seen = new Set<string>()
+    for (const root of categoryRoots) {
+      const t = treeById.get(root.id)
+      out.push(t ? { ...t, locked: false } : { id: root.id, name: root.name, count: 0, families: [], locked: true })
+      seen.add(root.id)
+    }
+    for (const t of tree) if (!seen.has(t.id)) out.push({ ...t, locked: false })
+    return out
+  }, [categoryRoots, tree])
 
   const activeLabel = useMemo(() => {
     if (activeKey === 'all') return 'All Products'
@@ -349,11 +366,22 @@ function ProductBrowser({ products, wa, supplierId, canSeeB2B = true }: { produc
               <span className="text-[11px] text-gray-400">{products.length}</span>
             </button>
 
-            {/* Main category → families (only those with products) */}
-            {tree.map((r) => {
+            {/* Fixed main categories — locked when they have no products */}
+            {displayRoots.map((r) => {
               const Icon = catIcon(r.name)
               const isOpen = expanded.has(r.id)
               const rootActive = activeKey === `root:${r.id}`
+
+              if (r.locked) {
+                return (
+                  <div key={r.id} className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-semibold text-gray-300 cursor-not-allowed select-none" title="No products yet">
+                    <Icon className="w-4 h-4 flex-shrink-0" />
+                    <span className="truncate flex-1 text-left">{r.name}</span>
+                    <span className="text-[9px] font-bold uppercase tracking-wide bg-gray-100 text-gray-400 px-1.5 py-0.5 rounded-full flex-shrink-0">Soon</span>
+                  </div>
+                )
+              }
+
               return (
                 <div key={r.id}>
                   <div className={`flex items-center rounded-lg transition-colors ${rootActive ? 'bg-blue-50' : 'hover:bg-gray-50'}`}>
@@ -370,7 +398,7 @@ function ProductBrowser({ products, wa, supplierId, canSeeB2B = true }: { produc
                       </button>
                     )}
                   </div>
-                  {/* Families */}
+                  {/* Families — only those with products */}
                   {isOpen && r.families.length > 0 && (
                     <div className="ml-3 pl-3 border-l border-gray-100 space-y-0.5 py-0.5">
                       {r.families.map((f) => {
@@ -520,7 +548,7 @@ export function BrandTabs({
   supplier, products, gallery, certifications, reviews, documents,
   avgRating, sectionVisibility, pos, brandSlug, shareUrl,
   channel, channelPosts = [], isAuthenticated = false, canSeeB2B = false,
-  contactUnlocked = false,
+  contactUnlocked = false, categoryRoots = [],
 }: Props) {
   const t = useT()
   const sidebarVideos = useMemo(
@@ -821,7 +849,7 @@ export function BrandTabs({
 
             <div data-reveal className="lg:grid lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-7 lg:items-start">
               <div className="min-w-0">
-                <ProductBrowser products={products} wa={wa} supplierId={supplier.id} canSeeB2B={canSeeB2B} />
+                <ProductBrowser products={products} wa={wa} supplierId={supplier.id} canSeeB2B={canSeeB2B} categoryRoots={categoryRoots} />
               </div>
               {/* Right rail — documents, videos, contact (desktop only) */}
               <BrandSidebar
