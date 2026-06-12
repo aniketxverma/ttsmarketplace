@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { ProductCard } from '@/components/marketplace/ProductCard'
 import { ProductGrid } from '@/components/marketplace/ProductGrid'
 import { dedupeProductsByMaster } from '@/lib/offers-server'
+import { HOUSE_BRAND } from '@/lib/house-brand'
 
 export const revalidate = 60
 
@@ -26,7 +27,7 @@ export default async function FamilyPage({
 
   let q = (supabase.from('products') as any)
     .select(`
-      id, name, slug, price_cents, retail_price_cents, currency_code, min_order_qty, marketplace_context, vat_rate,
+      id, name, slug, price_cents, retail_price_cents, currency_code, min_order_qty, marketplace_context, vat_rate, brand_name,
       supplier_id, category_id, product_line,
       suppliers!supplier_id!inner(legal_name, trade_name, brand_slug, reliability_tier, status),
       categories(name, slug),
@@ -47,20 +48,28 @@ export default async function FamilyPage({
   const products = await dedupeProductsByMaster(supabase, rawProducts)
 
   const first = products[0]
+  // Public hub/marketplace listing → sold under the TTAI EMA house identity
+  // (the underlying supplier is never shown to buyers). Only retail keeps its surface.
+  const houseBrand = !retail
   const supplier = first.suppliers as { legal_name: string; trade_name: string | null; brand_slug: string | null }
-  const supplierName = supplier?.trade_name ?? supplier?.legal_name ?? 'Supplier'
+  const supplierName = houseBrand ? HOUSE_BRAND.name : (supplier?.trade_name ?? supplier?.legal_name ?? 'Supplier')
   const title = searchParams.line ?? (first.categories?.name as string) ?? 'Products'
+  const cardShop = retail ? shop : (shop ?? 'b2b')
 
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Breadcrumb */}
       <nav className="flex items-center gap-2 text-xs text-gray-400 font-medium mb-4 flex-wrap">
-        <Link href="/marketplace" className="hover:text-[#0B1F4D]">Marketplace</Link>
+        <Link href={houseBrand ? HOUSE_BRAND.href : '/marketplace'} className="hover:text-[#0B1F4D]">{houseBrand ? HOUSE_BRAND.name : 'Marketplace'}</Link>
         <span>/</span>
-        {supplier?.brand_slug
-          ? <Link href={`/brand/${supplier.brand_slug}`} className="hover:text-[#0B1F4D]">{supplierName}</Link>
-          : <span>{supplierName}</span>}
-        <span>/</span>
+        {!houseBrand && (
+          <>
+            {supplier?.brand_slug
+              ? <Link href={`/brand/${supplier.brand_slug}`} className="hover:text-[#0B1F4D]">{supplierName}</Link>
+              : <span>{supplierName}</span>}
+            <span>/</span>
+          </>
+        )}
         <span className="text-[#0B1F4D]">{title}</span>
       </nav>
 
@@ -85,7 +94,8 @@ export default async function FamilyPage({
               mainImageUrl={img}
               href={href}
               retail={retail}
-              shop={shop}
+              shop={cardShop}
+              brand={(p as any).brand_name ?? null}
               offerCount={p._offerCount ?? 0}
             />
           )
