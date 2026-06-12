@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { StatusBanner } from '@/components/supplier/StatusBanner'
+import { ShopTypeModal } from '@/components/supplier/ShopTypeModal'
 import { ProfileCompletion } from '@/components/supplier/ProfileCompletion'
 import { requireAuth } from '@/lib/auth/rbac'
 import type { SupplierStatus } from '@/types/domain'
@@ -28,10 +29,17 @@ export default async function SupplierDashboardPage() {
   const user = await requireAuth()
   const supabase = createClient()
 
-  const { data: supplier } = await (supabase.from('suppliers') as any)
-    .select('id, status, legal_name, trade_name, reliability_tier, created_at, brand_slug, about_company, phone, logo_url')
-    .eq('owner_id', user.id)
-    .single() as { data: any }
+  // shop_type_chosen (migration 0061) may not exist yet — fall back gracefully.
+  const supRes = await (async () => {
+    const full = await (supabase.from('suppliers') as any)
+      .select('id, status, legal_name, trade_name, reliability_tier, created_at, brand_slug, about_company, phone, logo_url, shop_type_chosen')
+      .eq('owner_id', user.id).single()
+    if (!full.error) return full
+    return (supabase.from('suppliers') as any)
+      .select('id, status, legal_name, trade_name, reliability_tier, created_at, brand_slug, about_company, phone, logo_url')
+      .eq('owner_id', user.id).single()
+  })()
+  const supplier = supRes.data as any
 
   if (!supplier) redirect('/supplier/onboarding')
 
@@ -86,6 +94,8 @@ export default async function SupplierDashboardPage() {
 
   return (
     <div className="space-y-6 max-w-6xl">
+      {/* First-visit Shop Type popup (B2B vs Retail) — skip if already chosen */}
+      {supplier.shop_type_chosen === false && <ShopTypeModal />}
       <StatusBanner status={supplier.status as SupplierStatus} />
 
       {/* Header card */}

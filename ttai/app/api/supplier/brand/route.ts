@@ -20,7 +20,7 @@ const ALLOWED = new Set([
   // Retail local commerce location (Phase 5)
   'province_id', 'city_id', 'town_id', 'neighborhood_id', 'delivery_radius_km',
   // Free sales channel (B2B vs retail)
-  'marketplace_context',
+  'marketplace_context', 'shop_type_chosen',
   // Premium Shop Design
   'brand_color',
 ])
