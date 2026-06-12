@@ -46,7 +46,7 @@ export function CategoryNav({ categories }: CategoryNavProps) {
                 (active === cat.slug || isOpen) && 'bg-accent font-medium'
               )}
             >
-              <span>{cat.name}</span>
+              <span>{cat.name}{(cat as any).count != null && <span className="text-muted-foreground font-normal"> ({(cat as any).count})</span>}</span>
               {hasChildren && (
                 <svg
                   className={cn('w-3.5 h-3.5 flex-shrink-0 text-muted-foreground transition-transform', isOpen && 'rotate-90')}
@@ -65,7 +65,7 @@ export function CategoryNav({ categories }: CategoryNavProps) {
                   active === sub.slug && 'bg-accent text-foreground font-medium'
                 )}
               >
-                {sub.name}
+                {sub.name}{(sub as any).count != null && <span className="font-normal"> ({(sub as any).count})</span>}
               </Link>
             ))}
           </div>

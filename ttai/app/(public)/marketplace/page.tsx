@@ -86,6 +86,34 @@ export default async function MarketplacePage({
   })
   const categoryTree = roots.map((r) => ({ ...r, children: childMap[r.id] ?? [] }))
 
+  // ── Only surface categories/families that actually have products ──────────
+  // Counts every published product (active supplier, B2B context) up its category
+  // chain, so the nav shows real, active categories with counts — empty ones hide.
+  const { data: catProductRows } = await (supabase.from('products') as any)
+    .select('category_id, suppliers!supplier_id!inner(status)')
+    .eq('is_published', true)
+    .eq('suppliers.status', 'ACTIVE')
+    .in('marketplace_context', ['wholesale', 'both'])
+    .limit(5000)
+  const navCatById = new Map<string, any>(allCats.map((c: any) => [c.id, c]))
+  const subtreeCount = new Map<string, number>()
+  for (const row of (catProductRows ?? []) as any[]) {
+    let cur = row.category_id ? navCatById.get(row.category_id) : null
+    for (let i = 0; cur && i < 10; i++) {
+      subtreeCount.set(cur.id, (subtreeCount.get(cur.id) ?? 0) + 1)
+      cur = cur.parent_id ? navCatById.get(cur.parent_id) : null
+    }
+  }
+  const navTree = categoryTree
+    .filter((r) => (subtreeCount.get(r.id) ?? 0) > 0)
+    .map((r) => ({
+      ...r,
+      count: subtreeCount.get(r.id) ?? 0,
+      children: (r.children ?? [])
+        .filter((c: any) => (subtreeCount.get(c.id) ?? 0) > 0)
+        .map((c: any) => ({ ...c, count: subtreeCount.get(c.id) ?? 0 })),
+    }))
+
   let productQuery = (supabase
     .from('products') as any)
     .select(
@@ -361,7 +389,7 @@ export default async function MarketplacePage({
 
       <div className="flex gap-8">
         <aside className="hidden md:block w-48 flex-shrink-0">
-          <CategoryNav categories={categoryTree} />
+          <CategoryNav categories={navTree} />
         </aside>
 
         <div className="flex-1 min-w-0">
