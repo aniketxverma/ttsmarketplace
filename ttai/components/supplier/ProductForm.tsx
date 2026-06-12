@@ -61,6 +61,7 @@ interface FormState {
   priceNegotiable: boolean; priceOnRequest: boolean
   condition: string; warranty: string; warehouseLocation: string; deliveryDays: string; shipping: string
   retailAvailable: boolean; deliveryScope: string
+  isOutlet: boolean; outletSource: string; lotType: string
   isPublished: boolean
 }
 
@@ -83,6 +84,7 @@ const INITIAL: FormState = {
   priceNegotiable: false, priceOnRequest: false,
   condition: '', warranty: '', warehouseLocation: '', deliveryDays: '', shipping: '',
   retailAvailable: true, deliveryScope: 'city',
+  isOutlet: false, outletSource: '', lotType: 'pallet',
   isPublished: false,
 }
 
@@ -285,6 +287,10 @@ export function ProductForm({
       // Retail Shop local availability (Phase 6)
       retail_available:    form.retailAvailable,
       delivery_scope:      form.deliveryScope || 'city',
+      // Outlet & Return Goods Hub
+      is_outlet:           form.isOutlet,
+      outlet_source:       form.isOutlet ? (form.outletSource.trim() || null) : null,
+      lot_type:            form.isOutlet ? (form.lotType || 'pallet') : null,
       specs:               specs,
       // Cap sell-by units to the seller's plan (locked units can't be enabled).
       sell_piece:          form.sellPiece  && canSellUnit(sellerTier, 'piece'),
@@ -301,7 +307,7 @@ export function ProductForm({
     const OPTIONAL_KEYS = ['box_discount_pct', 'pallet_discount_pct', 'truck_discount_pct',
       'brand_name', 'source_type', 'original_supplier_id', 'current_owner_id', 'created_by', 'price_on_request', 'specs',
       'condition', 'warranty', 'warehouse_location', 'delivery_days', 'shipping_cents',
-      'retail_available', 'delivery_scope']
+      'retail_available', 'delivery_scope', 'is_outlet', 'outlet_source', 'lot_type']
     const stripOptional = (obj: any) => { const o = { ...obj }; OPTIONAL_KEYS.forEach(k => delete o[k]); return o }
     const isMissingColumn = (msg?: string | null) => !!msg && /column|does not exist|discount_pct/i.test(msg)
 
@@ -935,6 +941,40 @@ export function ProductForm({
               <option value="country">Whole country</option>
             </select>
             <p className="text-xs text-gray-400">How far you deliver this product from your location.</p>
+          </div>
+        )}
+      </div>
+
+      {/* Outlet & Return Goods */}
+      <div className="rounded-xl border border-orange-200 bg-orange-50/40 p-4 space-y-4">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <p className="font-semibold text-sm text-gray-900">List in the Outlet &amp; Return Goods Hub</p>
+            <p className="text-xs text-gray-500 mt-0.5">For liquidation, overstock & return lots (Amazon/Lidl returns, pallets, truckloads).</p>
+          </div>
+          <button type="button" onClick={() => update('isOutlet', !form.isOutlet)}
+            className={`relative w-12 h-6 rounded-full transition-colors flex-shrink-0 ${form.isOutlet ? 'bg-red-500' : 'bg-gray-300'}`}>
+            <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${form.isOutlet ? 'translate-x-6' : ''}`} />
+          </button>
+        </div>
+        {form.isOutlet && (
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className={labelCls}>Source / Brand</label>
+              <input className={inputCls} value={form.outletSource} onChange={(e) => update('outletSource', e.target.value)}
+                placeholder="e.g. Amazon Returns, Lidl Returns, Bosch, Overstock" />
+            </div>
+            <div className="space-y-1.5">
+              <label className={labelCls}>Lot type</label>
+              <select className={inputCls} value={form.lotType} onChange={(e) => update('lotType', e.target.value)}>
+                <option value="pallet">Pallet</option>
+                <option value="truckload">Truckload</option>
+                <option value="container">Container</option>
+                <option value="stock">Stock lot</option>
+                <option value="mixed">Mixed lot</option>
+              </select>
+            </div>
+            <p className="text-xs text-gray-400 sm:col-span-2">Tip: attach your <strong>Excel stock list</strong> (Catalogue URL / documents), a <strong>video</strong> and warehouse photos — they matter more than single product photos here.</p>
           </div>
         )}
       </div>

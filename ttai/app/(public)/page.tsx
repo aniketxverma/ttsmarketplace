@@ -8,6 +8,7 @@ import {
   ShieldCheck, Globe2, Headphones, Clock, ArrowRight, ShoppingCart, Boxes, Truck,
   MessageSquare, Share2, BarChart3, Lock, Factory, User, Building2, Store, Users,
   Package, Tag, Zap, CheckCircle2, TrendingUp,
+  FileSpreadsheet, PlayCircle, Warehouse, MessageCircle,
 } from 'lucide-react'
 
 /* ─────────────────────────── data ─────────────────────────── */
@@ -223,6 +224,42 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
               )
             })}
           </div>
+
+          {/* ── Outlet & Return Goods Hub — special wide card ── */}
+          <Reveal from="up" delay={120}>
+            <Link href="/outlet"
+              className="group relative mt-6 block overflow-hidden rounded-3xl border border-orange-200 bg-gradient-to-r from-[#1a1207] via-[#2a1c0c] to-[#3a2410] shadow-lg hover:shadow-2xl transition-all duration-300">
+              {/* warehouse glow */}
+              <div className="absolute -top-16 -right-10 w-80 h-80 rounded-full bg-orange-500/10 blur-3xl pointer-events-none" />
+              <Warehouse className="absolute -bottom-10 right-6 w-56 h-56 text-white/[0.05] pointer-events-none" strokeWidth={1} />
+
+              <div className="relative p-6 sm:p-7 flex flex-col lg:flex-row lg:items-center gap-5">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2.5 mb-2">
+                    <span className="rounded-md bg-red-600 text-white text-[10px] font-extrabold uppercase tracking-wide px-2 py-0.5">New</span>
+                    <h3 className="text-xl sm:text-2xl font-extrabold text-white">Outlet &amp; Return Goods Hub</h3>
+                  </div>
+                  <p className="text-orange-200/80 text-sm mb-4">Amazon Returns • Lidl Returns • MediaMarkt Returns • Overstock • Liquidations</p>
+                  <div className="flex flex-wrap gap-x-5 gap-y-2">
+                    {[
+                      { Icon: FileSpreadsheet, label: 'Excel Stock Lists', c: 'text-green-400' },
+                      { Icon: PlayCircle,      label: 'Video Offers',     c: 'text-red-400' },
+                      { Icon: Truck,           label: 'Pallets & Truckloads', c: 'text-amber-400' },
+                      { Icon: Warehouse,       label: 'Global Warehouses', c: 'text-blue-400' },
+                      { Icon: MessageCircle,   label: 'WhatsApp Contact', c: 'text-emerald-400' },
+                    ].map(({ Icon, label, c }) => (
+                      <span key={label} className="inline-flex items-center gap-1.5 text-xs font-semibold text-white/85">
+                        <Icon className={`w-4 h-4 ${c}`} /> {label}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                <span className="flex-shrink-0 inline-flex items-center justify-center gap-2 rounded-xl bg-red-600 hover:bg-red-700 text-white px-6 py-3 text-sm font-extrabold transition-colors group-hover:gap-3 self-start lg:self-auto">
+                  Explore Outlet Hub <ArrowRight className="w-4 h-4" />
+                </span>
+              </div>
+            </Link>
+          </Reveal>
         </div>
       </section>
 

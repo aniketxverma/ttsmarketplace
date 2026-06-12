@@ -142,6 +142,9 @@ export default async function EditProductPage({ params }: { params: { id: string
             sellTruck:          (product as any).sell_truck ?? false,
             retailAvailable:    (product as any).retail_available ?? true,
             deliveryScope:      (product as any).delivery_scope ?? 'city',
+            isOutlet:           (product as any).is_outlet ?? false,
+            outletSource:       (product as any).outlet_source ?? '',
+            lotType:            (product as any).lot_type ?? 'pallet',
             isPublished:        product.is_published ?? false,
           }}
         />
