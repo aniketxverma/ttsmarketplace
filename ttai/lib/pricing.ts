@@ -87,32 +87,54 @@ export const PLANS: Plan[] = [
 ]
 
 /**
- * Flagship done-for-you package — TtaiOn.
- * One-time annual fee, one shop, fully managed by the TTAI EMA team.
- * High-touch sale (no self-serve checkout) → "Talk to our team" CTA.
+ * Flagship program — TTAI ON · Business Growth.
+ * Annual membership (€350/yr) delivering up to €8,500 in program value:
+ * an international business-development program with hands-on support.
+ * High-touch (subject to availability) → "Talk to our team" CTA.
  */
 export interface Flagship {
   name: string
-  price: string
-  period: string
+  subtitle: string
+  fee: string          // membership fee customer pays
+  feePeriod: string    // e.g. '/year'
+  valueNote: string    // value anchor
   tagline: string
-  features: string[]
+  included: string[]   // Included Services
+  support: string[]    // Business Support
+  disclaimer: string
   accent: string
 }
 
 export const FLAGSHIP: Flagship = {
-  name: 'TtaiOn',
-  price: '€8,500',
-  period: 'one-time · 1 year · 1 shop',
-  tagline: 'Done for you — we build, stock and run your shop end to end, worldwide.',
+  name: 'TTAI ON',
+  subtitle: 'Business Growth · International Business Development Program',
+  fee: '€350',
+  feePeriod: '/year',
+  valueNote: 'Up to €8,500 in program value',
+  tagline: 'For startups, retailers, wholesalers and entrepreneurs ready to grow — with professional support, networking and real international trade opportunities.',
   accent: '#F5A623',
-  features: [
-    'Full sales presentation built for you',
-    'Logistics & warehouse handled for you',
-    'Administration fully managed',
-    'Dedicated Sales & Logistics team worldwide',
-    'Access to TTAI EMA Real Projects',
+  included: [
+    'Company registration support',
+    'Marketplace access',
+    'Business profile creation',
+    'Logistics hub access',
+    'Supplier & buyer connections',
+    'Sales team support',
+    'Business networking opportunities',
+    'Marketplace marketing support',
+    'International trade opportunities',
+    'Import & export guidance',
+    'Access to selected TTAIEMA projects',
   ],
+  support: [
+    'Business development guidance',
+    'Market expansion support',
+    'International partner search',
+    'Product & service promotion',
+    'Distribution opportunities',
+    'Business matching services',
+  ],
+  disclaimer: 'Participation, consulting services, business opportunities and project access are subject to availability, project scope and agreed business objectives.',
 }
 
 /** What each *role* is presented at a paid tier — the directional model. */
