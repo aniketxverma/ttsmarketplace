@@ -1,6 +1,6 @@
 import Link from 'next/link'
-import { Check, ArrowRight, Sparkles } from 'lucide-react'
-import { PLANS, PRESENTED_BY_ROLE } from '@/lib/pricing'
+import { Check, ArrowRight, Sparkles, Crown } from 'lucide-react'
+import { PLANS, PRESENTED_BY_ROLE, FLAGSHIP } from '@/lib/pricing'
 import { createClient } from '@/lib/supabase/server'
 import { SubscribeButton } from './SubscribeButton'
 
@@ -124,6 +124,45 @@ export default async function PricingPage() {
         <p className="text-center text-xs text-gray-400 mt-5">
           Paid plans are activated by our team after onboarding. Prices shown are indicative — contact us to confirm your plan.
         </p>
+      </div>
+
+      {/* ── Flagship: TtaiOn (done-for-you) ───────────────────────────────── */}
+      <div className="container mx-auto max-w-6xl px-4 pt-8 pb-4">
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0B1F4D] via-[#13306e] to-[#0a1733] text-white p-8 sm:p-10">
+          <div className="absolute -top-16 -right-10 w-72 h-72 rounded-full bg-[#F5A623]/20 blur-3xl pointer-events-none" />
+          <div className="relative grid md:grid-cols-[1.4fr_1fr] gap-8 items-center">
+            <div>
+              <div className="inline-flex items-center gap-2 rounded-full bg-[#F5A623]/15 border border-[#F5A623]/30 text-[#F5A623] px-4 py-1.5 text-xs font-extrabold uppercase tracking-widest mb-4">
+                <Crown className="w-3.5 h-3.5" /> Flagship · Fully managed
+              </div>
+              <h2 className="text-3xl sm:text-4xl font-extrabold">{FLAGSHIP.name}</h2>
+              <p className="text-blue-200 text-base mt-2 max-w-xl">{FLAGSHIP.tagline}</p>
+
+              <ul className="grid sm:grid-cols-2 gap-x-6 gap-y-2.5 mt-6">
+                {FLAGSHIP.features.map((f) => (
+                  <li key={f} className="flex items-start gap-2 text-sm text-blue-100">
+                    <span className="mt-0.5 w-4 h-4 rounded-full bg-[#F5A623]/20 flex items-center justify-center flex-shrink-0">
+                      <Check className="w-2.5 h-2.5 text-[#F5A623]" strokeWidth={3.5} />
+                    </span>
+                    {f}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="md:text-right">
+              <div className="flex md:justify-end items-end gap-1">
+                <span className="text-5xl font-extrabold">{FLAGSHIP.price}</span>
+              </div>
+              <p className="text-blue-300/90 text-sm mt-1.5">{FLAGSHIP.period}</p>
+              <Link href="/register?plan=ttaion"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#F5A623] hover:bg-[#fbb93a] text-[#0B1F4D] px-7 py-3.5 text-sm font-extrabold transition-colors mt-6 w-full md:w-auto">
+                Talk to our team <ArrowRight className="w-4 h-4" />
+              </Link>
+              <p className="text-blue-300/70 text-xs mt-3">One-time fee · we set everything up for you</p>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* ── How presentation works by role ────────────────────────────────── */}

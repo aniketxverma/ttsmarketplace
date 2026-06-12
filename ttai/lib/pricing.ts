@@ -86,6 +86,35 @@ export const PLANS: Plan[] = [
   },
 ]
 
+/**
+ * Flagship done-for-you package — TtaiOn.
+ * One-time annual fee, one shop, fully managed by the TTAI EMA team.
+ * High-touch sale (no self-serve checkout) → "Talk to our team" CTA.
+ */
+export interface Flagship {
+  name: string
+  price: string
+  period: string
+  tagline: string
+  features: string[]
+  accent: string
+}
+
+export const FLAGSHIP: Flagship = {
+  name: 'TtaiOn',
+  price: '€8,500',
+  period: 'one-time · 1 year · 1 shop',
+  tagline: 'Done for you — we build, stock and run your shop end to end, worldwide.',
+  accent: '#F5A623',
+  features: [
+    'Full sales presentation built for you',
+    'Logistics & warehouse handled for you',
+    'Administration fully managed',
+    'Dedicated Sales & Logistics team worldwide',
+    'Access to TTAI EMA Real Projects',
+  ],
+}
+
 /** What each *role* is presented at a paid tier — the directional model. */
 export const PRESENTED_BY_ROLE: { role: string; presented: string }[] = [
   { role: 'Shop / Retailer',          presented: 'Suppliers → Distributors → Factories (by plan)' },
