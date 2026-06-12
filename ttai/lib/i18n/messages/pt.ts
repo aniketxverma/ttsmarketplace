@@ -118,6 +118,7 @@ export default {
     orders: 'Pedidos',
     messages: 'Mensagens',
     documents: 'Documentos',
+    shop_design: 'Design da Loja',
     settings: 'Configurações',
     suppliers: 'Fornecedores',
     promotions: 'Promoções',

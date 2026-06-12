@@ -118,6 +118,7 @@ export default {
     orders: 'الطلبات',
     messages: 'الرسائل',
     documents: 'المستندات',
+    shop_design: 'تصميم المتجر',
     settings: 'الإعدادات',
     suppliers: 'الموردون',
     promotions: 'العروض',
