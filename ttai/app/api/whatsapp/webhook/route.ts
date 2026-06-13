@@ -28,6 +28,17 @@ export async function GET(req: NextRequest) {
 // ── Incoming messages ─────────────────────────────────────────────────────────
 export async function POST(req: NextRequest) {
   const raw = await req.text()
+
+  // ── Diagnostic: record that SOMETHING hit this endpoint (so we can tell if
+  //    Meta is delivering at all). Stored in app_settings; safe to remove later.
+  try {
+    const dbg = createAdminClient()
+    await (dbg.from('app_settings') as any).upsert(
+      { key: 'whatsapp_last_hit', value: `${new Date().toISOString()} :: ${raw.slice(0, 300)}` },
+      { onConflict: 'key' },
+    )
+  } catch {}
+
   // Best-effort signature check: log a mismatch but DON'T drop the message, so a
   // wrong/missing WHATSAPP_APP_SECRET never silently loses supplier offers.
   if (!verifySignature(raw, req.headers.get('x-hub-signature-256'))) {
