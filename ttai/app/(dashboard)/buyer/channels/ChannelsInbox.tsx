@@ -220,9 +220,9 @@ export function ChannelsInbox({ channels }: { channels: InboxChannel[] }) {
                               <span className="absolute right-0 top-0 w-3 h-3 bg-white rotate-45 origin-top-right" />
                             </span>
                             {post.video_url ? (
-                              <div className="p-[3px]"><video src={post.video_url} controls className="w-full rounded-[6px] bg-black max-h-72" /></div>
+                              <div className="p-[3px]"><video src={post.video_url} controls className="w-full h-auto rounded-[6px] bg-black" /></div>
                             ) : post.image_url && (
-                              <div className="p-[3px]"><img src={post.image_url} alt="" className="w-full rounded-[6px] object-cover max-h-72" /></div>
+                              <div className="p-[3px]"><img src={post.image_url} alt="" loading="lazy" className="w-full h-auto rounded-[6px]" /></div>
                             )}
                             <div className="px-2.5 pt-1.5 pb-1.5">
                               <div className="flex items-center gap-1.5 mb-0.5">

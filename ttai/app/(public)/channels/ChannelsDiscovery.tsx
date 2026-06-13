@@ -137,10 +137,10 @@ export function ChannelsDiscovery({ channels, feed, groups }: { channels: Discov
       {/* ── View tabs ─────────────────────────────────────────────────── */}
       <div className="sticky top-0 z-20 bg-white/95 backdrop-blur border-b border-gray-100">
         <div className="max-w-6xl mx-auto px-4 sm:px-8">
-          <div className="flex gap-1 py-2.5">
+          <div className="flex gap-1 py-2.5 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
             {TABS.map(({ key, label, Icon, count }) => (
               <button key={key} onClick={() => setView(key)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${
+                className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-sm font-bold transition-all whitespace-nowrap flex-shrink-0 ${
                   view === key ? 'bg-[#00a884] text-white shadow-sm' : 'text-gray-500 hover:bg-gray-100'
                 }`}>
                 <Icon className="w-4 h-4" />{label}
@@ -191,12 +191,12 @@ export function ChannelsDiscovery({ channels, feed, groups }: { channels: Discov
                       <span className={`inline-flex items-center gap-1 text-[10px] font-extrabold px-2 py-0.5 rounded-full ${t.badge}`}><t.Icon className="w-2.5 h-2.5" />{t.label}</span>
                     </div>
 
-                    {/* Media */}
+                    {/* Media — full image, correct aspect ratio (no cropping) */}
                     {hasMedia && (
                       <div className="px-2 pt-1.5">
                         {p.video_url
-                          ? <video src={p.video_url} controls className="w-full max-h-[28rem] rounded-xl bg-black" />
-                          : <img src={p.image_url!} alt="" className="w-full max-h-[28rem] object-cover rounded-xl" />}
+                          ? <video src={p.video_url} controls className="w-full h-auto rounded-xl bg-black" />
+                          : <img src={p.image_url!} alt="" loading="lazy" className="w-full h-auto rounded-xl bg-gray-50" />}
                       </div>
                     )}
 

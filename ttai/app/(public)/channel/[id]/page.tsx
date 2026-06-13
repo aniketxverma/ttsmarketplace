@@ -164,14 +164,14 @@ export default async function ChannelPage({ params }: { params: { id: string } }
                           <span className="absolute right-0 top-0 w-3 h-3 bg-white rotate-45 origin-top-right" />
                         </span>
 
-                        {/* Media */}
+                        {/* Media — full image, correct aspect ratio (no cropping) */}
                         {post.video_url ? (
                           <div className="p-[3px]">
-                            <video src={post.video_url} controls className="w-full rounded-[6px] bg-black max-h-80" />
+                            <video src={post.video_url} controls className="w-full h-auto rounded-[6px] bg-black" />
                           </div>
                         ) : post.image_url && (
                           <div className="p-[3px]">
-                            <img src={post.image_url} alt="" className="w-full rounded-[6px] object-cover max-h-80" />
+                            <img src={post.image_url} alt="" loading="lazy" className="w-full h-auto rounded-[6px]" />
                           </div>
                         )}
 
