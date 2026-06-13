@@ -5,11 +5,11 @@ import Image from 'next/image'
 import Link from 'next/link'
 import {
   Radio, Search, ArrowLeft, Bell, Tag, Package, Megaphone,
-  Users, ExternalLink, MessageSquare,
+  ExternalLink, MessageSquare, MoreVertical,
 } from 'lucide-react'
 
 type Supplier = { trade_name: string | null; legal_name: string | null; logo_url: string | null; brand_slug: string | null }
-type Post = { id: string; content: string; image_url: string | null; post_type: string; created_at: string }
+type Post = { id: string; content: string; image_url: string | null; video_url?: string | null; post_type: string; created_at: string }
 export type InboxChannel = {
   id: string; name: string; description: string | null; whatsapp: string | null
   member_count: number; post_count: number; joined_at: string
@@ -17,37 +17,44 @@ export type InboxChannel = {
   latest: Post | null
 }
 
-const TYPE: Record<string, { label: string; badge: string; bar: string; Icon: React.ComponentType<{ className?: string }> }> = {
-  update:       { label: 'Update',       badge: 'bg-blue-100 text-blue-700',    bar: 'bg-blue-500',   Icon: Bell      },
-  offer:        { label: 'Offer',        badge: 'bg-amber-100 text-amber-700',  bar: 'bg-amber-500',  Icon: Tag       },
-  product:      { label: 'Product',      badge: 'bg-purple-100 text-purple-700',bar: 'bg-purple-500', Icon: Package   },
-  announcement: { label: 'Announcement', badge: 'bg-green-100 text-green-700',  bar: 'bg-green-500',  Icon: Megaphone },
+// WhatsApp-style doodle wallpaper.
+const DOODLE = "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160'%3E%3Cg fill='none' stroke='%23a8b3ad' stroke-width='1.3' opacity='0.35'%3E%3Cpath d='M18 28c4-6 12-6 16 0'/%3E%3Ccircle cx='124' cy='26' r='7'/%3E%3Cpath d='M28 112l6-11 6 11z'/%3E%3Cpath d='M108 120c-6-6-1-14 7-10 8-4 13 4 7 10l-7 6z'/%3E%3Cpath d='M70 72h16M78 64v16'/%3E%3Cpath d='M132 92c0 6-4 9-9 9'/%3E%3Cpath d='M20 78c5 3 11 3 16 0'/%3E%3Crect x='96' y='60' width='14' height='14' rx='3'/%3E%3C/g%3E%3C/svg%3E\")"
+
+const TYPE: Record<string, { label: string; badge: string; color: string; Icon: React.ComponentType<{ className?: string }> }> = {
+  update:       { label: 'Update',       badge: 'bg-blue-50 text-blue-600',    color: '#1f7aec', Icon: Bell      },
+  offer:        { label: 'Offer',        badge: 'bg-amber-50 text-amber-700',  color: '#c77700', Icon: Tag       },
+  product:      { label: 'Product',      badge: 'bg-purple-50 text-purple-700',color: '#7c3aed', Icon: Package   },
+  announcement: { label: 'Announcement', badge: 'bg-green-50 text-green-700',  color: '#1f9d55', Icon: Megaphone },
 }
 
 function fmtListTime(iso: string) {
   const d = new Date(iso); const diff = Date.now() - d.getTime()
-  const m = Math.floor(diff / 60000)
-  if (m < 1) return 'now'
-  if (m < 60) return `${m}m`
-  if (diff < 86400000) return d.toLocaleTimeString('en', { hour: '2-digit', minute: '2-digit' })
+  if (diff < 86400000 && d.toDateString() === new Date().toDateString())
+    return d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
   if (diff < 7 * 86400000) return d.toLocaleDateString('en', { weekday: 'short' })
-  return d.toLocaleDateString('en', { day: 'numeric', month: 'short' })
+  return d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: '2-digit' })
 }
 function fmtMsgTime(iso: string) {
-  return new Date(iso).toLocaleTimeString('en', { hour: '2-digit', minute: '2-digit' })
+  return new Date(iso).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
 }
 function fmtDay(iso: string) {
   const d = new Date(iso); const today = new Date()
-  if (d.toDateString() === today.toDateString()) return 'Today'
+  if (d.toDateString() === today.toDateString()) return 'TODAY'
   const y = new Date(today); y.setDate(y.getDate() - 1)
-  if (d.toDateString() === y.toDateString()) return 'Yesterday'
+  if (d.toDateString() === y.toDateString()) return 'YESTERDAY'
   return d.toLocaleDateString('en', { day: 'numeric', month: 'long', year: 'numeric' })
+}
+function preview(p: Post | null) {
+  if (!p) return 'No posts yet'
+  if (p.video_url && !p.content) return '🎥 Video'
+  if (p.image_url && !p.content) return '📷 Photo'
+  return p.content
 }
 
 function Avatar({ supplier, name, size = 44 }: { supplier: Supplier | null; name: string; size?: number }) {
   const initial = (supplier?.trade_name ?? name ?? 'C')[0]?.toUpperCase() ?? 'C'
   return (
-    <div className="rounded-full overflow-hidden flex-shrink-0 bg-[#0B1F4D] flex items-center justify-center"
+    <div className="rounded-full overflow-hidden flex-shrink-0 bg-[#00a884] flex items-center justify-center"
       style={{ width: size, height: size }}>
       {supplier?.logo_url
         ? <Image src={supplier.logo_url} alt="" width={size} height={size} className="object-cover w-full h-full" />
@@ -84,45 +91,40 @@ export function ChannelsInbox({ channels }: { channels: InboxChannel[] }) {
     return () => { active = false }
   }, [selectedId])
 
-  function openChannel(id: string) {
-    setSelectedId(id)
-    setMobileOpen(true)
-  }
+  function openChannel(id: string) { setSelectedId(id); setMobileOpen(true) }
 
   return (
-    <div className="flex h-[calc(100vh-8.5rem)] min-h-[520px] rounded-2xl border border-gray-200 overflow-hidden bg-white shadow-sm">
+    <div className="flex h-[calc(100vh-8.5rem)] min-h-[520px] rounded-xl border border-black/10 overflow-hidden shadow-sm">
 
-      {/* ── LEFT: channel list ─────────────────────────────────────────── */}
-      <aside className={`${mobileOpen ? 'hidden' : 'flex'} md:flex flex-col w-full md:w-80 lg:w-96 border-r border-gray-100 bg-white`}>
-        {/* Header */}
-        <div className="px-4 py-3.5 border-b border-gray-100 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-[#0B1F4D] flex items-center justify-center">
-              <Radio className="w-4 h-4 text-white" />
-            </div>
-            <h1 className="font-extrabold text-[#0B1F4D] text-lg">My Canales</h1>
+      {/* ── LEFT: channel list (WhatsApp Web) ──────────────────────────── */}
+      <aside className={`${mobileOpen ? 'hidden' : 'flex'} md:flex flex-col w-full md:w-[360px] lg:w-[400px] border-r border-black/10 bg-white`}>
+        {/* Panel header */}
+        <div className="h-[59px] px-4 flex items-center justify-between flex-shrink-0" style={{ background: '#f0f2f5' }}>
+          <h1 className="font-semibold text-[#111b21] text-[17px]">Channels</h1>
+          <div className="flex items-center gap-1 text-[#54656f]">
+            <span className="text-xs font-bold text-[#54656f] bg-black/[0.06] px-2 py-0.5 rounded-full">{channels.length}</span>
+            <button className="w-9 h-9 rounded-full hover:bg-black/[0.05] flex items-center justify-center"><MoreVertical className="w-5 h-5" /></button>
           </div>
-          <span className="text-xs font-bold text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{channels.length}</span>
         </div>
 
         {/* Search */}
-        <div className="px-3 py-2.5 border-b border-gray-50">
+        <div className="px-3 py-2 bg-white flex-shrink-0">
           <div className="relative">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#54656f]" />
             <input value={query} onChange={e => setQuery(e.target.value)}
-              placeholder="Search canales…"
-              className="w-full pl-9 pr-3 py-2 rounded-xl bg-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B1F4D]/30 placeholder-gray-400" />
+              placeholder="Search channels"
+              className="w-full pl-11 pr-3 py-1.5 rounded-lg bg-[#f0f2f5] text-[14px] focus:outline-none placeholder-[#667781] text-[#111b21]" />
           </div>
         </div>
 
         {/* List */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto bg-white">
           {filtered.length === 0 ? (
             <div className="p-8 text-center">
               <Radio className="w-10 h-10 text-gray-200 mx-auto mb-3" />
-              <p className="text-sm text-gray-400 font-medium">{query ? 'No canales match' : 'No canales yet'}</p>
+              <p className="text-sm text-gray-400 font-medium">{query ? 'No channels match' : 'No channels yet'}</p>
               {!query && (
-                <Link href="/marketplace" className="mt-3 inline-block text-xs font-bold text-[#0B1F4D] hover:underline">
+                <Link href="/marketplace" className="mt-3 inline-block text-xs font-bold text-[#00a884] hover:underline">
                   Discover suppliers →
                 </Link>
               )}
@@ -132,20 +134,18 @@ export function ChannelsInbox({ channels }: { channels: InboxChannel[] }) {
             const t = ch.latest ? (TYPE[ch.latest.post_type] ?? TYPE.update) : null
             return (
               <button key={ch.id} onClick={() => openChannel(ch.id)}
-                className={`w-full flex items-center gap-3 px-3 py-3 border-b border-gray-50 text-left transition-colors ${
-                  isActive ? 'bg-[#0B1F4D]/[0.05]' : 'hover:bg-gray-50'
+                className={`w-full flex items-center gap-3 pl-3 pr-3 text-left transition-colors ${
+                  isActive ? 'bg-[#f0f2f5]' : 'hover:bg-[#f5f6f6]'
                 }`}>
-                <Avatar supplier={ch.supplier} name={ch.name} size={48} />
-                <div className="flex-1 min-w-0">
+                <Avatar supplier={ch.supplier} name={ch.name} size={49} />
+                <div className="flex-1 min-w-0 border-b border-black/[0.06] py-3">
                   <div className="flex items-center justify-between gap-2">
-                    <p className="font-bold text-sm text-gray-900 truncate">{ch.name}</p>
-                    {ch.latest && <span className="text-[10px] text-gray-400 flex-shrink-0">{fmtListTime(ch.latest.created_at)}</span>}
+                    <p className="font-normal text-[16px] text-[#111b21] truncate">{ch.name}</p>
+                    {ch.latest && <span className="text-[12px] text-[#667781] flex-shrink-0">{fmtListTime(ch.latest.created_at)}</span>}
                   </div>
-                  <div className="flex items-center gap-1.5 mt-0.5">
-                    {t && <t.Icon className="w-3 h-3 text-gray-400 flex-shrink-0" />}
-                    <p className="text-xs text-gray-400 truncate">
-                      {ch.latest ? (ch.latest.image_url && !ch.latest.content ? '📷 Photo' : ch.latest.content) : 'No posts yet'}
-                    </p>
+                  <div className="flex items-center gap-1 mt-0.5">
+                    {t && <t.Icon className="w-3.5 h-3.5 text-[#8696a0] flex-shrink-0" />}
+                    <p className="text-[14px] text-[#667781] truncate">{preview(ch.latest)}</p>
                   </div>
                 </div>
               </button>
@@ -154,49 +154,49 @@ export function ChannelsInbox({ channels }: { channels: InboxChannel[] }) {
         </div>
       </aside>
 
-      {/* ── RIGHT: feed ────────────────────────────────────────────────── */}
-      <section className={`${mobileOpen ? 'flex' : 'hidden'} md:flex flex-1 flex-col min-w-0`}
-        style={{ background: '#F0F2F5' }}>
+      {/* ── RIGHT: chat view ───────────────────────────────────────────── */}
+      <section className={`${mobileOpen ? 'flex' : 'hidden'} md:flex flex-1 flex-col min-w-0`}>
         {!selected ? (
-          <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
-            <div className="w-16 h-16 rounded-2xl bg-[#0B1F4D]/5 flex items-center justify-center mb-4">
-              <MessageSquare className="w-8 h-8 text-[#0B1F4D]/30" />
+          <div className="flex-1 flex flex-col items-center justify-center text-center p-8 border-b-4 border-[#00a884]" style={{ background: '#f0f2f5' }}>
+            <div className="w-20 h-20 rounded-full bg-white flex items-center justify-center mb-5 shadow-sm">
+              <MessageSquare className="w-10 h-10 text-[#54656f]/40" />
             </div>
-            <p className="text-gray-500 font-semibold">Select a canal to view updates</p>
-            <p className="text-gray-400 text-sm mt-1">Your subscribed suppliers&apos; posts appear here.</p>
+            <p className="text-[#41525d] font-light text-2xl">TTAI EMA Channels</p>
+            <p className="text-[#667781] text-sm mt-2 max-w-sm">Select a channel to read updates from suppliers you follow.</p>
           </div>
         ) : (
           <>
-            {/* Feed header */}
-            <div className="flex items-center gap-3 px-3 sm:px-4 py-2.5 bg-[#0B1F4D] flex-shrink-0">
+            {/* Chat header */}
+            <div className="flex items-center gap-3 px-4 h-[59px] flex-shrink-0" style={{ background: '#f0f2f5' }}>
               <button onClick={() => setMobileOpen(false)}
-                className="md:hidden w-8 h-8 rounded-full flex items-center justify-center text-white/70 hover:bg-white/10">
+                className="md:hidden w-8 h-8 -ml-1 rounded-full flex items-center justify-center text-[#54656f] hover:bg-black/[0.05]">
                 <ArrowLeft className="w-5 h-5" />
               </button>
               <Avatar supplier={selected.supplier} name={selected.name} size={40} />
               <div className="flex-1 min-w-0">
-                <p className="text-white font-bold text-sm truncate">{selected.name}</p>
-                <p className="text-white/50 text-[11px] flex items-center gap-1">
-                  <Users className="w-3 h-3" />{selected.member_count.toLocaleString()} subscribers
+                <p className="text-[#111b21] font-medium text-[16px] truncate">{selected.name}</p>
+                <p className="text-[#667781] text-[13px] truncate">
+                  Channel · {selected.member_count.toLocaleString()} followers
                 </p>
               </div>
               <Link href={`/channel/${selected.id}`} target="_blank"
-                className="w-8 h-8 rounded-full flex items-center justify-center text-white/60 hover:bg-white/10" title="Open full canal">
-                <ExternalLink className="w-4 h-4" />
+                className="w-9 h-9 rounded-full flex items-center justify-center text-[#54656f] hover:bg-black/[0.05]" title="Open full channel">
+                <ExternalLink className="w-5 h-5" />
               </Link>
             </div>
 
-            {/* Messages */}
-            <div className="flex-1 overflow-y-auto px-3 sm:px-5 py-4">
+            {/* Messages on doodle wallpaper */}
+            <div className="flex-1 overflow-y-auto px-4 sm:px-[5%] py-4"
+              style={{ backgroundColor: '#efeae2', backgroundImage: DOODLE }}>
               {loading ? (
                 <div className="flex justify-center pt-10">
-                  <div className="w-6 h-6 border-2 border-[#0B1F4D]/30 border-t-[#0B1F4D] rounded-full animate-spin" />
+                  <div className="w-6 h-6 border-2 border-[#00a884]/30 border-t-[#00a884] rounded-full animate-spin" />
                 </div>
               ) : posts.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-full text-center">
-                  <Bell className="w-10 h-10 text-gray-300 mb-2" />
-                  <p className="text-gray-500 font-semibold text-sm">No posts yet</p>
-                  <p className="text-gray-400 text-xs mt-0.5">You&apos;ll see updates here when they post.</p>
+                <div className="flex justify-center pt-6">
+                  <span className="bg-white text-[#54656f] text-[12.5px] px-3 py-1.5 rounded-lg shadow-sm">
+                    No posts yet — you&apos;ll see updates here when they post.
+                  </span>
                 </div>
               ) : (
                 <div className="space-y-2 max-w-2xl mx-auto">
@@ -208,30 +208,40 @@ export function ChannelsInbox({ channels }: { channels: InboxChannel[] }) {
                     return (
                       <div key={post.id}>
                         {showDay && (
-                          <div className="flex justify-center my-3">
-                            <span className="bg-white text-gray-500 text-[10px] font-semibold px-3 py-1 rounded-full shadow-sm">
+                          <div className="flex justify-center py-2.5">
+                            <span className="bg-white text-[#54656f] text-[12px] font-medium px-3 py-1 rounded-lg shadow-[0_1px_0.5px_rgba(11,20,26,0.13)] uppercase tracking-wide">
                               {fmtDay(post.created_at)}
                             </span>
                           </div>
                         )}
-                        <div className="flex items-start gap-2">
-                          <Avatar supplier={selected.supplier} name={selected.name} size={30} />
-                          <div className="flex-1 min-w-0 bg-white rounded-2xl rounded-tl-sm shadow-sm overflow-hidden max-w-[85%]">
-                            <div className={`h-0.5 ${cfg.bar}`} />
-                            {post.image_url && (
-                              <img src={post.image_url} alt="" className="w-full object-cover max-h-72" />
+                        <div className="flex">
+                          <div className="relative max-w-[88%] sm:max-w-[75%] bg-white rounded-lg rounded-tl-none shadow-[0_1px_0.5px_rgba(11,20,26,0.13)]">
+                            <span className="absolute -left-1.5 top-0 w-2 h-3 overflow-hidden">
+                              <span className="absolute right-0 top-0 w-3 h-3 bg-white rotate-45 origin-top-right" />
+                            </span>
+                            {post.video_url ? (
+                              <div className="p-[3px]"><video src={post.video_url} controls className="w-full rounded-[6px] bg-black max-h-72" /></div>
+                            ) : post.image_url && (
+                              <div className="p-[3px]"><img src={post.image_url} alt="" className="w-full rounded-[6px] object-cover max-h-72" /></div>
                             )}
-                            <div className="px-3 sm:px-4 pt-2.5 pb-2.5">
-                              <div className="flex items-center justify-between gap-2 mb-1">
-                                <p className="text-xs font-extrabold text-[#0B1F4D] truncate">
+                            <div className="px-2.5 pt-1.5 pb-1.5">
+                              <div className="flex items-center gap-1.5 mb-0.5">
+                                <span className="text-[13px] font-bold truncate" style={{ color: cfg.color }}>
                                   {selected.supplier?.trade_name ?? selected.name}
-                                </p>
-                                <span className={`flex items-center gap-1 text-[9px] font-extrabold px-2 py-0.5 rounded-full flex-shrink-0 ${cfg.badge}`}>
+                                </span>
+                                <span className={`inline-flex items-center gap-0.5 text-[10px] font-bold px-1.5 py-px rounded ${cfg.badge}`}>
                                   <cfg.Icon className="w-2.5 h-2.5" />{cfg.label}
                                 </span>
                               </div>
-                              {post.content && <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-line">{post.content}</p>}
-                              <p className="text-[10px] text-gray-400 mt-1.5 text-right">{fmtMsgTime(post.created_at)}</p>
+                              {post.content && (
+                                <p className="text-[14.2px] leading-[19px] text-[#111b21] whitespace-pre-line">
+                                  {post.content}<span className="inline-block w-12 h-1 align-bottom" />
+                                </p>
+                              )}
+                              <span className={`float-right text-[11px] text-[#667781] ${post.content ? '-mt-3.5' : ''} ml-2`}>
+                                {fmtMsgTime(post.created_at)}
+                              </span>
+                              <div className="clear-both" />
                             </div>
                           </div>
                         </div>
@@ -242,10 +252,10 @@ export function ChannelsInbox({ channels }: { channels: InboxChannel[] }) {
               )}
             </div>
 
-            {/* Footer */}
-            <div className="px-4 py-2.5 bg-white border-t border-gray-100 flex items-center justify-center gap-2 flex-shrink-0">
-              <Radio className="w-3.5 h-3.5 text-gray-400" />
-              <p className="text-[11px] text-gray-400">You&apos;re subscribed · only {selected.supplier?.trade_name ?? 'the supplier'} can post here</p>
+            {/* Footer note */}
+            <div className="px-4 py-2 flex items-center justify-center gap-2 flex-shrink-0" style={{ background: '#f0f2f5' }}>
+              <Radio className="w-3.5 h-3.5 text-[#8696a0]" />
+              <p className="text-[12px] text-[#667781]">Following · only {selected.supplier?.trade_name ?? 'the supplier'} can post here</p>
             </div>
           </>
         )}

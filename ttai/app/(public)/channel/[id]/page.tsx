@@ -2,20 +2,23 @@ import { notFound } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { ArrowLeft, Bell, Tag, Package, Megaphone } from 'lucide-react'
+import { ArrowLeft, Bell, Tag, Package, Megaphone, Search, MoreVertical } from 'lucide-react'
 import { ChannelJoinButton } from './ChannelJoinButton'
 
 export const revalidate = 30
 
-// ── Post type config ──────────────────────────────────────────────────────────
+// WhatsApp-style doodle wallpaper (faint shapes on beige).
+const DOODLE = "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160'%3E%3Cg fill='none' stroke='%23a8b3ad' stroke-width='1.3' opacity='0.35'%3E%3Cpath d='M18 28c4-6 12-6 16 0'/%3E%3Ccircle cx='124' cy='26' r='7'/%3E%3Cpath d='M28 112l6-11 6 11z'/%3E%3Cpath d='M108 120c-6-6-1-14 7-10 8-4 13 4 7 10l-7 6z'/%3E%3Cpath d='M70 72h16M78 64v16'/%3E%3Cpath d='M132 92c0 6-4 9-9 9'/%3E%3Cpath d='M20 78c5 3 11 3 16 0'/%3E%3Crect x='96' y='60' width='14' height='14' rx='3'/%3E%3C/g%3E%3C/svg%3E\")"
+
+// ── Post type config (small WhatsApp-style label) ──────────────────────────────
 const POST_TYPES: Record<string, {
-  label: string; badge: string; bar: string
+  label: string; badge: string; color: string
   Icon: React.ComponentType<{ className?: string }>
 }> = {
-  update:       { label: 'Update',       badge: 'bg-blue-100 text-blue-700',    bar: 'bg-blue-500',   Icon: Bell      },
-  offer:        { label: 'Offer',        badge: 'bg-amber-100 text-amber-700',  bar: 'bg-amber-500',  Icon: Tag       },
-  product:      { label: 'Product',      badge: 'bg-purple-100 text-purple-700',bar: 'bg-purple-500', Icon: Package   },
-  announcement: { label: 'Announcement', badge: 'bg-green-100 text-green-700',  bar: 'bg-green-500',  Icon: Megaphone },
+  update:       { label: 'Update',       badge: 'bg-blue-50 text-blue-600',    color: '#1f7aec', Icon: Bell      },
+  offer:        { label: 'Offer',        badge: 'bg-amber-50 text-amber-700',  color: '#c77700', Icon: Tag       },
+  product:      { label: 'Product',      badge: 'bg-purple-50 text-purple-700',color: '#7c3aed', Icon: Package   },
+  announcement: { label: 'Announcement', badge: 'bg-green-50 text-green-700',  color: '#1f9d55', Icon: Megaphone },
 }
 
 export async function generateMetadata({ params }: { params: { id: string } }) {
@@ -26,29 +29,22 @@ export async function generateMetadata({ params }: { params: { id: string } }) {
   if (!data) return {}
   const s = data.suppliers as any
   return {
-    title: `${data.name} — ${s?.trade_name ?? 'Supplier'} Canal · TTAI`,
-    description: data.description ?? `Subscribe to ${data.name} for exclusive updates.`,
+    title: `${data.name} — ${s?.trade_name ?? 'Supplier'} Channel · TTAI`,
+    description: data.description ?? `Follow ${data.name} for exclusive updates.`,
   }
 }
 
+/** WhatsApp shows the clock time on each message (e.g. 20:11). */
 function fmtTime(iso: string) {
-  const diff = Date.now() - new Date(iso).getTime()
-  const m = Math.floor(diff / 60000)
-  if (m < 1)  return 'just now'
-  if (m < 60) return `${m}m`
-  const h = Math.floor(m / 60)
-  if (h < 24) return `${h}h`
-  const d = new Date(iso)
-  if (diff < 7 * 86400000) return d.toLocaleDateString('en', { weekday: 'short' })
-  return d.toLocaleDateString('en', { day: 'numeric', month: 'short' })
+  return new Date(iso).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
 }
 
 function fmtDay(iso: string) {
   const d = new Date(iso)
   const today = new Date()
-  if (d.toDateString() === today.toDateString()) return 'Today'
+  if (d.toDateString() === today.toDateString()) return 'TODAY'
   const yest = new Date(today); yest.setDate(yest.getDate() - 1)
-  if (d.toDateString() === yest.toDateString()) return 'Yesterday'
+  if (d.toDateString() === yest.toDateString()) return 'YESTERDAY'
   return d.toLocaleDateString('en', { day: 'numeric', month: 'long', year: 'numeric' })
 }
 
@@ -70,190 +66,152 @@ export default async function ChannelPage({ params }: { params: { id: string } }
   const initial  = channel.name[0]?.toUpperCase() ?? 'C'
 
   return (
-    <div className="min-h-screen" style={{ background: '#F0F2F5' }}>
+    <div className="min-h-screen flex flex-col" style={{ background: '#efeae2' }}>
 
-      {/* ── Sticky header ─────────────────────────────────────────────── */}
-      <div className="sticky top-0 z-20 bg-[#0B1F4D] shadow-md">
-        <div className="max-w-2xl mx-auto px-3 sm:px-5 h-14 flex items-center gap-3">
+      {/* ── WhatsApp top bar (teal-green) ─────────────────────────────── */}
+      <div className="sticky top-0 z-20 shadow-md" style={{ background: '#075E54' }}>
+        <div className="max-w-2xl mx-auto px-2 sm:px-4 h-14 flex items-center gap-2 text-white">
           <Link
             href={supplier?.brand_slug ? `/brand/${supplier.brand_slug}` : '/marketplace'}
-            className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-white/60 hover:text-white hover:bg-white/10 transition-colors"
+            className="flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center text-white/90 hover:bg-white/10 transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
           </Link>
 
-          <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-white/20 flex-shrink-0 bg-white/10">
+          <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 bg-white/15">
             {supplier?.logo_url ? (
-              <Image src={supplier.logo_url} alt="" width={32} height={32} className="object-cover w-full h-full" />
+              <Image src={supplier.logo_url} alt="" width={36} height={36} className="object-cover w-full h-full" />
             ) : (
               <div className="w-full h-full flex items-center justify-center">
-                <span className="text-white font-extrabold text-xs">{initial}</span>
+                <span className="text-white font-extrabold text-sm">{initial}</span>
               </div>
             )}
           </div>
 
-          <div className="flex-1 min-w-0">
-            <h1 className="text-white font-extrabold text-sm leading-tight truncate">{channel.name}</h1>
-            <p className="text-white/50 text-[11px]">{channel.member_count.toLocaleString()} subscribers</p>
+          <div className="flex-1 min-w-0 leading-tight">
+            <h1 className="font-semibold text-[15px] truncate">{channel.name}</h1>
+            <p className="text-white/70 text-[12px] truncate">
+              {channel.member_count.toLocaleString()} followers
+            </p>
           </div>
 
-          {/* Mini subscribe pill in header */}
-          <div className="flex-shrink-0">
-            <ChannelJoinButton channelId={channel.id} whatsapp={channel.whatsapp} compact />
+          <button className="w-9 h-9 rounded-full hidden sm:flex items-center justify-center text-white/90 hover:bg-white/10"><Search className="w-5 h-5" /></button>
+          <button className="w-9 h-9 rounded-full flex items-center justify-center text-white/90 hover:bg-white/10"><MoreVertical className="w-5 h-5" /></button>
+        </div>
+      </div>
+
+      {/* ── Channel intro card (like WhatsApp channel header) ─────────── */}
+      <div className="bg-white border-b border-black/5">
+        <div className="max-w-2xl mx-auto px-4 py-6 flex flex-col items-center text-center">
+          <div className="w-24 h-24 rounded-full overflow-hidden border border-black/5 shadow-sm bg-[#075E54] flex items-center justify-center">
+            {supplier?.logo_url ? (
+              <Image src={supplier.logo_url} alt="" width={96} height={96} className="object-cover w-full h-full" />
+            ) : (
+              <span className="text-white font-extrabold text-4xl">{initial}</span>
+            )}
+          </div>
+          <h2 className="text-xl font-bold text-[#111b21] mt-3">{channel.name}</h2>
+          <p className="text-[13px] text-[#667781] mt-0.5">
+            Channel{supplier?.trade_name ? ` · ${supplier.trade_name}` : ''}
+          </p>
+          {channel.description && (
+            <p className="text-[14px] text-[#3b4a54] mt-2 max-w-md leading-relaxed">{channel.description}</p>
+          )}
+          <p className="text-[13px] text-[#667781] mt-1.5">
+            {channel.member_count.toLocaleString()} followers · {channel.post_count.toLocaleString()} posts
+          </p>
+          <div className="mt-4">
+            <ChannelJoinButton channelId={channel.id} whatsapp={channel.whatsapp} compact={false} />
           </div>
         </div>
       </div>
 
-      {/* ── Channel info card ─────────────────────────────────────────── */}
-      <div className="bg-white shadow-sm border-b border-gray-100">
-        <div className="max-w-2xl mx-auto px-4 sm:px-6 py-7 sm:py-10">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-5">
+      {/* ── Feed on doodle wallpaper ──────────────────────────────────── */}
+      <div className="flex-1" style={{ backgroundColor: '#efeae2', backgroundImage: DOODLE }}>
+        <div className="max-w-2xl mx-auto px-3 sm:px-6 py-4 pb-16">
 
-            {/* Logo */}
-            <div className="flex-shrink-0 mx-auto sm:mx-0">
-              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden border-4 border-white shadow-xl bg-[#0B1F4D] flex items-center justify-center">
-                {supplier?.logo_url ? (
-                  <Image src={supplier.logo_url} alt="" width={96} height={96} className="object-cover w-full h-full" />
-                ) : (
-                  <span className="text-white font-extrabold text-4xl">{initial}</span>
-                )}
-              </div>
+          {posts.length === 0 ? (
+            <div className="flex justify-center mt-6">
+              <span className="bg-[#ffffff] text-[#54656f] text-[12.5px] px-3 py-1.5 rounded-lg shadow-sm">
+                No posts yet — follow to be the first to know.
+              </span>
             </div>
+          ) : (
+            <div className="space-y-2">
+              {posts.map((post: any, idx: number) => {
+                const cfg      = POST_TYPES[post.post_type] ?? POST_TYPES.update
+                const TypeIcon = cfg.Icon
+                const postDay  = new Date(post.created_at).toDateString()
+                const prevDay  = idx > 0 ? new Date(posts[idx - 1].created_at).toDateString() : null
+                const showDay  = postDay !== prevDay   // first post + each day change
 
-            {/* Info */}
-            <div className="flex-1 text-center sm:text-left">
-              <h2 className="text-xl sm:text-2xl font-extrabold text-[#0B1F4D]">{channel.name}</h2>
-              {supplier?.trade_name && (
-                <p className="text-sm text-gray-500 font-medium mt-0.5">by {supplier.trade_name}</p>
-              )}
-              {channel.description && (
-                <p className="text-sm text-gray-500 mt-2 leading-relaxed max-w-md mx-auto sm:mx-0">
-                  {channel.description}
-                </p>
-              )}
+                return (
+                  <div key={post.id}>
+                    {/* Date chip */}
+                    {showDay && (
+                      <div className="flex justify-center py-2.5">
+                        <span className="bg-[#ffffff] text-[#54656f] text-[12px] font-medium px-3 py-1 rounded-lg shadow-[0_1px_0.5px_rgba(11,20,26,0.13)] uppercase tracking-wide">
+                          {fmtDay(post.created_at)}
+                        </span>
+                      </div>
+                    )}
 
-              {/* Stats */}
-              <div className="flex items-center justify-center sm:justify-start gap-6 mt-3">
-                <div className="text-center sm:text-left">
-                  <p className="text-lg font-extrabold text-[#0B1F4D]">{channel.member_count.toLocaleString()}</p>
-                  <p className="text-[11px] text-gray-400 uppercase tracking-wide font-semibold">Subscribers</p>
-                </div>
-                <div className="w-px h-8 bg-gray-200" />
-                <div className="text-center sm:text-left">
-                  <p className="text-lg font-extrabold text-[#0B1F4D]">{channel.post_count.toLocaleString()}</p>
-                  <p className="text-[11px] text-gray-400 uppercase tracking-wide font-semibold">Posts</p>
-                </div>
-              </div>
+                    {/* Message bubble (incoming style with tail) */}
+                    <div className="flex">
+                      <div className="relative max-w-[88%] sm:max-w-[78%] bg-white rounded-lg rounded-tl-none shadow-[0_1px_0.5px_rgba(11,20,26,0.13)]">
+                        {/* little tail */}
+                        <span className="absolute -left-1.5 top-0 w-2 h-3 overflow-hidden">
+                          <span className="absolute right-0 top-0 w-3 h-3 bg-white rotate-45 origin-top-right" />
+                        </span>
 
-              {/* Subscribe button — full size (below stats) */}
-              <div className="mt-5 flex justify-center sm:justify-start">
-                <ChannelJoinButton channelId={channel.id} whatsapp={channel.whatsapp} compact={false} />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+                        {/* Media */}
+                        {post.video_url ? (
+                          <div className="p-[3px]">
+                            <video src={post.video_url} controls className="w-full rounded-[6px] bg-black max-h-80" />
+                          </div>
+                        ) : post.image_url && (
+                          <div className="p-[3px]">
+                            <img src={post.image_url} alt="" className="w-full rounded-[6px] object-cover max-h-80" />
+                          </div>
+                        )}
 
-      {/* ── Posts feed ────────────────────────────────────────────────── */}
-      <div className="max-w-2xl mx-auto px-3 sm:px-4 py-4 pb-12">
-
-        {posts.length === 0 ? (
-          <div className="bg-white rounded-2xl p-14 text-center mt-2 shadow-sm border border-gray-100">
-            <div className="w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center mx-auto mb-3">
-              <Bell className="w-7 h-7 text-gray-300" />
-            </div>
-            <p className="text-gray-500 font-semibold text-sm">No posts yet</p>
-            <p className="text-gray-400 text-xs mt-1">Subscribe to be the first to know when they post.</p>
-          </div>
-        ) : (
-          <div className="space-y-2 mt-2">
-            <div className="flex items-center gap-3 py-2">
-              <div className="h-px flex-1 bg-gray-300/50" />
-              <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Updates</span>
-              <div className="h-px flex-1 bg-gray-300/50" />
-            </div>
-
-            {posts.map((post: any, idx: number) => {
-              const cfg      = POST_TYPES[post.post_type] ?? POST_TYPES.update
-              const TypeIcon = cfg.Icon
-              const postDay  = new Date(post.created_at).toDateString()
-              const prevDay  = idx < posts.length - 1 ? new Date(posts[idx + 1].created_at).toDateString() : null
-              const showDivider = prevDay && postDay !== prevDay
-
-              return (
-                <div key={post.id}>
-                  {/* Post bubble */}
-                  <div className="flex items-start gap-2 sm:gap-3">
-                    {/* Avatar */}
-                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full overflow-hidden flex-shrink-0 mt-0.5 border border-white shadow-sm bg-[#0B1F4D]">
-                      {supplier?.logo_url ? (
-                        <Image src={supplier.logo_url} alt="" width={32} height={32} className="object-cover w-full h-full" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <span className="text-white font-bold text-[9px]">{initial}</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Bubble */}
-                    <div className="flex-1 min-w-0 bg-white rounded-2xl rounded-tl-sm shadow-sm overflow-hidden">
-                      {/* Top accent bar */}
-                      <div className={`h-0.5 ${cfg.bar}`} />
-
-                      {/* Video / image — full width above text */}
-                      {post.video_url ? (
-                        <video src={post.video_url} controls
-                          className="w-full bg-black max-h-[280px] sm:max-h-80" />
-                      ) : post.image_url && (
-                        <img src={post.image_url} alt=""
-                          className="w-full object-cover max-h-[280px] sm:max-h-80" />
-                      )}
-
-                      {/* Text content */}
-                      <div className="px-3 sm:px-4 pt-2.5 pb-3">
-                        <div className="flex items-center justify-between gap-2 mb-1.5">
-                          <p className="text-xs font-extrabold text-[#0B1F4D] truncate">
-                            {supplier?.trade_name ?? channel.name}
+                        {/* Text */}
+                        <div className="px-2.5 pt-1.5 pb-1.5">
+                          <div className="flex items-center gap-1.5 mb-0.5">
+                            <span className="text-[13px] font-bold truncate" style={{ color: cfg.color }}>
+                              {supplier?.trade_name ?? channel.name}
+                            </span>
+                            <span className={`inline-flex items-center gap-0.5 text-[10px] font-bold px-1.5 py-px rounded ${cfg.badge}`}>
+                              <TypeIcon className="w-2.5 h-2.5" />{cfg.label}
+                            </span>
+                          </div>
+                          <p className="text-[14.2px] leading-[19px] text-[#111b21] whitespace-pre-line">
+                            {post.content}
+                            <span className="inline-block w-12 h-1 align-bottom" />
                           </p>
-                          <span className={`flex items-center gap-1 text-[10px] font-extrabold px-2 py-0.5 rounded-full flex-shrink-0 ${cfg.badge}`}>
-                            <TypeIcon className="w-2.5 h-2.5" />
-                            <span className="hidden sm:inline">{cfg.label}</span>
+                          <span className="float-right text-[11px] text-[#667781] -mt-3.5 ml-2">
+                            {fmtTime(post.created_at)}
                           </span>
-                        </div>
-                        <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-line">{post.content}</p>
-                        <div className="flex items-center justify-between mt-2">
-                          <span className={`sm:hidden flex items-center gap-1 text-[10px] font-extrabold px-2 py-0.5 rounded-full ${cfg.badge}`}>
-                            <TypeIcon className="w-2.5 h-2.5" />{cfg.label}
-                          </span>
-                          <p className="text-[10px] text-gray-400 ml-auto">{fmtTime(post.created_at)}</p>
+                          <div className="clear-both" />
                         </div>
                       </div>
                     </div>
                   </div>
+                )
+              })}
 
-                  {/* Date divider */}
-                  {showDivider && (
-                    <div className="flex items-center justify-center my-3">
-                      <span className="bg-gray-200/80 text-gray-500 text-[10px] font-semibold px-3 py-1 rounded-full">
-                        {fmtDay(posts[idx + 1].created_at)}
-                      </span>
-                    </div>
-                  )}
+              {supplier?.brand_slug && (
+                <div className="pt-6 flex justify-center">
+                  <Link href={`/brand/${supplier.brand_slug}`}
+                    className="inline-flex items-center gap-1.5 bg-white text-[#075E54] text-[13px] font-semibold px-4 py-2 rounded-full shadow-[0_1px_0.5px_rgba(11,20,26,0.13)] hover:bg-gray-50">
+                    Visit {supplier.trade_name ?? ''} store
+                    <ArrowLeft className="w-3.5 h-3.5 rotate-180" />
+                  </Link>
                 </div>
-              )
-            })}
-
-            {supplier?.brand_slug && (
-              <div className="pt-5 text-center">
-                <Link href={`/brand/${supplier.brand_slug}`}
-                  className="inline-flex items-center gap-1.5 text-sm font-bold text-[#0B1F4D] hover:underline">
-                  Visit {supplier.trade_name ?? ''} brand store
-                  <ArrowLeft className="w-3.5 h-3.5 rotate-180" />
-                </Link>
-              </div>
-            )}
-          </div>
-        )}
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )

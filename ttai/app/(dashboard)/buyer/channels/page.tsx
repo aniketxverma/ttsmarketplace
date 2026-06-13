@@ -33,7 +33,7 @@ export default async function BuyerChannelsPage() {
   const latestByChannel: Record<string, any> = {}
   if (channelIds.length > 0) {
     const { data: recent } = await (supabase.from('channel_posts') as any)
-      .select('id, channel_id, content, image_url, post_type, created_at')
+      .select('*')
       .in('channel_id', channelIds)
       .order('created_at', { ascending: false })
       .limit(channelIds.length * 6)
