@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { whatsappConfig, verifySignature, digitsOnly, sendText, downloadMedia } from '@/lib/whatsapp/client'
 
+async function diag(admin: ReturnType<typeof createAdminClient>, msg: string) {
+  try { await (admin.from('app_settings') as any).upsert({ key: 'whatsapp_diag', value: `${new Date().toISOString()} :: ${msg}` }, { onConflict: 'key' }) } catch {}
+}
+
 export const dynamic = 'force-dynamic'
 
 /**
@@ -83,6 +87,7 @@ export async function POST(req: NextRequest) {
       content = message.text?.body ?? ''
     } else if (message.type === 'image') {
       content = message.image?.caption ?? ''
+      const cfg = whatsappConfig()
       const media = await downloadMedia(message.image?.id)
       if (media) {
         const ext = media.mime.split('/')[1]?.split(';')[0] || 'jpg'
@@ -90,6 +95,9 @@ export async function POST(req: NextRequest) {
         const { error: upErr } = await admin.storage.from('brand-assets')
           .upload(path, media.buffer, { contentType: media.mime, upsert: false })
         if (!upErr) imageUrl = admin.storage.from('brand-assets').getPublicUrl(path).data.publicUrl
+        await diag(admin, `IMG configured=${cfg.configured} tokenLen=${cfg.token.length} mediaId=${message.image?.id} downloaded=YES(${media.buffer.length}b) uploadErr=${upErr?.message ?? 'none'}`)
+      } else {
+        await diag(admin, `IMG configured=${cfg.configured} tokenLen=${cfg.token.length} phoneId=${cfg.phoneId} mediaId=${message.image?.id} downloaded=NO`)
       }
     } else {
       await sendText(from, 'Send text or a photo with a caption to publish an offer.')
