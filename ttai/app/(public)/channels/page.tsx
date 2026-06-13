@@ -49,7 +49,7 @@ export default async function ChannelsPage() {
         .in('supplier_id', supplierIds)
         .eq('is_published', true),
       (supabase.from('channel_posts') as any)
-        .select('id, channel_id, content, image_url, post_type, created_at')
+        .select('*')
         .in('channel_id', channelIds)
         .order('created_at', { ascending: false })
         .limit(60),
@@ -103,6 +103,7 @@ export default async function ChannelsPage() {
       channel_name: c?.name ?? 'Canal',
       content: p.content,
       image_url: p.image_url,
+      video_url: p.video_url ?? null,
       post_type: p.post_type,
       created_at: p.created_at,
       category: categoryBySupplier[c?.supplier_id] ?? 'General',

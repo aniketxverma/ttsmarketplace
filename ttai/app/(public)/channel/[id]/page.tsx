@@ -200,8 +200,11 @@ export default async function ChannelPage({ params }: { params: { id: string } }
                       {/* Top accent bar */}
                       <div className={`h-0.5 ${cfg.bar}`} />
 
-                      {/* Image — full width above text */}
-                      {post.image_url && (
+                      {/* Video / image — full width above text */}
+                      {post.video_url ? (
+                        <video src={post.video_url} controls
+                          className="w-full bg-black max-h-[280px] sm:max-h-80" />
+                      ) : post.image_url && (
                         <img src={post.image_url} alt=""
                           className="w-full object-cover max-h-[280px] sm:max-h-80" />
                       )}

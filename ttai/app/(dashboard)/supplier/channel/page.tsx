@@ -16,7 +16,7 @@ type Channel = {
   created_at: string
 }
 type Post = {
-  id: string; content: string; image_url: string | null; post_type: string; created_at: string
+  id: string; content: string; image_url: string | null; video_url?: string | null; post_type: string; created_at: string
 }
 type Group = {
   id: string; name: string; description: string | null; category: string | null
@@ -457,7 +457,9 @@ export default function SupplierChannelPage() {
                       <span className="text-[11px] text-gray-400">{fmtDate(post.created_at)}</span>
                     </div>
                     <p className="text-sm text-gray-700 leading-relaxed">{post.content}</p>
-                    {post.image_url && (
+                    {post.video_url ? (
+                      <video src={post.video_url} controls className="mt-2.5 rounded-xl max-h-48 bg-black border border-gray-100" />
+                    ) : post.image_url && (
                       <img src={post.image_url} alt="" className="mt-2.5 rounded-xl max-h-48 object-cover border border-gray-100" />
                     )}
                   </div>

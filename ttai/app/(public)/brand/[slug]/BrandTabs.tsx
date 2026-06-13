@@ -82,7 +82,7 @@ interface Channel {
   member_count: number; post_count: number
 }
 interface ChannelPost {
-  id: string; content: string; image_url: string | null; post_type: string; created_at: string
+  id: string; content: string; image_url: string | null; video_url?: string | null; post_type: string; created_at: string
 }
 interface Props {
   supplier: Supplier; products: Product[]; gallery: GalleryItem[]; certifications: Certification[]
@@ -1017,7 +1017,9 @@ export function BrandTabs({
                         </span>
                       </div>
                       <p className="text-sm text-gray-700 leading-relaxed line-clamp-3">{post.content}</p>
-                      {post.image_url && (
+                      {post.video_url ? (
+                        <video src={post.video_url} controls className="mt-2 w-full rounded-xl bg-black max-h-40" />
+                      ) : post.image_url && (
                         <img src={post.image_url} alt="" className="mt-2 w-full rounded-xl object-cover max-h-40" />
                       )}
                     </div>

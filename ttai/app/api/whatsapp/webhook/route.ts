@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { whatsappConfig, verifyTokenEnv, verifySignature, digitsOnly, sendText, downloadMedia } from '@/lib/whatsapp/client'
+import { verifyTokenEnv, verifySignature, digitsOnly, sendText, downloadMedia } from '@/lib/whatsapp/client'
 
 async function diag(admin: ReturnType<typeof createAdminClient>, msg: string) {
   try { await (admin.from('app_settings') as any).upsert({ key: 'whatsapp_diag', value: `${new Date().toISOString()} :: ${msg}` }, { onConflict: 'key' }) } catch {}
@@ -79,42 +79,55 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ received: true })
     }
 
-    // Build the post from the message (text or image+caption).
+    // Build the post from the message (text, image+caption or video+caption).
     let content = ''
     let imageUrl: string | null = null
+    let videoUrl: string | null = null
+
+    // Download a media id → upload to storage → return its public URL.
+    const saveMedia = async (mediaId?: string, fallbackExt = 'bin') => {
+      const media = await downloadMedia(mediaId ?? '')
+      if (!media) return null
+      const ext = media.mime.split('/')[1]?.split(';')[0] || fallbackExt
+      const path = `channel-posts/wa-${match.id}-${Date.now()}.${ext}`
+      const { error: upErr } = await admin.storage.from('brand-assets')
+        .upload(path, media.buffer, { contentType: media.mime, upsert: false })
+      await diag(admin, `MEDIA ${message.type} mediaId=${mediaId} downloaded=YES(${media.buffer.length}b) uploadErr=${upErr?.message ?? 'none'}`)
+      return upErr ? null : admin.storage.from('brand-assets').getPublicUrl(path).data.publicUrl
+    }
 
     if (message.type === 'text') {
       content = message.text?.body ?? ''
     } else if (message.type === 'image') {
       content = message.image?.caption ?? ''
-      const cfg = await whatsappConfig()
-      const media = await downloadMedia(message.image?.id)
-      if (media) {
-        const ext = media.mime.split('/')[1]?.split(';')[0] || 'jpg'
-        const path = `channel-posts/wa-${match.id}-${Date.now()}.${ext}`
-        const { error: upErr } = await admin.storage.from('brand-assets')
-          .upload(path, media.buffer, { contentType: media.mime, upsert: false })
-        if (!upErr) imageUrl = admin.storage.from('brand-assets').getPublicUrl(path).data.publicUrl
-        await diag(admin, `IMG configured=${cfg.configured} tokenLen=${cfg.token.length} mediaId=${message.image?.id} downloaded=YES(${media.buffer.length}b) uploadErr=${upErr?.message ?? 'none'}`)
-      } else {
-        await diag(admin, `IMG configured=${cfg.configured} tokenLen=${cfg.token.length} phoneId=${cfg.phoneId} mediaId=${message.image?.id} downloaded=NO`)
-      }
+      imageUrl = await saveMedia(message.image?.id, 'jpg')
+    } else if (message.type === 'video') {
+      content = message.video?.caption ?? ''
+      videoUrl = await saveMedia(message.video?.id, 'mp4')
     } else {
-      await sendText(from, 'Send text or a photo with a caption to publish an offer.')
+      await sendText(from, 'Send text, a photo or a video (with a caption) to publish an offer.')
       return NextResponse.json({ received: true })
     }
 
-    if (!content.trim() && !imageUrl) {
-      await sendText(from, 'Your message was empty — send the offer text or a photo to publish.')
+    if (!content.trim() && !imageUrl && !videoUrl) {
+      await sendText(from, 'Your message was empty — send the offer text, a photo or a video to publish.')
       return NextResponse.json({ received: true })
     }
 
-    await (admin.from('channel_posts') as any).insert({
+    const row: Record<string, any> = {
       channel_id: match.id,
-      content:    content.trim() || '📷 Photo',
+      content:    content.trim() || (videoUrl ? '🎥 Video' : '📷 Photo'),
       image_url:  imageUrl,
       post_type:  'offer',
-    })
+    }
+    if (videoUrl) row.video_url = videoUrl
+    // Defensive: video_url column may not exist yet (migration 0063) → retry without.
+    let ins = await (admin.from('channel_posts') as any).insert(row)
+    if (ins.error && videoUrl) {
+      delete row.video_url
+      row.content = content.trim() || '🎥 Video (open WhatsApp)'
+      ins = await (admin.from('channel_posts') as any).insert(row)
+    }
 
     const site = process.env.NEXT_PUBLIC_APP_URL ?? 'https://ttai.es'
     await sendText(from, `✅ Your offer is live on TTAI EMA.\n${site}/channel/${match.id}`)

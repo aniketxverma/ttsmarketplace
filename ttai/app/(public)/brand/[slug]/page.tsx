@@ -171,7 +171,7 @@ export default async function BrandPage({ params }: { params: { slug: string } }
   const channel      = (channelRes.data ?? null) as any
   const channelPostsRes = channel
     ? await (supabase.from('channel_posts' as any) as any)
-        .select('id, content, image_url, post_type, created_at')
+        .select('*')
         .eq('channel_id', channel.id)
         .order('created_at', { ascending: false })
         .limit(5)

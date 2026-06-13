@@ -18,7 +18,7 @@ export type DiscoveryChannel = {
 }
 export type FeedPost = {
   id: string; channel_id: string; channel_name: string
-  content: string; image_url: string | null; post_type: string; created_at: string
+  content: string; image_url: string | null; video_url?: string | null; post_type: string; created_at: string
   category: string; paid: boolean; supplier: Supplier | null
 }
 export type GroupItem = {
@@ -189,7 +189,9 @@ export function ChannelsDiscovery({ channels, feed, groups }: { channels: Discov
                     <div className="px-4 py-3">
                       <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{p.content}</p>
                     </div>
-                    {p.image_url && <img src={p.image_url} alt="" className="w-full max-h-80 object-cover border-y border-gray-100" />}
+                    {p.video_url
+                      ? <video src={p.video_url} controls className="w-full max-h-80 bg-black border-y border-gray-100" />
+                      : p.image_url && <img src={p.image_url} alt="" className="w-full max-h-80 object-cover border-y border-gray-100" />}
                     <div className="flex items-center justify-between px-4 py-3 border-t border-gray-50">
                       <Link href={`/channel/${p.channel_id}`} className="text-xs font-bold text-[#7C3AED] hover:underline">View canal →</Link>
                       <button onClick={() => shareWA(`${name}: ${p.content}`, `/channel/${p.channel_id}`)}
