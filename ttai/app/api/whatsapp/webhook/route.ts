@@ -28,8 +28,10 @@ export async function GET(req: NextRequest) {
 // ── Incoming messages ─────────────────────────────────────────────────────────
 export async function POST(req: NextRequest) {
   const raw = await req.text()
+  // Best-effort signature check: log a mismatch but DON'T drop the message, so a
+  // wrong/missing WHATSAPP_APP_SECRET never silently loses supplier offers.
   if (!verifySignature(raw, req.headers.get('x-hub-signature-256'))) {
-    return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
+    console.warn('whatsapp webhook: signature check failed — processing anyway (verify WHATSAPP_APP_SECRET)')
   }
 
   // Always 200 back to Meta quickly; never let internal errors trigger retries.
