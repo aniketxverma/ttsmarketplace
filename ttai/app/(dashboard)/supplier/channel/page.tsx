@@ -6,7 +6,7 @@ import Image from 'next/image'
 import {
   Radio, Users, FileText, Send, Settings, Copy, Check,
   Megaphone, Tag, Package, Bell, ExternalLink, Trash2,
-  Eye, EyeOff, ChevronRight, Loader, Plus, ImagePlus, X,
+  Eye, EyeOff, ChevronRight, Loader, Plus, ImagePlus, X, MessagesSquare,
 } from 'lucide-react'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -17,6 +17,10 @@ type Channel = {
 }
 type Post = {
   id: string; content: string; image_url: string | null; post_type: string; created_at: string
+}
+type Group = {
+  id: string; name: string; description: string | null; category: string | null
+  invite_link: string; member_count: number
 }
 
 // ── Post type config ──────────────────────────────────────────────────────────
@@ -55,6 +59,12 @@ export default function SupplierChannelPage() {
   const [pForm, setPForm] = useState({ content: '', post_type: 'update' as PostType })
   const [sForm, setSForm] = useState({ name: '', description: '', whatsapp: '' })
 
+  // WhatsApp groups
+  const [groups, setGroups]   = useState<Group[]>([])
+  const [gForm,  setGForm]    = useState({ name: '', category: '', invite_link: '', description: '' })
+  const [gBusy,  setGBusy]    = useState(false)
+  const [gError, setGError]   = useState('')
+
   // ── Fetch channel ────────────────────────────────────────────────────────
   const loadChannel = useCallback(async () => {
     const res = await fetch('/api/channels')
@@ -74,7 +84,33 @@ export default function SupplierChannelPage() {
     setPosts(posts ?? [])
   }
 
-  useEffect(() => { loadChannel() }, [loadChannel])
+  const loadGroups = useCallback(async () => {
+    const res = await fetch('/api/groups')
+    if (!res.ok) return
+    const { groups } = await res.json()
+    setGroups(groups ?? [])
+  }, [])
+
+  useEffect(() => { loadChannel(); loadGroups() }, [loadChannel, loadGroups])
+
+  const handleAddGroup = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!gForm.name.trim() || !gForm.invite_link.trim()) return
+    setGBusy(true); setGError('')
+    const res = await fetch('/api/groups', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(gForm),
+    })
+    const data = await res.json()
+    setGBusy(false)
+    if (!res.ok) { setGError(data.error ?? 'Could not add group'); return }
+    setGroups(prev => [data.group, ...prev])
+    setGForm({ name: '', category: '', invite_link: '', description: '' })
+  }
+
+  const handleDeleteGroup = async (id: string) => {
+    await fetch(`/api/groups/${id}`, { method: 'DELETE' })
+    setGroups(prev => prev.filter(g => g.id !== id))
+  }
 
   // ── Image handlers ───────────────────────────────────────────────────────
   function handleImageSelect(e: React.ChangeEvent<HTMLInputElement>) {
@@ -480,6 +516,54 @@ export default function SupplierChannelPage() {
               </button>
             </div>
           </form>
+        )}
+      </div>
+
+      {/* ── WhatsApp Groups ──────────────────────────────────────────── */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="px-6 py-4 border-b border-gray-50 flex items-center gap-2">
+          <MessagesSquare className="w-4 h-4 text-[#1ea952]" />
+          <h2 className="text-sm font-extrabold text-[#0B1F4D] uppercase tracking-wide">WhatsApp Groups</h2>
+        </div>
+
+        <form onSubmit={handleAddGroup} className="p-6 space-y-3 border-b border-gray-50">
+          <p className="text-xs text-gray-400">List your public WhatsApp group so buyers can find and join it in the marketplace directory.</p>
+          <div className="grid sm:grid-cols-2 gap-3">
+            <input value={gForm.name} onChange={e => setGForm(f => ({ ...f, name: e.target.value }))}
+              placeholder="Group name *" className="px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B1F4D]" required />
+            <input value={gForm.category} onChange={e => setGForm(f => ({ ...f, category: e.target.value }))}
+              placeholder="Category (e.g. Electronics)" className="px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B1F4D]" />
+          </div>
+          <input value={gForm.invite_link} onChange={e => setGForm(f => ({ ...f, invite_link: e.target.value }))}
+            placeholder="WhatsApp invite link * — https://chat.whatsapp.com/…"
+            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B1F4D]" required />
+          <input value={gForm.description} onChange={e => setGForm(f => ({ ...f, description: e.target.value }))}
+            placeholder="Short description (optional)" className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B1F4D]" />
+          {gError && <p className="text-sm text-red-600 bg-red-50 rounded-xl px-4 py-2.5 border border-red-100">{gError}</p>}
+          <button type="submit" disabled={gBusy || !gForm.name.trim() || !gForm.invite_link.trim()}
+            className="flex items-center gap-2 px-5 py-2.5 bg-[#25D366] hover:bg-[#1ea952] text-white rounded-xl text-sm font-bold transition-colors disabled:opacity-50">
+            {gBusy ? <Loader className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}Add group
+          </button>
+        </form>
+
+        {groups.length > 0 && (
+          <div className="divide-y divide-gray-50">
+            {groups.map(g => (
+              <div key={g.id} className="flex items-center gap-3 p-4 hover:bg-gray-50/60 transition-colors group">
+                <div className="w-9 h-9 rounded-xl bg-[#25D366]/10 flex items-center justify-center flex-shrink-0">
+                  <MessagesSquare className="w-4 h-4 text-[#1ea952]" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold text-gray-800 truncate">{g.name} {g.category && <span className="text-xs text-gray-400 font-normal">· {g.category}</span>}</p>
+                  <a href={g.invite_link} target="_blank" rel="noopener noreferrer" className="text-xs text-[#1ea952] hover:underline truncate block">{g.invite_link}</a>
+                </div>
+                <button onClick={() => handleDeleteGroup(g.id)} title="Delete"
+                  className="opacity-0 group-hover:opacity-100 flex-shrink-0 w-7 h-7 rounded-lg text-red-400 hover:bg-red-50 hover:text-red-500 flex items-center justify-center transition-all">
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ))}
+          </div>
         )}
       </div>
 
