@@ -35,11 +35,11 @@ const APP_URL = (process.env.NEXT_PUBLIC_APP_URL || 'https://ttsmarketplace.verc
 const stripe = new Stripe(KEY, { apiVersion: '2024-04-10' })
 const MODE = KEY.startsWith('sk_live_') ? 'LIVE' : 'TEST'
 
-// The 3 paid membership plans. Edit amount_eur here if your prices change.
+// The 2 paid membership plans. Edit amount_eur here if your prices change.
+// lookup keys encode the amount so re-running with new prices creates fresh ones.
 const PLANS = [
-  { tier: 'standard', name: 'TTAI EMA — Standard', amount_eur: 49,  env: 'STRIPE_PRICE_STANDARD' },
-  { tier: 'pro',      name: 'TTAI EMA — Pro',      amount_eur: 99,  env: 'STRIPE_PRICE_PRO' },
-  { tier: 'full',     name: 'TTAI EMA — Full Pack', amount_eur: 199, env: 'STRIPE_PRICE_FULL' },
+  { tier: 'standard', name: 'TTAI EMA — Business', amount_eur: 79,  env: 'STRIPE_PRICE_STANDARD', lookup: 'ttai_business_79' },
+  { tier: 'pro',      name: 'TTAI EMA — Pro',      amount_eur: 199, env: 'STRIPE_PRICE_PRO',      lookup: 'ttai_pro_199' },
 ]
 
 // The 2 flagship TTAI ON programs. These get a product + recurring price AND a
@@ -78,7 +78,7 @@ const WEBHOOK_EVENTS = [
 ]
 
 async function ensurePlan(plan) {
-  const lookupKey = `ttai_${plan.tier}_monthly`
+  const lookupKey = plan.lookup || `ttai_${plan.tier}_monthly`
 
   // Reuse an existing price with this lookup_key if present.
   const existing = await stripe.prices.list({ lookup_keys: [lookupKey], active: true, limit: 1 })

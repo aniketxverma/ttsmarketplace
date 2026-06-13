@@ -43,8 +43,8 @@ export default async function PricingPage() {
       </div>
 
       {/* ── Plan cards ────────────────────────────────────────────────────── */}
-      <div className="container mx-auto max-w-6xl px-4 -mt-12 pb-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+      <div className="container mx-auto max-w-5xl px-4 -mt-12 pb-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-start">
           {PLANS.map((p) => (
             <div key={p.tier}
               className={`relative rounded-3xl bg-white p-6 flex flex-col border transition-all duration-300 ${
@@ -166,74 +166,126 @@ export default async function PricingPage() {
                 <p className="text-blue-300/90 text-sm mt-1">{fp.feeLabel ?? 'Program fee'}{fp.feeNote ? ` · ${fp.feeNote}` : ''}</p>
                 <a href={mailto}
                   className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#F5A623] hover:bg-[#fbb93a] text-[#0B1F4D] px-7 py-3.5 text-sm font-extrabold transition-colors mt-5 w-full">
-                  Talk to our team <ArrowRight className="w-4 h-4" />
+                  {fp.cta ?? 'Talk to our team'} <ArrowRight className="w-4 h-4" />
                 </a>
               </div>
             </div>
 
-            {/* Special highlights — the logistics hub / sales team / fair stand */}
-            <div className="relative grid sm:grid-cols-2 gap-4 mt-8">
-              {fp.highlights.map((h, i) => (
-                <div key={h.title} className="rounded-2xl bg-white/[0.05] border border-[#F5A623]/20 p-5">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="w-8 h-8 rounded-xl bg-[#F5A623]/15 flex items-center justify-center flex-shrink-0">
-                      {i === 0 ? <Warehouse className="w-4 h-4 text-[#F5A623]" /> : <Star className="w-4 h-4 text-[#F5A623]" />}
-                    </span>
-                    <p className="font-extrabold text-white text-sm">{h.title}</p>
+            {/* Sub-packages (e.g. Logistics €3,500 + Business Dev €5,000) */}
+            {fp.packages && (
+              <div className="relative grid sm:grid-cols-2 gap-4 mt-8">
+                {fp.packages.map((pk) => (
+                  <div key={pk.title} className="rounded-2xl bg-white/[0.05] border border-[#F5A623]/20 p-5">
+                    <div className="flex items-center justify-between gap-2 mb-3">
+                      <p className="font-extrabold text-white text-sm">{pk.title}</p>
+                      <span className="rounded-full bg-[#F5A623] text-[#0B1F4D] text-[11px] font-extrabold px-2.5 py-0.5">{pk.value}</span>
+                    </div>
+                    <ul className="space-y-2">
+                      {pk.items.map((it) => (
+                        <li key={it} className="flex items-start gap-2 text-sm text-blue-100">
+                          <span className="mt-0.5 w-4 h-4 rounded-full bg-[#F5A623]/20 flex items-center justify-center flex-shrink-0">
+                            <Check className="w-2.5 h-2.5 text-[#F5A623]" strokeWidth={3.5} />
+                          </span>
+                          {it}
+                        </li>
+                      ))}
+                    </ul>
                   </div>
-                  <p className="text-blue-100/90 text-sm leading-relaxed">{h.desc}</p>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
 
-            {/* Services / fairs / benefits */}
-            <div className="relative grid sm:grid-cols-2 lg:grid-cols-3 gap-x-10 gap-y-8 mt-9 pt-8 border-t border-white/10">
-              {fp.included && (
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-widest text-blue-300/80 mb-3">Included services</p>
-                  <ul className="space-y-2.5">
-                    {fp.included.map((f) => (
-                      <li key={f} className="flex items-start gap-2 text-sm text-blue-100">
-                        <span className="mt-0.5 w-4 h-4 rounded-full bg-[#F5A623]/20 flex items-center justify-center flex-shrink-0">
-                          <Check className="w-2.5 h-2.5 text-[#F5A623]" strokeWidth={3.5} />
-                        </span>
-                        {f}
-                      </li>
-                    ))}
-                  </ul>
+            {/* Special highlights (optional) */}
+            {fp.highlights && fp.highlights.length > 0 && (
+              <div className="relative grid sm:grid-cols-2 gap-4 mt-8">
+                {fp.highlights.map((h, i) => (
+                  <div key={h.title} className="rounded-2xl bg-white/[0.05] border border-[#F5A623]/20 p-5">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="w-8 h-8 rounded-xl bg-[#F5A623]/15 flex items-center justify-center flex-shrink-0">
+                        {i === 0 ? <Warehouse className="w-4 h-4 text-[#F5A623]" /> : <Star className="w-4 h-4 text-[#F5A623]" />}
+                      </span>
+                      <p className="font-extrabold text-white text-sm">{h.title}</p>
+                    </div>
+                    <p className="text-blue-100/90 text-sm leading-relaxed">{h.desc}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Services / fairs / premium benefits */}
+            {(fp.included || fp.fairs || fp.support) && (
+              <div className="relative grid sm:grid-cols-2 lg:grid-cols-3 gap-x-10 gap-y-8 mt-9 pt-8 border-t border-white/10">
+                {fp.included && (
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-widest text-blue-300/80 mb-3">{fp.includedLabel ?? 'Included services'}</p>
+                    <ul className="space-y-2.5">
+                      {fp.included.map((f) => (
+                        <li key={f} className="flex items-start gap-2 text-sm text-blue-100">
+                          <span className="mt-0.5 w-4 h-4 rounded-full bg-[#F5A623]/20 flex items-center justify-center flex-shrink-0">
+                            <Check className="w-2.5 h-2.5 text-[#F5A623]" strokeWidth={3.5} />
+                          </span>
+                          {f}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {fp.fairs && (
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-widest text-blue-300/80 mb-3">International events & fairs</p>
+                    <ul className="space-y-2.5">
+                      {fp.fairs.map((f) => (
+                        <li key={f} className="flex items-start gap-2 text-sm text-blue-100">
+                          <span className="mt-0.5 w-4 h-4 rounded-full bg-[#F5A623]/20 flex items-center justify-center flex-shrink-0">
+                            <Star className="w-2.5 h-2.5 text-[#F5A623]" strokeWidth={3} />
+                          </span>
+                          {f}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {fp.support && (
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-widest text-blue-300/80 mb-3">{fp.supportLabel ?? 'Business support'}</p>
+                    <ul className="space-y-2.5">
+                      {fp.support.map((f) => (
+                        <li key={f} className="flex items-start gap-2 text-sm text-blue-100">
+                          <span className="mt-0.5 w-4 h-4 rounded-full bg-[#F5A623]/20 flex items-center justify-center flex-shrink-0">
+                            <Check className="w-2.5 h-2.5 text-[#F5A623]" strokeWidth={3.5} />
+                          </span>
+                          {f}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Business benefits */}
+            {fp.benefits && (
+              <div className="relative mt-8 pt-8 border-t border-white/10">
+                <p className="text-xs font-bold uppercase tracking-widest text-blue-300/80 mb-3">{fp.benefitsLabel ?? 'Benefits'}</p>
+                <div className="flex flex-wrap gap-2">
+                  {fp.benefits.map((b) => (
+                    <span key={b} className="rounded-full bg-white/[0.06] border border-white/10 text-blue-100 text-xs font-semibold px-3 py-1.5">{b}</span>
+                  ))}
                 </div>
-              )}
-              {fp.fairs && (
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-widest text-blue-300/80 mb-3">Trade fair program</p>
-                  <ul className="space-y-2.5">
-                    {fp.fairs.map((f) => (
-                      <li key={f} className="flex items-start gap-2 text-sm text-blue-100">
-                        <span className="mt-0.5 w-4 h-4 rounded-full bg-[#F5A623]/20 flex items-center justify-center flex-shrink-0">
-                          <Star className="w-2.5 h-2.5 text-[#F5A623]" strokeWidth={3} />
-                        </span>
-                        {f}
-                      </li>
-                    ))}
-                  </ul>
+              </div>
+            )}
+
+            {/* Who it's for */}
+            {fp.who && (
+              <div className="relative mt-7">
+                <p className="text-xs font-bold uppercase tracking-widest text-blue-300/80 mb-3">Who it’s for</p>
+                <div className="flex flex-wrap gap-2">
+                  {fp.who.map((w) => (
+                    <span key={w} className="rounded-full bg-[#F5A623]/10 border border-[#F5A623]/25 text-[#F5A623] text-xs font-semibold px-3 py-1.5">{w}</span>
+                  ))}
                 </div>
-              )}
-              {fp.support && (
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-widest text-blue-300/80 mb-3">{fp.supportLabel ?? 'Business support'}</p>
-                  <ul className="space-y-2.5">
-                    {fp.support.map((f) => (
-                      <li key={f} className="flex items-start gap-2 text-sm text-blue-100">
-                        <span className="mt-0.5 w-4 h-4 rounded-full bg-[#F5A623]/20 flex items-center justify-center flex-shrink-0">
-                          <Check className="w-2.5 h-2.5 text-[#F5A623]" strokeWidth={3.5} />
-                        </span>
-                        {f}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
+              </div>
+            )}
 
             <p className="relative text-blue-300/60 text-xs mt-8 max-w-3xl">{fp.disclaimer}</p>
           </div>
