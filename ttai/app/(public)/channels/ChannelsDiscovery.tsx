@@ -7,6 +7,7 @@ import {
   Radio, Users, FileText, Search, Bell, Tag, Package, Megaphone, Crown,
   Star, Send, MessagesSquare, Sparkles,
 } from 'lucide-react'
+import { PostImage } from '@/components/channels/PostImage'
 
 type Supplier = { trade_name: string | null; legal_name: string | null; logo_url: string | null; brand_slug?: string | null; reliability_tier?: string | null }
 type Post = { content: string; image_url: string | null; post_type: string; created_at: string }
@@ -191,12 +192,12 @@ export function ChannelsDiscovery({ channels, feed, groups }: { channels: Discov
                       <span className={`inline-flex items-center gap-1 text-[10px] font-extrabold px-2 py-0.5 rounded-full ${t.badge}`}><t.Icon className="w-2.5 h-2.5" />{t.label}</span>
                     </div>
 
-                    {/* Media — full image, correct aspect ratio (no cropping) */}
+                    {/* Media — small preview, tap to open full */}
                     {hasMedia && (
                       <div className="px-2 pt-1.5">
                         {p.video_url
-                          ? <video src={p.video_url} controls className="w-full h-auto rounded-xl bg-black" />
-                          : <img src={p.image_url!} alt="" loading="lazy" className="w-full h-auto rounded-xl bg-gray-50" />}
+                          ? <video src={p.video_url} controls className="w-full max-h-[20rem] rounded-xl bg-black" />
+                          : <PostImage src={p.image_url!} />}
                       </div>
                     )}
 

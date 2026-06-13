@@ -7,6 +7,7 @@ import {
   Radio, Search, ArrowLeft, Bell, Tag, Package, Megaphone,
   ExternalLink, MessageSquare, MoreVertical,
 } from 'lucide-react'
+import { PostImage } from '@/components/channels/PostImage'
 
 type Supplier = { trade_name: string | null; legal_name: string | null; logo_url: string | null; brand_slug: string | null }
 type Post = { id: string; content: string; image_url: string | null; video_url?: string | null; post_type: string; created_at: string }
@@ -220,9 +221,9 @@ export function ChannelsInbox({ channels }: { channels: InboxChannel[] }) {
                               <span className="absolute right-0 top-0 w-3 h-3 bg-white rotate-45 origin-top-right" />
                             </span>
                             {post.video_url ? (
-                              <div className="p-[3px]"><video src={post.video_url} controls className="w-full h-auto rounded-[6px] bg-black" /></div>
+                              <div className="p-[3px]"><video src={post.video_url} controls className="w-full max-h-[20rem] rounded-[6px] bg-black" /></div>
                             ) : post.image_url && (
-                              <div className="p-[3px]"><img src={post.image_url} alt="" loading="lazy" className="w-full h-auto rounded-[6px]" /></div>
+                              <div className="p-[3px]"><PostImage src={post.image_url} rounded="rounded-[6px]" /></div>
                             )}
                             <div className="px-2.5 pt-1.5 pb-1.5">
                               <div className="flex items-center gap-1.5 mb-0.5">

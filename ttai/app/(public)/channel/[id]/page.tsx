@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { ArrowLeft, Bell, Tag, Package, Megaphone, Search, MoreVertical } from 'lucide-react'
 import { ChannelJoinButton } from './ChannelJoinButton'
+import { PostImage } from '@/components/channels/PostImage'
 
 export const revalidate = 30
 
@@ -167,11 +168,11 @@ export default async function ChannelPage({ params }: { params: { id: string } }
                         {/* Media — full image, correct aspect ratio (no cropping) */}
                         {post.video_url ? (
                           <div className="p-[3px]">
-                            <video src={post.video_url} controls className="w-full h-auto rounded-[6px] bg-black" />
+                            <video src={post.video_url} controls className="w-full max-h-[20rem] rounded-[6px] bg-black" />
                           </div>
                         ) : post.image_url && (
                           <div className="p-[3px]">
-                            <img src={post.image_url} alt="" loading="lazy" className="w-full h-auto rounded-[6px]" />
+                            <PostImage src={post.image_url} rounded="rounded-[6px]" />
                           </div>
                         )}
 
