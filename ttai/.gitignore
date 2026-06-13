@@ -45,6 +45,11 @@ supabase/.temp
 WhatsApp*/
 WhatsApp Image*
 WhatsApp Unknown*/
+# …but DO track our WhatsApp integration source code
+!app/api/whatsapp/
+!app/api/whatsapp/**
+!lib/whatsapp/
+!lib/whatsapp/**
 
 # Raw category source images (served copies live in public/categories)
 category images/
