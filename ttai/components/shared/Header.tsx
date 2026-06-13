@@ -4,6 +4,7 @@ import { UserMenu } from './UserMenu'
 import { CartIcon } from '@/components/cart/CartIcon'
 import { LocaleSwitcher } from '@/components/LocaleSwitcher'
 import { Logo } from '@/components/Logo'
+import { MobileMenu } from './MobileMenu'
 import { useServerTranslations } from '@/lib/i18n/server'
 
 export async function Header() {
@@ -77,12 +78,8 @@ export async function Header() {
             </Link>
           )}
 
-          {/* Mobile menu button */}
-          <button className="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors">
-            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </button>
+          {/* Mobile menu (client) */}
+          <MobileMenu nav={NAV} loggedIn={!!(user && profile)} loginLabel={t('common.login')} />
         </div>
       </div>
     </header>
