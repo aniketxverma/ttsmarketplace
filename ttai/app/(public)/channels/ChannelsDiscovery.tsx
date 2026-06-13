@@ -59,7 +59,7 @@ function PaidBadge() {
 function Avatar({ sup, size = 40 }: { sup: Supplier | null; size?: number }) {
   const name = sup?.trade_name ?? sup?.legal_name ?? 'Supplier'
   return (
-    <div className="rounded-xl overflow-hidden bg-[#0B1F4D] flex items-center justify-center flex-shrink-0" style={{ width: size, height: size }}>
+    <div className="rounded-full overflow-hidden bg-[#00a884] flex items-center justify-center flex-shrink-0" style={{ width: size, height: size }}>
       {sup?.logo_url
         ? <Image src={sup.logo_url} alt={name} width={size} height={size} className="object-cover w-full h-full" />
         : <span className="text-white font-extrabold" style={{ fontSize: size * 0.4 }}>{name[0]?.toUpperCase() ?? 'C'}</span>}
@@ -102,7 +102,7 @@ export function ChannelsDiscovery({ channels, feed, groups }: { channels: Discov
     <div className="min-h-screen bg-[#F7F8FA]">
 
       {/* ── Hero ──────────────────────────────────────────────────────── */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-[#4C1D95] via-[#5b21b6] to-[#7C3AED]">
+      <div className="relative overflow-hidden bg-gradient-to-br from-[#075E54] via-[#0b7d6e] to-[#00a884]">
         <div className="absolute inset-0 opacity-[0.06]" style={{ backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)', backgroundSize: '22px 22px' }} />
         <div className="absolute -top-20 -right-20 w-80 h-80 rounded-full bg-white/[0.05]" />
         <div className="relative max-w-6xl mx-auto px-4 sm:px-8 py-12 sm:py-16 text-center">
@@ -110,18 +110,18 @@ export function ChannelsDiscovery({ channels, feed, groups }: { channels: Discov
             <Radio className="w-3 h-3" />Live Supplier Offers
           </div>
           <h1 className="text-3xl sm:text-5xl font-extrabold text-white leading-tight mb-4">
-            Offers passing<br /><span className="text-purple-200">right now</span>
+            Offers passing<br /><span className="text-emerald-200">right now</span>
           </h1>
-          <p className="text-white/65 text-base max-w-xl mx-auto leading-relaxed mb-7">
-            A live feed of supplier offers — follow canales and join WhatsApp groups for exclusive deals and product drops, just like WhatsApp.
+          <p className="text-white/70 text-base max-w-xl mx-auto leading-relaxed mb-7">
+            A live feed of supplier offers — follow channels and join WhatsApp groups for exclusive deals and product drops, just like WhatsApp.
           </p>
 
           {/* Search */}
           <div className="max-w-md mx-auto relative">
             <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
             <input value={query} onChange={e => setQuery(e.target.value)}
-              placeholder="Search offers, canales or groups…"
-              className="w-full pl-10 pr-4 py-3 rounded-xl bg-white text-sm font-medium text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-300 shadow-lg" />
+              placeholder="Search offers, channels or groups…"
+              className="w-full pl-10 pr-4 py-3 rounded-xl bg-white text-sm font-medium text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-300 shadow-lg" />
           </div>
 
           <div className="flex items-center justify-center gap-8 mt-7">
@@ -141,7 +141,7 @@ export function ChannelsDiscovery({ channels, feed, groups }: { channels: Discov
             {TABS.map(({ key, label, Icon, count }) => (
               <button key={key} onClick={() => setView(key)}
                 className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${
-                  view === key ? 'bg-[#7C3AED] text-white shadow-sm' : 'text-gray-500 hover:bg-gray-100'
+                  view === key ? 'bg-[#00a884] text-white shadow-sm' : 'text-gray-500 hover:bg-gray-100'
                 }`}>
                 <Icon className="w-4 h-4" />{label}
                 <span className={`text-[11px] font-extrabold px-1.5 py-0.5 rounded-full ${view === key ? 'bg-white/20' : 'bg-gray-100 text-gray-400'}`}>{count}</span>
@@ -173,29 +173,45 @@ export function ChannelsDiscovery({ channels, feed, groups }: { channels: Discov
               {filteredFeed.map((p) => {
                 const t = TYPE[p.post_type] ?? TYPE.update
                 const name = p.supplier?.trade_name ?? p.supplier?.legal_name ?? 'Supplier'
+                const hasMedia = !!(p.video_url || p.image_url)
+                const placeholder = p.content === '📷 Photo' || p.content === '🎥 Video'
+                const showText = !!p.content.trim() && !(placeholder && hasMedia)
                 return (
-                  <div key={p.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                    <div className="flex items-center gap-3 px-4 pt-4">
+                  <div key={p.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow overflow-hidden">
+                    {/* Header */}
+                    <div className="flex items-center gap-3 px-4 pt-3.5 pb-1">
                       <Avatar sup={p.supplier} size={42} />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5">
-                          <Link href={`/channel/${p.channel_id}`} className="font-extrabold text-[#0B1F4D] text-sm truncate hover:text-[#7C3AED]">{p.channel_name}</Link>
+                          <Link href={`/channel/${p.channel_id}`} className="font-extrabold text-[#0B1F4D] text-sm truncate hover:text-[#00a884]">{p.channel_name}</Link>
                           {p.paid && <PaidBadge />}
                         </div>
                         <p className="text-[11px] text-gray-400">by {name} · {timeAgo(p.created_at)}</p>
                       </div>
                       <span className={`inline-flex items-center gap-1 text-[10px] font-extrabold px-2 py-0.5 rounded-full ${t.badge}`}><t.Icon className="w-2.5 h-2.5" />{t.label}</span>
                     </div>
-                    <div className="px-4 py-3">
-                      <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{p.content}</p>
-                    </div>
-                    {p.video_url
-                      ? <video src={p.video_url} controls className="w-full max-h-80 bg-black border-y border-gray-100" />
-                      : p.image_url && <img src={p.image_url} alt="" className="w-full max-h-80 object-cover border-y border-gray-100" />}
-                    <div className="flex items-center justify-between px-4 py-3 border-t border-gray-50">
-                      <Link href={`/channel/${p.channel_id}`} className="text-xs font-bold text-[#7C3AED] hover:underline">View canal →</Link>
-                      <button onClick={() => shareWA(`${name}: ${p.content}`, `/channel/${p.channel_id}`)}
-                        className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0B1F4D] bg-[#25D366]/10 hover:bg-[#25D366]/20 border border-[#25D366]/30 px-3 py-1.5 rounded-lg transition-colors">
+
+                    {/* Media */}
+                    {hasMedia && (
+                      <div className="px-2 pt-1.5">
+                        {p.video_url
+                          ? <video src={p.video_url} controls className="w-full max-h-[28rem] rounded-xl bg-black" />
+                          : <img src={p.image_url!} alt="" className="w-full max-h-[28rem] object-cover rounded-xl" />}
+                      </div>
+                    )}
+
+                    {/* Caption (only if it's real text) */}
+                    {showText && (
+                      <div className="px-4 pt-3">
+                        <p className="text-[14px] text-gray-800 leading-relaxed whitespace-pre-wrap">{p.content}</p>
+                      </div>
+                    )}
+
+                    {/* Footer */}
+                    <div className="flex items-center justify-between px-4 py-3 mt-2 border-t border-gray-50">
+                      <Link href={`/channel/${p.channel_id}`} className="text-xs font-bold text-[#00a884] hover:underline">View channel →</Link>
+                      <button onClick={() => shareWA(`${name}: ${showText ? p.content : 'New offer'}`, `/channel/${p.channel_id}`)}
+                        className="inline-flex items-center gap-1.5 text-xs font-bold text-[#075E54] bg-[#25D366]/10 hover:bg-[#25D366]/20 border border-[#25D366]/30 px-3 py-1.5 rounded-lg transition-colors">
                         <Send className="w-3.5 h-3.5 text-[#1ea952]" />Share on WhatsApp
                       </button>
                     </div>
@@ -220,7 +236,7 @@ export function ChannelsDiscovery({ channels, feed, groups }: { channels: Discov
                 return (
                   <Link key={ch.id} href={`/channel/${ch.id}`}
                     className={`group block bg-white rounded-3xl border shadow-sm hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-300 overflow-hidden h-full ${ch.paid ? 'border-[#F5A623]/40 ring-1 ring-[#F5A623]/20' : 'border-gray-100'}`}>
-                    <div className="relative h-20 bg-gradient-to-br from-[#7C3AED] via-[#6d28d9] to-[#4C1D95] overflow-hidden">
+                    <div className="relative h-20 bg-gradient-to-br from-[#075E54] via-[#0b7d6e] to-[#00a884] overflow-hidden">
                       <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)', backgroundSize: '14px 14px' }} />
                       <Radio className="absolute -bottom-3 -right-2 w-20 h-20 text-white/10" />
                       <span className="absolute top-3 right-3 text-[10px] font-extrabold text-white bg-white/15 border border-white/20 backdrop-blur-sm px-2.5 py-1 rounded-full">{ch.category}</span>
@@ -235,14 +251,14 @@ export function ChannelsDiscovery({ channels, feed, groups }: { channels: Discov
                     </div>
                     <div className="px-5 pt-3 pb-5">
                       <div className="flex items-center gap-1.5">
-                        <h3 className="font-extrabold text-[#0B1F4D] text-base truncate group-hover:text-[#7C3AED] transition-colors">{ch.name}</h3>
+                        <h3 className="font-extrabold text-[#0B1F4D] text-base truncate group-hover:text-[#00a884] transition-colors">{ch.name}</h3>
                         {isGold && <Crown className="w-4 h-4 text-amber-500 flex-shrink-0" />}
                       </div>
                       <p className="text-xs text-gray-400 truncate mb-3">by {name}</p>
                       {ch.latest ? (
                         <div className="rounded-xl bg-gray-50 border border-gray-100 p-3 mb-4">
                           {t && <span className={`inline-flex items-center gap-1 text-[9px] font-extrabold px-1.5 py-0.5 rounded-full mb-1.5 ${t.badge}`}><t.Icon className="w-2.5 h-2.5" />{t.label}</span>}
-                          <p className="text-xs text-gray-600 line-clamp-2 leading-relaxed">{ch.latest.content || '📷 Photo'}</p>
+                          <p className="text-xs text-gray-600 line-clamp-2 leading-relaxed">{ch.latest.content || (ch.latest.image_url ? '📷 Photo' : 'New post')}</p>
                         </div>
                       ) : ch.description ? (
                         <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed mb-4">{ch.description}</p>
@@ -254,8 +270,8 @@ export function ChannelsDiscovery({ channels, feed, groups }: { channels: Discov
                           <span className="flex items-center gap-1"><Users className="w-3 h-3" />{ch.member_count.toLocaleString()}</span>
                           <span className="flex items-center gap-1"><FileText className="w-3 h-3" />{ch.post_count}</span>
                         </div>
-                        <span className="inline-flex items-center gap-1.5 bg-[#7C3AED] text-white px-3.5 py-1.5 rounded-xl text-xs font-extrabold group-hover:gap-2.5 transition-all shadow-sm">
-                          <Radio className="w-3.5 h-3.5" />Join
+                        <span className="inline-flex items-center gap-1.5 bg-[#00a884] text-white px-3.5 py-1.5 rounded-xl text-xs font-extrabold group-hover:gap-2.5 transition-all shadow-sm">
+                          <Radio className="w-3.5 h-3.5" />Follow
                         </span>
                       </div>
                     </div>
