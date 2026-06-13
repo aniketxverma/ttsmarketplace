@@ -79,7 +79,7 @@ export function ChannelJoinButton({ channelId, whatsapp, compact = false }: Prop
         }`}>
         {busy ? <Loader className="w-3 h-3 animate-spin" />
                : isMember ? <BellOff className="w-3 h-3" /> : <Bell className="w-3 h-3" />}
-        {busy ? '…' : isMember ? 'Subscribed' : 'Subscribe'}
+        {busy ? '…' : isMember ? 'Following' : 'Follow'}
       </button>
     )
   }
@@ -89,16 +89,16 @@ export function ChannelJoinButton({ channelId, whatsapp, compact = false }: Prop
     <div className="flex flex-col items-start gap-3">
       <div className="flex items-center gap-3 flex-wrap">
         <button onClick={handleAction} disabled={busy}
-          className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-sm transition-all shadow-sm disabled:opacity-60 ${
+          className={`flex items-center gap-2 px-7 py-2.5 rounded-full font-bold text-sm transition-all disabled:opacity-60 ${
             isMember
-              ? 'bg-gray-100 text-gray-600 hover:bg-red-50 hover:text-red-600 border border-gray-200 hover:border-red-200'
-              : 'bg-[#0B1F4D] text-white hover:bg-[#162d6e]'
+              ? 'bg-[#f0f2f5] text-[#3b4a54] hover:bg-red-50 hover:text-red-600'
+              : 'bg-[#00a884] text-white hover:bg-[#06917a] shadow-sm'
           }`}>
           {busy ? <Loader className="w-4 h-4 animate-spin" />
                 : isMember ? <BellOff className="w-4 h-4" /> : user ? <Bell className="w-4 h-4" /> : <LogIn className="w-4 h-4" />}
           {busy ? 'Please wait…'
-                : isMember ? 'Subscribed'
-                : user ? 'Subscribe' : 'Login to Subscribe'}
+                : isMember ? 'Following'
+                : user ? 'Follow' : 'Login to Follow'}
         </button>
 
         {isMember && waHref && (
@@ -112,7 +112,7 @@ export function ChannelJoinButton({ channelId, whatsapp, compact = false }: Prop
       {isMember && (
         <p className="text-xs text-green-600 font-semibold flex items-center gap-1.5">
           <span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block" />
-          You are subscribed to this canal
+          You&apos;re following this channel
         </p>
       )}
     </div>

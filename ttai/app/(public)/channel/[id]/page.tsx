@@ -8,7 +8,7 @@ import { ChannelJoinButton } from './ChannelJoinButton'
 export const revalidate = 30
 
 // WhatsApp-style doodle wallpaper (faint shapes on beige).
-const DOODLE = "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160'%3E%3Cg fill='none' stroke='%23a8b3ad' stroke-width='1.3' opacity='0.35'%3E%3Cpath d='M18 28c4-6 12-6 16 0'/%3E%3Ccircle cx='124' cy='26' r='7'/%3E%3Cpath d='M28 112l6-11 6 11z'/%3E%3Cpath d='M108 120c-6-6-1-14 7-10 8-4 13 4 7 10l-7 6z'/%3E%3Cpath d='M70 72h16M78 64v16'/%3E%3Cpath d='M132 92c0 6-4 9-9 9'/%3E%3Cpath d='M20 78c5 3 11 3 16 0'/%3E%3Crect x='96' y='60' width='14' height='14' rx='3'/%3E%3C/g%3E%3C/svg%3E\")"
+const DOODLE = "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96' viewBox='0 0 96 96'%3E%3Cg fill='none' stroke='%239aa6a0' stroke-width='1' opacity='0.22'%3E%3Cpath d='M10 16c2-3 7-3 9 0'/%3E%3Ccircle cx='74' cy='14' r='4'/%3E%3Cpath d='M16 66l4-7 4 7z'/%3E%3Cpath d='M64 72c-3-3-1-7 4-5 4-2 6 2 3 5l-3 3z'/%3E%3Cpath d='M42 44h9M46 40v9'/%3E%3Cpath d='M80 50c0 3-2 5-5 5'/%3E%3Cpath d='M10 44c3 2 6 2 9 0'/%3E%3Crect x='56' y='34' width='8' height='8' rx='2'/%3E%3Cpath d='M84 80c2-3 6-3 8 0'/%3E%3Ccircle cx='30' cy='84' r='4'/%3E%3C/g%3E%3C/svg%3E\")"
 
 // ── Post type config (small WhatsApp-style label) ──────────────────────────────
 const POST_TYPES: Record<string, {
