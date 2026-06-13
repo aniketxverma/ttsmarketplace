@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { whatsappConfig, verifySignature, digitsOnly, sendText, downloadMedia } from '@/lib/whatsapp/client'
+import { whatsappConfig, verifyTokenEnv, verifySignature, digitsOnly, sendText, downloadMedia } from '@/lib/whatsapp/client'
 
 async function diag(admin: ReturnType<typeof createAdminClient>, msg: string) {
   try { await (admin.from('app_settings') as any).upsert({ key: 'whatsapp_diag', value: `${new Date().toISOString()} :: ${msg}` }, { onConflict: 'key' }) } catch {}
@@ -21,7 +21,7 @@ export const dynamic = 'force-dynamic'
 
 // ── Verification handshake ────────────────────────────────────────────────────
 export async function GET(req: NextRequest) {
-  const { verifyToken } = whatsappConfig()
+  const verifyToken = verifyTokenEnv()
   const p = req.nextUrl.searchParams
   if (p.get('hub.mode') === 'subscribe' && verifyToken && p.get('hub.verify_token') === verifyToken) {
     return new NextResponse(p.get('hub.challenge') ?? '', { status: 200 })
@@ -87,7 +87,7 @@ export async function POST(req: NextRequest) {
       content = message.text?.body ?? ''
     } else if (message.type === 'image') {
       content = message.image?.caption ?? ''
-      const cfg = whatsappConfig()
+      const cfg = await whatsappConfig()
       const media = await downloadMedia(message.image?.id)
       if (media) {
         const ext = media.mime.split('/')[1]?.split(';')[0] || 'jpg'
