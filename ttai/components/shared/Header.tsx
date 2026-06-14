@@ -26,7 +26,7 @@ export async function Header() {
     { label: 'Home',                    href: '/' },
     { label: t('nav.marketplace'),      href: '/marketplace' },
     { label: 'Regions',                 href: '/regions/europe' },
-    { label: 'Store',                   href: '/store' },
+    { label: 'Stores',                  href: '/store-center' },
     { label: t('nav.suppliers'),        href: '/suppliers' },
     { label: 'Pricing',                 href: '/pricing' },
     { label: 'Channels',                href: '/channels' },

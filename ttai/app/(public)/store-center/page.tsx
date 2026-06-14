@@ -1,10 +1,11 @@
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getMasterSellers } from '@/lib/offers-server'
+import { StoreLocationPicker } from '@/components/store/StoreLocationPicker'
 import Image from 'next/image'
 import Link from 'next/link'
 import {
-  MapPin, ChevronDown, Search, Star, Store, Utensils, Cpu, Home, Sparkles,
+  MapPin, Search, Star, Store, Utensils, Cpu, Home, Sparkles,
   Shirt, Car, PawPrint, Layers, Tag, Truck, Shield, Headphones, Wallet, Play,
 } from 'lucide-react'
 
@@ -12,7 +13,7 @@ export const revalidate = 60
 export const metadata = { title: 'Retail Store Center · TTAI EMA' }
 
 const CAT_META: { key: string; label: string; Icon: any; color: string }[] = [
-  { key: 'all',        label: 'All Categories', Icon: Layers,   color: '#7c3aed' },
+  { key: 'all',        label: 'All Categories', Icon: Layers,   color: '#0B1F4D' },
   { key: 'food',       label: 'Food & Beverage',Icon: Utensils, color: '#f97316' },
   { key: 'technology', label: 'Technology',      Icon: Cpu,      color: '#3b82f6' },
   { key: 'home',       label: 'Home & Living',   Icon: Home,     color: '#22c55e' },
@@ -28,13 +29,21 @@ async function safe<T>(q: any, fallback: T): Promise<T> {
 const money = (cents: number, cur = 'EUR') =>
   new Intl.NumberFormat('en-IE', { style: 'currency', currency: cur || 'EUR' }).format((cents ?? 0) / 100)
 
-export default async function StoreCenterPage() {
+export default async function StoreCenterPage({ searchParams }: { searchParams: { country?: string } }) {
   const supabase = createClient()
 
+  // Countries for the location picker + the active selection.
+  const countries = await safe<any[]>((supabase.from('countries') as any).select('id, name, iso_code').order('name'), [])
+  const activeIso = (searchParams.country ?? '').toUpperCase()
+  const activeCountry = countries.find((c: any) => c.iso_code === activeIso) ?? null
+
   const cats = await safe<any[]>(supabase.from('categories').select('id, name, slug, parent_id, sort_order').is('parent_id', null).order('sort_order'), [])
-  const shops = await safe<any[]>((supabase.from('suppliers') as any)
+  let shopQ = (supabase.from('suppliers') as any)
     .select('id, legal_name, trade_name, logo_url, brand_slug, reliability_tier, tagline, description, country_id, countries(name)')
-    .eq('status', 'ACTIVE').in('marketplace_context', ['retail', 'both']).limit(16), [])
+    .eq('status', 'ACTIVE').in('marketplace_context', ['retail', 'both'])
+  if (activeCountry) shopQ = shopQ.eq('country_id', activeCountry.id)
+  const shops = await safe<any[]>(shopQ.limit(16), [])
+  const locLabel = activeCountry?.name ?? 'Granada'
 
   // Store counts per category.
   const prodRows = await safe<any[]>((supabase.from('products') as any)
@@ -98,40 +107,25 @@ export default async function StoreCenterPage() {
 
         {/* ══ LEFT ════════════════════════════════════════════════════════ */}
         <aside className="space-y-4">
-          <div className="rounded-2xl bg-white border border-gray-200 shadow-sm p-4">
-            <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-3">Explore Location</p>
-            {[
-              { label: 'Continent', value: 'Europe' }, { label: 'Country', value: 'Spain' },
-              { label: 'Region', value: 'Andalucía' }, { label: 'City', value: 'Granada' },
-            ].map((row) => (
-              <div key={row.label} className="flex items-center justify-between gap-2 rounded-xl bg-gray-50 border border-gray-100 px-3 py-2.5 mb-2">
-                <div className="min-w-0">
-                  <p className="text-[10px] uppercase tracking-wide text-gray-400">{row.label}</p>
-                  <p className="text-sm font-bold text-gray-900 truncate">{row.value}</p>
-                </div>
-                <ChevronDown className="w-4 h-4 text-gray-400 flex-shrink-0" />
-              </div>
-            ))}
-            <Link href="/store" className="block text-center mt-1 rounded-xl bg-[#7c3aed] hover:bg-[#6d28d9] text-white text-sm font-bold py-2.5 transition-colors">Change Location</Link>
-          </div>
+          <StoreLocationPicker countries={countries.map((c: any) => ({ iso: c.iso_code, name: c.name }))} country={activeIso} />
 
           <div className="rounded-2xl bg-white border border-gray-200 shadow-sm p-4">
             <p className="text-[11px] text-gray-400 mb-1">You are in</p>
-            <p className="text-xs text-gray-500">Europe › Spain › Andalucía ›</p>
-            <p className="text-lg font-extrabold text-gray-900">Granada</p>
-            <p className="flex items-center gap-1.5 text-xs text-[#7c3aed] font-semibold mt-1"><MapPin className="w-3.5 h-3.5" />Retail Store Center</p>
+            <p className="text-xs text-gray-500">Europe{activeCountry ? ` › ${activeCountry.name}` : ' › Spain › Andalucía'} ›</p>
+            <p className="text-lg font-extrabold text-gray-900">{locLabel}</p>
+            <p className="flex items-center gap-1.5 text-xs text-[#0B1F4D] font-semibold mt-1"><MapPin className="w-3.5 h-3.5" />{shops.length} stores nearby</p>
           </div>
 
           <div className="rounded-2xl bg-white border border-gray-200 shadow-sm p-4">
             <p className="font-extrabold text-gray-900 text-sm">Retail Store Center</p>
-            <p className="text-xs text-gray-400 mb-3">Explore local shops in Granada.</p>
+            <p className="text-xs text-gray-400 mb-3">Explore local shops{activeCountry ? ` in ${activeCountry.name}` : ' near you'}.</p>
             <div className="space-y-0.5">
-              <CatRow Icon={Layers} color="#7c3aed" name="All Categories" count={totalStores} href="/store" />
+              <CatRow Icon={Layers} color="#0B1F4D" name="All Categories" count={totalStores} href="/store" />
               {sidebarCats.map((c) => (
                 <CatRow key={c.slug} Icon={c.Icon} color={c.color} name={c.name} count={c.count} href={`/store?category=${c.slug}`} />
               ))}
             </div>
-            <Link href="/store" className="block text-center mt-3 rounded-xl border border-[#7c3aed]/30 text-[#7c3aed] text-xs font-bold py-2.5 hover:bg-[#7c3aed]/5 transition-colors">View All Categories</Link>
+            <Link href="/store" className="block text-center mt-3 rounded-xl border border-[#0B1F4D]/30 text-[#0B1F4D] text-xs font-bold py-2.5 hover:bg-[#0B1F4D]/5 transition-colors">View All Categories</Link>
           </div>
         </aside>
 
@@ -180,7 +174,7 @@ export default async function StoreCenterPage() {
               {CAT_META.map((c, i) => (
                 <Link key={c.key} href={c.key === 'all' ? '/store' : storeHref(c.key)}
                   className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg px-3.5 py-2 text-xs font-bold transition-all flex-shrink-0 hover:scale-105 ${
-                    i === 0 ? 'bg-[#7c3aed] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    i === 0 ? 'bg-[#0B1F4D] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                   }`}>
                   <c.Icon className="w-3.5 h-3.5" style={{ color: i === 0 ? '#fff' : c.color }} />{c.label}
                 </Link>
@@ -191,18 +185,18 @@ export default async function StoreCenterPage() {
           {/* Top stores */}
           <div className="rounded-2xl bg-white border border-gray-200 shadow-sm p-5">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-extrabold text-gray-900 tracking-tight">TOP RETAIL STORES IN GRANADA</h2>
-              <Link href="/store?view=shops" className="text-xs font-bold text-[#7c3aed] hover:underline">View All Stores</Link>
+              <h2 className="text-lg font-extrabold text-gray-900 tracking-tight">TOP RETAIL STORES{activeCountry ? ` IN ${activeCountry.name.toUpperCase()}` : ' IN GRANADA'}</h2>
+              <Link href="/store?view=shops" className="text-xs font-bold text-[#0B1F4D] hover:underline">View All Stores</Link>
             </div>
             {shops.length === 0 ? (
               <div className="text-center py-12 text-gray-400"><Store className="w-10 h-10 mx-auto mb-3 opacity-30" /><p className="text-sm">No retail stores yet in this area.</p></div>
             ) : (
-              <div className="flex gap-4 overflow-x-auto pb-2" style={{ scrollbarWidth: 'none' }}>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
                 {shops.map((s) => {
                   const name = s.trade_name ?? s.legal_name ?? 'Store'
                   const gold = s.reliability_tier === 'GOLD'
                   return (
-                    <div key={s.id} className="w-[230px] flex-shrink-0 rounded-2xl bg-white border border-gray-200 overflow-hidden hover:shadow-xl hover:-translate-y-1 hover:border-[#7c3aed]/30 transition-all duration-300">
+                    <div key={s.id} className="rounded-2xl bg-white border border-gray-200 overflow-hidden hover:shadow-xl hover:-translate-y-1 hover:border-[#0B1F4D]/30 transition-all duration-300">
                       <div className="relative h-28 bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center">
                         {s.logo_url
                           ? <Image src={s.logo_url} alt={name} width={230} height={112} className="object-cover w-full h-full" />
@@ -217,7 +211,7 @@ export default async function StoreCenterPage() {
                           <span className="text-xs font-bold text-green-600">Open Now</span>
                         </div>
                         <Link href={s.brand_slug ? `/brand/${s.brand_slug}` : `/store?supplier=${s.id}`}
-                          className="block text-center rounded-lg bg-[#7c3aed] hover:bg-[#6d28d9] text-white text-xs font-bold py-2 transition-colors">View Store</Link>
+                          className="block text-center rounded-lg bg-[#0B1F4D] hover:bg-[#162d6e] text-white text-xs font-bold py-2 transition-colors">View Store</Link>
                       </div>
                     </div>
                   )
@@ -233,10 +227,10 @@ export default async function StoreCenterPage() {
             <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-3">Find a Store</p>
             <div className="relative mb-2">
               <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input name="q" placeholder="Search stores, products…" className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#7c3aed]/50" />
+              <input name="q" placeholder="Search stores, products…" className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#0B1F4D]/50" />
             </div>
             <input type="hidden" name="view" value="shops" />
-            <button className="w-full rounded-xl bg-[#7c3aed] hover:bg-[#6d28d9] text-white text-sm font-bold py-2.5 transition-colors">Search</button>
+            <button className="w-full rounded-xl bg-[#0B1F4D] hover:bg-[#162d6e] text-white text-sm font-bold py-2.5 transition-colors">Search</button>
           </form>
 
           <div className="rounded-2xl bg-white border border-gray-200 shadow-sm p-4">
@@ -244,7 +238,7 @@ export default async function StoreCenterPage() {
             {compare ? (
               <>
                 <div className="flex items-center gap-2 mb-3">
-                  <div className="w-9 h-9 rounded-lg bg-[#7c3aed]/10 flex items-center justify-center"><Tag className="w-4 h-4 text-[#7c3aed]" /></div>
+                  <div className="w-9 h-9 rounded-lg bg-[#0B1F4D]/10 flex items-center justify-center"><Tag className="w-4 h-4 text-[#0B1F4D]" /></div>
                   <div className="min-w-0"><p className="text-sm font-bold text-gray-900 truncate">{compare.name}</p><p className="text-[11px] text-gray-400">Same product, different stores</p></div>
                 </div>
                 {compare.rows.map((r) => (
@@ -253,7 +247,7 @@ export default async function StoreCenterPage() {
                     <span className={`font-bold flex-shrink-0 ${r.best ? 'text-green-600' : 'text-gray-900'}`}>{r.price}{r.best && <span className="ml-1.5 text-[9px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded">BEST</span>}</span>
                   </div>
                 ))}
-                <Link href="/marketplace" className="block text-center mt-3 text-xs font-bold text-[#7c3aed] hover:underline">View All Comparison</Link>
+                <Link href="/marketplace" className="block text-center mt-3 text-xs font-bold text-[#0B1F4D] hover:underline">View All Comparison</Link>
               </>
             ) : (
               <p className="text-sm text-gray-400 py-4 text-center">Price comparison appears when a product is sold by multiple stores.</p>
@@ -267,7 +261,7 @@ export default async function StoreCenterPage() {
             ) : offers.map((o) => (
               <div key={o.name + o.store} className="flex items-center justify-between gap-2 rounded-xl bg-gray-50 border border-gray-100 p-3 mb-2">
                 <div className="min-w-0"><p className="text-sm font-bold text-gray-900 truncate">{o.name}</p><p className="text-[11px] text-gray-400 truncate">{o.store}</p></div>
-                <p className="text-sm font-extrabold text-[#7c3aed] flex-shrink-0">{o.price}</p>
+                <p className="text-sm font-extrabold text-[#0B1F4D] flex-shrink-0">{o.price}</p>
               </div>
             ))}
             <Link href="/store" className="block text-center mt-1 rounded-xl border border-gray-200 text-gray-600 text-xs font-bold py-2.5 hover:bg-gray-50 transition-colors">View All</Link>
@@ -287,7 +281,7 @@ export default async function StoreCenterPage() {
             { Icon: Headphones, t: '24/7 Support', s: 'We are here for you' },
           ].map((x) => (
             <div key={x.t} className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-[#7c3aed]/10 flex items-center justify-center flex-shrink-0"><x.Icon className="w-5 h-5 text-[#7c3aed]" /></div>
+              <div className="w-10 h-10 rounded-xl bg-[#0B1F4D]/10 flex items-center justify-center flex-shrink-0"><x.Icon className="w-5 h-5 text-[#0B1F4D]" /></div>
               <div><p className="text-sm font-bold text-gray-900">{x.t}</p><p className="text-[11px] text-gray-400">{x.s}</p></div>
             </div>
           ))}
