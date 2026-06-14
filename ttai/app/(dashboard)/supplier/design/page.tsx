@@ -4,6 +4,7 @@ import { requireAuth } from '@/lib/auth/rbac'
 import { redirect } from 'next/navigation'
 import { tierRank } from '@/lib/business-chain'
 import { BrandColorEditor } from '@/components/supplier/BrandColorEditor'
+import { CardTemplateEditor } from '@/components/supplier/CardTemplateEditor'
 import {
   Palette, Image as ImageIcon, Sparkles, Megaphone, TrendingUp,
   Lock, Check, ArrowRight, PaintBucket, Crown,
@@ -37,9 +38,11 @@ export default async function ShopDesignPage() {
   const supabase = createClient()
   // brand_color column may not be migrated yet — fall back to id-only.
   const supRes = await (async () => {
-    const full = await (supabase.from('suppliers') as any).select('id, brand_color').eq('owner_id', user.id).single()
-    if (!full.error) return full
-    return supabase.from('suppliers').select('id').eq('owner_id', user.id).single()
+    const sel = (cols: string) => (supabase.from('suppliers') as any).select(cols).eq('owner_id', user.id).single()
+    let r = await sel('id, brand_color, card_template')
+    if (r.error) r = await sel('id, brand_color')
+    if (r.error) r = await sel('id')
+    return r
   })()
   const supplier = supRes.data as any
   if (!supplier) redirect('/supplier/onboarding')
@@ -81,6 +84,9 @@ export default async function ShopDesignPage() {
           </div>
         </div>
       )}
+
+      {/* Business card style — free for everyone (card is public on the profile) */}
+      <CardTemplateEditor initial={supplier.card_template ?? null} />
 
       {/* First live premium editor — Brand Color (paid only) */}
       {paid && <BrandColorEditor initial={supplier.brand_color ?? null} />}

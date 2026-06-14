@@ -22,9 +22,10 @@ const TEMPLATES: Tpl[] = [
   { id: 'plat',  name: 'Platinum', bg: 'bg-gradient-to-br from-white via-gray-50 to-gray-100 border border-gray-200', text: 'text-[#0B1F4D]', sub: 'text-gray-500', chip: 'bg-[#0B1F4D]/5 border-[#0B1F4D]/10 text-[#0B1F4D]', accent: '#7c3aed' },
 ]
 
-export function BusinessCard({ data }: { data: CardData }) {
+export function BusinessCard({ data, defaultTemplate }: { data: CardData; defaultTemplate?: string }) {
   const isGold = (data.tier ?? '').toUpperCase() === 'GOLD'
-  const [tplId, setTplId] = useState(isGold ? 'gold' : 'navy')
+  const initialTpl = defaultTemplate && TEMPLATES.some((x) => x.id === defaultTemplate) ? defaultTemplate : (isGold ? 'gold' : 'navy')
+  const [tplId, setTplId] = useState(initialTpl)
   const [flipped, setFlipped] = useState(false)
   const [copied, setCopied] = useState(false)
   const t = TEMPLATES.find((x) => x.id === tplId)!

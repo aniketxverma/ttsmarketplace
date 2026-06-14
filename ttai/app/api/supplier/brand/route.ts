@@ -22,7 +22,7 @@ const ALLOWED = new Set([
   // Free sales channel (B2B vs retail)
   'marketplace_context', 'shop_type_chosen',
   // Premium Shop Design
-  'brand_color',
+  'brand_color', 'card_template',
 ])
 
 export async function POST(req: NextRequest) {
@@ -44,8 +44,9 @@ export async function POST(req: NextRequest) {
 
   let { error } = await (admin.from('suppliers') as any).update(payload).eq('id', (sup as any).id)
   // Resilience: if a recently-added column isn't migrated yet, drop it and retry.
-  if (error && /min_order_value_cents|column|does not exist/i.test(error.message)) {
+  if (error && /min_order_value_cents|card_template|column|does not exist/i.test(error.message)) {
     delete payload.min_order_value_cents
+    delete payload.card_template
     if (Object.keys(payload).length) {
       ;({ error } = await (admin.from('suppliers') as any).update(payload).eq('id', (sup as any).id))
     } else error = null

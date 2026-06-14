@@ -7,7 +7,6 @@ import {
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { BrandTabs } from './BrandTabs'
-import { BusinessCard } from '@/components/brand/BusinessCard'
 import { BrandLogo } from '@/components/BrandLogo'
 import { canSeeB2B, tierRank } from '@/lib/business-chain'
 import { getMarketplaceOpen, PRE_OPENING_NOTICE } from '@/lib/marketplace-phase'
@@ -372,25 +371,6 @@ export default async function BrandPage({ params }: { params: { slug: string } }
         </div>
         </div>
         <p className="text-sm text-gray-400 mt-2.5 px-1">{products.length} products</p>
-      </div>
-
-      {/* ══ DIGITAL BUSINESS CARD ════════════════════════════════════════════ */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-8 mt-6">
-        <div className="rounded-3xl bg-gradient-to-br from-gray-50 to-white border border-gray-100 p-6 sm:p-8">
-          <div className="text-center mb-5">
-            <p className="text-[11px] font-bold uppercase tracking-widest text-[#F5A623]">Digital Business Card</p>
-            <h2 className="text-xl font-extrabold text-[#0B1F4D]">Save & share this business</h2>
-            <p className="text-sm text-gray-400 mt-1">Flip the card, pick a style, share it or save the contact.</p>
-          </div>
-          <BusinessCard data={{
-            name: supplier.trade_name ?? supplier.legal_name ?? 'Business',
-            legal: supplier.legal_name, tagline: supplier.tagline, logo: supplier.logo_url,
-            country: (country as any)?.name ?? null, city: (city as any)?.name ?? null,
-            flag: isoFlag((country as any)?.iso_code) || '',
-            website: supplier.website, phone: supplier.phone, whatsapp: supplier.whatsapp, email: supplier.business_email,
-            slug: params.slug, tier: supplier.reliability_tier, verified: supplier.status === 'ACTIVE', url: shareUrl,
-          }} />
-        </div>
       </div>
 
       {/* ══ MAIN CONTENT ═════════════════════════════════════════════════════ */}

@@ -3,6 +3,10 @@
 import { useState, useEffect, useMemo } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
+import { BusinessCard } from '@/components/brand/BusinessCard'
+
+const isoFlag = (iso?: string | null) =>
+  iso && iso.length === 2 ? iso.toUpperCase().replace(/./g, (c) => String.fromCodePoint(127397 + c.charCodeAt(0))) : ''
 import {
   Package, Images, Award, Star, MapPin, MessageCircle, Info,
   Store, Warehouse, Truck, Building2, ShoppingBag, Briefcase, Anchor,
@@ -1253,6 +1257,28 @@ export function BrandTabs({
             )}
           </section>
         )}
+
+        {/* ══════════════ DIGITAL BUSINESS CARD ═══════════════════════════════ */}
+        <section id="sec-card" data-reveal>
+          <div className="rounded-3xl bg-gradient-to-br from-gray-50 to-white border border-gray-100 p-6 sm:p-8">
+            <div className="text-center mb-5">
+              <p className="text-[11px] font-bold uppercase tracking-widest text-[#F5A623]">Digital Business Card</p>
+              <h2 className="text-xl font-extrabold text-[#0B1F4D]">Save &amp; share this business</h2>
+              <p className="text-sm text-gray-400 mt-1">Flip the card, pick a style, share it or save the contact.</p>
+            </div>
+            <BusinessCard
+              defaultTemplate={(supplier as any).card_template ?? undefined}
+              data={{
+                name: (supplier as any).trade_name ?? (supplier as any).legal_name ?? 'Business',
+                legal: (supplier as any).legal_name, tagline: (supplier as any).tagline, logo: (supplier as any).logo_url,
+                country: ((supplier as any).countries)?.name ?? null, city: ((supplier as any).cities)?.name ?? null,
+                flag: isoFlag(((supplier as any).countries)?.iso_code) || '',
+                website: (supplier as any).website, phone: (supplier as any).phone, whatsapp: (supplier as any).whatsapp, email: (supplier as any).business_email,
+                slug: brandSlug ?? '', tier: (supplier as any).reliability_tier, verified: (supplier as any).status === 'ACTIVE', url: shareUrl ?? '',
+              }}
+            />
+          </div>
+        </section>
 
         {/* ══════════════ REVIEWS ═════════════════════════════════════════════ */}
         {sectionVisibility.reviews !== false && (
