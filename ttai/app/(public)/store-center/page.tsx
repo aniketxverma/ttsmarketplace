@@ -29,28 +29,39 @@ async function safe<T>(q: any, fallback: T): Promise<T> {
 const money = (cents: number, cur = 'EUR') =>
   new Intl.NumberFormat('en-IE', { style: 'currency', currency: cur || 'EUR' }).format((cents ?? 0) / 100)
 
-export default async function StoreCenterPage({ searchParams }: { searchParams: { country?: string } }) {
+export default async function StoreCenterPage({ searchParams }: { searchParams: { country?: string; city?: string } }) {
   const supabase = createClient()
 
-  // Countries for the location picker + the active selection.
-  const countries = await safe<any[]>((supabase.from('countries') as any).select('id, name, iso_code').order('name'), [])
+  // ── Real location selection (Country → City) ──
+  const countries = await safe<any[]>((supabase.from('countries') as any).select('id, name, iso_code').eq('is_active', true).order('name'), [])
   const activeIso = (searchParams.country ?? '').toUpperCase()
   const activeCountry = countries.find((c: any) => c.iso_code === activeIso) ?? null
 
-  const cats = await safe<any[]>(supabase.from('categories').select('id, name, slug, parent_id, sort_order').is('parent_id', null).order('sort_order'), [])
-  let shopQ = (supabase.from('suppliers') as any)
-    .select('id, legal_name, trade_name, logo_url, brand_slug, reliability_tier, tagline, description, country_id, countries(name)')
-    .eq('status', 'ACTIVE').in('marketplace_context', ['retail', 'both'])
-  if (activeCountry) shopQ = shopQ.eq('country_id', activeCountry.id)
-  const shops = await safe<any[]>(shopQ.limit(16), [])
-  const locLabel = activeCountry?.name ?? 'Granada'
+  const cities = activeCountry
+    ? await safe<any[]>((supabase.from('cities') as any).select('id, name').eq('country_id', activeCountry.id).order('name'), [])
+    : []
+  const activeCity = cities.find((c: any) => c.id === (searchParams.city ?? '')) ?? null
 
-  // Store counts per category.
+  const cats = await safe<any[]>(supabase.from('categories').select('id, name, slug, parent_id, sort_order').is('parent_id', null).order('sort_order'), [])
+
+  // Active retail stores in the chosen location.
+  let supQ = (supabase.from('suppliers') as any)
+    .select('id, legal_name, trade_name, logo_url, brand_slug, reliability_tier, tagline, description, country_id, city_id, countries(name)')
+    .eq('status', 'ACTIVE').in('marketplace_context', ['retail', 'both'])
+  if (activeCountry) supQ = supQ.eq('country_id', activeCountry.id)
+  if (activeCity)    supQ = supQ.eq('city_id', activeCity.id)
+  const allShops = await safe<any[]>(supQ.limit(500), [])
+  const shops = allShops.slice(0, 16)
+  const locSupIds = new Set(allShops.map((s: any) => s.id))
+  const totalStores = allShops.length
+  const locLabel = activeCity?.name ?? activeCountry?.name ?? 'All Locations'
+  const locSuffix = activeCity ? ` IN ${activeCity.name.toUpperCase()}` : activeCountry ? ` IN ${activeCountry.name.toUpperCase()}` : ''
+
+  // Category store-counts — only retail stores in the active location.
   const prodRows = await safe<any[]>((supabase.from('products') as any)
-    .select('supplier_id, category_id').eq('is_published', true).limit(4000), [])
+    .select('supplier_id, category_id').eq('is_published', true).limit(5000), [])
   const supByCat: Record<string, Set<string>> = {}
-  for (const r of prodRows) { if (r.category_id) (supByCat[r.category_id] ||= new Set()).add(r.supplier_id) }
-  const totalStores = shops.length
+  for (const r of prodRows) { if (r.category_id && locSupIds.has(r.supplier_id)) (supByCat[r.category_id] ||= new Set()).add(r.supplier_id) }
   const sidebarCats = cats.slice(0, 8).map((c, i) => ({
     name: c.name, slug: c.slug, count: supByCat[c.id]?.size ?? 0,
     Icon: CAT_META[(i % (CAT_META.length - 1)) + 1].Icon, color: CAT_META[(i % (CAT_META.length - 1)) + 1].color,
@@ -107,18 +118,24 @@ export default async function StoreCenterPage({ searchParams }: { searchParams: 
 
         {/* ══ LEFT ════════════════════════════════════════════════════════ */}
         <aside className="space-y-4">
-          <StoreLocationPicker countries={countries.map((c: any) => ({ iso: c.iso_code, name: c.name }))} country={activeIso} />
+          <StoreLocationPicker
+            countries={countries.map((c: any) => ({ iso: c.iso_code, name: c.name }))}
+            cities={cities.map((c: any) => ({ id: c.id, name: c.name }))}
+            country={activeIso} city={activeCity?.id ?? ''}
+          />
 
           <div className="rounded-2xl bg-white border border-gray-200 shadow-sm p-4">
             <p className="text-[11px] text-gray-400 mb-1">You are in</p>
-            <p className="text-xs text-gray-500">Europe{activeCountry ? ` › ${activeCountry.name}` : ' › Spain › Andalucía'} ›</p>
+            <p className="text-xs text-gray-500">
+              {activeCountry ? activeCountry.name : 'All locations'}{activeCity ? ` › ${activeCity.name}` : ''}
+            </p>
             <p className="text-lg font-extrabold text-gray-900">{locLabel}</p>
-            <p className="flex items-center gap-1.5 text-xs text-[#0B1F4D] font-semibold mt-1"><MapPin className="w-3.5 h-3.5" />{shops.length} stores nearby</p>
+            <p className="flex items-center gap-1.5 text-xs text-[#0B1F4D] font-semibold mt-1"><MapPin className="w-3.5 h-3.5" />{totalStores} {totalStores === 1 ? 'store' : 'stores'} available</p>
           </div>
 
           <div className="rounded-2xl bg-white border border-gray-200 shadow-sm p-4">
             <p className="font-extrabold text-gray-900 text-sm">Retail Store Center</p>
-            <p className="text-xs text-gray-400 mb-3">Explore local shops{activeCountry ? ` in ${activeCountry.name}` : ' near you'}.</p>
+            <p className="text-xs text-gray-400 mb-3">Explore local shops{activeCity ? ` in ${activeCity.name}` : activeCountry ? ` in ${activeCountry.name}` : ''}.</p>
             <div className="space-y-0.5">
               <CatRow Icon={Layers} color="#0B1F4D" name="All Categories" count={totalStores} href="/store" />
               {sidebarCats.map((c) => (
@@ -140,7 +157,7 @@ export default async function StoreCenterPage({ searchParams }: { searchParams: 
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <h1 className="text-3xl sm:text-5xl font-black text-white tracking-tight drop-shadow-lg">RETAIL STORE CENTER</h1>
-                    <p className="text-slate-200 text-sm sm:text-base mt-1 max-w-xl drop-shadow">Discover local stores in Granada. Compare prices, read reviews and find the best offers near you.</p>
+                    <p className="text-slate-200 text-sm sm:text-base mt-1 max-w-xl drop-shadow">Discover local stores{activeCity ? ` in ${activeCity.name}` : activeCountry ? ` in ${activeCountry.name}` : ' near you'}. Compare prices, read reviews and find the best offers.</p>
                   </div>
                   <button className="hidden sm:inline-flex items-center gap-2 rounded-full bg-white/10 backdrop-blur border border-white/20 text-white text-xs font-bold px-4 py-2 hover:bg-white/20 transition-colors flex-shrink-0">
                     <Play className="w-3.5 h-3.5" />How It Works
@@ -185,7 +202,7 @@ export default async function StoreCenterPage({ searchParams }: { searchParams: 
           {/* Top stores */}
           <div className="rounded-2xl bg-white border border-gray-200 shadow-sm p-5">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-extrabold text-gray-900 tracking-tight">TOP RETAIL STORES{activeCountry ? ` IN ${activeCountry.name.toUpperCase()}` : ' IN GRANADA'}</h2>
+              <h2 className="text-lg font-extrabold text-gray-900 tracking-tight">TOP RETAIL STORES{locSuffix}</h2>
               <Link href="/store?view=shops" className="text-xs font-bold text-[#0B1F4D] hover:underline">View All Stores</Link>
             </div>
             {shops.length === 0 ? (
