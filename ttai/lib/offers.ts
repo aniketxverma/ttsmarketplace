@@ -41,6 +41,9 @@ export interface OfferLike {
   reliability_tier?: string | null
   /** Supplier country (name or ISO) — used for "nearest" ranking. */
   country?: string | null
+  /** Used to auto-merge the same product from different suppliers. */
+  name?: string | null
+  ean?: string | null
 }
 
 export interface SortOpts {
@@ -88,30 +91,38 @@ export function bestOffer<T extends OfferLike>(offers: T[], opts: SortOpts = {})
   return offers.length ? sortOffers(offers, opts)[0] : null
 }
 
+/** Grouping key: an explicit master link wins; otherwise the same barcode (EAN)
+ *  or the same normalized name collapses the same product from different
+ *  suppliers into ONE listing — so the shop never shows duplicates. */
+function groupKey(r: OfferLike): string {
+  if (r.master_product_id) return 'm:' + r.master_product_id
+  const ean = (r.ean ?? '').replace(/\s/g, '')
+  if (ean.length >= 8) return 'e:' + ean
+  const name = (r.name ?? '').trim().toLowerCase().replace(/\s+/g, ' ')
+  if (name) return 'n:' + name
+  return 'id:' + r.id
+}
+
 /**
- * Collapse a flat product list so products sharing a master_product_id become a
- * single representative (the best offer), annotated with how many suppliers offer
- * it. Products without a master pass through untouched.
+ * Collapse a flat product list so the same product (by master link, barcode or
+ * name) becomes a single representative (the best offer), annotated with how
+ * many suppliers offer it. Genuinely unique products pass through untouched.
  */
 export function dedupeByMaster<T extends OfferLike>(
   rows: T[],
 ): (T & { _offerCount?: number; _masterId?: string })[] {
-  const byMaster = new Map<string, T[]>()
-  const out: (T & { _offerCount?: number; _masterId?: string })[] = []
-
+  const groups = new Map<string, T[]>()
   for (const r of rows) {
-    const mid = r.master_product_id
-    if (mid) {
-      const g = byMaster.get(mid)
-      if (g) g.push(r)
-      else byMaster.set(mid, [r])
-    } else {
-      out.push(r)
-    }
+    const k = groupKey(r)
+    const g = groups.get(k)
+    if (g) g.push(r); else groups.set(k, [r])
   }
-  for (const [mid, group] of Array.from(byMaster.entries())) {
+
+  const out: (T & { _offerCount?: number; _masterId?: string })[] = []
+  for (const group of Array.from(groups.values())) {
+    if (group.length === 1) { out.push(group[0]); continue }
     const rep = bestOffer(group)!
-    out.push({ ...(rep as any), _offerCount: group.length, _masterId: mid })
+    out.push({ ...(rep as any), _offerCount: group.length, _masterId: rep.master_product_id ?? undefined })
   }
   return out
 }
