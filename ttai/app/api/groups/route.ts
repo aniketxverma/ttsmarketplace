@@ -28,22 +28,26 @@ export async function POST(req: Request) {
     .select('id').eq('owner_id', user.id).single()
   if (!supplier) return NextResponse.json({ error: 'Not a supplier' }, { status: 403 })
 
-  const { name, description, category, invite_link, member_count } = await req.json()
+  const { name, description, category, region, invite_link, member_count } = await req.json()
   if (!name?.trim()) return NextResponse.json({ error: 'Group name is required' }, { status: 400 })
   const link = (invite_link ?? '').trim()
   if (!/^https?:\/\//i.test(link)) return NextResponse.json({ error: 'A valid WhatsApp invite link is required' }, { status: 400 })
 
-  const { data: group, error } = await (supabase.from('whatsapp_groups') as any)
-    .insert({
-      supplier_id:  supplier.id,
-      name:         name.trim(),
-      description:  description?.trim() || null,
-      category:     category?.trim()    || null,
-      invite_link:  link,
-      member_count: Number.isFinite(+member_count) ? Math.max(0, Math.trunc(+member_count)) : 0,
-    })
-    .select().single()
-
+  const row: Record<string, any> = {
+    supplier_id:  supplier.id,
+    name:         name.trim(),
+    description:  description?.trim() || null,
+    category:     category?.trim()    || null,
+    region:       region?.trim()      || null,
+    invite_link:  link,
+    member_count: Number.isFinite(+member_count) ? Math.max(0, Math.trunc(+member_count)) : 0,
+  }
+  // Defensive: `region` column may not be migrated yet → retry without it.
+  let { data: group, error } = await (supabase.from('whatsapp_groups') as any).insert(row).select().single()
+  if (error && /region/i.test(error.message)) {
+    delete row.region
+    ;({ data: group, error } = await (supabase.from('whatsapp_groups') as any).insert(row).select().single())
+  }
   if (error) return NextResponse.json({ error: error.message }, { status: 400 })
   return NextResponse.json({ group }, { status: 201 })
 }

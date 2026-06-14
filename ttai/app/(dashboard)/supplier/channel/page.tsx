@@ -61,7 +61,7 @@ export default function SupplierChannelPage() {
 
   // WhatsApp groups
   const [groups, setGroups]   = useState<Group[]>([])
-  const [gForm,  setGForm]    = useState({ name: '', category: '', invite_link: '', description: '' })
+  const [gForm,  setGForm]    = useState({ name: '', category: '', region: '', invite_link: '', description: '' })
   const [gBusy,  setGBusy]    = useState(false)
   const [gError, setGError]   = useState('')
 
@@ -104,7 +104,7 @@ export default function SupplierChannelPage() {
     setGBusy(false)
     if (!res.ok) { setGError(data.error ?? 'Could not add group'); return }
     setGroups(prev => [data.group, ...prev])
-    setGForm({ name: '', category: '', invite_link: '', description: '' })
+    setGForm({ name: '', category: '', region: '', invite_link: '', description: '' })
   }
 
   const handleDeleteGroup = async (id: string) => {
@@ -530,11 +530,16 @@ export default function SupplierChannelPage() {
 
         <form onSubmit={handleAddGroup} className="p-6 space-y-3 border-b border-gray-50">
           <p className="text-xs text-gray-400">List your public WhatsApp group so buyers can find and join it in the marketplace directory.</p>
-          <div className="grid sm:grid-cols-2 gap-3">
+          <div className="grid sm:grid-cols-3 gap-3">
             <input value={gForm.name} onChange={e => setGForm(f => ({ ...f, name: e.target.value }))}
               placeholder="Group name *" className="px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B1F4D]" required />
             <input value={gForm.category} onChange={e => setGForm(f => ({ ...f, category: e.target.value }))}
               placeholder="Category (e.g. Electronics)" className="px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B1F4D]" />
+            <select value={gForm.region} onChange={e => setGForm(f => ({ ...f, region: e.target.value }))}
+              className="px-4 py-2.5 rounded-xl border border-gray-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#0B1F4D]">
+              <option value="">Region…</option>
+              {['Spain', 'Europe', 'Africa', 'Middle East', 'Latin America', 'Asia', 'North America', 'Global'].map(r => <option key={r} value={r}>{r}</option>)}
+            </select>
           </div>
           <input value={gForm.invite_link} onChange={e => setGForm(f => ({ ...f, invite_link: e.target.value }))}
             placeholder="WhatsApp invite link * — https://chat.whatsapp.com/…"
