@@ -104,10 +104,9 @@ export default async function StoreCenterPage() {
         <main className="space-y-5 min-w-0">
           {/* Hero */}
           <div className="relative rounded-2xl overflow-hidden border border-white/5">
-            <div className="relative h-[300px] sm:h-[380px] bg-gradient-to-br from-[#1a1340] via-[#21184f] to-[#0f1629]">
-              {/* Drop your 3D render at /public/store-center.jpg — falls back to the gradient if absent */}
-              <div className="absolute inset-0 bg-cover bg-center opacity-90" style={{ backgroundImage: "url('/store-center.jpg')" }} />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#0a0e1a] via-transparent to-[#0a0e1a]/40" />
+            <div className="relative aspect-video max-h-[460px] bg-gradient-to-br from-[#1a1340] via-[#21184f] to-[#0f1629]">
+              <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: "url('/store-center.png')" }} />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#0a0e1a]/90 via-transparent to-[#0a0e1a]/35" />
 
               {/* Title */}
               <div className="absolute top-0 left-0 right-0 p-6 sm:p-8">
@@ -124,14 +123,14 @@ export default async function StoreCenterPage() {
 
               {/* Category pins floating on the scene */}
               {[
-                { label: 'Food & Beverage', color: '#f97316', top: '46%', left: '16%' },
-                { label: 'Technology',      color: '#3b82f6', top: '34%', left: '40%' },
-                { label: 'Home & Living',   color: '#22c55e', top: '34%', left: '66%' },
-                { label: 'Beauty & Health', color: '#ec4899', top: '40%', left: '86%' },
-                { label: 'Fashion',         color: '#a855f7', top: '74%', left: '24%' },
-                { label: 'Automotive',      color: '#ef4444', top: '78%', left: '46%' },
-                { label: 'Pet Supplies',    color: '#eab308', top: '76%', left: '66%' },
-                { label: 'Services',        color: '#14b8a6', top: '72%', left: '88%' },
+                { label: 'Food & Beverage', color: '#f97316', top: '36%', left: '13%' },
+                { label: 'Technology',      color: '#3b82f6', top: '32%', left: '32%' },
+                { label: 'Home & Living',   color: '#22c55e', top: '32%', left: '67%' },
+                { label: 'Beauty & Health', color: '#ec4899', top: '36%', left: '87%' },
+                { label: 'Fashion',         color: '#a855f7', top: '70%', left: '15%' },
+                { label: 'Automotive',      color: '#ef4444', top: '80%', left: '37%' },
+                { label: 'Pet Supplies',    color: '#eab308', top: '73%', left: '63%' },
+                { label: 'Services',        color: '#14b8a6', top: '75%', left: '87%' },
               ].map((pin) => (
                 <span key={pin.label} className="absolute -translate-x-1/2 -translate-y-1/2 hidden md:flex items-center gap-1.5" style={{ top: pin.top, left: pin.left }}>
                   <span className="w-6 h-6 rounded-full flex items-center justify-center shadow-lg ring-2 ring-white/30" style={{ background: pin.color }}>
