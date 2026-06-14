@@ -50,6 +50,10 @@ WhatsApp Unknown*/
 !app/api/whatsapp/**
 !lib/whatsapp/
 !lib/whatsapp/**
+!app/**/whatsapp-hub/
+!app/**/whatsapp-hub/**
+!components/**/whatsapp/
+!components/**/whatsapp/**
 
 # Raw category source images (served copies live in public/categories)
 category images/
