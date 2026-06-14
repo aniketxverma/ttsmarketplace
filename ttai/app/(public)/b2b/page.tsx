@@ -118,6 +118,17 @@ export default async function B2BPage({
   // The Trade Hub sells under the house brand (TTAIEMA), so cards stay on the
   // house-brand product page and we do NOT reveal the supplier count.
   const deduped = await dedupeProductsByMaster(supabase, (allRows ?? []) as any[])
+
+  // Category-wise ordering — group products by category (not by recency) so the
+  // grid reads Electronics, then the next category, and so on.
+  const catById: Record<string, any> = Object.fromEntries((allCats as any[]).map((c) => [c.id, c]))
+  const ordKey = (cid: string) => {
+    const c = catById[cid]; if (!c) return 9_000_000
+    const root = c.parent_id ? catById[c.parent_id] : c
+    return (root?.sort_order ?? 8000) * 1000 + (c.parent_id ? (c.sort_order ?? 0) : 0)
+  }
+  ;(deduped as any[]).sort((a, b) => ordKey(a.category_id) - ordKey(b.category_id) || String(a.name).localeCompare(String(b.name)))
+
   const count = deduped.length
   const totalPages = Math.ceil(count / PAGE_SIZE)
   const from = (page - 1) * PAGE_SIZE
@@ -128,7 +139,7 @@ export default async function B2BPage({
 
             {/* ── Header ── */}
       <div className="border-b bg-white">
-        <div className="max-w-6xl mx-auto px-4 sm:px-8 py-6">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-8 py-6">
           <p className="text-xs font-extrabold text-[#F5A623] uppercase tracking-widest mb-1">B2B Wholesale Hub</p>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0B1F4D]">Wholesale products</h1>
         </div>
@@ -136,7 +147,7 @@ export default async function B2BPage({
 
       {/* ── Wholesale product catalogue ─────────────────────── */}
       <div className="bg-[#F4F6FB] py-14">
-        <div className="max-w-6xl mx-auto px-4 sm:px-8">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-8">
           <div className="flex items-center justify-between mb-6">
             <div>
               <h2 className="text-2xl font-extrabold text-[#0B1F4D]">Wholesale Product Catalogue</h2>
