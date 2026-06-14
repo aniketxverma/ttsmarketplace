@@ -29,7 +29,7 @@ export async function Header() {
     { label: 'Stores',                  href: '/store-center' },
     { label: t('nav.suppliers'),        href: '/suppliers' },
     { label: 'Pricing',                 href: '/pricing' },
-    { label: 'Channels',                href: '/channels' },
+    { label: 'WhatsApp Hub',            href: '/whatsapp-hub' },
   ]
 
   return (
