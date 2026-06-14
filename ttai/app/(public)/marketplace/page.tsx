@@ -242,7 +242,15 @@ export default async function MarketplacePage({
 
   const families = groupIntoFamilies(filteredProducts)
   const isSponsoredFam = (fam: typeof families[number]) => fam.members.some((m: any) => sponsoredSet.has(m.id))
-  families.sort((a, b) => Number(isSponsoredFam(b)) - Number(isSponsoredFam(a))) // sponsored first (stable)
+  // Category-wise ordering (root → subcategory); sponsored boosted within a category.
+  const ordKey = (cid: string) => {
+    const c: any = navCatById.get(cid); if (!c) return 9_000_000
+    const root: any = c.parent_id ? navCatById.get(c.parent_id) : c
+    return (root?.sort_order ?? 8000) * 1000 + (c.parent_id ? (c.sort_order ?? 0) : 0)
+  }
+  families.sort((a, b) =>
+    ordKey((a.representative as any).category_id) - ordKey((b.representative as any).category_id) ||
+    (Number(isSponsoredFam(b)) - Number(isSponsoredFam(a))))
   const totalProducts = filteredProducts.length
   const totalPages = Math.ceil(families.length / PAGE_SIZE)
   const from = (page - 1) * PAGE_SIZE

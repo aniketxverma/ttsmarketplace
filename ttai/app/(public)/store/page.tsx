@@ -120,6 +120,18 @@ export default async function StorePage({
   // One product, many suppliers — collapse offers sharing a master into one card.
   const deduped = await dedupeProductsByMaster(supabase, (allProducts ?? []) as any[])
   const families = groupIntoFamilies(deduped as any[])
+
+  // Category-wise ordering — group products by category (root then subcategory).
+  const catById: Record<string, any> = Object.fromEntries((allCats as any[]).map((c) => [c.id, c]))
+  const ordKey = (cid: string) => {
+    const c = catById[cid]; if (!c) return 9_000_000
+    const root = c.parent_id ? catById[c.parent_id] : c
+    return (root?.sort_order ?? 8000) * 1000 + (c.parent_id ? (c.sort_order ?? 0) : 0)
+  }
+  families.sort((a, b) =>
+    ordKey((a.representative as any)?.category_id) - ordKey((b.representative as any)?.category_id) ||
+    String((a.representative as any)?.name).localeCompare(String((b.representative as any)?.name)))
+
   const count = (allProducts ?? []).length
   const totalPages = Math.ceil(families.length / PAGE_SIZE)
   const from = (page - 1) * PAGE_SIZE
