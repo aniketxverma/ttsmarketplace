@@ -62,7 +62,7 @@ export function WhatsAppHub({ stats, categories, channels, groups, activity }: {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-5">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-3 mt-5">
             {[
               { Icon: Megaphone, n: stats.channels, t: 'Active channels', s: 'Real-time offers', c: '#075E54' },
               { Icon: Users,     n: stats.groups,   t: 'Active groups',   s: 'Negotiate & connect', c: '#00a884' },
@@ -84,18 +84,23 @@ export function WhatsAppHub({ stats, categories, channels, groups, activity }: {
 
       {/* ── Tabs + filters ─────────────────────────────────────────────── */}
       <div className="bg-white border-b border-gray-200 sticky top-0 z-20">
-        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-2.5 flex flex-wrap items-center gap-2">
-          {([['all', 'All'], ['channels', 'Offer Channels'], ['groups', 'Trading Groups']] as const).map(([k, l]) => (
-            <button key={k} onClick={() => setTab(k)}
-              className={`px-4 py-2 rounded-lg text-sm font-bold transition-colors ${tab === k ? 'bg-[#075E54] text-white' : 'text-gray-600 hover:bg-gray-100'}`}>{l}</button>
-          ))}
-          <div className="flex-1" />
-          <select value={cat} onChange={(e) => setCat(e.target.value)} className="rounded-lg border border-gray-200 bg-gray-50 text-sm font-semibold text-gray-700 px-3 py-2 focus:outline-none">
-            {cats.map((c) => <option key={c} value={c}>{c === 'All' ? 'All categories' : c}</option>)}
-          </select>
-          <div className="relative">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search…" className="w-40 sm:w-56 pl-9 pr-3 py-2 rounded-lg bg-gray-50 border border-gray-200 text-sm focus:outline-none" />
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-2.5 flex flex-col sm:flex-row sm:items-center gap-2">
+          {/* Tabs — scroll horizontally on small screens */}
+          <div className="flex gap-1.5 overflow-x-auto -mx-1 px-1" style={{ scrollbarWidth: 'none' }}>
+            {([['all', 'All'], ['channels', 'Offer Channels'], ['groups', 'Trading Groups']] as const).map(([k, l]) => (
+              <button key={k} onClick={() => setTab(k)}
+                className={`px-3.5 sm:px-4 py-2 rounded-lg text-sm font-bold whitespace-nowrap flex-shrink-0 transition-colors ${tab === k ? 'bg-[#075E54] text-white' : 'text-gray-600 hover:bg-gray-100'}`}>{l}</button>
+            ))}
+          </div>
+          {/* Filters — full width on mobile, inline-right on desktop */}
+          <div className="flex items-center gap-2 sm:ml-auto">
+            <select value={cat} onChange={(e) => setCat(e.target.value)} className="flex-1 sm:flex-none min-w-0 rounded-lg border border-gray-200 bg-gray-50 text-sm font-semibold text-gray-700 px-3 py-2 focus:outline-none">
+              {cats.map((c) => <option key={c} value={c}>{c === 'All' ? 'All categories' : c}</option>)}
+            </select>
+            <div className="relative flex-1 sm:flex-none">
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search…" className="w-full sm:w-56 pl-9 pr-3 py-2 rounded-lg bg-gray-50 border border-gray-200 text-sm focus:outline-none" />
+            </div>
           </div>
         </div>
       </div>
