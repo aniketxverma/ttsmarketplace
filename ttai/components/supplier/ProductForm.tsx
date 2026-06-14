@@ -354,6 +354,8 @@ export function ProductForm({
       }
       if (upd.error) { setError(upd.error.message); setLoading(false); return }
       await dedupeCover(productId)
+      // Re-link to the master catalog in case the name/EAN changed.
+      fetch('/api/supplier/master', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'link', productId }) }).catch(() => {})
     }
 
     setSuccess(true)
