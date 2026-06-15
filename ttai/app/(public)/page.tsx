@@ -10,6 +10,7 @@ import {
   MessageSquare, Share2, BarChart3, Lock, Factory, User, Building2, Store, Users,
   Package, Tag, Zap, CheckCircle2, TrendingUp,
   FileSpreadsheet, PlayCircle, Warehouse, MessageCircle,
+  MapPin, Sparkles, Handshake, Rocket,
 } from 'lucide-react'
 
 /* ─────────────────────────── data ─────────────────────────── */
@@ -96,6 +97,22 @@ const PAYMENTS = [
   { label: 'VISA', cls: 'text-[#1a1f71]' }, { label: 'mastercard', cls: 'text-[#eb001b]' },
   { label: 'PayPal', cls: 'text-[#003087]' }, { label: 'DHL', cls: 'text-[#d40511]' },
   { label: 'GLS', cls: 'text-[#061ab1]' }, { label: 'FedEx', cls: 'text-[#4d148c]' },
+] as const
+
+const GROW_LEVELS = [
+  { Icon: MapPin,     step: '01', title: 'In Your City',          desc: 'Reach local customers right around you.',        grad: 'from-emerald-500 to-teal-600',   h: 162 },
+  { Icon: Building2,  step: '02', title: 'Across Your Province',  desc: 'Expand to nearby towns and regions.',           grad: 'from-blue-500 to-blue-700',      h: 190 },
+  { Icon: Store,      step: '03', title: 'Nationwide',            desc: 'Sell across the entire country.',               grad: 'from-violet-600 to-purple-700',  h: 218 },
+  { Icon: Globe2,     step: '04', title: 'Worldwide',             desc: 'Expand internationally whenever you’re ready.', grad: 'from-amber-500 to-orange-600',   h: 246 },
+] as const
+
+const GROW_CAPS = [
+  { Icon: ShoppingCart,  title: 'Sell Retail',            desc: 'Sell to local customers, by the piece.' },
+  { Icon: Boxes,         title: 'Sell Wholesale (B2B)',   desc: 'Move boxes, pallets and truckloads.' },
+  { Icon: Store,         title: 'Manage Multiple Stores', desc: 'One store or hundreds of locations.' },
+  { Icon: MessageSquare, title: 'Receive Enquiries',      desc: 'Business leads land in your inbox.' },
+  { Icon: Handshake,     title: 'Connect with Trade',     desc: 'Distributors and wholesalers network.' },
+  { Icon: TrendingUp,    title: 'Grow Step by Step',      desc: 'Scale at your own pace, your way.' },
 ] as const
 
 const GROW = [
@@ -345,6 +362,90 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
                 <TrendingUp className="w-6 h-6 text-[#F5A623]" />
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══ GROW YOUR BUSINESS — LOCAL → GLOBAL ═══ */}
+      <section className="py-20 px-4 bg-gradient-to-b from-gray-50 to-white relative overflow-hidden">
+        <div className="absolute -top-24 -left-24 w-96 h-96 rounded-full bg-[#F5A623]/10 blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-24 -right-24 w-96 h-96 rounded-full bg-blue-500/10 blur-3xl pointer-events-none" />
+        <div className="container mx-auto max-w-6xl relative">
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center gap-2 rounded-full bg-[#0B1F4D]/5 px-4 py-1.5 text-xs font-bold uppercase tracking-widest text-[#0B1F4D] mb-3">
+              <Sparkles className="w-4 h-4 text-[#F5A623]" /> Retail · Franchise · Supermarket · Chains
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-[#0B1F4D] leading-tight">
+              Grow Your Business —{' '}
+              <span className="bg-gradient-to-r from-emerald-500 via-blue-600 to-[#F5A623] bg-clip-text text-transparent">
+                Locally, Nationally &amp; Internationally
+              </span>
+            </h2>
+            <p className="text-gray-500 mt-4 max-w-xl mx-auto">
+              Whether you own one store or hundreds of locations, TTAIEMA gives you the tools to grow at your own pace.
+            </p>
+          </div>
+
+          {/* growth ladder */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-14 items-end">
+            {GROW_LEVELS.map((l, i) => (
+              <Reveal key={l.title} from="up" delay={i * 100}>
+                <div
+                  className={`group relative overflow-hidden rounded-3xl bg-gradient-to-br ${l.grad} p-6 shadow-lg ring-1 ring-white/10 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl`}
+                  style={{ minHeight: l.h }}
+                >
+                  <span className="absolute -bottom-7 -right-2 text-[7rem] font-black leading-none text-white/10 select-none pointer-events-none">{l.step}</span>
+                  <l.Icon className="absolute -top-6 -right-5 w-32 h-32 text-white/10 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3" strokeWidth={1.25} />
+                  <div className="relative">
+                    <div className="w-12 h-12 rounded-2xl bg-white/15 border border-white/25 backdrop-blur flex items-center justify-center mb-4 shadow-inner">
+                      <l.Icon className="w-6 h-6 text-white" />
+                    </div>
+                    <p className="text-[11px] font-bold uppercase tracking-widest text-white/70 mb-1">Step {l.step}</p>
+                    <h3 className="text-lg font-extrabold text-white leading-tight">{l.title}</h3>
+                    <p className="text-sm text-white/80 mt-1.5 leading-relaxed">{l.desc}</p>
+                  </div>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+
+          {/* capabilities + CTA */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+            <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {GROW_CAPS.map((c, i) => (
+                <Reveal key={c.title} from="up" delay={i * 60} className="h-full">
+                  <div className="group h-full flex items-start gap-3 rounded-2xl border border-gray-100 bg-white p-4 hover:border-[#F5A623]/40 hover:shadow-md transition-all">
+                    <div className="w-10 h-10 rounded-xl bg-[#0B1F4D]/5 flex items-center justify-center flex-shrink-0 group-hover:bg-[#F5A623]/10 transition-colors">
+                      <c.Icon className="w-5 h-5 text-[#0B1F4D] group-hover:text-[#F5A623] transition-colors" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />
+                        <p className="font-extrabold text-[#0B1F4D] text-sm">{c.title}</p>
+                      </div>
+                      <p className="text-xs text-gray-400 mt-0.5 leading-relaxed">{c.desc}</p>
+                    </div>
+                  </div>
+                </Reveal>
+              ))}
+            </div>
+
+            <Reveal from="up" delay={120} className="lg:col-span-5 h-full">
+              <div className="relative h-full overflow-hidden rounded-3xl bg-gradient-to-br from-[#0B1F4D] to-[#1a3580] p-8 flex flex-col justify-center shadow-lg">
+                <div className="absolute -top-16 -right-12 w-60 h-60 rounded-full bg-[#F5A623]/15 blur-3xl pointer-events-none" />
+                <Rocket className="absolute bottom-4 right-5 w-28 h-28 text-white/5 pointer-events-none" strokeWidth={1} />
+                <div className="relative">
+                  <p className="text-[#F5A623] font-extrabold text-sm tracking-wide mb-2">Start Local. Grow National. Expand Worldwide.</p>
+                  <h3 className="text-2xl sm:text-3xl font-black text-white leading-tight mb-3">Join TTAIEMA Marketplace today.</h3>
+                  <p className="text-blue-100/70 text-sm mb-6 leading-relaxed">
+                    One platform to sell retail, sell wholesale, manage your stores and reach buyers everywhere.
+                  </p>
+                  <Link href="/register" className="inline-flex items-center gap-2 rounded-xl bg-[#F5A623] text-[#0B1F4D] px-6 py-3.5 text-sm font-extrabold hover:bg-[#fbb93a] transition-colors shadow-lg w-fit">
+                    Get Started Free <ArrowRight className="w-4 h-4" />
+                  </Link>
+                </div>
+              </div>
+            </Reveal>
           </div>
         </div>
       </section>
