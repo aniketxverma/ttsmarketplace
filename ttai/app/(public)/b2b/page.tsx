@@ -12,7 +12,6 @@ import { SearchBar } from '@/components/marketplace/SearchBar'
 import { CategoryNav } from '@/components/marketplace/CategoryNav'
 import { Pagination } from '@/components/marketplace/Pagination'
 import { dedupeProductsByMaster } from '@/lib/offers-server'
-import { CategoryShowcase, type ShowcaseCat } from '@/components/marketplace/CategoryShowcase'
 import { localizeCategoryNames } from '@/lib/i18n/categories'
 import { getLocale } from '@/lib/i18n/server'
 import type { Category } from '@/types/domain'
@@ -167,25 +166,6 @@ export default async function B2BPage({
     sections.push(...Array.from(byRoot.values()).sort((a, b) => ordKey(a.root.id) - ordKey(b.root.id)))
   }
 
-  // Homepage "shop by category" showcase blocks (same as the marketplace).
-  const SHOWCASE_ICON: Record<string, string> = {
-    'electronics-technology': 'smartphone', 'food-beverage': 'food',
-    'cleaning-household': 'cleaning', 'automotive-transport': 'car',
-  }
-  const showcaseCats: ShowcaseCat[] = isGrouped
-    ? sections.map(({ root, items }) => ({
-        name: root.name, slug: root.slug,
-        accent: CAT_ACCENT[root.slug] ?? '#0B1F4D',
-        icon: SHOWCASE_ICON[root.slug] ?? 'package',
-        count: items.length,
-        subs: (childMap[root.id] ?? []).slice(0, 5).map((c: any) => c.name).join(' · '),
-        thumbs: items.slice(0, 4).map((p: any) => {
-          const imgs = (p.product_images ?? []) as { url: string; sort_order: number }[]
-          return imgs.slice().sort((a, b) => a.sort_order - b.sort_order)[0]?.url ?? ''
-        }),
-      }))
-    : []
-
   // Sub-category sections when a category is open (Smartphones, Audio…), same as marketplace.
   const activeCat = searchParams.category ? allCats.find((c: any) => c.slug === searchParams.category) : null
   const activeCatChildren = activeCat ? (childMap[(activeCat as any).id] ?? []) : []
@@ -255,9 +235,6 @@ export default async function B2BPage({
 
             {/* Grid */}
             <div className="flex-1 min-w-0">
-              {/* Homepage — big classified category blocks (same as marketplace) */}
-              {isGrouped && <CategoryShowcase cats={showcaseCats} />}
-
               {showSubSections ? (
                 /* Category open → sub-category sections (Smartphones, Audio…) */
                 <div className="space-y-10">
