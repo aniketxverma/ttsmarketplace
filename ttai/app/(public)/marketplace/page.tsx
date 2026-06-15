@@ -15,6 +15,7 @@ import { SupplierMiniCard, type MiniSupplier } from '@/components/marketplace/Su
 import { ShoppingChannels } from '@/components/marketplace/ShoppingChannels'
 import { MarketplaceTopBar } from '@/components/marketplace/MarketplaceTopBar'
 import { ShopCard, type ShopCardData } from '@/components/marketplace/ShopCard'
+import { CategoryShowcase, type ShowcaseCat } from '@/components/marketplace/CategoryShowcase'
 import { getMarketplaceOpen } from '@/lib/marketplace-phase'
 import { OpeningSoon } from '@/components/OpeningSoon'
 import type { Category } from '@/types/domain'
@@ -308,6 +309,26 @@ export default async function MarketplacePage({
       if (fams && fams.length) categorySections.push({ cat: r, families: fams })
     }
   }
+  // Homepage "shop by category" showcase blocks (mockup-style directory).
+  const SHOWCASE_ICON: Record<string, string> = {
+    'electronics-technology': 'smartphone', 'food-beverage': 'food',
+    'cleaning-household': 'cleaning', 'automotive-transport': 'car',
+  }
+  const showcaseCats: ShowcaseCat[] = isGroupedView
+    ? categorySections.map(({ cat, families: fams }) => ({
+        name: cat.name,
+        slug: cat.slug,
+        accent: CAT_ACCENT[cat.slug] ?? '#0B1F4D',
+        icon: SHOWCASE_ICON[cat.slug] ?? 'package',
+        count: subtreeCount.get(cat.id) ?? fams.length,
+        subs: (childMap[cat.id] ?? []).slice(0, 5).map((c) => c.name).join(' · '),
+        thumbs: fams.slice(0, 4).map((f) => {
+          const imgs = ((f.representative as any).product_images ?? []) as { url: string; sort_order: number }[]
+          return imgs.slice().sort((a, b) => a.sort_order - b.sort_order)[0]?.url ?? ''
+        }),
+      }))
+    : []
+
   const promotions = (promotionsRes.data ?? []) as unknown as Parameters<typeof PromotionBanner>[0]['promotions']
 
   // ── Suppliers active in the selected category (so buyers see profiles, not just products) ──
@@ -485,6 +506,9 @@ export default async function MarketplacePage({
             )
           ) : (
           <>
+          {/* Homepage — big classified category blocks (shop-by-category directory) */}
+          {isGroupedView && <CategoryShowcase cats={showcaseCats} />}
+
           {/* Three ways to shop this collection */}
           {activeCat && (
             <div className="mb-8">
