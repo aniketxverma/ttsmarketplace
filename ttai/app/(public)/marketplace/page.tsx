@@ -15,13 +15,13 @@ import { SupplierMiniCard, type MiniSupplier } from '@/components/marketplace/Su
 import { ShoppingChannels } from '@/components/marketplace/ShoppingChannels'
 import { MarketplaceTopBar } from '@/components/marketplace/MarketplaceTopBar'
 import { ShopCard, type ShopCardData } from '@/components/marketplace/ShopCard'
+import { CategoryMall, type MallCat } from '@/components/marketplace/CategoryMall'
 import { getMarketplaceOpen } from '@/lib/marketplace-phase'
 import { OpeningSoon } from '@/components/OpeningSoon'
 import { Smartphone, UtensilsCrossed, Car, SprayCan, Package } from 'lucide-react'
 import type { Category } from '@/types/domain'
 
 const PAGE_SIZE = 24
-const SECTION_LIMIT = 5 // max product cards per category row (one line) before "View all"
 const SUB_SECTION_LIMIT = 10 // products shown per sub-category section on a category page
 
 function ChevronRight() {
@@ -187,7 +187,7 @@ export default async function MarketplacePage({
       .select(
         `id, name, slug, price_cents, retail_price_cents, currency_code, min_order_qty, marketplace_context, vat_rate,
         supplier_id, category_id, product_line, is_family_cover,
-        suppliers!supplier_id!inner(legal_name, trade_name, reliability_tier, status, countries(name, iso_code)),
+        suppliers!supplier_id!inner(legal_name, trade_name, reliability_tier, status, countries(name, iso_code), cities(name)),
         categories(name, slug),
         product_images(url, sort_order)`
       )
@@ -320,6 +320,31 @@ export default async function MarketplacePage({
       if (fams && fams.length) categorySections.push({ cat: r, families: fams })
     }
   }
+  // Mall-style homepage: one big banner card per product family (no mixed grid).
+  const MALL_ICON: Record<string, string> = {
+    'electronics-technology': 'smartphone', 'food-beverage': 'food',
+    'cleaning-household': 'cleaning', 'automotive-transport': 'car',
+  }
+  const mallCats: MallCat[] = isGroupedView
+    ? categorySections.map(({ cat, families: fams }) => {
+        const thumbs = fams
+          .map((f) => {
+            const imgs = ((f.representative as any).product_images ?? []) as { url: string; sort_order: number }[]
+            return imgs.slice().sort((a, b) => a.sort_order - b.sort_order)[0]?.url ?? ''
+          })
+          .filter(Boolean)
+        return {
+          name: cat.name,
+          slug: cat.slug,
+          accent: CAT_ACCENT[cat.slug] ?? '#0B1F4D',
+          icon: MALL_ICON[cat.slug] ?? 'package',
+          count: subtreeCount.get(cat.id) ?? fams.length,
+          subs: (childMap[cat.id] ?? []).slice(0, 6).map((c) => c.name),
+          thumbs: thumbs.slice(0, 5),
+        }
+      })
+    : []
+
   const promotions = (promotionsRes.data ?? []) as unknown as Parameters<typeof PromotionBanner>[0]['promotions']
 
   // ── Suppliers active in the selected category (so buyers see profiles, not just products) ──
@@ -561,8 +586,8 @@ export default async function MarketplacePage({
               const offerCount = (fam.representative as any)._offerCount ?? 0
               if (fam.members.length > 1) return <FamilyCard key={fam.key} family={fam} shop="market" brand={brand} sponsored={sponsored} minOrderCents={minOrderCents} />
               const p = fam.representative as any
-              const sup = p.suppliers as { legal_name: string; trade_name: string | null; reliability_tier: import('@/types/domain').ReliabilityTier; countries?: { name: string; iso_code: string } | null }
-              const supplier = { ...sup, country_name: sup.countries?.name ?? null, country_iso: sup.countries?.iso_code ?? null }
+              const sup = p.suppliers as { legal_name: string; trade_name: string | null; reliability_tier: import('@/types/domain').ReliabilityTier; countries?: { name: string; iso_code: string } | null; cities?: { name: string } | null }
+              const supplier = { ...sup, country_name: sup.countries?.name ?? null, country_iso: sup.countries?.iso_code ?? null, city_name: sup.cities?.name ?? null }
               const mainImg = (p.product_images as { url: string; sort_order: number }[])?.sort((a, b) => a.sort_order - b.sort_order)[0]?.url
               // Deduped card → the best offer's product page (which lists all sellers).
               const href = `/product/${p.slug ?? p.id}`
@@ -603,29 +628,9 @@ export default async function MarketplacePage({
               )
             }
 
-            if (isGroupedView && categorySections.length > 0) {
-              return (
-                <div className="space-y-12">
-                  {categorySections.map(({ cat, families: fams }) => {
-                    const accent = CAT_ACCENT[cat.slug] ?? '#0B1F4D'
-                    const subs = (childMap[cat.id] ?? []).slice(0, 4).map((c) => c.name).join(' · ')
-                    const href = `/marketplace?category=${cat.slug}${activeRegion ? `&region=${activeRegion}` : ''}`
-                    return (
-                      <section key={cat.id}>
-                        <CatBanner name={cat.name} subs={subs} accent={accent} href={href} ctaLabel="Explore Category" />
-                        <ProductGrid>{fams.slice(0, SECTION_LIMIT).map(renderCard)}</ProductGrid>
-                        {fams.length > SECTION_LIMIT && (
-                          <div className="mt-4 text-center">
-                            <Link href={href} className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-5 py-2.5 text-sm font-bold text-[#0B1F4D] hover:border-[#0B1F4D] transition-colors">
-                              View all {fams.length} in {cat.name}
-                            </Link>
-                          </div>
-                        )}
-                      </section>
-                    )
-                  })}
-                </div>
-              )
+            // Homepage → mall directory: big banner per product family (no product wall).
+            if (isGroupedView && mallCats.length > 0) {
+              return <CategoryMall categories={mallCats} />
             }
 
             if (pageFamilies.length > 0) {

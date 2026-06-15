@@ -22,6 +22,7 @@ interface ProductCardProps {
     reliability_tier: ReliabilityTier
     country_name?: string | null
     country_iso?: string | null
+    city_name?: string | null
   }
   mainImageUrl?: string
   href: string
@@ -85,7 +86,9 @@ export function ProductCard({ product, supplier, mainImageUrl, href, retail = fa
               sponsored ? 'top-9' : 'top-2',
             )}>
               <span className="text-[12px] leading-none">{isoFlag(supplier.country_iso)}</span>
-              <span className="max-w-[90px] truncate">{supplier.country_name ?? supplier.country_iso}</span>
+              <span className="max-w-[120px] truncate">
+                {supplier.country_name ?? supplier.country_iso}{supplier.city_name ? ` · ${supplier.city_name}` : ''}
+              </span>
             </span>
           )}
           {sponsored && (
