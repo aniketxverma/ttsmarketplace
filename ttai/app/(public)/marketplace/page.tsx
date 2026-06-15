@@ -210,7 +210,7 @@ export default async function MarketplacePage({
   // Fetch matching products, then collapse into families (one card per type).
   const { data: allProducts } = await productQuery
     .order('created_at', { ascending: false })
-    .limit(500)
+    .limit(2000)
 
   const prodList = (allProducts ?? []) as any[]
 
