@@ -31,7 +31,8 @@ const BIZ_LABEL: Record<string, string> = {
 
 export function ShopCard({ shop }: { shop: ShopCardData }) {
   const name = shop.trade_name ?? shop.legal_name
-  const href = `/brand/${shop.brand_slug ?? shop.id}`
+  // Open the supplier's shop (full catalogue), guiding the buyer to order there.
+  const href = `/marketplace?supplier=${shop.id}`
   const tier = TIER[shop.reliability_tier ?? 'UNVERIFIED'] ?? TIER.UNVERIFIED
   const initials = name.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase()
   const biz = shop.business_type ? (BIZ_LABEL[shop.business_type.toLowerCase()] ?? shop.business_type) : null

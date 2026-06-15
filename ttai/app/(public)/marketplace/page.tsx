@@ -667,6 +667,13 @@ export default async function MarketplacePage({
                   {subSections.map(({ cat, families: fams }) => {
                     const isDirect = cat.id === activeCat!.id
                     const href = `/marketplace?category=${cat.slug}${activeRegion ? `&region=${activeRegion}` : ''}`
+                    // Guide the buyer to the supplier(s) behind this sub-category.
+                    const sups = new Map<string, string>()
+                    for (const f of fams) {
+                      const p: any = f.representative
+                      if (p.supplier_id && !sups.has(p.supplier_id)) sups.set(p.supplier_id, p.suppliers?.trade_name ?? p.suppliers?.legal_name ?? 'Supplier')
+                    }
+                    const supList = Array.from(sups.entries())
                     return (
                       <section key={cat.id}>
                         <CatBanner
@@ -675,6 +682,17 @@ export default async function MarketplacePage({
                           href={isDirect ? undefined : href}
                           ctaLabel={fams.length > SUB_SECTION_LIMIT ? `View all ${fams.length}` : 'View all'}
                         />
+                        {supList.length > 0 && (
+                          <div className="-mt-2 mb-4 flex flex-wrap items-center gap-2 text-xs">
+                            <span className="font-bold text-gray-400">{supList.length > 1 ? 'Suppliers:' : 'Sold by:'}</span>
+                            {supList.slice(0, 4).map(([id, nm]) => (
+                              <Link key={id} href={`/marketplace?supplier=${id}`}
+                                className="inline-flex items-center gap-1 rounded-full border border-gray-200 bg-white px-2.5 py-1 font-bold text-[#0B1F4D] hover:border-[#0B1F4D] transition-colors">
+                                {nm} <span className="text-gray-400">· visit shop →</span>
+                              </Link>
+                            ))}
+                          </div>
+                        )}
                         <ProductGrid>{fams.slice(0, SUB_SECTION_LIMIT).map(renderCard)}</ProductGrid>
                         {!isDirect && fams.length > SUB_SECTION_LIMIT && (
                           <div className="mt-4 text-center">
