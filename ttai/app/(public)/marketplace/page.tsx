@@ -17,6 +17,7 @@ import { MarketplaceTopBar } from '@/components/marketplace/MarketplaceTopBar'
 import { ShopCard, type ShopCardData } from '@/components/marketplace/ShopCard'
 import { getMarketplaceOpen } from '@/lib/marketplace-phase'
 import { OpeningSoon } from '@/components/OpeningSoon'
+import { Smartphone, UtensilsCrossed, Car, SprayCan, Package } from 'lucide-react'
 import type { Category } from '@/types/domain'
 
 const PAGE_SIZE = 24
@@ -63,6 +64,14 @@ const CAT_ACCENT: Record<string, string> = {
   'textile-fashion': '#c026d3', 'construction-building': '#d97706', 'construction-materials': '#d97706',
   'automotive-transport': '#52525b', 'recycling-sustainability': '#059669',
   'industrial-manufacturing': '#4f46e5', 'healthcare-medical': '#e11d48',
+}
+
+// Icon per root category (for the category hero banner).
+const CAT_ICON: Record<string, typeof Package> = {
+  'electronics-technology': Smartphone, 'electronics-tech': Smartphone,
+  'food-beverage': UtensilsCrossed, 'agriculture-food': UtensilsCrossed,
+  'automotive-transport': Car,
+  'cleaning-household': SprayCan,
 }
 
 export default async function MarketplacePage({
@@ -468,6 +477,24 @@ export default async function MarketplacePage({
       <MarketplaceTopBar activeView={activeView} activeCountry={activeCountryIso} activeMarket={activeMarket} categoryLabel={categoryLabel} />
 
       <PromotionBanner promotions={promotions} />
+
+      {/* ── Category hero banner (when a category is open) ── */}
+      {activeCat && activeView !== 'shops' && (() => {
+        const accent = CAT_ACCENT[activeCat.slug] ?? '#0B1F4D'
+        const Icon = CAT_ICON[activeCat.slug] ?? Package
+        const subs = (childMap[activeCat.id] ?? []).slice(0, 6).map((c: any) => c.name).join(' · ')
+        return (
+          <div className="rounded-2xl mb-6 px-5 sm:px-7 py-5 flex items-center gap-4 shadow-sm" style={{ background: accent }}>
+            <div className="w-14 h-14 rounded-2xl bg-white/20 flex items-center justify-center flex-shrink-0">
+              <Icon className="w-8 h-8 text-white" />
+            </div>
+            <div className="min-w-0">
+              <h2 className="text-xl sm:text-2xl font-extrabold text-white leading-tight">{activeCat.name}</h2>
+              <p className="text-white/80 text-sm mt-0.5 truncate">{subs || `Explore our range of ${activeCat.name}`}</p>
+            </div>
+          </div>
+        )
+      })()}
 
       <div className="flex gap-8">
         <aside className="hidden md:block w-48 flex-shrink-0">
