@@ -20,7 +20,7 @@ import { OpeningSoon } from '@/components/OpeningSoon'
 import type { Category } from '@/types/domain'
 
 const PAGE_SIZE = 24
-const SECTION_LIMIT = 8 // products shown per category in the grouped "All Products" view
+const SECTION_LIMIT = 5 // max product cards per category row (one line) before "View all"
 const SUB_SECTION_LIMIT = 10 // products shown per sub-category section on a category page
 
 function ChevronRight() {
