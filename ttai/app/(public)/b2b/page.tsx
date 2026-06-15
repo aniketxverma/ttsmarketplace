@@ -12,6 +12,7 @@ import { SearchBar } from '@/components/marketplace/SearchBar'
 import { CategoryNav } from '@/components/marketplace/CategoryNav'
 import { Pagination } from '@/components/marketplace/Pagination'
 import { dedupeProductsByMaster } from '@/lib/offers-server'
+import { CategoryShowcase, type ShowcaseCat } from '@/components/marketplace/CategoryShowcase'
 import { localizeCategoryNames } from '@/lib/i18n/categories'
 import { getLocale } from '@/lib/i18n/server'
 import type { Category } from '@/types/domain'
@@ -109,7 +110,11 @@ export default async function B2BPage({
 
   if (searchParams.category) {
     const cat = allCats.find((c: any) => c.slug === searchParams.category)
-    if (cat) productQuery = productQuery.eq('category_id', (cat as any).id)
+    if (cat) {
+      // A root category shows all its sub-categories' products too.
+      const childIds = allCats.filter((c: any) => c.parent_id === (cat as any).id).map((c: any) => c.id)
+      productQuery = productQuery.in('category_id', [(cat as any).id, ...childIds])
+    }
   }
   if (searchParams.q) {
     productQuery = productQuery.ilike('name', `%${searchParams.q}%`)
@@ -162,6 +167,57 @@ export default async function B2BPage({
     sections.push(...Array.from(byRoot.values()).sort((a, b) => ordKey(a.root.id) - ordKey(b.root.id)))
   }
 
+  // Homepage "shop by category" showcase blocks (same as the marketplace).
+  const SHOWCASE_ICON: Record<string, string> = {
+    'electronics-technology': 'smartphone', 'food-beverage': 'food',
+    'cleaning-household': 'cleaning', 'automotive-transport': 'car',
+  }
+  const showcaseCats: ShowcaseCat[] = isGrouped
+    ? sections.map(({ root, items }) => ({
+        name: root.name, slug: root.slug,
+        accent: CAT_ACCENT[root.slug] ?? '#0B1F4D',
+        icon: SHOWCASE_ICON[root.slug] ?? 'package',
+        count: items.length,
+        subs: (childMap[root.id] ?? []).slice(0, 5).map((c: any) => c.name).join(' · '),
+        thumbs: items.slice(0, 4).map((p: any) => {
+          const imgs = (p.product_images ?? []) as { url: string; sort_order: number }[]
+          return imgs.slice().sort((a, b) => a.sort_order - b.sort_order)[0]?.url ?? ''
+        }),
+      }))
+    : []
+
+  // Sub-category sections when a category is open (Smartphones, Audio…), same as marketplace.
+  const activeCat = searchParams.category ? allCats.find((c: any) => c.slug === searchParams.category) : null
+  const activeCatChildren = activeCat ? (childMap[(activeCat as any).id] ?? []) : []
+  const subSections: { cat: { id: string; name: string; slug: string }; items: any[] }[] = []
+  if (activeCat) {
+    const byCat = new Map<string, any[]>()
+    for (const p of deduped as any[]) {
+      const cid = p.category_id
+      if (!cid) continue
+      if (!byCat.has(cid)) byCat.set(cid, [])
+      byCat.get(cid)!.push(p)
+    }
+    for (const ch of [...activeCatChildren].sort((a: any, b: any) => (a.sort_order ?? 0) - (b.sort_order ?? 0))) {
+      const items = byCat.get((ch as any).id)
+      if (items && items.length) subSections.push({ cat: ch as any, items })
+    }
+    const direct = byCat.get((activeCat as any).id)
+    if (direct && direct.length) subSections.push({ cat: { id: (activeCat as any).id, name: `More ${activeCat.name}`, slug: activeCat.slug }, items: direct })
+  }
+  const showSubSections = subSections.filter((s) => s.cat.id !== (activeCat as any)?.id).length > 0
+
+  // One card renderer reused by every layout.
+  const renderCard = (p: any) => {
+    const supplier = p.suppliers as unknown as { legal_name: string; trade_name: string | null; reliability_tier: import('@/types/domain').ReliabilityTier }
+    const images = p.product_images as { url: string; sort_order: number }[]
+    const mainImg = images?.slice().sort((a, b) => a.sort_order - b.sort_order)[0]?.url
+    return (
+      <ProductCard key={p.id} product={p as Parameters<typeof ProductCard>[0]['product']}
+        supplier={supplier} mainImageUrl={mainImg} href={`/product/${p.slug ?? p.id}?shop=b2b`} shop="b2b" brand={p.brand_name ?? null} />
+    )
+  }
+
   return (
     <div className="min-h-screen bg-white">
 
@@ -199,12 +255,49 @@ export default async function B2BPage({
 
             {/* Grid */}
             <div className="flex-1 min-w-0">
-              {isGrouped && sections.length > 0 ? (
+              {/* Homepage — big classified category blocks (same as marketplace) */}
+              {isGrouped && <CategoryShowcase cats={showcaseCats} />}
+
+              {showSubSections ? (
+                /* Category open → sub-category sections (Smartphones, Audio…) */
+                <div className="space-y-10">
+                  {(() => {
+                    const accent = CAT_ACCENT[(activeCat as any).slug] ?? '#0B1F4D'
+                    return subSections.map(({ cat, items }) => {
+                      const isDirect = cat.id === (activeCat as any).id
+                      const href = `/b2b?category=${cat.slug}`
+                      return (
+                        <section key={cat.id}>
+                          <div className="flex items-center justify-between gap-3 mb-4 rounded-xl px-4 py-3"
+                            style={{ background: `${accent}0F`, borderLeft: `4px solid ${accent}` }}>
+                            <h2 className="text-lg sm:text-xl font-extrabold leading-tight" style={{ color: accent }}>
+                              {cat.name} <span className="text-sm font-bold opacity-60">· {items.length}</span>
+                            </h2>
+                            {!isDirect && items.length > SECTION_CAP && (
+                              <Link href={href} className="flex-shrink-0 text-sm font-bold whitespace-nowrap inline-flex items-center gap-1 hover:gap-2 transition-all" style={{ color: accent }}>
+                                View all {items.length} <ArrowRight className="w-4 h-4" />
+                              </Link>
+                            )}
+                          </div>
+                          <ProductGrid>{items.slice(0, SECTION_CAP).map(renderCard)}</ProductGrid>
+                          {!isDirect && items.length > SECTION_CAP && (
+                            <div className="mt-4 text-center">
+                              <Link href={href} className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-5 py-2.5 text-sm font-bold text-[#0B1F4D] hover:border-[#0B1F4D] transition-colors">
+                                View all {items.length} in {cat.name}
+                              </Link>
+                            </div>
+                          )}
+                        </section>
+                      )
+                    })
+                  })()}
+                </div>
+              ) : isGrouped && sections.length > 0 ? (
+                /* Homepage — one banner section per root category */
                 <div className="space-y-10">
                   {sections.map(({ root, items }) => {
                     const accent = CAT_ACCENT[root.slug] ?? '#0B1F4D'
                     const href = `/b2b?category=${root.slug}`
-                    const supplier = (p: any) => p.suppliers as unknown as { legal_name: string; trade_name: string | null; reliability_tier: import('@/types/domain').ReliabilityTier }
                     return (
                       <section key={root.id}>
                         <div className="flex items-center justify-between gap-3 mb-4 rounded-xl px-4 py-3"
@@ -218,16 +311,7 @@ export default async function B2BPage({
                             </Link>
                           )}
                         </div>
-                        <ProductGrid>
-                          {items.slice(0, SECTION_CAP).map((p) => {
-                            const images = p.product_images as { url: string; sort_order: number }[]
-                            const mainImg = images?.slice().sort((a, b) => a.sort_order - b.sort_order)[0]?.url
-                            return (
-                              <ProductCard key={p.id} product={p as Parameters<typeof ProductCard>[0]['product']}
-                                supplier={supplier(p)} mainImageUrl={mainImg} href={`/product/${p.slug ?? p.id}?shop=b2b`} shop="b2b" brand={p.brand_name ?? null} />
-                            )
-                          })}
-                        </ProductGrid>
+                        <ProductGrid>{items.slice(0, SECTION_CAP).map(renderCard)}</ProductGrid>
                         {items.length > SECTION_CAP && (
                           <div className="mt-4 text-center">
                             <Link href={href} className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-5 py-2.5 text-sm font-bold text-[#0B1F4D] hover:border-[#0B1F4D] transition-colors">
@@ -241,26 +325,7 @@ export default async function B2BPage({
                 </div>
               ) : (products?.length ?? 0) > 0 ? (
                 <>
-                  <ProductGrid>
-                    {products!.map((p) => {
-                      const supplier = p.suppliers as unknown as {
-                        legal_name: string; trade_name: string | null; reliability_tier: import('@/types/domain').ReliabilityTier
-                      }
-                      const images = p.product_images as { url: string; sort_order: number }[]
-                      const mainImg = images?.slice().sort((a, b) => a.sort_order - b.sort_order)[0]?.url
-                      return (
-                        <ProductCard
-                          key={p.id}
-                          product={p as Parameters<typeof ProductCard>[0]['product']}
-                          supplier={supplier}
-                          mainImageUrl={mainImg}
-                          href={`/product/${p.slug ?? p.id}?shop=b2b`}
-                          shop="b2b"
-                          brand={(p as any).brand_name ?? null}
-                        />
-                      )
-                    })}
-                  </ProductGrid>
+                  <ProductGrid>{products!.map(renderCard)}</ProductGrid>
                   <Pagination page={page} totalPages={totalPages} />
                 </>
               ) : (
