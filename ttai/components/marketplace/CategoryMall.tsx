@@ -31,11 +31,11 @@ function Row({ c }: { c: MallCat }) {
 
   return (
     <div className="overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm hover:shadow-lg transition-shadow duration-300">
-      <div className="flex flex-col lg:flex-row">
+      <div className="flex flex-col lg:flex-row items-stretch">
         {/* Hero panel — clickable into the category */}
         <Link
           href={`/marketplace?category=${c.slug}`}
-          className="group relative overflow-hidden lg:w-[320px] flex-shrink-0 p-6 sm:p-7 text-white flex flex-col justify-between"
+          className="group relative overflow-hidden lg:w-[300px] flex-shrink-0 p-6 sm:p-7 text-white flex flex-col justify-between"
           style={{ background: `linear-gradient(135deg, ${c.accent}, ${c.accent}cc)` }}
         >
           <Icon className="absolute -bottom-7 -right-6 w-44 h-44 text-white/10 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3" strokeWidth={1.1} />
@@ -55,18 +55,18 @@ function Row({ c }: { c: MallCat }) {
         </Link>
 
         {/* Sliding product rail */}
-        <div className="relative flex-1 min-w-0 bg-gray-50/50">
+        <div className="relative flex-1 min-w-0 flex items-center bg-gray-50/50 py-3">
           {c.products.length > 4 && (
             <>
               <button
                 type="button" aria-label="Previous" onClick={() => slide(-1)}
-                className="hidden sm:flex absolute left-2 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-white shadow-md border border-gray-100 items-center justify-center text-gray-600 hover:text-[#0B1F4D] hover:scale-105 transition"
+                className="hidden sm:flex absolute left-2 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full bg-white shadow-md border border-gray-100 items-center justify-center text-gray-600 hover:text-[#0B1F4D] hover:scale-105 transition"
               >
                 <ChevronLeft className="w-5 h-5" />
               </button>
               <button
                 type="button" aria-label="Next" onClick={() => slide(1)}
-                className="hidden sm:flex absolute right-2 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-white shadow-md border border-gray-100 items-center justify-center text-gray-600 hover:text-[#0B1F4D] hover:scale-105 transition"
+                className="hidden sm:flex absolute right-2 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full bg-white shadow-md border border-gray-100 items-center justify-center text-gray-600 hover:text-[#0B1F4D] hover:scale-105 transition"
               >
                 <ChevronRight className="w-5 h-5" />
               </button>
@@ -74,14 +74,14 @@ function Row({ c }: { c: MallCat }) {
           )}
           <div
             ref={ref}
-            className="flex gap-3 overflow-x-auto scroll-smooth snap-x snap-mandatory p-3 sm:px-12"
+            className="flex gap-3 overflow-x-auto scroll-smooth snap-x px-3 sm:px-14"
             style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
           >
             {c.products.map((p, i) => (
               <Link
                 key={`${p.slug}-${i}`}
                 href={`/product/${p.slug}`}
-                className="group/tile snap-start flex-shrink-0 w-[140px] rounded-2xl bg-white border border-gray-100 overflow-hidden hover:border-gray-300 hover:shadow-md transition-all"
+                className="group/tile snap-start flex-shrink-0 w-[142px] rounded-2xl bg-white border border-gray-100 overflow-hidden hover:border-gray-300 hover:shadow-md transition-all"
               >
                 <div className="aspect-square bg-white flex items-center justify-center overflow-hidden">
                   {p.img ? (
@@ -91,7 +91,7 @@ function Row({ c }: { c: MallCat }) {
                     <Package className="w-7 h-7 text-gray-200" />
                   )}
                 </div>
-                <div className="px-2.5 pb-2.5 pt-1">
+                <div className="px-2.5 pb-2.5 pt-1 border-t border-gray-50">
                   <p className="text-[11px] font-medium text-gray-600 leading-tight line-clamp-2 h-[28px]">{p.name}</p>
                   <p className="text-sm font-extrabold text-[#0B1F4D] mt-1">{price(p.priceCents, p.currency)}</p>
                 </div>
@@ -100,6 +100,20 @@ function Row({ c }: { c: MallCat }) {
           </div>
         </div>
       </div>
+
+      {/* Footer — category name + view all */}
+      <Link
+        href={`/marketplace?category=${c.slug}`}
+        className="flex items-center justify-between gap-3 px-5 sm:px-6 py-3 border-t border-gray-100 bg-white hover:bg-gray-50/70 transition-colors"
+      >
+        <span className="inline-flex items-center gap-2 font-extrabold text-sm" style={{ color: c.accent }}>
+          <span className="w-2 h-2 rounded-full" style={{ background: c.accent }} />
+          {c.name}
+        </span>
+        <span className="inline-flex items-center gap-1 text-xs sm:text-sm font-bold text-gray-500 hover:text-[#0B1F4D]">
+          View all {c.count} products <ArrowRight className="w-4 h-4" />
+        </span>
+      </Link>
     </div>
   )
 }
