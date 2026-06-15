@@ -21,6 +21,36 @@ import type { Category } from '@/types/domain'
 
 const PAGE_SIZE = 24
 const SECTION_LIMIT = 8 // products shown per category in the grouped "All Products" view
+const SUB_SECTION_LIMIT = 10 // products shown per sub-category section on a category page
+
+function ChevronRight() {
+  return (
+    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+    </svg>
+  )
+}
+
+// Coloured banner header used by both the homepage category sections and the
+// per-category sub-section rows (Smartphones, Audio…). Keeps classification visible.
+function CatBanner({ name, subs, accent, href, ctaLabel }: {
+  name: string; subs?: string; accent: string; href?: string; ctaLabel?: string
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3 mb-4 rounded-xl px-4 py-3"
+      style={{ background: `${accent}0F`, borderLeft: `4px solid ${accent}` }}>
+      <div className="min-w-0">
+        <h2 className="text-lg sm:text-xl font-extrabold leading-tight" style={{ color: accent }}>{name}</h2>
+        {subs ? <p className="text-xs text-gray-500 truncate mt-0.5">{subs}</p> : null}
+      </div>
+      {href ? (
+        <Link href={href} className="flex-shrink-0 text-sm font-bold whitespace-nowrap inline-flex items-center gap-1 hover:gap-2 transition-all" style={{ color: accent }}>
+          {ctaLabel ?? 'Explore'} <ChevronRight />
+        </Link>
+      ) : null}
+    </div>
+  )
+}
 
 // Accent colour per root category (falls back to brand navy).
 const CAT_ACCENT: Record<string, string> = {
@@ -307,6 +337,32 @@ export default async function MarketplacePage({
       .slice(0, 9)
   }
 
+  // ── Sub-category sections for a category page ──────────────────────────────
+  // When a buyer opens a category (e.g. Electronics), don't dump every product in
+  // one flat wall (49 iPhones first…). Break it into sub-category sections —
+  // Smartphones, Audio, Chargers… — each capped with a "view all" drill-down.
+  const activeCatChildren = activeCat ? (childMap[activeCat.id] ?? []) : []
+  const subSections: { cat: { id: string; name: string; slug: string }; families: typeof families }[] = []
+  if (activeCat) {
+    const famByCat = new Map<string, typeof families>()
+    for (const fam of families) {
+      const cid = (fam.representative as any).category_id
+      if (!cid) continue
+      if (!famByCat.has(cid)) famByCat.set(cid, [])
+      famByCat.get(cid)!.push(fam)
+    }
+    const orderedChildren = [...activeCatChildren].sort((a: any, b: any) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+    for (const ch of orderedChildren) {
+      const fams = famByCat.get((ch as any).id)
+      if (fams && fams.length) subSections.push({ cat: ch as any, families: fams })
+    }
+    // Products attached straight to the parent category (no sub-category chosen).
+    const direct = famByCat.get(activeCat.id)
+    if (direct && direct.length) subSections.push({ cat: { id: activeCat.id, name: `More ${activeCat.name}`, slug: activeCat.slug }, families: direct })
+  }
+  const childSections = subSections.filter((s) => s.cat.id !== activeCat?.id)
+  const showSubSections = childSections.length > 0
+
   // ── SHOPS view (Phase 1) — verified business profiles, filtered by category + country ──
   let shops: ShopCardData[] = []
   if (activeView === 'shops') {
@@ -370,9 +426,11 @@ export default async function MarketplacePage({
           </>
         ) : (
           <>
-            <h1 className="text-2xl font-bold">Wholesale Marketplace</h1>
+            <h1 className="text-2xl font-bold">{categoryLabel ?? 'Wholesale Marketplace'}</h1>
             <p className="text-muted-foreground text-sm mt-1">
-              {totalProducts} products from verified suppliers
+              {categoryLabel
+                ? `${totalProducts} products · browse by section below`
+                : `${totalProducts} products from verified suppliers`}
             </p>
           </>
         )}
@@ -484,6 +542,37 @@ export default async function MarketplacePage({
               )
             }
 
+            // Category page → sub-category sections (Smartphones, Audio…) instead of a flat wall.
+            if (showSubSections) {
+              const accent = CAT_ACCENT[activeCat!.slug] ?? '#0B1F4D'
+              return (
+                <div className="space-y-10">
+                  {subSections.map(({ cat, families: fams }) => {
+                    const isDirect = cat.id === activeCat!.id
+                    const href = `/marketplace?category=${cat.slug}${activeRegion ? `&region=${activeRegion}` : ''}`
+                    return (
+                      <section key={cat.id}>
+                        <CatBanner
+                          name={cat.name}
+                          accent={accent}
+                          href={isDirect ? undefined : href}
+                          ctaLabel={fams.length > SUB_SECTION_LIMIT ? `View all ${fams.length}` : 'View all'}
+                        />
+                        <ProductGrid>{fams.slice(0, SUB_SECTION_LIMIT).map(renderCard)}</ProductGrid>
+                        {!isDirect && fams.length > SUB_SECTION_LIMIT && (
+                          <div className="mt-4 text-center">
+                            <Link href={href} className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-5 py-2.5 text-sm font-bold text-[#0B1F4D] hover:border-[#0B1F4D] transition-colors">
+                              View all {fams.length} in {cat.name}
+                            </Link>
+                          </div>
+                        )}
+                      </section>
+                    )
+                  })}
+                </div>
+              )
+            }
+
             if (isGroupedView && categorySections.length > 0) {
               return (
                 <div className="space-y-12">
@@ -493,19 +582,7 @@ export default async function MarketplacePage({
                     const href = `/marketplace?category=${cat.slug}${activeRegion ? `&region=${activeRegion}` : ''}`
                     return (
                       <section key={cat.id}>
-                        <div className="flex items-end justify-between gap-3 mb-4">
-                          <div className="flex items-center gap-3 min-w-0">
-                            <span className="w-1.5 h-9 rounded-full flex-shrink-0" style={{ background: accent }} />
-                            <div className="min-w-0">
-                              <h2 className="text-xl font-extrabold text-[#0B1F4D] leading-tight">{cat.name}</h2>
-                              {subs && <p className="text-xs text-gray-400 truncate">{subs}</p>}
-                            </div>
-                          </div>
-                          <Link href={href} className="text-sm font-bold whitespace-nowrap inline-flex items-center gap-1 hover:gap-2 transition-all" style={{ color: accent }}>
-                            Explore Category
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" /></svg>
-                          </Link>
-                        </div>
+                        <CatBanner name={cat.name} subs={subs} accent={accent} href={href} ctaLabel="Explore Category" />
                         <ProductGrid>{fams.slice(0, SECTION_LIMIT).map(renderCard)}</ProductGrid>
                         {fams.length > SECTION_LIMIT && (
                           <div className="mt-4 text-center">
