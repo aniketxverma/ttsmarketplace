@@ -327,12 +327,27 @@ export default async function MarketplacePage({
   }
   const mallCats: MallCat[] = isGroupedView
     ? categorySections.map(({ cat, families: fams }) => {
-        const thumbs = fams
+        // Round-robin across sub-categories so the rail shows variety (a phone,
+        // a cable, a charger, audio…) instead of five of the same product line.
+        const bySub = new Map<string, typeof fams>()
+        for (const f of fams) {
+          const cid = (f.representative as any).category_id || cat.id
+          if (!bySub.has(cid)) bySub.set(cid, [])
+          bySub.get(cid)!.push(f)
+        }
+        const lists = Array.from(bySub.values()).map((l) => l.slice())
+        const varied: typeof fams = []
+        while (varied.length < 18 && lists.some((l) => l.length)) {
+          for (const l of lists) { if (l.length) { varied.push(l.shift()!); if (varied.length >= 18) break } }
+        }
+        const products = varied
           .map((f) => {
-            const imgs = ((f.representative as any).product_images ?? []) as { url: string; sort_order: number }[]
-            return imgs.slice().sort((a, b) => a.sort_order - b.sort_order)[0]?.url ?? ''
+            const p = f.representative as any
+            const imgs = (p.product_images ?? []) as { url: string; sort_order: number }[]
+            const img = imgs.slice().sort((a, b) => a.sort_order - b.sort_order)[0]?.url ?? ''
+            return { slug: p.slug ?? p.id, name: p.name as string, img, priceCents: p.price_cents as number, currency: (p.currency_code as string) ?? 'EUR' }
           })
-          .filter(Boolean)
+          .filter((p) => p.img)
         return {
           name: cat.name,
           slug: cat.slug,
@@ -340,7 +355,7 @@ export default async function MarketplacePage({
           icon: MALL_ICON[cat.slug] ?? 'package',
           count: subtreeCount.get(cat.id) ?? fams.length,
           subs: (childMap[cat.id] ?? []).slice(0, 6).map((c) => c.name),
-          thumbs: thumbs.slice(0, 5),
+          products,
         }
       })
     : []
