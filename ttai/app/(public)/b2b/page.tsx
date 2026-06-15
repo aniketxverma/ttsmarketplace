@@ -16,6 +16,11 @@ import { localizeCategoryNames } from '@/lib/i18n/categories'
 import { getLocale } from '@/lib/i18n/server'
 import type { Category } from '@/types/domain'
 
+const CAT_ACCENT: Record<string, string> = {
+  'electronics-technology': '#2563eb', 'food-beverage': '#ea580c',
+  'cleaning-household': '#16a34a', 'automotive-transport': '#52525b',
+}
+
 const TIER: Record<string, { label: string; Icon: typeof Crown; bg: string; text: string }> = {
   GOLD:       { label: 'Gold Verified',     Icon: Crown,       bg: 'bg-amber-100',  text: 'text-amber-700' },
   SILVER:     { label: 'Verified',          Icon: ShieldCheck, bg: 'bg-gray-100',   text: 'text-gray-600'  },
@@ -79,7 +84,7 @@ export default async function B2BPage({
   let productQuery = (supabase
     .from('products') as any)
     .select(
-      `id, name, slug, price_cents, currency_code, min_order_qty, marketplace_context, vat_rate, brand_name,
+      `id, name, slug, price_cents, currency_code, min_order_qty, marketplace_context, vat_rate, brand_name, category_id,
       suppliers!supplier_id!inner(legal_name, trade_name, reliability_tier, status),
       product_images(url, sort_order)`
     )
@@ -134,6 +139,29 @@ export default async function B2BPage({
   const from = (page - 1) * PAGE_SIZE
   const products = deduped.slice(from, from + PAGE_SIZE)
 
+  // ── Category-grouped sections (like the marketplace) ──────────────────────
+  // On the main catalogue (no filter) show one banner section per category —
+  // Electronics, then Food, then Cleaning… — capped with a "view all" drill-down,
+  // instead of a flat wall mixing every category together.
+  const rootOf = (cid?: string | null): any => {
+    let c = cid ? catById[cid] : null
+    for (let i = 0; c && c.parent_id && i < 10; i++) c = catById[c.parent_id]
+    return c ?? null
+  }
+  const SECTION_CAP = 10
+  const isGrouped = !searchParams.category && !searchParams.q && !searchParams.supplier
+  const sections: { root: any; items: any[] }[] = []
+  if (isGrouped) {
+    const byRoot = new Map<string, { root: any; items: any[] }>()
+    for (const p of deduped as any[]) {
+      const r = rootOf(p.category_id)
+      if (!r) continue
+      if (!byRoot.has(r.id)) byRoot.set(r.id, { root: r, items: [] })
+      byRoot.get(r.id)!.items.push(p)
+    }
+    sections.push(...Array.from(byRoot.values()).sort((a, b) => ordKey(a.root.id) - ordKey(b.root.id)))
+  }
+
   return (
     <div className="min-h-screen bg-white">
 
@@ -171,7 +199,47 @@ export default async function B2BPage({
 
             {/* Grid */}
             <div className="flex-1 min-w-0">
-              {(products?.length ?? 0) > 0 ? (
+              {isGrouped && sections.length > 0 ? (
+                <div className="space-y-10">
+                  {sections.map(({ root, items }) => {
+                    const accent = CAT_ACCENT[root.slug] ?? '#0B1F4D'
+                    const href = `/b2b?category=${root.slug}`
+                    const supplier = (p: any) => p.suppliers as unknown as { legal_name: string; trade_name: string | null; reliability_tier: import('@/types/domain').ReliabilityTier }
+                    return (
+                      <section key={root.id}>
+                        <div className="flex items-center justify-between gap-3 mb-4 rounded-xl px-4 py-3"
+                          style={{ background: `${accent}0F`, borderLeft: `4px solid ${accent}` }}>
+                          <h2 className="text-lg sm:text-xl font-extrabold leading-tight" style={{ color: accent }}>
+                            {root.name} <span className="text-sm font-bold opacity-60">· {items.length}</span>
+                          </h2>
+                          {items.length > SECTION_CAP && (
+                            <Link href={href} className="flex-shrink-0 text-sm font-bold whitespace-nowrap inline-flex items-center gap-1 hover:gap-2 transition-all" style={{ color: accent }}>
+                              View all {items.length} <ArrowRight className="w-4 h-4" />
+                            </Link>
+                          )}
+                        </div>
+                        <ProductGrid>
+                          {items.slice(0, SECTION_CAP).map((p) => {
+                            const images = p.product_images as { url: string; sort_order: number }[]
+                            const mainImg = images?.slice().sort((a, b) => a.sort_order - b.sort_order)[0]?.url
+                            return (
+                              <ProductCard key={p.id} product={p as Parameters<typeof ProductCard>[0]['product']}
+                                supplier={supplier(p)} mainImageUrl={mainImg} href={`/product/${p.slug ?? p.id}?shop=b2b`} shop="b2b" brand={p.brand_name ?? null} />
+                            )
+                          })}
+                        </ProductGrid>
+                        {items.length > SECTION_CAP && (
+                          <div className="mt-4 text-center">
+                            <Link href={href} className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-5 py-2.5 text-sm font-bold text-[#0B1F4D] hover:border-[#0B1F4D] transition-colors">
+                              View all {items.length} in {root.name}
+                            </Link>
+                          </div>
+                        )}
+                      </section>
+                    )
+                  })}
+                </div>
+              ) : (products?.length ?? 0) > 0 ? (
                 <>
                   <ProductGrid>
                     {products!.map((p) => {
@@ -179,7 +247,7 @@ export default async function B2BPage({
                         legal_name: string; trade_name: string | null; reliability_tier: import('@/types/domain').ReliabilityTier
                       }
                       const images = p.product_images as { url: string; sort_order: number }[]
-                      const mainImg = images?.sort((a, b) => a.sort_order - b.sort_order)[0]?.url
+                      const mainImg = images?.slice().sort((a, b) => a.sort_order - b.sort_order)[0]?.url
                       return (
                         <ProductCard
                           key={p.id}
