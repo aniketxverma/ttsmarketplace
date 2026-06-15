@@ -157,45 +157,10 @@ export default async function MarketplacePage({
         .map((c: any) => ({ ...c, count: subtreeCount.get(c.id) ?? 0 })),
     }))
 
-  let productQuery = (supabase
-    .from('products') as any)
-    .select(
-      `id, name, slug, price_cents, retail_price_cents, currency_code, min_order_qty, marketplace_context, vat_rate,
-      supplier_id, category_id, product_line, is_family_cover,
-      suppliers!supplier_id!inner(legal_name, trade_name, reliability_tier, status, countries(name, iso_code)),
-      categories(name, slug),
-      product_images(url, sort_order)`
-    )
-    .eq('is_published', true)
-    .eq('suppliers.status', 'ACTIVE')
-    .in('marketplace_context', ['wholesale', 'both'])
-
-  // Scoped to a single supplier (e.g. arriving from a brand's "Shop B2B")
-  if (activeSupplier) productQuery = productQuery.eq('supplier_id', activeSupplier)
-
-  // Europe country banner — filter by the supplier's country (inherited per product).
-  if (activeCountryId) productQuery = productQuery.eq('suppliers.country_id', activeCountryId)
-
-  if (searchParams.category) {
-    const cat = allCats.find((c) => c.slug === searchParams.category)
-    if (cat) {
-      // Include the category itself + its subcategories so a main industry shows all its products
-      const childIds = allCats.filter((c) => c.parent_id === cat.id).map((c) => c.id)
-      productQuery = productQuery.in('category_id', [cat.id, ...childIds])
-    } else {
-      // Unknown category slug (e.g. taxonomy migration not yet run) → show no products
-      // rather than silently showing everything.
-      productQuery = productQuery.eq('category_id', '00000000-0000-0000-0000-000000000000')
-    }
-  }
-
-  if (searchParams.q) {
-    productQuery = productQuery.ilike('name', `%${searchParams.q}%`)
-  }
-
-  // Region filter — products from suppliers who serve the chosen region (automatic placement).
-  // A country key like "europe:spain" must ALSO match suppliers who serve the whole region
-  // ("europe") — serving all of Europe means serving Spain too.
+  // Region filter — resolve the supplier ids serving the chosen region up front.
+  // A country key like "europe:spain" must ALSO match suppliers who serve the whole
+  // region ("europe") — serving all of Europe means serving Spain too.
+  let regionSupplierIds: string[] | null = null
   if (activeRegion) {
     const parentRegion = activeRegion.includes(':') ? activeRegion.split(':')[0] : null
     const ors = [`region_key.eq.${activeRegion}`, `region_key.like.${activeRegion}:%`]
@@ -203,14 +168,52 @@ export default async function MarketplacePage({
     const { data: srRows } = await (supabase.from('supplier_regions') as any)
       .select('supplier_id')
       .or(ors.join(','))
-    const ids = Array.from(new Set((srRows ?? []).map((r: any) => r.supplier_id)))
-    productQuery = productQuery.in('supplier_id', ids.length ? ids : ['00000000-0000-0000-0000-000000000000'])
+    regionSupplierIds = Array.from(new Set((srRows ?? []).map((r: any) => r.supplier_id)))
+    if (!regionSupplierIds.length) regionSupplierIds = ['00000000-0000-0000-0000-000000000000']
   }
 
-  // Fetch matching products, then collapse into families (one card per type).
-  const { data: allProducts } = await productQuery
-    .order('created_at', { ascending: false })
-    .limit(2000)
+  // Build a fresh, fully-filtered product query (rebuilt per page so we can paginate).
+  const mkQuery = () => {
+    let q = (supabase.from('products') as any)
+      .select(
+        `id, name, slug, price_cents, retail_price_cents, currency_code, min_order_qty, marketplace_context, vat_rate,
+        supplier_id, category_id, product_line, is_family_cover,
+        suppliers!supplier_id!inner(legal_name, trade_name, reliability_tier, status, countries(name, iso_code)),
+        categories(name, slug),
+        product_images(url, sort_order)`
+      )
+      .eq('is_published', true)
+      .eq('suppliers.status', 'ACTIVE')
+      .in('marketplace_context', ['wholesale', 'both'])
+    if (activeSupplier) q = q.eq('supplier_id', activeSupplier)
+    if (activeCountryId) q = q.eq('suppliers.country_id', activeCountryId)
+    if (searchParams.category) {
+      const cat = allCats.find((c) => c.slug === searchParams.category)
+      if (cat) {
+        const childIds = allCats.filter((c) => c.parent_id === cat.id).map((c) => c.id)
+        q = q.in('category_id', [cat.id, ...childIds])
+      } else {
+        q = q.eq('category_id', '00000000-0000-0000-0000-000000000000')
+      }
+    }
+    if (searchParams.q) q = q.ilike('name', `%${searchParams.q}%`)
+    if (regionSupplierIds) q = q.in('supplier_id', regionSupplierIds)
+    return q
+  }
+
+  // Supabase caps a single response at ~1000 rows, so paginate to pull the whole
+  // catalogue — otherwise the newest category (e.g. 1,392 XO items) fills the cap
+  // and older categories (Food, Cleaning…) silently vanish from the grouped view.
+  const PAGE = 1000
+  const allProducts: any[] = []
+  for (let off = 0; off < 6000; off += PAGE) {
+    const { data: pageRows } = await mkQuery()
+      .order('created_at', { ascending: false })
+      .range(off, off + PAGE - 1)
+    if (!pageRows || !pageRows.length) break
+    allProducts.push(...pageRows)
+    if (pageRows.length < PAGE) break
+  }
 
   const prodList = (allProducts ?? []) as any[]
 
