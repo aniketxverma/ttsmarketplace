@@ -16,6 +16,7 @@ import { ShoppingChannels } from '@/components/marketplace/ShoppingChannels'
 import { MarketplaceTopBar } from '@/components/marketplace/MarketplaceTopBar'
 import { ShopCard, type ShopCardData } from '@/components/marketplace/ShopCard'
 import { CategoryMall, type MallCat } from '@/components/marketplace/CategoryMall'
+import { SupplierShopHeader } from '@/components/marketplace/SupplierShopHeader'
 import { getMarketplaceOpen } from '@/lib/marketplace-phase'
 import { OpeningSoon } from '@/components/OpeningSoon'
 import { Smartphone, UtensilsCrossed, Car, SprayCan, Package } from 'lucide-react'
@@ -119,13 +120,17 @@ export default async function MarketplacePage({
   const locale = await getLocale()
   const allCats = await localizeCategoryNames(categoriesRes.data ?? [], locale)
 
-  // When scoped to one supplier, show their name in the header.
-  let scopedSupplierName: string | null = null
+  // When scoped to one supplier, this is their SHOP — load full shop data so the
+  // buyer is guided to order everything from this one supplier (the core model:
+  // we introduce buyers to suppliers, the supplier sells their whole catalogue).
+  let shopSupplier: any = null
   if (activeSupplier) {
-    const { data: s } = await (supabase.from('suppliers') as any)
-      .select('trade_name, legal_name').eq('id', activeSupplier).maybeSingle()
-    scopedSupplierName = s?.trade_name ?? s?.legal_name ?? null
+    const sel = (cols: string) => (supabase.from('suppliers') as any).select(cols).eq('id', activeSupplier).maybeSingle()
+    let r = await sel('id, trade_name, legal_name, logo_url, brand_slug, tagline, description, reliability_tier, whatsapp, min_order_value_cents, catalogue_url, video_url, countries(name, iso_code), cities(name)')
+    if (r.error) r = await sel('id, trade_name, legal_name, logo_url, brand_slug, reliability_tier, countries(name, iso_code)')
+    shopSupplier = r.data ?? null
   }
+  const scopedSupplierName: string | null = shopSupplier ? (shopSupplier.trade_name ?? shopSupplier.legal_name ?? null) : null
   // Pending (supplier-requested, not yet approved) categories stay hidden publicly.
   const isActiveCat = (c: any) => (c.status ?? 'active') === 'active'
   const roots = allCats.filter((c) => c.parent_id === null && isActiveCat(c)) as Category[]
@@ -360,6 +365,24 @@ export default async function MarketplacePage({
       })
     : []
 
+  // Supplier Shop sections — group THIS supplier's catalogue into their own
+  // sections (like aisles in a store) so the buyer browses & orders it all here.
+  const supplierShopSections: { cat: any; families: typeof families }[] = []
+  if (activeSupplier) {
+    const byCat = new Map<string, typeof families>()
+    for (const f of families) {
+      const cid = (f.representative as any).category_id || '_'
+      if (!byCat.has(cid)) byCat.set(cid, [])
+      byCat.get(cid)!.push(f)
+    }
+    const entries = Array.from(byCat.entries()).map(([cid, fams]) => ({
+      cat: catById.get(cid) ?? { id: cid, name: 'Products', slug: '' },
+      families: fams,
+    }))
+    entries.sort((a, b) => ordKey(a.cat.id) - ordKey(b.cat.id))
+    supplierShopSections.push(...entries)
+  }
+
   const promotions = (promotionsRes.data ?? []) as unknown as Parameters<typeof PromotionBanner>[0]['promotions']
 
   // ── Suppliers active in the selected category (so buyers see profiles, not just products) ──
@@ -466,17 +489,11 @@ export default async function MarketplacePage({
 
   return (
     <div className="container mx-auto px-4 py-8">
+      {/* Supplier Shop — the buyer has been guided to one supplier; order it all here. */}
+      {shopSupplier && <SupplierShopHeader s={shopSupplier} productCount={totalProducts} />}
+
       <div className="mb-6">
-        {scopedSupplierName ? (
-          <>
-            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#F5A623] mb-1">
-              <span>Wholesale shop</span>
-              <Link href="/marketplace" className="text-gray-400 hover:text-[#0B1F4D] normal-case font-semibold tracking-normal">· all suppliers</Link>
-            </div>
-            <h1 className="text-2xl font-bold">{scopedSupplierName}</h1>
-            <p className="text-muted-foreground text-sm mt-1">{totalProducts} wholesale products · buy by piece, box, pallet or truck</p>
-          </>
-        ) : (
+        {scopedSupplierName ? null : (
           <>
             <h1 className="text-2xl font-bold">{categoryLabel ?? 'Wholesale Marketplace'}</h1>
             <p className="text-muted-foreground text-sm mt-1">
@@ -609,6 +626,36 @@ export default async function MarketplacePage({
               return (
                 <ProductCard key={p.id} product={p as Parameters<typeof ProductCard>[0]['product']}
                   supplier={supplier} mainImageUrl={mainImg} href={href} shop="market" brand={brand} sponsored={sponsored} minOrderCents={minOrderCents} offerCount={offerCount} />
+              )
+            }
+
+            // Supplier Shop → the supplier's whole catalogue in their own sections.
+            if (activeSupplier && supplierShopSections.length > 0) {
+              return (
+                <div className="space-y-10">
+                  {supplierShopSections.map(({ cat, families: fams }) => {
+                    const href = cat.slug ? `/marketplace?supplier=${activeSupplier}&category=${cat.slug}` : undefined
+                    const accent = CAT_ACCENT[rootOf(cat.id)?.slug] ?? '#0B1F4D'
+                    return (
+                      <section key={cat.id}>
+                        <CatBanner
+                          name={cat.name}
+                          accent={accent}
+                          href={href && fams.length > SUB_SECTION_LIMIT ? href : undefined}
+                          ctaLabel={`View all ${fams.length}`}
+                        />
+                        <ProductGrid>{fams.slice(0, SUB_SECTION_LIMIT).map(renderCard)}</ProductGrid>
+                        {href && fams.length > SUB_SECTION_LIMIT && (
+                          <div className="mt-4 text-center">
+                            <Link href={href} className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-5 py-2.5 text-sm font-bold text-[#0B1F4D] hover:border-[#0B1F4D] transition-colors">
+                              View all {fams.length} in {cat.name}
+                            </Link>
+                          </div>
+                        )}
+                      </section>
+                    )
+                  })}
+                </div>
               )
             }
 
