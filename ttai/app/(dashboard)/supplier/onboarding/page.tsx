@@ -9,13 +9,15 @@ type Step = 1 | 2 | 3 | 4
 
 interface FormState {
   legalName: string; tradeName: string; taxId: string; vatNumber: string
-  countryId: string; cityId: string; addressLine1: string; addressLine2: string; postalCode: string
+  countryId: string; provinceId: string; cityId: string; newProvince: string; newCity: string
+  addressLine1: string; addressLine2: string; postalCode: string
   marketplaceContext: 'wholesale' | 'retail' | 'both'; description: string
 }
 
 const INITIAL: FormState = {
   legalName: '', tradeName: '', taxId: '', vatNumber: '',
-  countryId: '', cityId: '', addressLine1: '', addressLine2: '', postalCode: '',
+  countryId: '', provinceId: '', cityId: '', newProvince: '', newCity: '',
+  addressLine1: '', addressLine2: '', postalCode: '',
   marketplaceContext: 'wholesale', description: '',
 }
 
@@ -33,6 +35,8 @@ export default function SupplierOnboardingPage() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [countries, setCountries] = useState<{ id: string; name: string }[]>([])
+  const [provinces, setProvinces] = useState<{ id: string; name: string }[]>([])
+  const [cities, setCities] = useState<{ id: string; name: string }[]>([])
   const [loaded, setLoaded] = useState(false)
 
   async function loadCountries() {
@@ -42,9 +46,29 @@ export default function SupplierOnboardingPage() {
     setCountries(data ?? [])
     setLoaded(true)
   }
+  async function loadProvinces(cid: string) {
+    const supabase = createClient()
+    const { data } = await supabase.from('provinces').select('id, name').eq('country_id', cid).order('name')
+    setProvinces(data ?? [])
+  }
+  async function loadCities(pid: string) {
+    const supabase = createClient()
+    const { data } = await supabase.from('cities').select('id, name').eq('province_id', pid).order('name')
+    setCities(data ?? [])
+  }
 
   function update(field: keyof FormState, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }))
+  }
+  function onCountry(v: string) {
+    setForm((p) => ({ ...p, countryId: v, provinceId: '', cityId: '', newProvince: '', newCity: '' }))
+    setProvinces([]); setCities([])
+    if (v) loadProvinces(v)
+  }
+  function onProvince(v: string) {
+    setForm((p) => ({ ...p, provinceId: v, cityId: '', newCity: '' }))
+    setCities([])
+    if (v && v !== '__new__') loadCities(v)
   }
 
   function validateStep(): boolean {
@@ -63,13 +87,14 @@ export default function SupplierOnboardingPage() {
     setError(null)
     setLoading(true)
 
+    const selectedCityId = form.cityId && form.cityId !== '__new__' ? form.cityId : undefined
     const parsed = createSupplierSchema.safeParse({
       legalName:          form.legalName,
       tradeName:          form.tradeName || undefined,
       taxId:              form.taxId,
       vatNumber:          form.vatNumber || undefined,
       countryId:          form.countryId,
-      cityId:             form.cityId || undefined,
+      cityId:             selectedCityId,
       addressLine1:       form.addressLine1 || undefined,
       postalCode:         form.postalCode || undefined,
       marketplaceContext: form.marketplaceContext,
@@ -107,6 +132,23 @@ export default function SupplierOnboardingPage() {
     }
 
     await supabase.from('profiles').update({ role: 'supplier' }).eq('id', user.id)
+
+    // Assign province / city — auto-creating any new place the supplier typed, so
+    // the location map (Country → Province → City) fills itself on registration.
+    const provSel = form.provinceId && form.provinceId !== '__new__' ? form.provinceId : null
+    if (provSel || selectedCityId || form.newProvince || form.newCity) {
+      await fetch('/api/supplier/brand', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          country_id: form.countryId,
+          province_id: provSel,
+          city_id: selectedCityId ?? null,
+          new_province: form.provinceId === '__new__' ? form.newProvince : '',
+          new_city: form.cityId === '__new__' ? form.newCity : '',
+        }),
+      }).catch(() => {})
+    }
+
     // Auto-place the supplier into their region/country (from profile continent + country)
     fetch('/api/supplier/sync-regions', { method: 'POST' }).catch(() => {})
     router.push('/supplier')
@@ -194,10 +236,35 @@ export default function SupplierOnboardingPage() {
               <h2 className="font-bold text-[#0B1F4D] text-base">Business Address</h2>
               <div className="space-y-1.5" onClick={loadCountries}>
                 <label className={labelCls}>Country *</label>
-                <select className={inputCls} value={form.countryId} onChange={(e) => update('countryId', e.target.value)} onFocus={loadCountries}>
+                <select className={inputCls} value={form.countryId} onChange={(e) => onCountry(e.target.value)} onFocus={loadCountries}>
                   <option value="">Select country...</option>
                   {countries.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
+              </div>
+              {/* Province + City — pick or add a new one (auto-created on submit) */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className={labelCls}>Province</label>
+                  <select className={inputCls} value={form.provinceId} disabled={!form.countryId} onChange={(e) => onProvince(e.target.value)}>
+                    <option value="">{form.countryId ? 'Select…' : '—'}</option>
+                    {provinces.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                    {form.countryId && <option value="__new__">➕ Add new province…</option>}
+                  </select>
+                  {form.provinceId === '__new__' && (
+                    <input className={inputCls} placeholder="New province — e.g. Granada" value={form.newProvince} onChange={(e) => update('newProvince', e.target.value)} />
+                  )}
+                </div>
+                <div className="space-y-1.5">
+                  <label className={labelCls}>City / District</label>
+                  <select className={inputCls} value={form.cityId} disabled={!form.provinceId} onChange={(e) => update('cityId', e.target.value)}>
+                    <option value="">{form.provinceId ? 'Select…' : '—'}</option>
+                    {cities.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    {form.provinceId && <option value="__new__">➕ Add new city / district…</option>}
+                  </select>
+                  {form.cityId === '__new__' && (
+                    <input className={inputCls} placeholder="New city / district — e.g. Albaicín" value={form.newCity} onChange={(e) => update('newCity', e.target.value)} />
+                  )}
+                </div>
               </div>
               <div className="space-y-1.5">
                 <label className={labelCls}>Address Line 1</label>
