@@ -399,8 +399,9 @@ export default async function MarketplacePage({
         }
       })
     : []
-  // Most popular / biggest categories first (by product count) — not random.
-  mallCats.sort((a, b) => b.count - a.count)
+  // Order: admin priority first, then product count (popular) — never random.
+  const prioOf = (slug: string) => { const c: any = allCats.find((x) => x.slug === slug); return c?.priority ?? 0 }
+  mallCats.sort((a, b) => prioOf(b.slug) - prioOf(a.slug) || b.count - a.count)
 
   // Popular Brands strip — order known brands first, then by presence in catalogue.
   const BRAND_PRIORITY = ['Apple', 'Samsung', 'Xiaomi', 'Huawei', 'JBL', 'Sony', 'LG', 'Philips', 'Bosch', "De'Longhi", 'Dyson', 'Garmin', 'Fitbit', 'Realme', 'Anker', 'Google', 'Honor', 'Chtaura', 'Nestlé', 'Coca-Cola', 'Pepsi', 'Red Bull', 'Rozil', 'XO']
@@ -473,7 +474,7 @@ export default async function MarketplacePage({
       if (!famByCat.has(cid)) famByCat.set(cid, [])
       famByCat.get(cid)!.push(fam)
     }
-    const orderedChildren = [...activeCatChildren].sort((a: any, b: any) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+    const orderedChildren = [...activeCatChildren].sort((a: any, b: any) => (b.priority ?? 0) - (a.priority ?? 0) || (a.sort_order ?? 0) - (b.sort_order ?? 0))
     for (const ch of orderedChildren) {
       const fams = famByCat.get((ch as any).id)
       if (fams && fams.length) subSections.push({ cat: ch as any, families: fams })

@@ -3,6 +3,7 @@ import { requireRole } from '@/lib/auth/rbac'
 import { AddCategoryForm } from './AddCategoryForm'
 import { DeleteCategory } from './DeleteCategory'
 import { CategoryTemplateEditor } from './CategoryTemplateEditor'
+import { CategoryPriority } from './CategoryPriority'
 import { PendingCategories } from './PendingCategories'
 
 type Cat = {
@@ -26,7 +27,7 @@ export default async function AdminCategoriesPage() {
   let categories: Cat[] | null = null
   {
     const full = await (supabase.from('categories') as any)
-      .select('id, name, slug, depth, marketplace_context, sort_order, parent_id, status, requested_by, template_fields')
+      .select('id, name, slug, depth, marketplace_context, sort_order, parent_id, status, requested_by, template_fields, priority')
       .order('depth', { ascending: true }).order('sort_order', { ascending: true }).order('name', { ascending: true })
     if (!full.error) categories = full.data
     else {
@@ -88,6 +89,7 @@ export default async function AdminCategoriesPage() {
               <th className="text-left px-4 py-3 font-medium hidden sm:table-cell">Slug</th>
               <th className="text-left px-4 py-3 font-medium">Context</th>
               <th className="text-left px-4 py-3 font-medium hidden md:table-cell">Depth</th>
+              <th className="text-left px-4 py-3 font-medium" title="Higher = appears first">Priority</th>
               <th className="text-left px-4 py-3 font-medium">Fields</th>
               <th className="px-4 py-3" />
             </tr>
@@ -104,6 +106,7 @@ export default async function AdminCategoriesPage() {
                     </span>
                   </td>
                   <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">Root</td>
+                  <td className="px-4 py-3"><CategoryPriority id={root.id} initial={(root as any).priority ?? 0} /></td>
                   <td className="px-4 py-3">
                     <CategoryTemplateEditor categoryId={root.id} categoryName={root.name} initialFields={(root as any).template_fields ?? []} />
                   </td>
@@ -121,6 +124,7 @@ export default async function AdminCategoriesPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">Sub</td>
+                    <td className="px-4 py-3"><CategoryPriority id={child.id} initial={(child as any).priority ?? 0} /></td>
                     <td className="px-4 py-3">
                       <CategoryTemplateEditor categoryId={child.id} categoryName={child.name} initialFields={(child as any).template_fields ?? []} />
                     </td>
@@ -133,7 +137,7 @@ export default async function AdminCategoriesPage() {
             ))}
             {!roots.length && (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">No categories yet</td>
+                <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">No categories yet</td>
               </tr>
             )}
           </tbody>
