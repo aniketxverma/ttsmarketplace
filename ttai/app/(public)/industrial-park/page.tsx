@@ -29,13 +29,13 @@ export default async function IndustrialParkPage({ searchParams }: { searchParam
   const cities = activeCountry ? await safe<any[]>((supabase.from('cities') as any).select('id, name').eq('country_id', activeCountry.id).order('name'), []) : []
   const activeCity = cities.find((c: any) => c.id === (searchParams.city ?? '')) ?? null
 
-  // Industrial parks for the selected location. A city shows its parks; a country
-  // with no city shows one national zone (so it's never an empty screen).
+  // Industrial parks for the selected location. City → its parks; country → one
+  // national zone; nothing selected → a global zone with all companies (never empty).
   const parks = activeCity
     ? parksForCity(activeCity.name, activeCountry?.name)
     : activeCountry
       ? [{ slug: 'all', name: `${activeCountry.name} — Industrial Companies`, area: activeCountry.name, count: 0 }]
-      : []
+      : [{ slug: 'all', name: 'Global Industrial Companies', area: 'All countries', count: 0 }]
   const activePark = parks.find((p) => p.slug === searchParams.park) ?? parks[0] ?? null
 
   // Companies = B2B suppliers in the selected city (fallback: country).
