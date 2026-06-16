@@ -19,6 +19,7 @@ export type MallStore = {
   about: string | null
   whatsapp: string | null
   image: string
+  hours: string
   minOrder: string
   products: MallProduct[]
   productCount: number
@@ -50,7 +51,7 @@ function StoreCard({ s, onOpen }: { s: MallStore; onOpen: (s: MallStore) => void
       <div className="p-3">
         <div className="flex items-center justify-between text-xs mb-2.5">
           <span className="inline-flex items-center gap-1 font-bold text-amber-500"><Star className="w-3.5 h-3.5 fill-amber-400" />{s.rating} <span className="text-gray-400 font-medium">({s.reviews})</span></span>
-          <span className="inline-flex items-center gap-1 font-bold text-green-600"><span className="w-1.5 h-1.5 rounded-full bg-green-500" />Open 24 Hours</span>
+          <span className="inline-flex items-center gap-1 font-bold text-green-600"><span className="w-1.5 h-1.5 rounded-full bg-green-500" />{s.hours}</span>
         </div>
         <div className="flex items-center gap-1.5">
           {s.products.slice(0, 4).map((p, i) => (
@@ -108,7 +109,7 @@ function StoreDrawer({ s, onClose }: { s: MallStore; onClose: () => void }) {
           <img src={s.image} alt={s.name} className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
           <button onClick={onClose} className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 flex items-center justify-center text-gray-600 hover:bg-white"><X className="w-4 h-4" /></button>
-          {s.premium && <span className="absolute top-3 left-3 inline-flex items-center rounded-md bg-[#1f7a3a] px-2 py-0.5 text-[10px] font-extrabold text-white"><Clock className="w-3 h-3 mr-1" />24 HOURS</span>}
+          <span className="absolute top-3 left-3 inline-flex items-center rounded-md bg-[#1f7a3a] px-2 py-0.5 text-[10px] font-extrabold text-white"><Clock className="w-3 h-3 mr-1" />{s.hours}</span>
         </div>
 
         <div className="p-5">

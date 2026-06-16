@@ -335,8 +335,8 @@ export function BrandProfileEditor({ supplier, gallery: initialGallery, certific
               <Field label="Logo" hint="Square, at least 200×200px">
                 <ImageUpload value={form.logo_url || null} onChange={(url) => set('logo_url', url)} folder="logos" aspect="square" label="Logo" />
               </Field>
-              <Field label="Banner image" hint="Wide hero banner for your brand page (at least 1200×300px)">
-                <ImageUpload value={form.banner_image || null} onChange={(url) => set('banner_image', url)} folder="banners" aspect="wide" label="Banner" />
+              <Field label="Storefront / Banner photo" hint="Used as your shop window in the TTAI Shopping Mall + hero on your brand page (at least 1200×300px)">
+                <ImageUpload value={form.banner_image || null} onChange={(url) => set('banner_image', url)} folder="banners" aspect="wide" label="Storefront" />
               </Field>
             </div>
           </div>

@@ -49,7 +49,7 @@ export default async function ShoppingMallPage({ searchParams }: { searchParams:
 
   // ── Retail shops in this location ──
   let supQ = (supabase.from('suppliers') as any)
-    .select('id, legal_name, trade_name, logo_url, brand_slug, reliability_tier, tagline, description, country_id, city_id, whatsapp, min_order_value_cents, countries(name)')
+    .select('id, legal_name, trade_name, logo_url, banner_image, brand_slug, reliability_tier, tagline, description, country_id, city_id, whatsapp, working_hours, min_order_value_cents, countries(name)')
     .eq('status', 'ACTIVE').in('marketplace_context', ['retail', 'both'])
   if (activeCountry) supQ = supQ.eq('country_id', activeCountry.id)
   if (activeCity)    supQ = supQ.eq('city_id', activeCity.id)
@@ -66,12 +66,26 @@ export default async function ShoppingMallPage({ searchParams }: { searchParams:
   const prodBySup: Record<string, any[]> = {}
   for (const p of shopProdRows) (prodBySup[p.supplier_id] ||= []).push(p)
 
-  const STORE_IMG: Record<string, string> = {
-    'food-beverage': 'https://images.unsplash.com/photo-1488459716781-31db52582fe9?w=600&q=80',
-    'electronics-technology': 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=600&q=80',
-    'automotive-transport': 'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=600&q=80',
-    'cleaning-household': 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=600&q=80',
-    default: 'https://images.unsplash.com/photo-1555529669-e69e7aa0ba9a?w=600&q=80',
+  // Several storefront photos per category so each shop looks distinct until the
+  // supplier uploads their own (saved to banner_image in the dashboard).
+  const STORE_IMG: Record<string, string[]> = {
+    'food-beverage': [
+      'https://images.unsplash.com/photo-1488459716781-31db52582fe9?w=600&q=80',
+      'https://images.unsplash.com/photo-1542838132-92c53300491e?w=600&q=80',
+      'https://images.unsplash.com/photo-1534723452862-4c874018d66d?w=600&q=80',
+      'https://images.unsplash.com/photo-1521017432531-fbd92d768814?w=600&q=80',
+    ],
+    'electronics-technology': [
+      'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=600&q=80',
+      'https://images.unsplash.com/photo-1498049794561-7780e7231661?w=600&q=80',
+    ],
+    'automotive-transport': ['https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=600&q=80'],
+    'cleaning-household': ['https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=600&q=80'],
+    default: ['https://images.unsplash.com/photo-1555529669-e69e7aa0ba9a?w=600&q=80'],
+  }
+  const pickImg = (root: string, id: string) => {
+    const arr = STORE_IMG[root] ?? STORE_IMG.default
+    return arr[(id.charCodeAt(0) + id.charCodeAt(id.length - 1)) % arr.length]
   }
   const ROOT_ACCENT: Record<string, string> = {
     'food-beverage': '#ea580c', 'electronics-technology': '#2563eb',
@@ -98,7 +112,8 @@ export default async function ShoppingMallPage({ searchParams }: { searchParams:
       location: [activeCity?.name, activeCountry?.name].filter(Boolean).join(', ') || (s.countries as any)?.name || 'Local',
       about: s.description ?? s.tagline ?? null,
       whatsapp: s.whatsapp ?? null,
-      image: STORE_IMG[topRoot] ?? STORE_IMG.default,
+      image: s.banner_image || pickImg(topRoot, s.id),
+      hours: s.working_hours || 'Open 24 Hours',
       minOrder: s.min_order_value_cents ? money(s.min_order_value_cents) : '€15.00',
       products: products.slice(0, 8),
       productCount: ps.length,
