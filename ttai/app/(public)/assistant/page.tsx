@@ -30,9 +30,25 @@ export default async function AssistantPage() {
   const newPosts = await count((supabase.from('channel_posts') as any).select('id', { count: 'exact', head: true }).gte('created_at', weekAgo))
   const channels = await count((supabase.from('supplier_channels') as any).select('id', { count: 'exact', head: true }).eq('is_active', true))
 
-  const offers = await safe<any[]>((supabase.from('products') as any)
-    .select('id, name, slug, price_cents, currency_code, created_at, suppliers!supplier_id!inner(trade_name, legal_name, status, countries(name, iso_code)), product_images(url, sort_order)')
-    .eq('is_published', true).eq('suppliers.status', 'ACTIVE').order('created_at', { ascending: false }).limit(8), [])
+  // Today's Best Offers — spread across ALL categories (top from each), not just
+  // the newest (which would all be one category).
+  const allCats = await safe<any[]>(supabase.from('categories').select('id, parent_id'), [])
+  const catById: Record<string, any> = Object.fromEntries(allCats.map((c: any) => [c.id, c]))
+  const rootOf = (cid?: string | null): any => { let c = cid ? catById[cid] : null; for (let i = 0; c && c.parent_id && i < 8; i++) c = catById[c.parent_id]; return c ?? null }
+  const offerPool = await safe<any[]>((supabase.from('products') as any)
+    .select('id, name, slug, price_cents, currency_code, created_at, category_id, suppliers!supplier_id!inner(trade_name, legal_name, status, countries(name, iso_code)), product_images(url, sort_order)')
+    .eq('is_published', true).eq('suppliers.status', 'ACTIVE').order('created_at', { ascending: false }).limit(120), [])
+  const offersByRoot = new Map<string, any[]>()
+  for (const p of offerPool) {
+    const r = rootOf(p.category_id); const k = r?.id ?? '_'
+    if (!offersByRoot.has(k)) offersByRoot.set(k, [])
+    offersByRoot.get(k)!.push(p)
+  }
+  const offerLists = Array.from(offersByRoot.values())
+  const offers: any[] = []
+  while (offers.length < 8 && offerLists.some((l) => l.length)) {
+    for (const l of offerLists) { if (l.length) { offers.push(l.shift()); if (offers.length >= 8) break } }
+  }
 
   const posts = await safe<any[]>((supabase.from('channel_posts') as any)
     .select('id, content, image_url, post_type, created_at, supplier_channels(name)')

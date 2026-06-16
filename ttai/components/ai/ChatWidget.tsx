@@ -220,7 +220,7 @@ export function ChatWidget() {
             ? 'opacity-100 translate-y-0 scale-100 pointer-events-auto'
             : 'opacity-0 translate-y-6 scale-95 pointer-events-none'
         }`}
-        style={{ maxHeight: '580px' }}
+        style={{ maxHeight: '640px' }}
       >
         {/* Header */}
         <div
@@ -334,6 +334,16 @@ export function ChatWidget() {
             </div>
           </div>
         )}
+
+        {/* Quick suggestions — always available for fast, interactive prompts */}
+        <div className="px-4 pt-2.5 pb-0.5 flex gap-1.5 overflow-x-auto flex-shrink-0 bg-white" style={{ scrollbarWidth: 'none' }}>
+          {['🔎 Find iPhone suppliers', '🧴 Cheapest cleaning products', '📍 Suppliers in Spain', '🍴 Best food offers', '📦 Request a quote'].map((s) => (
+            <button key={s} onClick={() => sendMessage(s.replace(/^[^\w]+\s/, ''))} disabled={isLoading}
+              className="flex-shrink-0 rounded-full border border-gray-200 bg-gray-50 px-3 py-1.5 text-[11px] font-semibold text-gray-600 hover:border-[#0B1F4D] hover:text-[#0B1F4D] hover:bg-[#0B1F4D]/5 transition-colors disabled:opacity-50 whitespace-nowrap">
+              {s}
+            </button>
+          ))}
+        </div>
 
         {/* Input */}
         <div className="px-4 py-3 bg-white border-t border-gray-100 flex-shrink-0">
