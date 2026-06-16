@@ -229,3 +229,23 @@
     animation: sheen 5s linear infinite;
   }
 }
+
+/* ── TTAI Shopping Mall hero animations ── */
+@keyframes mallKenburns {
+  0%   { transform: scale(1.04) translate(0, 0); }
+  50%  { transform: scale(1.12) translate(-1.2%, -1.2%); }
+  100% { transform: scale(1.04) translate(0, 0); }
+}
+.animate-mall-kenburns { animation: mallKenburns 30s ease-in-out infinite; }
+
+@keyframes mallFloat {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-5px); }
+}
+.animate-mall-float { animation: mallFloat 3.5s ease-in-out infinite; }
+
+@keyframes mallGlow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0.0); }
+  50%      { box-shadow: 0 0 14px 3px rgba(255,255,255,0.35); }
+}
+.animate-mall-glow { animation: mallGlow 2.8s ease-in-out infinite; }
