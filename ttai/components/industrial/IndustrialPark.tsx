@@ -6,6 +6,7 @@ import {
   Star, Heart, X, MapPin, Info, Search, ChevronDown, ShieldCheck,
   Calendar, Users, Package, Globe, Share2, Bookmark, Factory, Quote,
 } from 'lucide-react'
+import { QuoteModal } from '@/components/shared/QuoteModal'
 
 export type CompanyProduct = { name: string; price: string; img: string }
 export type Company = {
@@ -66,6 +67,7 @@ function WarehouseCard({ c, onOpen }: { c: Company; onOpen: (c: Company) => void
 
 function CompanyDrawer({ c, onClose }: { c: Company; onClose: () => void }) {
   const [tab, setTab] = useState<'About Us' | 'Certificates' | 'Company Info' | 'Gallery'>('About Us')
+  const [quote, setQuote] = useState(false)
   const wa = c.whatsapp ? `https://wa.me/${c.whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(`Hello ${c.name}, I'd like a quotation.`)}` : null
   const facts = [
     { Icon: Calendar, label: 'Year Established', val: c.founded },
@@ -107,11 +109,13 @@ function CompanyDrawer({ c, onClose }: { c: Company; onClose: () => void }) {
 
           {/* CTAs */}
           <div className="grid grid-cols-2 gap-2 mt-4">
-            <button className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#1f7a3a] hover:bg-[#1a6a32] text-white font-extrabold py-2.5 text-sm transition-colors"><Quote className="w-4 h-4" />Request a Quote</button>
+            <button onClick={() => setQuote(true)} className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#1f7a3a] hover:bg-[#1a6a32] text-white font-extrabold py-2.5 text-sm transition-colors"><Quote className="w-4 h-4" />Request a Quote</button>
             {wa ? (
               <a href={wa} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 text-gray-700 font-bold py-2.5 text-sm hover:border-green-500 hover:text-green-600 transition-colors">Chat on WhatsApp</a>
             ) : <span />}
           </div>
+          <QuoteModal open={quote} onClose={() => setQuote(false)} company={c.name} whatsapp={c.whatsapp} />
+
 
           {/* Featured products */}
           <div className="flex items-center justify-between mt-5 mb-2">

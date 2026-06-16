@@ -150,6 +150,13 @@ export default async function ShoppingMallPage({ searchParams }: { searchParams:
     { Icon: Layers, value: `${compact(suppliersCount)}`, label: 'Suppliers' },
     { Icon: Star, value: '4.8', label: 'Average Rating' },
   ]
+  // Today's Deals — a few featured products across stores (premium first).
+  const deals = stores
+    .slice().sort((a, b) => Number(b.premium) - Number(a.premium))
+    .flatMap((s) => s.products.slice(0, 2).map((p) => ({ ...p, store: s.name, href: s.href, premium: s.premium })))
+    .filter((d) => d.img)
+    .slice(0, 14)
+
   const catCount = (root: string) => (root ? (byRoot[root]?.length ?? 0) : totalStores)
   const storeHref = (key: string) => {
     const c = cats.find((x: any) => (x.name || '').toLowerCase().includes(key))
@@ -227,6 +234,32 @@ export default async function ShoppingMallPage({ searchParams }: { searchParams:
             </div>
           ))}
         </div>
+
+        {/* ── Today's Deals ── */}
+        {deals.length > 0 && (
+          <div className="rounded-2xl bg-white border border-gray-200 shadow-sm p-4 sm:p-5">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-base sm:text-lg font-extrabold text-gray-900 flex items-center gap-2">🔥 Today&apos;s Deals</h2>
+              <span className="text-[11px] font-bold text-gray-400">Featured by stores in {locLabel}</span>
+            </div>
+            <div className="flex gap-3 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+              {deals.map((d, i) => (
+                <Link key={i} href={d.href} className="group flex-shrink-0 w-[150px] rounded-xl border border-gray-100 overflow-hidden hover:shadow-md transition-all">
+                  <div className="relative aspect-square bg-white flex items-center justify-center overflow-hidden">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={d.img} alt={d.name} loading="lazy" className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-300" />
+                    {d.premium && <span className="absolute top-1.5 left-1.5 rounded bg-[#F5A623] px-1.5 py-0.5 text-[9px] font-extrabold text-[#0B1F4D]">Featured</span>}
+                  </div>
+                  <div className="p-2.5 border-t border-gray-50">
+                    <p className="text-[11px] font-medium text-gray-600 line-clamp-2 leading-tight h-[28px]">{d.name}</p>
+                    <p className="text-sm font-extrabold text-[#0B1F4D] mt-1">{d.price}</p>
+                    <p className="text-[10px] text-gray-400 truncate">{d.store}</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* ── Category strip ── */}
         <div className="grid grid-cols-4 sm:grid-cols-8 gap-2.5 sm:gap-3">
