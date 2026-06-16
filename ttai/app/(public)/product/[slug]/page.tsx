@@ -9,6 +9,7 @@ import { ModelSelector } from './ModelSelector'
 import { CopyProductButton } from './CopyProductButton'
 import { SellersTable } from '../../p/[id]/SellersTable'
 import { SellerInfoPanel } from '@/components/product/SellerInfoPanel'
+import { QuoteButton } from '@/components/shared/QuoteButton'
 import { getMasterSellers } from '@/lib/offers-server'
 import { unitsPerPallet, unitsPerTruck, cartonsPerTruck, unitsForShop, intersectUnits, retailCostBaseCents } from '@/lib/packaging'
 import { chainLevel, unitsForRole, tierRank } from '@/lib/business-chain'
@@ -299,6 +300,19 @@ export default async function ProductPage({ params, searchParams }: { params: { 
                     {t('product.call')}
                   </a>
                 )}
+              </div>
+            )}
+
+            {/* Request a Quotation — B2B/wholesale products */}
+            {!houseBrand && !retailView && (
+              <div className="pt-1">
+                <QuoteButton
+                  company={supplier?.trade_name ?? supplier?.legal_name ?? 'Supplier'}
+                  whatsapp={supplier?.whatsapp ?? null}
+                  email={supplier?.business_email ?? null}
+                  productName={product.name}
+                  className="inline-flex items-center gap-2 rounded-xl bg-[#F5A623] hover:bg-[#fbb93a] text-[#0B1F4D] px-5 py-2.5 text-sm font-extrabold transition-colors shadow-sm"
+                />
               </div>
             )}
 

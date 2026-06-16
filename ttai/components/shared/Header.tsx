@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { Heart } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { UserMenu } from './UserMenu'
 import { CartIcon } from '@/components/cart/CartIcon'
@@ -59,6 +60,11 @@ export async function Header() {
           <div className="hidden sm:block">
             <LocaleSwitcherLight />
           </div>
+
+          {/* Saved */}
+          <Link href="/saved" aria-label="Saved" className="hidden sm:flex w-9 h-9 rounded-xl items-center justify-center text-gray-500 hover:text-rose-500 hover:bg-rose-50 transition-colors">
+            <Heart className="w-5 h-5" />
+          </Link>
 
           {/* Cart */}
           <CartIcon />
