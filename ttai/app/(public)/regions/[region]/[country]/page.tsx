@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/server'
 import { SupplierShowcaseCard, type ShowcaseSupplier } from '@/components/marketplace/SupplierShowcaseCard'
 import { ShoppingChannels } from '@/components/marketplace/ShoppingChannels'
 import { IndustryExplorer } from '@/app/(public)/IndustryExplorer'
+import { MapPin, ArrowRight } from 'lucide-react'
 
 export const revalidate = 60
 
@@ -76,6 +77,33 @@ export default async function CountryPage({ params }: { params: { region: string
     }))
   }
 
+  // Resolve this country to its DB row → real products + provinces (drill-down into
+  // the marketplace location filter: country → province → city).
+  const { data: cRow } = await (supabase.from('countries') as any)
+    .select('id, iso_code').ilike('name', country.name).maybeSingle()
+  const countryId: string | null = cRow?.id ?? null
+  const countryIso: string | null = cRow?.iso_code ?? null
+  let countryProducts: any[] = []
+  let countryProductCount = 0
+  let provinces: { name: string; slug: string }[] = []
+  if (countryId) {
+    const [prRes, cntRes, provRes] = await Promise.all([
+      (supabase.from('products') as any)
+        .select('id, name, slug, price_cents, currency_code, product_images(url, sort_order), suppliers!supplier_id!inner(country_id, status)')
+        .eq('is_published', true).eq('suppliers.status', 'ACTIVE').eq('suppliers.country_id', countryId).limit(12),
+      (supabase.from('products') as any)
+        .select('id, suppliers!supplier_id!inner(country_id, status)', { count: 'exact', head: true })
+        .eq('is_published', true).eq('suppliers.status', 'ACTIVE').eq('suppliers.country_id', countryId),
+      (supabase.from('provinces') as any).select('name, slug').eq('country_id', countryId).order('name'),
+    ])
+    countryProducts = ((prRes.data ?? []) as any[]).map((p) => ({
+      ...p, thumb: ((p.product_images ?? []) as any[]).slice().sort((a, b) => a.sort_order - b.sort_order)[0]?.url ?? null,
+    }))
+    countryProductCount = cntRes.count ?? 0
+    provinces = (provRes.data ?? []) as any[]
+  }
+  const money = (cents: number, cur: string) => { try { return new Intl.NumberFormat('en-EU', { style: 'currency', currency: cur }).format(cents / 100) } catch { return `€${(cents / 100).toFixed(2)}` } }
+
   return (
     <div className="min-h-screen bg-white">
 
@@ -132,6 +160,66 @@ export default async function CountryPage({ params }: { params: { region: string
           </svg>
         </Link>
       </div>
+
+      {/* ── Provinces in this country (drill-down → marketplace location filter) ── */}
+      {provinces.length > 0 && countryIso && (
+        <div className="border-t bg-white py-10">
+          <div className="container mx-auto px-4 sm:px-8">
+            <div className="flex items-end justify-between gap-4 mb-5">
+              <div>
+                <p className="text-[#F5A623] text-xs font-bold uppercase tracking-widest mb-1">Browse by Location</p>
+                <h2 className="text-xl sm:text-2xl font-extrabold text-[#0B1F4D]">Provinces in {country.name}</h2>
+                <p className="text-gray-400 text-sm mt-1">Pick a province to see its local suppliers, shops and products.</p>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2.5">
+              {provinces.map((p) => (
+                <Link key={p.slug} href={`/marketplace?country=${countryIso}&province=${p.slug}`}
+                  className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 hover:border-[#0B1F4D] hover:text-[#0B1F4D] transition-colors">
+                  <MapPin className="w-4 h-4 text-[#F5A623]" /> {p.name}
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Products available in this country ────────────────────────── */}
+      {countryProducts.length > 0 && (
+        <div className="border-t bg-gray-50/60 py-12">
+          <div className="container mx-auto px-4 sm:px-8">
+            <div className="flex items-end justify-between gap-4 mb-6">
+              <div>
+                <p className="text-[#F5A623] text-xs font-bold uppercase tracking-widest mb-1">In Stock</p>
+                <h2 className="text-xl sm:text-2xl font-extrabold text-[#0B1F4D]">Products in {country.name}</h2>
+                <p className="text-gray-400 text-sm mt-1">{countryProductCount} products from suppliers in {country.name}</p>
+              </div>
+              {countryIso && (
+                <Link href={`/marketplace?country=${countryIso}`} className="hidden sm:inline-flex items-center gap-1.5 text-sm font-bold text-[#0B1F4D] hover:underline flex-shrink-0">
+                  View all <ArrowRight className="w-4 h-4" />
+                </Link>
+              )}
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+              {countryProducts.map((p) => (
+                <Link key={p.id} href={`/product/${p.slug ?? p.id}`}
+                  className="group bg-white rounded-xl border border-gray-100 overflow-hidden hover:shadow-md transition-all">
+                  <div className="aspect-square bg-white flex items-center justify-center overflow-hidden">
+                    {p.thumb ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={p.thumb} alt={p.name} loading="lazy" className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-300" />
+                    ) : null}
+                  </div>
+                  <div className="p-2.5">
+                    <p className="text-[11px] font-medium text-gray-600 line-clamp-2 leading-tight h-[28px]">{p.name}</p>
+                    <p className="text-sm font-extrabold text-[#0B1F4D] mt-1">{money(p.price_cents, p.currency_code)}</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Three ways to shop this market ───────────────────────────── */}
       <div className="border-t bg-gray-50 py-14">
