@@ -52,35 +52,40 @@ function Row({ c }: { c: MallCat }) {
         </Link>
 
         {/* Auto-scrolling product rail (marquee) — pauses on hover */}
-        <div className="relative flex-1 min-w-0 flex items-center bg-gray-50/50 py-3 overflow-hidden">
+        <div className="relative flex-1 min-w-0 flex items-center bg-gray-50/50 py-4 overflow-hidden">
           <div
-            className="flex gap-3 px-3 w-max animate-marquee"
+            className="flex gap-4 px-4 w-max animate-marquee"
             style={{ animationDuration: `${Math.max(20, c.products.length * 4)}s` }}
           >
             {[...c.products, ...c.products].map((p, i) => (
               <Link
                 key={`${p.slug}-${i}`}
                 href={`/product/${p.slug}`}
-                className="group/tile flex-shrink-0 w-[142px] rounded-2xl bg-white border border-gray-100 overflow-hidden hover:border-gray-300 hover:shadow-md transition-all"
+                className="group/tile flex-shrink-0 w-[172px] rounded-2xl bg-white border border-gray-100 shadow-sm overflow-hidden hover:border-[#0B1F4D]/25 hover:shadow-xl hover:-translate-y-1.5 transition-all duration-200"
               >
-                <div className="aspect-square bg-white flex items-center justify-center overflow-hidden">
+                <div className="aspect-square bg-gradient-to-b from-gray-50/60 to-white flex items-center justify-center overflow-hidden">
                   {p.img ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={p.img} alt={p.name} loading="lazy" className="w-full h-full object-contain p-2 group-hover/tile:scale-105 transition-transform duration-300" />
+                    <img src={p.img} alt={p.name} loading="lazy" className="w-full h-full object-contain p-3.5 group-hover/tile:scale-110 transition-transform duration-300" />
                   ) : (
-                    <Package className="w-7 h-7 text-gray-200" />
+                    <Package className="w-8 h-8 text-gray-200" />
                   )}
                 </div>
-                <div className="px-2.5 pb-2.5 pt-1 border-t border-gray-50">
-                  <p className="text-[11px] font-medium text-gray-600 leading-tight line-clamp-2 h-[28px]">{p.name}</p>
-                  <p className="text-sm font-extrabold text-[#0B1F4D] mt-1">{price(p.priceCents, p.currency)}</p>
+                <div className="px-3 pb-3 pt-2 border-t border-gray-50">
+                  <p className="text-xs font-medium text-gray-600 leading-snug line-clamp-2 h-[32px]">{p.name}</p>
+                  <div className="flex items-center justify-between mt-1.5">
+                    <p className="text-base font-extrabold text-[#0B1F4D]">{price(p.priceCents, p.currency)}</p>
+                    <span className="w-7 h-7 rounded-full flex items-center justify-center text-white shadow-sm group-hover/tile:scale-110 transition-transform" style={{ background: c.accent }}>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </span>
+                  </div>
                 </div>
               </Link>
             ))}
           </div>
           {/* edge fades */}
-          <div className="pointer-events-none absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-gray-50/80 to-transparent" />
-          <div className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-gray-50/80 to-transparent" />
+          <div className="pointer-events-none absolute inset-y-0 left-0 w-10 bg-gradient-to-r from-gray-50/90 to-transparent" />
+          <div className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-gray-50/90 to-transparent" />
         </div>
       </div>
 

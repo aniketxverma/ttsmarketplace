@@ -137,19 +137,21 @@ function StoreDrawer({ s, onClose }: { s: MallStore; onClose: () => void }) {
             <p className="text-sm font-extrabold text-gray-900">Top Products</p>
             <Link href={s.href} className="text-xs font-bold text-[#0B1F4D] hover:underline">View All ({s.productCount})</Link>
           </div>
-          <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
-            {s.products.slice(0, 6).map((p, i) => (
-              <div key={i} className="flex-shrink-0 w-20">
-                <div className="w-20 h-20 rounded-lg bg-gray-50 border border-gray-100 overflow-hidden flex items-center justify-center">
-                  {p.img ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={p.img} alt={p.name} className="w-full h-full object-contain p-1" />
-                  ) : <Store className="w-5 h-5 text-gray-200" />}
+          <div className="overflow-hidden">
+            <div className="flex gap-2 w-max animate-marquee" style={{ animationDuration: `${Math.max(16, s.products.length * 3.5)}s` }}>
+              {[...s.products.slice(0, 8), ...s.products.slice(0, 8)].map((p, i) => (
+                <div key={i} className="group/p flex-shrink-0 w-20">
+                  <div className="w-20 h-20 rounded-lg bg-gray-50 border border-gray-100 overflow-hidden flex items-center justify-center group-hover/p:scale-105 transition-transform">
+                    {p.img ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={p.img} alt={p.name} className="w-full h-full object-contain p-1" />
+                    ) : <Store className="w-5 h-5 text-gray-200" />}
+                  </div>
+                  <p className="text-[10px] text-gray-600 line-clamp-2 mt-1 leading-tight">{p.name}</p>
+                  <p className="text-[11px] font-extrabold text-[#0B1F4D]">{p.price}</p>
                 </div>
-                <p className="text-[10px] text-gray-600 line-clamp-2 mt-1 leading-tight">{p.name}</p>
-                <p className="text-[11px] font-extrabold text-[#0B1F4D]">{p.price}</p>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
 
           {/* Tabs */}

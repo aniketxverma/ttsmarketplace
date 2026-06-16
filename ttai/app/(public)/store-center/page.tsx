@@ -208,12 +208,12 @@ export default async function ShoppingMallPage({ searchParams }: { searchParams:
                 <div key={pin.label} className="absolute z-10 -translate-x-1/2 -translate-y-1/2 hidden md:block" style={{ top: pin.top, left: pin.left }}>
                   <div className="animate-mall-float" style={{ animationDelay: `${(i % 4) * 0.5}s` }}>
                     <Link href={pin.kw === 'all' ? '/store' : storeHref(pin.kw)}
-                      className={`group flex items-center gap-1.5 ${labelLeft ? 'flex-row-reverse' : ''}`}>
-                      <span className="relative w-6 h-6 rounded-full flex items-center justify-center shadow-lg ring-2 ring-white/60 group-hover:ring-white transition-transform duration-200 group-hover:scale-125 animate-mall-glow" style={{ background: pin.color }}>
+                      className={`group flex items-center gap-2 rounded-full bg-white/95 backdrop-blur shadow-xl ring-1 ring-black/5 py-1 transition-transform duration-200 hover:scale-110 ${labelLeft ? 'flex-row-reverse pl-3 pr-1' : 'pl-1 pr-3'}`}>
+                      <span className="relative w-7 h-7 rounded-full flex items-center justify-center shadow ring-2 ring-white animate-mall-glow flex-shrink-0" style={{ background: pin.color }}>
                         <span className="absolute inset-0 rounded-full animate-ping opacity-40" style={{ background: pin.color }} />
-                        <MapPin className="w-3.5 h-3.5 text-white relative" />
+                        <MapPin className="w-4 h-4 text-white relative" fill="currentColor" />
                       </span>
-                      <span className="text-[11px] font-extrabold text-white bg-black/55 group-hover:bg-black/85 backdrop-blur px-2 py-0.5 rounded-md whitespace-nowrap transition-colors shadow">{pin.label}</span>
+                      <span className="text-[11px] font-extrabold text-gray-800 whitespace-nowrap">{pin.label}</span>
                     </Link>
                   </div>
                 </div>
@@ -242,21 +242,23 @@ export default async function ShoppingMallPage({ searchParams }: { searchParams:
               <h2 className="text-base sm:text-lg font-extrabold text-gray-900 flex items-center gap-2">🔥 Today&apos;s Deals</h2>
               <span className="text-[11px] font-bold text-gray-400">Featured by stores in {locLabel}</span>
             </div>
-            <div className="flex gap-3 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
-              {deals.map((d, i) => (
-                <Link key={i} href={d.href} className="group flex-shrink-0 w-[150px] rounded-xl border border-gray-100 overflow-hidden hover:shadow-md transition-all">
-                  <div className="relative aspect-square bg-white flex items-center justify-center overflow-hidden">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={d.img} alt={d.name} loading="lazy" className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-300" />
-                    {d.premium && <span className="absolute top-1.5 left-1.5 rounded bg-[#F5A623] px-1.5 py-0.5 text-[9px] font-extrabold text-[#0B1F4D]">Featured</span>}
-                  </div>
-                  <div className="p-2.5 border-t border-gray-50">
-                    <p className="text-[11px] font-medium text-gray-600 line-clamp-2 leading-tight h-[28px]">{d.name}</p>
-                    <p className="text-sm font-extrabold text-[#0B1F4D] mt-1">{d.price}</p>
-                    <p className="text-[10px] text-gray-400 truncate">{d.store}</p>
-                  </div>
-                </Link>
-              ))}
+            <div className="overflow-hidden">
+              <div className="flex gap-3 w-max animate-marquee py-1" style={{ animationDuration: `${Math.max(22, deals.length * 4)}s` }}>
+                {[...deals, ...deals].map((d, i) => (
+                  <Link key={i} href={d.href} className="group flex-shrink-0 w-[150px] rounded-xl border border-gray-100 overflow-hidden bg-white hover:shadow-lg hover:-translate-y-1 hover:scale-[1.03] transition-all duration-200">
+                    <div className="relative aspect-square bg-white flex items-center justify-center overflow-hidden">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={d.img} alt={d.name} loading="lazy" className="w-full h-full object-contain p-2 group-hover:scale-110 transition-transform duration-300" />
+                      {d.premium && <span className="absolute top-1.5 left-1.5 rounded bg-[#F5A623] px-1.5 py-0.5 text-[9px] font-extrabold text-[#0B1F4D]">Featured</span>}
+                    </div>
+                    <div className="p-2.5 border-t border-gray-50">
+                      <p className="text-[11px] font-medium text-gray-600 line-clamp-2 leading-tight h-[28px]">{d.name}</p>
+                      <p className="text-sm font-extrabold text-[#0B1F4D] mt-1">{d.price}</p>
+                      <p className="text-[10px] text-gray-400 truncate">{d.store}</p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
             </div>
           </div>
         )}
