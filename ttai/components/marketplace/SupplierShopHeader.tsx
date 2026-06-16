@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { Store, MapPin, ShieldCheck, Package, FileSpreadsheet, FileText, PlayCircle, ArrowLeft } from 'lucide-react'
+import { QuoteButton } from '@/components/shared/QuoteButton'
 
 export type ShopSupplier = {
   id: string
@@ -70,12 +71,16 @@ export function SupplierShopHeader({ s, productCount }: { s: ShopSupplier; produ
               {s.min_order_value_cents ? <span>Min. order {money(s.min_order_value_cents)}</span> : null}
             </div>
           </div>
-          {wa && (
-            <a href={wa} target="_blank" rel="noopener noreferrer"
-              className="flex-shrink-0 inline-flex items-center justify-center gap-2 rounded-xl bg-green-500 hover:bg-green-400 text-white px-5 py-3 text-sm font-extrabold shadow-lg transition-colors">
-              Order from {name}
-            </a>
-          )}
+          <div className="flex-shrink-0 flex flex-col gap-2">
+            <QuoteButton company={name} whatsapp={s.whatsapp}
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#F5A623] hover:bg-[#fbb93a] text-[#0B1F4D] px-5 py-3 text-sm font-extrabold shadow-lg transition-colors" />
+            {wa && (
+              <a href={wa} target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-green-500 hover:bg-green-400 text-white px-5 py-3 text-sm font-extrabold shadow-lg transition-colors">
+                Order from {name}
+              </a>
+            )}
+          </div>
         </div>
       </div>
 

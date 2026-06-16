@@ -4,7 +4,7 @@ import { useRef, useState } from 'react'
 import Link from 'next/link'
 import {
   Star, ChevronLeft, ChevronRight, X, MapPin, Truck, ShoppingBag,
-  Package, Store, ShieldCheck, Clock,
+  Package, Store, ShieldCheck, Clock, Search,
 } from 'lucide-react'
 import { FavButton } from '@/components/shared/FavButton'
 
@@ -204,6 +204,7 @@ function StoreDrawer({ s, onClose }: { s: MallStore; onClose: () => void }) {
 
 export function MallShops({ groups }: { groups: MallGroup[] }) {
   const [open, setOpen] = useState<MallStore | null>(null)
+  const [q, setQ] = useState('')
   if (!groups.length) {
     return (
       <div className="rounded-2xl bg-white border border-gray-200 shadow-sm p-12 text-center text-gray-400">
@@ -211,9 +212,29 @@ export function MallShops({ groups }: { groups: MallGroup[] }) {
       </div>
     )
   }
+  const query = q.toLowerCase().trim()
+  const matches = query ? groups.flatMap((g) => g.stores).filter((s) => s.name.toLowerCase().includes(query)) : null
   return (
     <div className="space-y-5">
-      {groups.map((g) => <Row key={g.category} g={g} onOpen={setOpen} />)}
+      {/* Store search */}
+      <div className="rounded-2xl bg-white border border-gray-200 shadow-sm p-2.5 flex items-center gap-2">
+        <Search className="w-4 h-4 text-gray-400 ml-2 flex-shrink-0" />
+        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search stores in the mall…" className="flex-1 bg-transparent text-sm focus:outline-none" />
+        {q && <button onClick={() => setQ('')} className="text-xs font-bold text-[#0B1F4D] hover:underline mr-2">Clear</button>}
+      </div>
+
+      {matches ? (
+        matches.length ? (
+          <div className="rounded-2xl bg-white border border-gray-200 shadow-sm p-4 sm:p-5">
+            <p className="text-sm font-bold text-gray-500 mb-4">{matches.length} store{matches.length !== 1 ? 's' : ''} matching &quot;{q}&quot;</p>
+            <div className="flex flex-wrap gap-4">{matches.map((s) => <StoreCard key={s.id} s={s} onOpen={setOpen} />)}</div>
+          </div>
+        ) : (
+          <div className="rounded-2xl bg-white border border-gray-200 shadow-sm p-12 text-center text-gray-400"><Store className="w-10 h-10 mx-auto mb-3 opacity-30" /><p className="text-sm">No stores match &quot;{q}&quot;.</p></div>
+        )
+      ) : (
+        groups.map((g) => <Row key={g.category} g={g} onOpen={setOpen} />)
+      )}
       {open && <StoreDrawer s={open} onClose={() => setOpen(null)} />}
     </div>
   )

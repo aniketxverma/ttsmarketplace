@@ -175,7 +175,12 @@ export function IndustrialPark({ parkName, parkArea, companyCount, companies }: 
   parkName: string; parkArea: string; companyCount: number; companies: Company[]
 }) {
   const [open, setOpen] = useState<Company | null>(null)
-  const pinned = companies.slice(0, 6)
+  const [q, setQ] = useState('')
+  const [cat, setCat] = useState('')
+  const allCategories = Array.from(new Set(companies.map((c) => c.category))).sort()
+  const filtered = companies.filter((c) =>
+    (!q || `${c.name} ${c.category}`.toLowerCase().includes(q.toLowerCase().trim())) && (!cat || c.category === cat))
+  const pinned = filtered.slice(0, 6)
   return (
     <div className="space-y-5">
       {/* Park header */}
@@ -217,20 +222,26 @@ export function IndustrialPark({ parkName, parkArea, companyCount, companies }: 
         <div className="flex flex-wrap items-center gap-2 p-3 bg-white border-t border-gray-100">
           <div className="relative flex-1 min-w-[180px]">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input placeholder="Search companies in this park…" className="w-full pl-9 pr-3 py-2 rounded-lg bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:border-[#0B1F4D]/50" />
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search companies in this park…" className="w-full pl-9 pr-3 py-2 rounded-lg bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:border-[#0B1F4D]/50" />
           </div>
-          <button className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-sm font-semibold text-gray-600">All Categories <ChevronDown className="w-4 h-4" /></button>
-          <button className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-sm font-semibold text-gray-600">All Activities <ChevronDown className="w-4 h-4" /></button>
+          <div className="relative">
+            <select value={cat} onChange={(e) => setCat(e.target.value)} className="appearance-none rounded-lg border border-gray-200 pl-3 pr-8 py-2 text-sm font-semibold text-gray-600 bg-white focus:outline-none focus:border-[#0B1F4D]/50">
+              <option value="">All Categories</option>
+              {allCategories.map((x) => <option key={x} value={x}>{x}</option>)}
+            </select>
+            <ChevronDown className="w-4 h-4 absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+          </div>
+          {(q || cat) && <button onClick={() => { setQ(''); setCat('') }} className="text-xs font-bold text-[#0B1F4D] hover:underline">Clear</button>}
         </div>
       </div>
 
       {/* Company grid */}
-      {companies.length === 0 ? (
-        <div className="rounded-2xl bg-white border border-gray-200 p-12 text-center text-gray-400"><Factory className="w-10 h-10 mx-auto mb-3 opacity-30" /><p className="text-sm">No companies registered in this park yet.</p></div>
+      {filtered.length === 0 ? (
+        <div className="rounded-2xl bg-white border border-gray-200 p-12 text-center text-gray-400"><Factory className="w-10 h-10 mx-auto mb-3 opacity-30" /><p className="text-sm">{companies.length ? 'No companies match your search.' : 'No companies registered in this park yet.'}</p></div>
       ) : (
         <>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-            {companies.map((c) => <WarehouseCard key={c.id} c={c} onOpen={setOpen} />)}
+            {filtered.map((c) => <WarehouseCard key={c.id} c={c} onOpen={setOpen} />)}
           </div>
           <div className="text-center">
             <Link href="/marketplace" className="inline-flex items-center gap-2 rounded-xl bg-[#0B1F4D] hover:bg-[#162d6e] text-white text-sm font-bold px-6 py-2.5 transition-colors">View All Companies in this Park</Link>
