@@ -31,6 +31,13 @@ export default async function SupplierSettingsPage() {
   const sup = supplierRes.data as any
   const paid = tierRank((profile as any)?.tier) >= 1
 
+  // Industrial park slug (separate, defensive — column may be pre-migration).
+  let initialPark: string | null = null
+  try {
+    const { data } = await (supabase.from('suppliers') as any).select('industrial_park').eq('owner_id', user.id).single()
+    initialPark = data?.industrial_park ?? null
+  } catch { /* column not migrated yet */ }
+
   return (
     <div className="space-y-4">
       <div className="mb-2">
@@ -58,6 +65,7 @@ export default async function SupplierSettingsPage() {
             town_id: sup.town_id ?? null,
             neighborhood_id: sup.neighborhood_id ?? null,
             delivery_radius_km: sup.delivery_radius_km ?? null,
+            industrial_park: initialPark,
           }}
         />
       </div>

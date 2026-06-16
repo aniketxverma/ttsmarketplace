@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { StoreLocationPicker } from '@/components/store/StoreLocationPicker'
 import { IndustrialPark, type Company } from '@/components/industrial/IndustrialPark'
+import { parksForCity } from '@/lib/industrial-parks'
 import Link from 'next/link'
 import { Factory, MapPin } from 'lucide-react'
 
@@ -11,20 +12,6 @@ async function safe<T>(q: any, fallback: T): Promise<T> {
   try { const { data } = await q; return (data ?? fallback) as T } catch { return fallback }
 }
 const money = (cents: number, cur = 'EUR') => new Intl.NumberFormat('en-IE', { style: 'currency', currency: cur || 'EUR' }).format((cents ?? 0) / 100)
-
-// Known industrial parks per city (the directory of zones). Cities without a
-// preset get one default park; suppliers slot in by their real city.
-const PARKS_BY_CITY: Record<string, { slug: string; name: string; area: string; count: number }[]> = {
-  madrid: [
-    { slug: 'cobo-calleja', name: 'Polígono Cobo Calleja', area: 'Fuenlabrada, Madrid – Spain', count: 325 },
-    { slug: 'vallecas', name: 'Polígono Vallecas', area: 'Madrid – Spain', count: 218 },
-    { slug: 'villaverde', name: 'Polígono Villaverde', area: 'Madrid – Spain', count: 156 },
-    { slug: 'alcobendas', name: 'Polígono Alcobendas', area: 'Alcobendas, Madrid – Spain', count: 189 },
-    { slug: 'san-fernando', name: 'Polígono San Fernando', area: 'San Fernando, Madrid – Spain', count: 98 },
-  ],
-  granada: [{ slug: 'juncaril', name: 'Polígono Juncaril', area: 'Albolote, Granada – Spain', count: 140 }],
-  shenzhen: [{ slug: 'baoan', name: "Bao'an Industrial Park", area: "Bao'an, Shenzhen – China", count: 520 }],
-}
 
 const WAREHOUSE_IMG = [
   'https://images.unsplash.com/photo-1565793298595-6a879b1d9492?w=600&q=80',
@@ -43,10 +30,7 @@ export default async function IndustrialParkPage({ searchParams }: { searchParam
   const activeCity = cities.find((c: any) => c.id === (searchParams.city ?? '')) ?? null
 
   // Industrial parks in the selected city.
-  const cityKey = (activeCity?.name ?? '').toLowerCase()
-  const parks = PARKS_BY_CITY[cityKey] ?? (activeCity
-    ? [{ slug: 'main', name: `${activeCity.name} Industrial Park`, area: `${activeCity.name}${activeCountry ? ` – ${activeCountry.name}` : ''}`, count: 0 }]
-    : [])
+  const parks = parksForCity(activeCity?.name, activeCountry?.name)
   const activePark = parks.find((p) => p.slug === searchParams.park) ?? parks[0] ?? null
 
   // Companies = B2B suppliers in the selected city (fallback: country).
@@ -100,6 +84,20 @@ export default async function IndustrialParkPage({ searchParams }: { searchParam
     }
   }).sort((a: Company, b: Company) => Number(b.premium) - Number(a.premium))
 
+  // Map companies to their real park (suppliers.industrial_park). Defensive: if the
+  // column isn't migrated yet, or nobody is assigned, show all city companies so
+  // parks are never empty.
+  let parkCompanies = companies
+  if (activePark && supIds.length) {
+    try {
+      const { data: pk } = await (supabase.from('suppliers') as any).select('id, industrial_park').in('id', supIds)
+      const parkBy: Record<string, string | null> = Object.fromEntries((pk ?? []).map((r: any) => [r.id, r.industrial_park ?? null]))
+      if ((pk ?? []).some((r: any) => r.industrial_park)) {
+        parkCompanies = companies.filter((c) => parkBy[c.id] === activePark.slug)
+      }
+    } catch { /* column not migrated — keep all */ }
+  }
+
   const STEPS = [
     { n: 1, t: 'Choose Region, Country & City' },
     { n: 2, t: 'Select an Industrial Park' },
@@ -152,7 +150,7 @@ export default async function IndustrialParkPage({ searchParams }: { searchParam
 
             {/* Park experience */}
             <main className="min-w-0">
-              <IndustrialPark parkName={activePark.name} parkArea={activePark.area} companyCount={activePark.count || companies.length} companies={companies} />
+              <IndustrialPark parkName={activePark.name} parkArea={activePark.area} companyCount={activePark.count || parkCompanies.length} companies={parkCompanies} />
             </main>
           </div>
         )}

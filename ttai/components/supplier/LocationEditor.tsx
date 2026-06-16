@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { MapPin, Loader2, Check } from 'lucide-react'
+import { MapPin, Loader2, Check, Factory } from 'lucide-react'
+import { parksForCity } from '@/lib/industrial-parks'
 
 interface Opt { id: string; name: string }
 interface Initial {
@@ -12,6 +13,7 @@ interface Initial {
   town_id: string | null
   neighborhood_id: string | null
   delivery_radius_km: number | null
+  industrial_park?: string | null
 }
 
 /**
@@ -29,6 +31,7 @@ export function LocationEditor({ countryId, countryName, initial }: { countryId:
   // "Add new" free-text — auto-creates the place on save so the map fills itself.
   const [newProvince, setNewProvince] = useState('')
   const [newCity, setNewCity] = useState('')
+  const [park, setPark] = useState(initial.industrial_park ?? '')
 
   const [provinces, setProvinces] = useState<Opt[]>([])
   const [cities, setCities] = useState<Opt[]>([])
@@ -43,6 +46,10 @@ export function LocationEditor({ countryId, countryName, initial }: { countryId:
   useEffect(() => { if (city) supabase.from('towns').select('id, name').eq('city_id', city).order('name').then(({ data }) => setTowns((data ?? []) as Opt[])); else setTowns([]) }, [city, supabase])
   useEffect(() => { if (town) supabase.from('neighborhoods').select('id, name').eq('town_id', town).order('name').then(({ data }) => setHoods((data ?? []) as Opt[])); else setHoods([]) }, [town, supabase])
 
+  // Industrial parks available in the selected city (from the parks directory).
+  const selectedCityName = cities.find((c) => c.id === city)?.name ?? ''
+  const parkOptions = parksForCity(selectedCityName, countryName)
+
   async function save() {
     setSaving(true); setSaved(false)
     const res = await fetch('/api/supplier/brand', {
@@ -56,6 +63,7 @@ export function LocationEditor({ countryId, countryName, initial }: { countryId:
         delivery_radius_km: radius ? parseInt(radius) : null,
         new_province: province === '__new__' ? newProvince : '',
         new_city: city === '__new__' ? newCity : '',
+        industrial_park: park || null,
       }),
     })
     setSaving(false)
@@ -131,6 +139,17 @@ export function LocationEditor({ countryId, countryName, initial }: { countryId:
             <input value={newCity} onChange={(e) => setNewCity(e.target.value)} placeholder="New city / district — e.g. Albaicín"
               className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
           )}
+        </div>
+
+        {/* Industrial Park — which zone the company sits in (TTAI Industrial Park) */}
+        <div className="space-y-1 sm:col-span-2">
+          <label className="text-sm font-medium flex items-center gap-1.5"><Factory className="w-3.5 h-3.5 text-[#0B1F4D]" /> Industrial Park / Zone</label>
+          <select value={park} disabled={!city || city === '__new__'} onChange={(e) => setPark(e.target.value)}
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring disabled:bg-gray-50 disabled:text-gray-300">
+            <option value="">{city && city !== '__new__' ? 'Not in an industrial park' : 'Select a city first'}</option>
+            {parkOptions.map((p) => <option key={p.slug} value={p.slug}>{p.name}</option>)}
+          </select>
+          <p className="text-[11px] text-muted-foreground">Places your company inside this zone on the TTAI Industrial Park map.</p>
         </div>
         <Select label="Town" value={town} options={towns} disabled={!city} onChange={(v) => { setTown(v); setHood('') }} />
         <Select label="Neighborhood" value={hood} options={hoods} disabled={!town} onChange={setHood} />

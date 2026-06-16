@@ -19,6 +19,8 @@ const ALLOWED = new Set([
   'min_order_value_cents',
   // Retail local commerce location (Phase 5)
   'province_id', 'city_id', 'town_id', 'neighborhood_id', 'delivery_radius_km',
+  // Industrial Park zone (0066)
+  'industrial_park',
   // Free sales channel (B2B vs retail)
   'marketplace_context', 'shop_type_chosen',
   // Premium Shop Design
@@ -72,9 +74,10 @@ export async function POST(req: NextRequest) {
 
   let { error } = await (admin.from('suppliers') as any).update(payload).eq('id', (sup as any).id)
   // Resilience: if a recently-added column isn't migrated yet, drop it and retry.
-  if (error && /min_order_value_cents|card_template|column|does not exist/i.test(error.message)) {
+  if (error && /min_order_value_cents|card_template|industrial_park|column|does not exist/i.test(error.message)) {
     delete payload.min_order_value_cents
     delete payload.card_template
+    delete payload.industrial_park
     if (Object.keys(payload).length) {
       ;({ error } = await (admin.from('suppliers') as any).update(payload).eq('id', (sup as any).id))
     } else error = null
