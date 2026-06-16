@@ -18,10 +18,30 @@ import { ShoppingBag, Zap, Shield, Truck, Star, Package, Store } from 'lucide-re
 import type { Category } from '@/types/domain'
 
 const PAGE_SIZE = 24
+const SECTION_LIMIT = 5      // product cards per category row before "view all"
+const SUB_SECTION_LIMIT = 10 // products per sub-category section on a category page
+const CAT_ACCENT: Record<string, string> = {
+  'food-beverage': '#ea580c', 'electronics-technology': '#2563eb',
+  'automotive-transport': '#52525b', 'cleaning-household': '#16a34a',
+}
 
 export const metadata = {
   title: 'Online Store — Shop Direct from Suppliers · TTAI EMA',
   description: 'Browse and buy products directly from verified suppliers. Retail and direct-to-consumer products with guaranteed quality.',
+}
+
+function CatBanner({ name, accent, href, ctaLabel, subs }: { name: string; accent: string; href?: string; ctaLabel?: string; subs?: string }) {
+  return (
+    <div className="flex items-center justify-between gap-3 mb-4 rounded-xl px-4 py-3" style={{ background: `${accent}0F`, borderLeft: `4px solid ${accent}` }}>
+      <div className="min-w-0">
+        <h2 className="text-lg sm:text-xl font-extrabold leading-tight" style={{ color: accent }}>{name}</h2>
+        {subs ? <p className="text-xs text-gray-500 truncate mt-0.5">{subs}</p> : null}
+      </div>
+      {href ? (
+        <Link href={href} className="flex-shrink-0 text-sm font-bold whitespace-nowrap inline-flex items-center gap-1 hover:gap-2 transition-all" style={{ color: accent }}>{ctaLabel ?? 'View all'} →</Link>
+      ) : null}
+    </div>
+  )
 }
 
 export default async function StorePage({
@@ -106,7 +126,10 @@ export default async function StorePage({
 
   if (searchParams.category) {
     const cat = allCats.find((c) => c.slug === searchParams.category)
-    if (cat) productQuery = productQuery.eq('category_id', cat.id)
+    if (cat) {
+      const childIds = allCats.filter((c) => c.parent_id === cat.id).map((c) => c.id)
+      productQuery = productQuery.in('category_id', [cat.id, ...childIds])
+    }
   }
 
   if (searchParams.q) {
@@ -136,6 +159,55 @@ export default async function StorePage({
   const totalPages = Math.ceil(families.length / PAGE_SIZE)
   const from = (page - 1) * PAGE_SIZE
   const pageFamilies = families.slice(from, from + PAGE_SIZE)
+
+  // ── Same categorization as the marketplace: category rows + sub-category sections ──
+  const rootOf = (cid?: string | null): any => { let c = cid ? catById[cid] : null; for (let i = 0; c && c.parent_id && i < 10; i++) c = catById[c.parent_id]; return c ?? null }
+  const activeCat = searchParams.category ? allCats.find((c) => c.slug === searchParams.category) : null
+  const isGroupedView = !searchParams.category && !searchParams.q && !searchParams.supplier && activeView === 'products'
+  const catHref = (slug: string) => `/store?category=${slug}${activeMarket ? `&market=${activeMarket}` : ''}${activeCountryIso ? `&country=${activeCountryIso}` : ''}`
+
+  // Homepage → one banner row per root category (Food & Beverage, Electronics…).
+  const categorySections: { cat: any; families: typeof families }[] = []
+  if (isGroupedView) {
+    const byRoot = new Map<string, typeof families>()
+    for (const fam of families) {
+      const r = rootOf((fam.representative as any)?.category_id); if (!r) continue
+      if (!byRoot.has(r.id)) byRoot.set(r.id, [])
+      byRoot.get(r.id)!.push(fam)
+    }
+    for (const r of roots) { const fs = byRoot.get(r.id); if (fs && fs.length) categorySections.push({ cat: r, families: fs }) }
+  }
+
+  // Category page → sub-category sections (Dips & Spreads, Pickles…).
+  const activeCatChildren = activeCat ? (childMap[(activeCat as any).id] ?? []) : []
+  const subSections: { cat: { id: string; name: string; slug: string }; items: typeof families }[] = []
+  if (activeCat) {
+    const byCat = new Map<string, typeof families>()
+    for (const fam of families) {
+      const cid = (fam.representative as any)?.category_id; if (!cid) continue
+      if (!byCat.has(cid)) byCat.set(cid, [])
+      byCat.get(cid)!.push(fam)
+    }
+    for (const ch of [...activeCatChildren].sort((a: any, b: any) => (a.sort_order ?? 0) - (b.sort_order ?? 0))) {
+      const items = byCat.get((ch as any).id); if (items && items.length) subSections.push({ cat: ch as any, items })
+    }
+    const direct = byCat.get((activeCat as any).id)
+    if (direct && direct.length) subSections.push({ cat: { id: (activeCat as any).id, name: `More ${activeCat.name}`, slug: activeCat.slug }, items: direct })
+  }
+  const showSubSections = subSections.filter((s) => s.cat.id !== (activeCat as any)?.id).length > 0
+
+  // One card renderer reused by every layout.
+  const renderStoreCard = (fam: typeof families[number]) => {
+    if (fam.members.length > 1) return <FamilyCard key={fam.key} family={fam} retail />
+    const p = fam.representative as any
+    const supplier = p.suppliers as { legal_name: string; trade_name: string | null; reliability_tier: import('@/types/domain').ReliabilityTier }
+    const images = p.product_images as { url: string; sort_order: number }[]
+    const mainImg = images?.slice().sort((a, b) => a.sort_order - b.sort_order)[0]?.url
+    return (
+      <ProductCard key={p.id} product={p as Parameters<typeof ProductCard>[0]['product']}
+        supplier={supplier} mainImageUrl={mainImg} href={`/product/${p.slug ?? p.id}`} retail offerCount={p._offerCount ?? 0} />
+    )
+  }
 
   // ── Retail SHOPS view — verified sellers whose shop type is retail or both ──
   let shops: ShopCardData[] = []
@@ -264,43 +336,53 @@ export default async function StorePage({
             <CategoryNav categories={categoryTree} />
           </aside>
 
-          {/* Product grid */}
+          {/* Product area — category rows / sub-category sections / flat grid */}
           <div className="flex-1 min-w-0">
-            {pageFamilies.length > 0 ? (
+            {showSubSections ? (
+              <div className="space-y-10">
+                {subSections.map(({ cat, items }) => {
+                  const accent = CAT_ACCENT[(activeCat as any).slug] ?? '#7c3aed'
+                  const isDirect = cat.id === (activeCat as any).id
+                  const href = catHref(cat.slug)
+                  return (
+                    <section key={cat.id}>
+                      <CatBanner name={cat.name} accent={accent} href={!isDirect && items.length > SUB_SECTION_LIMIT ? href : undefined} ctaLabel={`View all ${items.length}`} />
+                      <ProductGrid>{items.slice(0, SUB_SECTION_LIMIT).map(renderStoreCard)}</ProductGrid>
+                      {!isDirect && items.length > SUB_SECTION_LIMIT && (
+                        <div className="mt-4 text-center">
+                          <Link href={href} className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-5 py-2.5 text-sm font-bold text-purple-700 hover:border-purple-700 transition-colors">View all {items.length} in {cat.name}</Link>
+                        </div>
+                      )}
+                    </section>
+                  )
+                })}
+              </div>
+            ) : isGroupedView && categorySections.length > 0 ? (
+              <div className="space-y-12">
+                {categorySections.map(({ cat, families: fs }) => {
+                  const accent = CAT_ACCENT[cat.slug] ?? '#7c3aed'
+                  const subs = (childMap[cat.id] ?? []).slice(0, 4).map((c: any) => c.name).join(' · ')
+                  const href = catHref(cat.slug)
+                  return (
+                    <section key={cat.id}>
+                      <CatBanner name={cat.name} accent={accent} subs={subs} href={href} ctaLabel="Explore Category" />
+                      <ProductGrid>{fs.slice(0, SECTION_LIMIT).map(renderStoreCard)}</ProductGrid>
+                      {fs.length > SECTION_LIMIT && (
+                        <div className="mt-4 text-center">
+                          <Link href={href} className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-5 py-2.5 text-sm font-bold text-purple-700 hover:border-purple-700 transition-colors">View all {fs.length} in {cat.name}</Link>
+                        </div>
+                      )}
+                    </section>
+                  )
+                })}
+              </div>
+            ) : pageFamilies.length > 0 ? (
               <>
                 <p className="text-sm text-muted-foreground mb-4">
                   {count} product{count !== 1 ? 's' : ''}
                   {searchParams.q && <> for &quot;<strong>{searchParams.q}</strong>&quot;</>}
-                  {searchParams.category && (() => {
-                    const cat = allCats.find(c => c.slug === searchParams.category)
-                    return cat ? <> in <strong>{cat.name}</strong></> : null
-                  })()}
                 </p>
-                <ProductGrid>
-                  {pageFamilies.map((fam) => {
-                    if (fam.members.length > 1) {
-                      return <FamilyCard key={fam.key} family={fam} retail />
-                    }
-                    const p = fam.representative as any
-                    const supplier = p.suppliers as {
-                      legal_name: string; trade_name: string | null; reliability_tier: import('@/types/domain').ReliabilityTier
-                    }
-                    const images = p.product_images as { url: string; sort_order: number }[]
-                    const mainImg = images?.sort((a, b) => a.sort_order - b.sort_order)[0]?.url
-                    const href = `/product/${p.slug ?? p.id}`
-                    return (
-                      <ProductCard
-                        key={p.id}
-                        product={p as Parameters<typeof ProductCard>[0]['product']}
-                        supplier={supplier}
-                        mainImageUrl={mainImg}
-                        href={href}
-                        retail
-                        offerCount={p._offerCount ?? 0}
-                      />
-                    )
-                  })}
-                </ProductGrid>
+                <ProductGrid>{pageFamilies.map(renderStoreCard)}</ProductGrid>
                 <Pagination page={page} totalPages={totalPages} />
               </>
             ) : (
@@ -309,9 +391,7 @@ export default async function StorePage({
                 <p className="text-lg font-semibold">No products found</p>
                 <p className="text-sm mt-1">Try adjusting your filters or search query</p>
                 {(searchParams.q || searchParams.category) && (
-                  <Link href="/store" className="mt-4 inline-block text-sm font-bold text-purple-600 hover:underline">
-                    Clear filters
-                  </Link>
+                  <Link href="/store" className="mt-4 inline-block text-sm font-bold text-purple-600 hover:underline">Clear filters</Link>
                 )}
               </div>
             )}
