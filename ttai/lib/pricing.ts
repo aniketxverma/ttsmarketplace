@@ -87,6 +87,44 @@ export const GROWTH_LEVELS: { icon: string; title: string; sub: string; price: s
   { icon: '🌍', title: 'International Market', sub: 'Trade worldwide — buy & sell across borders.', price: '€210 / mo' },
 ]
 
+/* ─────────────── Role-based membership plans (Factory / Supplier / Retail) ─────────────── */
+export interface RolePlan { tier: 'free' | 'standard' | 'pro'; name: string; price: string; tagline: string; features: string[]; highlight?: boolean }
+export interface RolePlanSet { key: string; role: string; icon: string; accent: string; blurb: string; plans: RolePlan[] }
+
+const FACTORY: RolePlan[] = [
+  { tier: 'free', name: 'Free', price: '€0', tagline: 'Start selling worldwide — free. Introduce your products to the international market.', features: ['Company Profile', 'Factory Profile', 'Product Catalog', '1 B2B Shop', 'Receive B2B enquiries', 'Connect with Suppliers & Distributors', 'National visibility', 'Limited international visibility', 'TTAIEMA Marketplace access', 'Basic support'] },
+  { tier: 'standard', name: 'Business', price: '€79', highlight: true, tagline: 'Increase visibility and generate more sales. Perfect for factories looking to increase exports.', features: ['Everything in Free', 'Priority ranking in search', 'Verified Business badge', 'Professional company page', 'Professional online shop', 'WhatsApp Business Channel', 'Country WhatsApp Business Groups', 'Featured products', 'Better positioning in TTAIEMA', 'Product organization assistance', 'Monthly product updates', 'Buyer & distributor recommendations', 'More international exposure', 'Business support'] },
+  { tier: 'pro', name: 'Premium', price: '€210', tagline: 'International business growth partner. Designed for factories ready to expand internationally.', features: ['Everything in Business', 'Dedicated Business Manager', 'AI Sales Avatar', 'International market strategy', 'Target country analysis', 'Exclusive supplier & distributor matching', 'Buyer & retail matching', 'Premium homepage placement + banner', 'Monthly advertisement campaign', 'Featured company promotion', 'Premium WhatsApp promotion', 'Fair & exhibition consulting', 'International business & logistics consulting', 'Inspection assistance', 'Business development support', 'Monthly Business Opportunity Report', 'Priority access to new projects'] },
+]
+const SUPPLIER: RolePlan[] = [
+  { tier: 'free', name: 'Free', price: '€0', tagline: 'Start buying and selling through TTAIEMA.', features: ['Company Profile', 'One B2B Shop', 'Buy from participating factories', 'Sell to retailers', 'National visibility', 'Limited international visibility', 'Marketplace access', 'Basic support'] },
+  { tier: 'standard', name: 'Business', price: '€79', highlight: true, tagline: 'Grow your sales network. Perfect for companies expanding their reach.', features: ['Everything in Free', 'Professional online shop', 'Priority search position', 'WhatsApp Business Channel', 'Country WhatsApp Groups', 'Shop setup assistance', 'Shop optimization', 'Featured products', 'Better marketplace position', 'International visibility', 'Business support'] },
+  { tier: 'pro', name: 'Premium', price: '€210', tagline: 'Expand into new markets. Designed for companies scaling internationally.', features: ['Everything in Business', 'Dedicated Business Manager', 'AI Sales Avatar', 'Supplier & buyer matching', 'Retail matching', 'Featured placement in TTAIEMA Hub', 'Homepage banner', 'Monthly advertising campaign', 'International promotion', 'Business strategy & new-market development', 'Logistics consulting', 'Inspection support', 'Premium WhatsApp promotion', 'Monthly Business Opportunity Report', 'Priority offers from factories', 'Priority access to new products', 'Premium business consulting'] },
+]
+const RETAIL: RolePlan[] = [
+  { tier: 'free', name: 'Free', price: '€0', tagline: 'Open your online shop and connect with distributors.', features: ['Company Profile', 'One Online Shop', 'National visibility', 'Access to selected distributors', 'Limited international access', 'Basic support'] },
+  { tier: 'standard', name: 'Business', price: '€79', highlight: true, tagline: 'Grow online. Perfect for retailers building their presence.', features: ['Everything in Free', 'Professional online shop', 'Better marketplace position', 'Shop setup assistance', 'Featured products', 'WhatsApp Business Channel', 'Country WhatsApp Groups', 'Distributor opportunities', 'Business support'] },
+  { tier: 'pro', name: 'Premium', price: '€210', tagline: 'Become a distributor. Designed for retailers ready to scale.', features: ['Everything in Business', 'Dedicated Business Manager', 'AI Sales Avatar', 'Sales assistance', 'Distributor growth program', 'Priority factory opportunities', 'Homepage banner', 'Monthly advertising campaign', 'Premium placement', 'International promotion', 'Business strategy & shop optimization', 'Premium WhatsApp promotion', 'Monthly Business Opportunity Report', 'Marketing consulting'] },
+]
+
+export const ROLE_PLANS: RolePlanSet[] = [
+  { key: 'factory',  role: 'Factories',                 icon: 'factory', accent: '#4f46e5', blurb: 'Introduce your products to the international market.', plans: FACTORY },
+  { key: 'supplier', role: 'Suppliers & Distributors',  icon: 'truck',   accent: '#2563eb', blurb: 'Buy from factories, sell to retailers, grow your network.', plans: SUPPLIER },
+  { key: 'retail',   role: 'Retail Shops',              icon: 'store',   accent: '#7c3aed', blurb: 'Open your shop, connect with distributors, expand.', plans: RETAIL },
+]
+
+export const WHY_UPGRADE: { name: string; accent: string; points: string[] }[] = [
+  { name: 'Free', accent: '#64748b', points: ['Join the marketplace', 'Receive enquiries', 'Test the platform'] },
+  { name: 'Business', accent: '#2563eb', points: ['Increase visibility', 'Build trust', 'Be recommended more often', 'Improve your online presence', 'Reach more international buyers'] },
+  { name: 'Premium', accent: '#7c3aed', points: ['We actively promote your company', 'We help you find customers', 'We help you enter new markets', 'We connect you with the right partners', 'We grow your business internationally'] },
+]
+
+export const BROKER_SERVICES: string[] = [
+  'Buyer Matching', 'Supplier Matching', 'Factory Matching', 'Distributor Matching',
+  'Business Introductions', 'International Sourcing', 'Inspection Coordination',
+  'Logistics Support', 'Trade Consulting', 'Commission Opportunities', 'Exclusive Business Projects',
+]
+
 /**
  * Flagship programs — TTAI ON.
  *   • Business Expansion Package (€8,500): Logistics (€3,500) + Business Dev (€5,000).
