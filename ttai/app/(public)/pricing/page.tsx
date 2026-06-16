@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { Check, ArrowRight, Sparkles, Crown, Star, Warehouse } from 'lucide-react'
-import { PLANS, PRESENTED_BY_ROLE, FLAGSHIPS } from '@/lib/pricing'
+import { PLANS, PRESENTED_BY_ROLE, FLAGSHIPS, GROWTH_LEVELS } from '@/lib/pricing'
 import { createClient } from '@/lib/supabase/server'
 import { SubscribeButton } from './SubscribeButton'
 
@@ -124,6 +124,26 @@ export default async function PricingPage() {
         <p className="text-center text-xs text-gray-400 mt-5">
           Paid plans are activated by our team after onboarding. Prices shown are indicative — contact us to confirm your plan.
         </p>
+
+        {/* ── One Platform. Three Growth Levels. ── */}
+        <div className="mt-12 rounded-3xl bg-gradient-to-br from-[#0B1F4D] to-[#1a3a7a] text-white p-8 sm:p-10">
+          <div className="text-center mb-7">
+            <p className="text-[#F5A623] text-xs font-bold uppercase tracking-widest mb-2">One Platform · Three Growth Levels</p>
+            <h2 className="text-2xl sm:text-3xl font-extrabold">Start Local. Grow National. Expand Worldwide.</h2>
+            <p className="text-blue-200/80 text-sm mt-2">Start where you are. Grow at your own pace. Expand when you&apos;re ready.</p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {GROWTH_LEVELS.map((g, i) => (
+              <div key={g.title} className="relative rounded-2xl bg-white/[0.06] border border-white/10 p-5 text-center">
+                {i < GROWTH_LEVELS.length - 1 && <ArrowRight className="hidden sm:block absolute -right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#F5A623] z-10" />}
+                <span className="text-3xl">{g.icon}</span>
+                <p className="font-extrabold text-lg mt-2">{g.title}</p>
+                <p className="text-blue-200/70 text-xs mt-1 leading-relaxed">{g.sub}</p>
+                <p className="text-[#F5A623] font-bold text-sm mt-3">{g.price}</p>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* ── Flagship programs: TTAI ON ─────────────────────────────────────── */}
