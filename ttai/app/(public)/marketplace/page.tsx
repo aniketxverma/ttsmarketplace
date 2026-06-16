@@ -78,7 +78,7 @@ const CAT_ICON: Record<string, typeof Package> = {
 export default async function MarketplacePage({
   searchParams,
 }: {
-  searchParams: { category?: string; q?: string; page?: string; region?: string; supplier?: string; brand?: string; view?: string; country?: string; market?: string }
+  searchParams: { category?: string; q?: string; page?: string; region?: string; supplier?: string; brand?: string; view?: string; country?: string; market?: string; province?: string; city?: string }
 }) {
   const supabase = createClient()
 
@@ -104,6 +104,37 @@ export default async function MarketplacePage({
     const { data: c } = await (supabase.from('countries') as any)
       .select('id').eq('iso_code', activeCountryIso).maybeSingle()
     activeCountryId = c?.id ?? '00000000-0000-0000-0000-000000000000'
+  }
+
+  // Location drill-down: Continent → Country → Province → City/Area.
+  const activeProvinceSlug = searchParams.province ?? ''
+  const activeCitySlug = searchParams.city ?? ''
+  let provincesForCountry: { name: string; slug: string }[] = []
+  let citiesForProvince: { name: string; slug: string }[] = []
+  let activeProvinceId: string | null = null
+  let activeCityId: string | null = null
+  if (activeCountryId && activeCountryIso) {
+    const { data: provs } = await (supabase.from('provinces') as any)
+      .select('id, name, slug').eq('country_id', activeCountryId).order('name')
+    provincesForCountry = (provs ?? []).map((p: any) => ({ name: p.name, slug: p.slug }))
+    if (activeProvinceSlug) {
+      const prow = (provs ?? []).find((p: any) => p.slug === activeProvinceSlug)
+      activeProvinceId = prow?.id ?? null
+      if (activeProvinceId) {
+        const { data: cs } = await (supabase.from('cities') as any)
+          .select('id, name, slug').eq('province_id', activeProvinceId).order('name')
+        citiesForProvince = (cs ?? []).map((c: any) => ({ name: c.name, slug: c.slug }))
+        if (activeCitySlug) activeCityId = (cs ?? []).find((c: any) => c.slug === activeCitySlug)?.id ?? null
+      }
+    }
+  }
+  // Resolve province → supplier ids (supplier's city sits in this province).
+  let provinceSupplierIds: string[] | null = null
+  if (activeProvinceId && !activeCityId) {
+    const { data: sc } = await (supabase.from('suppliers') as any)
+      .select('id, cities!inner(province_id)').eq('cities.province_id', activeProvinceId)
+    provinceSupplierIds = Array.from(new Set((sc ?? []).map((r: any) => r.id)))
+    if (!provinceSupplierIds.length) provinceSupplierIds = ['00000000-0000-0000-0000-000000000000']
   }
 
   const [categoriesRes, promotionsRes] = await Promise.all([
@@ -201,6 +232,9 @@ export default async function MarketplacePage({
       .in('marketplace_context', ['wholesale', 'both'])
     if (activeSupplier) q = q.eq('supplier_id', activeSupplier)
     if (activeCountryId) q = q.eq('suppliers.country_id', activeCountryId)
+    // Province / City drill-down filter (by the supplier's location).
+    if (activeCityId) q = q.eq('suppliers.city_id', activeCityId)
+    else if (provinceSupplierIds) q = q.in('supplier_id', provinceSupplierIds)
     if (searchParams.category) {
       const cat = allCats.find((c) => c.slug === searchParams.category)
       if (cat) {
@@ -531,7 +565,8 @@ export default async function MarketplacePage({
       )}
 
       {/* ── Products | Shops tabs + Europe country banner (dynamic, no reload) ── */}
-      <MarketplaceTopBar activeView={activeView} activeCountry={activeCountryIso} activeMarket={activeMarket} categoryLabel={categoryLabel} />
+      <MarketplaceTopBar activeView={activeView} activeCountry={activeCountryIso} activeMarket={activeMarket} categoryLabel={categoryLabel}
+        provinces={provincesForCountry} cities={citiesForProvince} activeProvince={activeProvinceSlug} activeCity={activeCitySlug} />
 
       <PromotionBanner promotions={promotions} />
 

@@ -4,16 +4,26 @@ import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import { Package, Store } from 'lucide-react'
 import { MARKET_REGIONS, getRegion } from '@/lib/market-regions'
 
+type Place = { name: string; slug: string }
+
 export function MarketplaceTopBar({
   activeView,
   activeCountry,
   activeMarket,
   categoryLabel,
+  provinces = [],
+  cities = [],
+  activeProvince = '',
+  activeCity = '',
 }: {
   activeView: 'products' | 'shops'
   activeCountry: string
   activeMarket: string
   categoryLabel: string | null
+  provinces?: Place[]
+  cities?: Place[]
+  activeProvince?: string
+  activeCity?: string
 }) {
   const router = useRouter()
   const pathname = usePathname()
@@ -82,11 +92,12 @@ export function MarketplaceTopBar({
             })}
           </div>
         </div>
+        {/* Level 2 — countries of the selected continent */}
         <div className="bg-white/[0.06] border-t border-white/10 px-3 sm:px-4 py-2.5 flex items-center gap-2 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
           {countries.map((c) => {
             const active = (activeCountry || '') === c.iso
             return (
-              <button key={c.iso || 'all'} onClick={() => navigate({ country: c.iso || null })}
+              <button key={c.iso || 'all'} onClick={() => navigate({ country: c.iso || null, province: null, city: null })}
                 className={`flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold whitespace-nowrap transition-colors ${
                   active ? 'bg-white text-[#0B1F4D] shadow-sm' : 'text-white/80 hover:bg-white/10'}`}>
                 <span className="text-base leading-none">{c.flag}</span> {c.name}
@@ -94,6 +105,46 @@ export function MarketplaceTopBar({
             )
           })}
         </div>
+
+        {/* Level 3 — provinces of the selected country */}
+        {provinces.length > 0 && (
+          <div className="bg-white/[0.04] border-t border-white/10 px-3 sm:px-4 py-2 flex items-center gap-2 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+            <span className="flex-shrink-0 text-[10px] font-bold uppercase tracking-wider text-white/40 mr-1">Province</span>
+            <button onClick={() => navigate({ province: null, city: null })}
+              className={`flex-shrink-0 px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-colors ${!activeProvince ? 'bg-white text-[#0B1F4D]' : 'text-white/70 hover:bg-white/10'}`}>
+              All
+            </button>
+            {provinces.map((p) => {
+              const active = activeProvince === p.slug
+              return (
+                <button key={p.slug} onClick={() => navigate({ province: p.slug, city: null })}
+                  className={`flex-shrink-0 px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-colors ${active ? 'bg-[#F5A623] text-[#0B1F4D]' : 'text-white/70 hover:bg-white/10'}`}>
+                  {p.name}
+                </button>
+              )
+            })}
+          </div>
+        )}
+
+        {/* Level 4 — cities / districts of the selected province */}
+        {cities.length > 0 && (
+          <div className="bg-white/[0.02] border-t border-white/10 px-3 sm:px-4 py-2 flex items-center gap-2 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+            <span className="flex-shrink-0 text-[10px] font-bold uppercase tracking-wider text-white/40 mr-1">Area</span>
+            <button onClick={() => navigate({ city: null })}
+              className={`flex-shrink-0 px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-colors ${!activeCity ? 'bg-white text-[#0B1F4D]' : 'text-white/70 hover:bg-white/10'}`}>
+              All
+            </button>
+            {cities.map((c) => {
+              const active = activeCity === c.slug
+              return (
+                <button key={c.slug} onClick={() => navigate({ city: c.slug })}
+                  className={`flex-shrink-0 px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-colors ${active ? 'bg-white text-[#0B1F4D] shadow-sm' : 'text-white/70 hover:bg-white/10'}`}>
+                  {c.name}
+                </button>
+              )
+            })}
+          </div>
+        )}
       </div>
     </div>
   )
