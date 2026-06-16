@@ -39,8 +39,36 @@ export async function POST(req: NextRequest) {
 
   const admin = createAdminClient()
   const { data: sup } = await admin
-    .from('suppliers').select('id').eq('owner_id', user.id).maybeSingle()
+    .from('suppliers').select('id, country_id').eq('owner_id', user.id).maybeSingle()
   if (!sup) return NextResponse.json({ error: 'No supplier profile found' }, { status: 404 })
+
+  // Auto-create missing province / city so the location map fills itself as
+  // suppliers register their real location (Country → Province → City).
+  const countryId = (sup as any).country_id ?? body.country_id ?? null
+  const slugify = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60)
+  const findOrCreate = async (table: string, parent: Record<string, any>, name: string): Promise<string | null> => {
+    const nm = name.trim(); if (!nm) return null
+    const slug = slugify(nm)
+    let q = admin.from(table).select('id') as any
+    for (const [k, v] of Object.entries(parent)) q = q.eq(k, v)
+    const { data: ex } = await q.ilike('name', nm).maybeSingle()
+    if (ex) return (ex as any).id
+    const { data, error: insErr } = await (admin.from(table) as any).insert({ ...parent, name: nm, slug }).select('id').single()
+    if (insErr) {
+      let q2 = admin.from(table).select('id') as any
+      for (const [k, v] of Object.entries(parent)) q2 = q2.eq(k, v)
+      const { data: ex2 } = await q2.eq('slug', slug).maybeSingle()
+      return ex2 ? (ex2 as any).id : null
+    }
+    return (data as any).id
+  }
+  if (typeof body.new_province === 'string' && body.new_province.trim() && countryId) {
+    payload.province_id = await findOrCreate('provinces', { country_id: countryId }, body.new_province)
+  }
+  const provId = payload.province_id ?? body.province_id ?? null
+  if (typeof body.new_city === 'string' && body.new_city.trim() && countryId) {
+    payload.city_id = await findOrCreate('cities', { country_id: countryId, province_id: provId }, body.new_city)
+  }
 
   let { error } = await (admin.from('suppliers') as any).update(payload).eq('id', (sup as any).id)
   // Resilience: if a recently-added column isn't migrated yet, drop it and retry.
@@ -53,5 +81,5 @@ export async function POST(req: NextRequest) {
   }
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  return NextResponse.json({ ok: true })
+  return NextResponse.json({ ok: true, province_id: payload.province_id ?? null, city_id: payload.city_id ?? null })
 }

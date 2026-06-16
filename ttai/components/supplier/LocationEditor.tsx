@@ -26,6 +26,9 @@ export function LocationEditor({ countryId, countryName, initial }: { countryId:
   const [town, setTown] = useState(initial.town_id ?? '')
   const [hood, setHood] = useState(initial.neighborhood_id ?? '')
   const [radius, setRadius] = useState<string>(initial.delivery_radius_km?.toString() ?? '')
+  // "Add new" free-text — auto-creates the place on save so the map fills itself.
+  const [newProvince, setNewProvince] = useState('')
+  const [newCity, setNewCity] = useState('')
 
   const [provinces, setProvinces] = useState<Opt[]>([])
   const [cities, setCities] = useState<Opt[]>([])
@@ -46,16 +49,33 @@ export function LocationEditor({ countryId, countryName, initial }: { countryId:
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         country_id: countryId,
-        province_id: province || null,
-        city_id: city || null,
+        province_id: province && province !== '__new__' ? province : null,
+        city_id: city && city !== '__new__' ? city : null,
         town_id: town || null,
         neighborhood_id: hood || null,
         delivery_radius_km: radius ? parseInt(radius) : null,
+        new_province: province === '__new__' ? newProvince : '',
+        new_city: city === '__new__' ? newCity : '',
       }),
     })
     setSaving(false)
-    if (res.ok) { setSaved(true); setTimeout(() => setSaved(false), 2500) }
-    else alert('Could not save location')
+    if (!res.ok) { alert('Could not save location'); return }
+    const j = await res.json().catch(() => ({}))
+    // Adopt the auto-created place ids and refresh the option lists.
+    if (j.province_id) {
+      setProvince(j.province_id); setNewProvince('')
+      const { data } = await supabase.from('provinces').select('id, name').eq('country_id', countryId!).order('name')
+      setProvinces((data ?? []) as Opt[])
+    }
+    if (j.city_id) {
+      setCity(j.city_id); setNewCity('')
+      const pid = j.province_id ?? province
+      if (pid && pid !== '__new__') {
+        const { data } = await supabase.from('cities').select('id, name').eq('province_id', pid).order('name')
+        setCities((data ?? []) as Opt[])
+      }
+    }
+    setSaved(true); setTimeout(() => setSaved(false), 2500)
   }
 
   const Select = ({ label, value, onChange, options, disabled }: { label: string; value: string; onChange: (v: string) => void; options: Opt[]; disabled?: boolean }) => (
@@ -81,8 +101,37 @@ export function LocationEditor({ countryId, countryName, initial }: { countryId:
           <label className="text-sm font-medium">Country</label>
           <input value={countryName} disabled className="w-full rounded-md border border-input bg-gray-50 px-3 py-2 text-sm text-gray-500" />
         </div>
-        <Select label="Province" value={province} options={provinces} onChange={(v) => { setProvince(v); setCity(''); setTown(''); setHood('') }} />
-        <Select label="City" value={city} options={cities} disabled={!province} onChange={(v) => { setCity(v); setTown(''); setHood('') }} />
+        {/* Province — pick or add a new one (auto-created on save) */}
+        <div className="space-y-1">
+          <label className="text-sm font-medium">Province</label>
+          <select value={province}
+            onChange={(e) => { const v = e.target.value; setProvince(v); setCity(''); setTown(''); setHood(''); if (v !== '__new__') setNewProvince('') }}
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring">
+            <option value="">Select…</option>
+            {provinces.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
+            <option value="__new__">➕ Add new province…</option>
+          </select>
+          {province === '__new__' && (
+            <input value={newProvince} onChange={(e) => setNewProvince(e.target.value)} placeholder="New province name — e.g. Granada"
+              className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+          )}
+        </div>
+
+        {/* City / District — pick or add a new one */}
+        <div className="space-y-1">
+          <label className="text-sm font-medium">City / District</label>
+          <select value={city} disabled={!province}
+            onChange={(e) => { const v = e.target.value; setCity(v); setTown(''); setHood(''); if (v !== '__new__') setNewCity('') }}
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring disabled:bg-gray-50 disabled:text-gray-300">
+            <option value="">{!province ? '—' : 'Select…'}</option>
+            {cities.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
+            {province && <option value="__new__">➕ Add new city / district…</option>}
+          </select>
+          {city === '__new__' && (
+            <input value={newCity} onChange={(e) => setNewCity(e.target.value)} placeholder="New city / district — e.g. Albaicín"
+              className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
+          )}
+        </div>
         <Select label="Town" value={town} options={towns} disabled={!city} onChange={(v) => { setTown(v); setHood('') }} />
         <Select label="Neighborhood" value={hood} options={hoods} disabled={!town} onChange={setHood} />
         <div className="space-y-1">
