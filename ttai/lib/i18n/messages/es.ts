@@ -139,6 +139,13 @@ export default {
   },
   dir: 'ltr',
   nav: {
+    home: 'Inicio',
+    regions: 'Regiones',
+    shopping_mall: 'Centro Comercial',
+    industrial_park: 'Parque Industrial',
+    ai_assistant: 'Asistente IA',
+    pricing: 'Precios',
+    whatsapp_hub: 'WhatsApp Hub',
     marketplace:  'Mercado',
     suppliers:    'Proveedores',
     login:        'Iniciar sesión',

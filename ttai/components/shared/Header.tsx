@@ -24,15 +24,15 @@ export async function Header() {
   }
 
   const NAV = [
-    { label: 'Home',                    href: '/' },
+    { label: t('nav.home'),             href: '/' },
     { label: t('nav.marketplace'),      href: '/marketplace' },
-    { label: 'Regions',                 href: '/regions/europe' },
-    { label: 'Shopping Mall',           href: '/store-center' },
-    { label: 'Industrial Park',         href: '/industrial-park' },
-    { label: 'AI Assistant',            href: '/assistant' },
+    { label: t('nav.regions'),          href: '/regions/europe' },
+    { label: t('nav.shopping_mall'),    href: '/store-center' },
+    { label: t('nav.industrial_park'),  href: '/industrial-park' },
+    { label: t('nav.ai_assistant'),     href: '/assistant' },
     { label: t('nav.suppliers'),        href: '/suppliers' },
-    { label: 'Pricing',                 href: '/pricing' },
-    { label: 'WhatsApp Hub',            href: '/whatsapp-hub' },
+    { label: t('nav.pricing'),          href: '/pricing' },
+    { label: t('nav.whatsapp_hub'),     href: '/whatsapp-hub' },
   ]
 
   return (

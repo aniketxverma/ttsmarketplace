@@ -139,6 +139,13 @@ export default {
   },
   dir: 'ltr',
   nav: {
+    home: 'Главная',
+    regions: 'Регионы',
+    shopping_mall: 'Торговый центр',
+    industrial_park: 'Промпарк',
+    ai_assistant: 'ИИ-ассистент',
+    pricing: 'Цены',
+    whatsapp_hub: 'WhatsApp-хаб',
     marketplace:  'Маркетплейс',
     suppliers:    'Поставщики',
     login:        'Войти',

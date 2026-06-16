@@ -139,6 +139,13 @@ export default {
   },
   dir: 'ltr',
   nav: {
+    home: 'Home',
+    regions: 'Regions',
+    shopping_mall: 'Shopping Mall',
+    industrial_park: 'Industrial Park',
+    ai_assistant: 'AI Assistant',
+    pricing: 'Pricing',
+    whatsapp_hub: 'WhatsApp Hub',
     marketplace:  'Marketplace',
     suppliers:    'Suppliers',
     login:        'Login',

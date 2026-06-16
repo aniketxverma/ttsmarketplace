@@ -139,6 +139,13 @@ export default {
   },
   dir: 'rtl',
   nav: {
+    home: 'خانه',
+    regions: 'مناطق',
+    shopping_mall: 'مرکز خرید',
+    industrial_park: 'شهرک صنعتی',
+    ai_assistant: 'دستیار هوش مصنوعی',
+    pricing: 'قیمت‌گذاری',
+    whatsapp_hub: 'هاب واتساپ',
     marketplace:  'بازارگاه',
     suppliers:    'تأمین‌کنندگان',
     login:        'ورود',

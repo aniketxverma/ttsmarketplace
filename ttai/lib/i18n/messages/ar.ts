@@ -139,6 +139,13 @@ export default {
   },
   dir: 'rtl',
   nav: {
+    home: 'الرئيسية',
+    regions: 'المناطق',
+    shopping_mall: 'مركز التسوق',
+    industrial_park: 'المجمع الصناعي',
+    ai_assistant: 'المساعد الذكي',
+    pricing: 'الأسعار',
+    whatsapp_hub: 'مركز واتساب',
     marketplace:  'السوق',
     suppliers:    'الموردون',
     login:        'تسجيل الدخول',
