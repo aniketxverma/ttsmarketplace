@@ -178,32 +178,40 @@ export default async function ShoppingMallPage({ searchParams }: { searchParams:
             {/* soft moving light sweep */}
             <div className="pointer-events-none absolute -inset-x-1/2 inset-y-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-[shimmer_7s_linear_infinite]" />
 
-            {/* Welcome + title (no counters on the image) */}
-            <div className="absolute top-0 left-0 right-0 p-6 sm:p-8">
+            {/* Welcome + title (no counters on the image). pointer-events-none so the
+                title never blocks the category pins underneath it. */}
+            <div className="absolute top-0 left-0 right-0 p-6 sm:p-8 pointer-events-none">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="text-white/80 text-sm">Welcome to</p>
                   <h1 className="text-3xl sm:text-5xl font-black text-white tracking-tight leading-none drop-shadow-lg">TTAI SHOPPING MALL</h1>
                   <p className="text-white/70 text-sm mt-1.5 max-w-md drop-shadow">Your Local Shopping Center. All in One Place.</p>
                 </div>
-                <button className="hidden sm:inline-flex items-center gap-2 rounded-full bg-white/10 backdrop-blur border border-white/20 text-white text-xs font-bold px-4 py-2 hover:bg-white/20 transition-colors flex-shrink-0">
+                <button className="pointer-events-auto hidden sm:inline-flex items-center gap-2 rounded-full bg-white/10 backdrop-blur border border-white/20 text-white text-xs font-bold px-4 py-2 hover:bg-white/20 transition-colors flex-shrink-0">
                   <Play className="w-3.5 h-3.5" />How It Works
                 </button>
               </div>
             </div>
 
-            {/* Animated category pins */}
-            {HERO_PINS.map((pin, i) => (
-              <Link key={pin.label} href={pin.kw === 'all' ? '/store' : storeHref(pin.kw)}
-                className="group absolute -translate-x-1/2 -translate-y-1/2 hidden md:flex items-center gap-1.5 transition-transform duration-200 hover:scale-[1.2] hover:z-20 animate-mall-float"
-                style={{ top: pin.top, left: pin.left, animationDelay: `${(i % 4) * 0.4}s` }}>
-                <span className="relative w-6 h-6 rounded-full flex items-center justify-center shadow-lg ring-2 ring-white/60 group-hover:ring-white animate-mall-glow" style={{ background: pin.color }}>
-                  <span className="absolute inset-0 rounded-full animate-ping opacity-40" style={{ background: pin.color }} />
-                  <MapPin className="w-3.5 h-3.5 text-white relative" />
-                </span>
-                <span className="text-[11px] font-extrabold text-white bg-black/55 group-hover:bg-black/85 backdrop-blur px-2 py-0.5 rounded-md whitespace-nowrap transition-colors shadow">{pin.label}</span>
-              </Link>
-            ))}
+            {/* Animated category pins — positioning, float and hover are kept on
+                separate elements so their transforms don't fight each other. */}
+            {HERO_PINS.map((pin, i) => {
+              const labelLeft = parseFloat(pin.left) > 55 // right-side pins: label points inward (avoids clipping)
+              return (
+                <div key={pin.label} className="absolute z-10 -translate-x-1/2 -translate-y-1/2 hidden md:block" style={{ top: pin.top, left: pin.left }}>
+                  <div className="animate-mall-float" style={{ animationDelay: `${(i % 4) * 0.5}s` }}>
+                    <Link href={pin.kw === 'all' ? '/store' : storeHref(pin.kw)}
+                      className={`group flex items-center gap-1.5 ${labelLeft ? 'flex-row-reverse' : ''}`}>
+                      <span className="relative w-6 h-6 rounded-full flex items-center justify-center shadow-lg ring-2 ring-white/60 group-hover:ring-white transition-transform duration-200 group-hover:scale-125 animate-mall-glow" style={{ background: pin.color }}>
+                        <span className="absolute inset-0 rounded-full animate-ping opacity-40" style={{ background: pin.color }} />
+                        <MapPin className="w-3.5 h-3.5 text-white relative" />
+                      </span>
+                      <span className="text-[11px] font-extrabold text-white bg-black/55 group-hover:bg-black/85 backdrop-blur px-2 py-0.5 rounded-md whitespace-nowrap transition-colors shadow">{pin.label}</span>
+                    </Link>
+                  </div>
+                </div>
+              )
+            })}
           </div>
         </div>
 
