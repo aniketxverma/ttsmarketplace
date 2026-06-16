@@ -8,8 +8,8 @@ type City = { id: string; name: string }
 
 /** Real, working location card. Country → City cascade; selecting reloads the
  * page filtered to that location. No hardcoded places. */
-export function StoreLocationPicker({ countries, cities, country, city }: {
-  countries: Country[]; cities: City[]; country: string; city: string
+export function StoreLocationPicker({ countries, cities, country, city, basePath = '/store-center', label = 'Explore Location' }: {
+  countries: Country[]; cities: City[]; country: string; city: string; basePath?: string; label?: string
 }) {
   const router = useRouter()
 
@@ -18,7 +18,7 @@ export function StoreLocationPicker({ countries, cities, country, city }: {
     if (c) p.set('country', c)
     if (ci) p.set('city', ci)
     const qs = p.toString()
-    router.push(qs ? `/store-center?${qs}` : '/store-center')
+    router.push(qs ? `${basePath}?${qs}` : basePath)
   }
 
   const Field = ({ label, display, value, options, disabled, onChange }: {
@@ -42,7 +42,7 @@ export function StoreLocationPicker({ countries, cities, country, city }: {
 
   return (
     <div className="rounded-2xl bg-white border border-gray-200 shadow-sm px-4 py-3 flex flex-wrap items-center gap-2.5">
-      <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400 mr-1 flex-shrink-0">Explore Location</p>
+      <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400 mr-1 flex-shrink-0">{label}</p>
       <Field
         label="Country"
         display={countries.find((c) => c.iso === country)?.name ?? 'All countries'}

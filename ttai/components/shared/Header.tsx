@@ -27,6 +27,7 @@ export async function Header() {
     { label: t('nav.marketplace'),      href: '/marketplace' },
     { label: 'Regions',                 href: '/regions/europe' },
     { label: 'Shopping Mall',           href: '/store-center' },
+    { label: 'Industrial Park',         href: '/industrial-park' },
     { label: t('nav.suppliers'),        href: '/suppliers' },
     { label: 'Pricing',                 href: '/pricing' },
     { label: 'WhatsApp Hub',            href: '/whatsapp-hub' },
