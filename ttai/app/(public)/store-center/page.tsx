@@ -3,14 +3,24 @@ import { StoreLocationPicker } from '@/components/store/StoreLocationPicker'
 import { MallShops, type MallGroup } from '@/components/store/MallShops'
 import Link from 'next/link'
 import {
-  MapPin, Star, Truck, Shield, Headphones, Wallet, Store, ShoppingBag,
+  MapPin, Star, Truck, Shield, Headphones, Wallet, Store, ShoppingBag, Play,
   Layers, Utensils, Cpu, Home, Sparkles, Shirt, Car, PawPrint, Scissors,
 } from 'lucide-react'
 
 export const revalidate = 60
 export const metadata = { title: 'TTAI Shopping Mall · TTAI EMA' }
 
-const HERO_IMG = 'https://images.unsplash.com/photo-1519567241046-7f570eee3ce6?w=1600&q=80'
+// Animated category pins over the 3D mall map.
+const HERO_PINS = [
+  { label: 'Food & Beverage', kw: 'food',    color: '#f97316', top: '36%', left: '13%' },
+  { label: 'Technology',      kw: 'tech',    color: '#3b82f6', top: '32%', left: '32%' },
+  { label: 'Home & Living',   kw: 'home',    color: '#22c55e', top: '32%', left: '67%' },
+  { label: 'Beauty & Health', kw: 'beaut',   color: '#ec4899', top: '36%', left: '87%' },
+  { label: 'Fashion',         kw: 'fashion', color: '#a855f7', top: '70%', left: '15%' },
+  { label: 'Automotive',      kw: 'auto',    color: '#ef4444', top: '80%', left: '37%' },
+  { label: 'Pet Supplies',    kw: 'pet',     color: '#eab308', top: '73%', left: '63%' },
+  { label: 'Services',        kw: 'service', color: '#14b8a6', top: '75%', left: '87%' },
+]
 
 const CAT_STRIP: { key: string; label: string; Icon: any; color: string; root: string }[] = [
   { key: 'food',       label: 'Food & Beverage', Icon: Utensils, color: '#22c55e', root: 'food-beverage' },
@@ -160,26 +170,49 @@ export default async function ShoppingMallPage({ searchParams }: { searchParams:
           <span className="inline-flex items-center gap-1 text-sm font-semibold text-gray-500"><MapPin className="w-4 h-4" /> Change Location</span>
         </div>
 
-        {/* ── Hero ── */}
-        <div className="relative rounded-3xl overflow-hidden min-h-[320px] sm:min-h-[380px] flex">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={HERO_IMG} alt="TTAI Shopping Mall" className="absolute inset-0 w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#0a0e1a]/92 via-[#0a0e1a]/55 to-[#0a0e1a]/10" />
-          <div className="relative p-7 sm:p-10 flex flex-col justify-center max-w-2xl">
-            <p className="text-white/80 text-sm sm:text-base">Welcome to</p>
-            <h1 className="text-4xl sm:text-6xl font-black text-white tracking-tight leading-none drop-shadow">TTAI SHOPPING MALL</h1>
-            <p className="text-white/70 text-sm sm:text-base mt-2">Your Local Shopping Center. All in One Place.</p>
-            <div className="flex flex-wrap gap-x-8 gap-y-3 mt-7">
-              {stats.map((s) => (
-                <div key={s.label} className="flex items-center gap-2.5">
-                  <s.Icon className="w-6 h-6 text-[#F5A623] flex-shrink-0" strokeWidth={1.75} />
-                  <div>
-                    <p className="text-xl font-black text-white leading-none">{s.value}{s.label !== 'Average Rating' && '+'}</p>
-                    <p className="text-[11px] text-white/65 font-semibold">{s.label}</p>
+        {/* ── Hero: 3D mall map with animated category pins ── */}
+        <div className="relative rounded-3xl overflow-hidden border border-gray-200 shadow-sm">
+          <div className="relative aspect-[16/8] sm:aspect-[16/6] min-h-[340px] bg-gradient-to-br from-[#1a1340] via-[#21184f] to-[#0f1629]">
+            <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: "url('/store-center.png')" }} />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#0a0e1a]/90 via-transparent to-[#0a0e1a]/40" />
+
+            {/* Welcome + title + stats */}
+            <div className="absolute top-0 left-0 right-0 p-6 sm:p-8">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-white/80 text-sm">Welcome to</p>
+                  <h1 className="text-3xl sm:text-5xl font-black text-white tracking-tight leading-none drop-shadow-lg">TTAI SHOPPING MALL</h1>
+                  <p className="text-white/70 text-sm mt-1.5 max-w-md drop-shadow">Your Local Shopping Center. All in One Place.</p>
+                  <div className="flex flex-wrap gap-x-7 gap-y-2.5 mt-5">
+                    {stats.map((s) => (
+                      <div key={s.label} className="flex items-center gap-2">
+                        <s.Icon className="w-5 h-5 text-[#F5A623] flex-shrink-0" strokeWidth={1.75} />
+                        <div>
+                          <p className="text-lg font-black text-white leading-none drop-shadow">{s.value}{s.label !== 'Average Rating' && '+'}</p>
+                          <p className="text-[11px] text-white/65 font-semibold">{s.label}</p>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
-              ))}
+                <button className="hidden sm:inline-flex items-center gap-2 rounded-full bg-white/10 backdrop-blur border border-white/20 text-white text-xs font-bold px-4 py-2 hover:bg-white/20 transition-colors flex-shrink-0">
+                  <Play className="w-3.5 h-3.5" />How It Works
+                </button>
+              </div>
             </div>
+
+            {/* Animated category pins */}
+            {HERO_PINS.map((pin) => (
+              <Link key={pin.label} href={pin.kw === 'all' ? '/store' : storeHref(pin.kw)}
+                className="group absolute -translate-x-1/2 -translate-y-1/2 hidden md:flex items-center gap-1.5 transition-transform duration-200 hover:scale-[1.18] hover:z-20"
+                style={{ top: pin.top, left: pin.left }}>
+                <span className="relative w-6 h-6 rounded-full flex items-center justify-center shadow-lg ring-2 ring-white/50 group-hover:ring-white" style={{ background: pin.color }}>
+                  <span className="absolute inset-0 rounded-full animate-ping opacity-30" style={{ background: pin.color }} />
+                  <MapPin className="w-3.5 h-3.5 text-white relative" />
+                </span>
+                <span className="text-[11px] font-extrabold text-white bg-black/50 group-hover:bg-black/80 backdrop-blur px-2 py-0.5 rounded-md whitespace-nowrap transition-colors shadow">{pin.label}</span>
+              </Link>
+            ))}
           </div>
         </div>
 
