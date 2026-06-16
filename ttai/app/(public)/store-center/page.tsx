@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getMasterSellers } from '@/lib/offers-server'
 import { StoreLocationPicker } from '@/components/store/StoreLocationPicker'
+import { MallCorridor, type Storefront } from '@/components/store/MallCorridor'
 import Image from 'next/image'
 import Link from 'next/link'
 import {
@@ -10,7 +11,7 @@ import {
 } from 'lucide-react'
 
 export const revalidate = 60
-export const metadata = { title: 'Retail Store Center · TTAI EMA' }
+export const metadata = { title: 'TTAI Shopping Mall · TTAI EMA' }
 
 const CAT_META: { key: string; label: string; Icon: any; color: string }[] = [
   { key: 'all',        label: 'All Categories', Icon: Layers,   color: '#0B1F4D' },
@@ -53,6 +54,29 @@ export default async function StoreCenterPage({ searchParams }: { searchParams: 
   const allShops = await safe<any[]>(supQ.limit(500), [])
   const shops = allShops.slice(0, 16)
   const locSupIds = new Set(allShops.map((s: any) => s.id))
+
+  // Storefront windows — a few real product images per shop, premium shops first.
+  const shopIds = shops.map((s: any) => s.id)
+  const winRows = await safe<any[]>((supabase.from('products') as any)
+    .select('supplier_id, product_images(url, sort_order)')
+    .in('supplier_id', shopIds.length ? shopIds : ['__none__'])
+    .eq('is_published', true).limit(600), [])
+  const thumbsBySup: Record<string, string[]> = {}
+  for (const p of winRows) {
+    const url = ((p.product_images ?? []) as any[]).slice().sort((a, b) => a.sort_order - b.sort_order)[0]?.url
+    if (url) (thumbsBySup[p.supplier_id] ||= []).push(url)
+  }
+  const storefronts: Storefront[] = shops
+    .map((s: any) => ({
+      id: s.id,
+      name: s.trade_name ?? s.legal_name ?? 'Store',
+      tagline: s.tagline ?? s.description ?? null,
+      href: `/brand/${s.brand_slug ?? s.id}`,
+      premium: s.reliability_tier === 'GOLD',
+      tier: s.reliability_tier ?? null,
+      thumbs: (thumbsBySup[s.id] ?? []).slice(0, 3),
+    }))
+    .sort((a, b) => Number(b.premium) - Number(a.premium))
   const totalStores = allShops.length
   const locLabel = activeCity?.name ?? activeCountry?.name ?? 'All Locations'
   const locSuffix = activeCity ? ` IN ${activeCity.name.toUpperCase()}` : activeCountry ? ` IN ${activeCountry.name.toUpperCase()}` : ''
@@ -134,7 +158,7 @@ export default async function StoreCenterPage({ searchParams }: { searchParams: 
           </div>
 
           <div className="rounded-2xl bg-white border border-gray-200 shadow-sm p-4">
-            <p className="font-extrabold text-gray-900 text-sm">Retail Store Center</p>
+            <p className="font-extrabold text-gray-900 text-sm">TTAI Shopping Mall</p>
             <p className="text-xs text-gray-400 mb-3">Explore local shops{activeCity ? ` in ${activeCity.name}` : activeCountry ? ` in ${activeCountry.name}` : ''}.</p>
             <div className="space-y-0.5">
               <CatRow Icon={Layers} color="#0B1F4D" name="All Categories" count={totalStores} href="/store" />
@@ -156,8 +180,8 @@ export default async function StoreCenterPage({ searchParams }: { searchParams: 
               <div className="absolute top-0 left-0 right-0 p-6 sm:p-8">
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <h1 className="text-3xl sm:text-5xl font-black text-white tracking-tight drop-shadow-lg">RETAIL STORE CENTER</h1>
-                    <p className="text-slate-200 text-sm sm:text-base mt-1 max-w-xl drop-shadow">Discover local stores{activeCity ? ` in ${activeCity.name}` : activeCountry ? ` in ${activeCountry.name}` : ' near you'}. Compare prices, read reviews and find the best offers.</p>
+                    <h1 className="text-3xl sm:text-5xl font-black text-white tracking-tight drop-shadow-lg">TTAI SHOPPING MALL</h1>
+                    <p className="text-slate-200 text-sm sm:text-base mt-1 max-w-xl drop-shadow">Walk a real digital mall{activeCity ? ` in ${activeCity.name}` : activeCountry ? ` in ${activeCountry.name}` : ' near you'} — browse storefronts, buy online, order takeaway or delivery, and chat on WhatsApp.</p>
                   </div>
                   <button className="hidden sm:inline-flex items-center gap-2 rounded-full bg-white/10 backdrop-blur border border-white/20 text-white text-xs font-bold px-4 py-2 hover:bg-white/20 transition-colors flex-shrink-0">
                     <Play className="w-3.5 h-3.5" />How It Works
@@ -199,43 +223,8 @@ export default async function StoreCenterPage({ searchParams }: { searchParams: 
             </div>
           </div>
 
-          {/* Top stores */}
-          <div className="rounded-2xl bg-white border border-gray-200 shadow-sm p-5">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-extrabold text-gray-900 tracking-tight">TOP RETAIL STORES{locSuffix}</h2>
-              <Link href="/store?view=shops" className="text-xs font-bold text-[#0B1F4D] hover:underline">View All Stores</Link>
-            </div>
-            {shops.length === 0 ? (
-              <div className="text-center py-12 text-gray-400"><Store className="w-10 h-10 mx-auto mb-3 opacity-30" /><p className="text-sm">No retail stores yet in this area.</p></div>
-            ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                {shops.map((s) => {
-                  const name = s.trade_name ?? s.legal_name ?? 'Store'
-                  const gold = s.reliability_tier === 'GOLD'
-                  return (
-                    <div key={s.id} className="rounded-2xl bg-white border border-gray-200 overflow-hidden hover:shadow-xl hover:-translate-y-1 hover:border-[#0B1F4D]/30 transition-all duration-300">
-                      <div className="relative h-28 bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center">
-                        {s.logo_url
-                          ? <Image src={s.logo_url} alt={name} width={230} height={112} className="object-cover w-full h-full" />
-                          : <span className="text-3xl font-black text-white/80">{name[0]?.toUpperCase()}</span>}
-                        <span className="absolute top-2 left-2 text-[10px] font-extrabold text-white bg-black/50 px-2 py-0.5 rounded">{(s.countries as any)?.name ?? 'Local'}</span>
-                      </div>
-                      <div className="p-3.5">
-                        <p className="font-extrabold text-gray-900 text-sm truncate">{name}</p>
-                        <p className="text-xs text-gray-400 truncate mb-2">{s.tagline ?? s.description ?? 'Retail store'}</p>
-                        <div className="flex items-center justify-between mb-3">
-                          <span className="flex items-center gap-1 text-xs font-bold text-amber-500"><Star className="w-3.5 h-3.5 fill-amber-400" />{gold ? 'Gold' : 'Verified'}</span>
-                          <span className="text-xs font-bold text-green-600">Open Now</span>
-                        </div>
-                        <Link href={s.brand_slug ? `/brand/${s.brand_slug}` : `/store?supplier=${s.id}`}
-                          className="block text-center rounded-lg bg-[#0B1F4D] hover:bg-[#162d6e] text-white text-xs font-bold py-2 transition-colors">View Store</Link>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-          </div>
+          {/* The mall — storefronts line the corridor */}
+          <MallCorridor storefronts={storefronts} locationLabel={locLabel} />
         </main>
 
         {/* ══ RIGHT ═══════════════════════════════════════════════════════ */}
