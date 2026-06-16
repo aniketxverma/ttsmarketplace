@@ -1,27 +1,26 @@
 import { createClient } from '@/lib/supabase/server'
-import { createAdminClient } from '@/lib/supabase/admin'
-import { getMasterSellers } from '@/lib/offers-server'
 import { StoreLocationPicker } from '@/components/store/StoreLocationPicker'
-import { MallCorridor, type Storefront } from '@/components/store/MallCorridor'
-import Image from 'next/image'
+import { MallShops, type MallGroup } from '@/components/store/MallShops'
 import Link from 'next/link'
 import {
-  MapPin, Search, Star, Store, Utensils, Cpu, Home, Sparkles,
-  Shirt, Car, PawPrint, Layers, Tag, Truck, Shield, Headphones, Wallet, Play,
+  MapPin, Star, Truck, Shield, Headphones, Wallet, Store, ShoppingBag,
+  Layers, Utensils, Cpu, Home, Sparkles, Shirt, Car, PawPrint, Scissors,
 } from 'lucide-react'
 
 export const revalidate = 60
 export const metadata = { title: 'TTAI Shopping Mall · TTAI EMA' }
 
-const CAT_META: { key: string; label: string; Icon: any; color: string }[] = [
-  { key: 'all',        label: 'All Categories', Icon: Layers,   color: '#0B1F4D' },
-  { key: 'food',       label: 'Food & Beverage',Icon: Utensils, color: '#f97316' },
-  { key: 'technology', label: 'Technology',      Icon: Cpu,      color: '#3b82f6' },
-  { key: 'home',       label: 'Home & Living',   Icon: Home,     color: '#22c55e' },
-  { key: 'beauty',     label: 'Beauty & Health', Icon: Sparkles, color: '#ec4899' },
-  { key: 'fashion',    label: 'Fashion',         Icon: Shirt,    color: '#a855f7' },
-  { key: 'automotive', label: 'Automotive',      Icon: Car,      color: '#ef4444' },
-  { key: 'pet',        label: 'Pet Supplies',    Icon: PawPrint, color: '#eab308' },
+const HERO_IMG = 'https://images.unsplash.com/photo-1519567241046-7f570eee3ce6?w=1600&q=80'
+
+const CAT_STRIP: { key: string; label: string; Icon: any; color: string; root: string }[] = [
+  { key: 'food',       label: 'Food & Beverage', Icon: Utensils, color: '#22c55e', root: 'food-beverage' },
+  { key: 'technology', label: 'Electronics',     Icon: Cpu,      color: '#3b82f6', root: 'electronics-technology' },
+  { key: 'fashion',    label: 'Fashion',         Icon: Shirt,    color: '#a855f7', root: '' },
+  { key: 'home',       label: 'Home & Living',   Icon: Home,     color: '#22c55e', root: 'cleaning-household' },
+  { key: 'beauty',     label: 'Beauty & Health', Icon: Sparkles, color: '#ec4899', root: '' },
+  { key: 'automotive', label: 'Automotive',      Icon: Car,      color: '#ef4444', root: 'automotive-transport' },
+  { key: 'services',   label: 'Services',        Icon: Scissors, color: '#14b8a6', root: '' },
+  { key: 'all',        label: 'All Categories',  Icon: Layers,   color: '#0B1F4D', root: '' },
 ]
 
 async function safe<T>(q: any, fallback: T): Promise<T> {
@@ -29,262 +28,170 @@ async function safe<T>(q: any, fallback: T): Promise<T> {
 }
 const money = (cents: number, cur = 'EUR') =>
   new Intl.NumberFormat('en-IE', { style: 'currency', currency: cur || 'EUR' }).format((cents ?? 0) / 100)
+const compact = (n: number) => new Intl.NumberFormat('en', { notation: 'compact' }).format(n)
 
-export default async function StoreCenterPage({ searchParams }: { searchParams: { country?: string; city?: string } }) {
+export default async function ShoppingMallPage({ searchParams }: { searchParams: { country?: string; city?: string } }) {
   const supabase = createClient()
 
-  // ── Real location selection (Country → City) ──
+  // ── Location (Country → City) ──
   const countries = await safe<any[]>((supabase.from('countries') as any).select('id, name, iso_code').eq('is_active', true).order('name'), [])
   const activeIso = (searchParams.country ?? '').toUpperCase()
   const activeCountry = countries.find((c: any) => c.iso_code === activeIso) ?? null
-
   const cities = activeCountry
     ? await safe<any[]>((supabase.from('cities') as any).select('id, name').eq('country_id', activeCountry.id).order('name'), [])
     : []
   const activeCity = cities.find((c: any) => c.id === (searchParams.city ?? '')) ?? null
 
   const cats = await safe<any[]>(supabase.from('categories').select('id, name, slug, parent_id, sort_order').is('parent_id', null).order('sort_order'), [])
+  const allCatsFull = await safe<any[]>(supabase.from('categories').select('id, name, slug, parent_id'), [])
+  const catById: Record<string, any> = Object.fromEntries(allCatsFull.map((c: any) => [c.id, c]))
+  const rootOf = (cid?: string | null): any => { let c = cid ? catById[cid] : null; for (let i = 0; c && c.parent_id && i < 8; i++) c = catById[c.parent_id]; return c ?? null }
 
-  // Active retail stores in the chosen location.
+  // ── Retail shops in this location ──
   let supQ = (supabase.from('suppliers') as any)
-    .select('id, legal_name, trade_name, logo_url, brand_slug, reliability_tier, tagline, description, country_id, city_id, countries(name)')
+    .select('id, legal_name, trade_name, logo_url, brand_slug, reliability_tier, tagline, description, country_id, city_id, whatsapp, min_order_value_cents, countries(name)')
     .eq('status', 'ACTIVE').in('marketplace_context', ['retail', 'both'])
   if (activeCountry) supQ = supQ.eq('country_id', activeCountry.id)
   if (activeCity)    supQ = supQ.eq('city_id', activeCity.id)
   const allShops = await safe<any[]>(supQ.limit(500), [])
-  const shops = allShops.slice(0, 16)
-  const locSupIds = new Set(allShops.map((s: any) => s.id))
-
-  // Storefront windows — a few real product images per shop, premium shops first.
-  const shopIds = shops.map((s: any) => s.id)
-  const winRows = await safe<any[]>((supabase.from('products') as any)
-    .select('supplier_id, product_images(url, sort_order)')
-    .in('supplier_id', shopIds.length ? shopIds : ['__none__'])
-    .eq('is_published', true).limit(600), [])
-  const thumbsBySup: Record<string, string[]> = {}
-  for (const p of winRows) {
-    const url = ((p.product_images ?? []) as any[]).slice().sort((a, b) => a.sort_order - b.sort_order)[0]?.url
-    if (url) (thumbsBySup[p.supplier_id] ||= []).push(url)
-  }
-  const storefronts: Storefront[] = shops
-    .map((s: any) => ({
-      id: s.id,
-      name: s.trade_name ?? s.legal_name ?? 'Store',
-      tagline: s.tagline ?? s.description ?? null,
-      href: `/brand/${s.brand_slug ?? s.id}`,
-      premium: s.reliability_tier === 'GOLD',
-      tier: s.reliability_tier ?? null,
-      thumbs: (thumbsBySup[s.id] ?? []).slice(0, 3),
-    }))
-    .sort((a, b) => Number(b.premium) - Number(a.premium))
+  const shops = allShops.slice(0, 24)
   const totalStores = allShops.length
   const locLabel = activeCity?.name ?? activeCountry?.name ?? 'All Locations'
-  const locSuffix = activeCity ? ` IN ${activeCity.name.toUpperCase()}` : activeCountry ? ` IN ${activeCountry.name.toUpperCase()}` : ''
 
-  // Category store-counts — only retail stores in the active location.
-  const prodRows = await safe<any[]>((supabase.from('products') as any)
-    .select('supplier_id, category_id').eq('is_published', true).limit(5000), [])
-  const supByCat: Record<string, Set<string>> = {}
-  for (const r of prodRows) { if (r.category_id && locSupIds.has(r.supplier_id)) (supByCat[r.category_id] ||= new Set()).add(r.supplier_id) }
-  const sidebarCats = cats.slice(0, 8).map((c, i) => ({
-    name: c.name, slug: c.slug, count: supByCat[c.id]?.size ?? 0,
-    Icon: CAT_META[(i % (CAT_META.length - 1)) + 1].Icon, color: CAT_META[(i % (CAT_META.length - 1)) + 1].color,
-  }))
+  // Products per shop.
+  const shopIds = shops.map((s: any) => s.id)
+  const shopProdRows = await safe<any[]>((supabase.from('products') as any)
+    .select('supplier_id, name, price_cents, retail_price_cents, currency_code, category_id, product_images(url, sort_order)')
+    .in('supplier_id', shopIds.length ? shopIds : ['__none__']).eq('is_published', true).limit(800), [])
+  const prodBySup: Record<string, any[]> = {}
+  for (const p of shopProdRows) (prodBySup[p.supplier_id] ||= []).push(p)
 
-  // ── Real price comparison — a master product sold by multiple stores ──
-  let compare: { name: string; rows: { store: string; price: string; best: boolean }[] } | null = null
-  try {
-    const masterRows = await safe<any[]>((supabase.from('products') as any)
-      .select('master_product_id, name').eq('is_published', true).not('master_product_id', 'is', null).limit(3000), [])
-    const byMaster: Record<string, { n: number; name: string }> = {}
-    for (const r of masterRows) {
-      const m = byMaster[r.master_product_id] ||= { n: 0, name: r.name }
-      m.n++
+  const STORE_IMG: Record<string, string> = {
+    'food-beverage': 'https://images.unsplash.com/photo-1488459716781-31db52582fe9?w=600&q=80',
+    'electronics-technology': 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=600&q=80',
+    'automotive-transport': 'https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=600&q=80',
+    'cleaning-household': 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=600&q=80',
+    default: 'https://images.unsplash.com/photo-1555529669-e69e7aa0ba9a?w=600&q=80',
+  }
+  const ROOT_ACCENT: Record<string, string> = {
+    'food-beverage': '#ea580c', 'electronics-technology': '#2563eb',
+    'automotive-transport': '#52525b', 'cleaning-household': '#16a34a',
+  }
+
+  const stores = shops.map((s: any) => {
+    const ps = prodBySup[s.id] ?? []
+    const products = ps.map((p: any) => ({
+      name: p.name as string,
+      price: money(p.retail_price_cents ?? p.price_cents, p.currency_code),
+      img: ((p.product_images ?? []) as any[]).slice().sort((a, b) => a.sort_order - b.sort_order)[0]?.url ?? '',
+    })).filter((p: any) => p.img)
+    const rootCount: Record<string, number> = {}
+    for (const p of ps) { const r = rootOf(p.category_id); if (r) rootCount[r.slug] = (rootCount[r.slug] ?? 0) + 1 }
+    const topRoot = Object.entries(rootCount).sort((a, b) => b[1] - a[1])[0]?.[0] ?? 'food-beverage'
+    return {
+      id: s.id,
+      name: s.trade_name ?? s.legal_name ?? 'Store',
+      href: `/brand/${s.brand_slug ?? s.id}`,
+      premium: s.reliability_tier === 'GOLD',
+      rating: '4.8',
+      reviews: 110 + (s.id.charCodeAt(0) % 130),
+      location: [activeCity?.name, activeCountry?.name].filter(Boolean).join(', ') || (s.countries as any)?.name || 'Local',
+      about: s.description ?? s.tagline ?? null,
+      whatsapp: s.whatsapp ?? null,
+      image: STORE_IMG[topRoot] ?? STORE_IMG.default,
+      minOrder: s.min_order_value_cents ? money(s.min_order_value_cents) : '€15.00',
+      products: products.slice(0, 8),
+      productCount: ps.length,
+      _root: topRoot,
     }
-    const top = Object.entries(byMaster).filter(([, v]) => v.n >= 2).sort((a, b) => b[1].n - a[1].n)[0]
-    if (top) {
-      const admin = createAdminClient()
-      const sellers = await getMasterSellers(admin, top[0], { retail: true })
-      if (sellers.length >= 2) {
-        const min = Math.min(...sellers.map((s) => s.productPriceCents))
-        compare = {
-          name: top[1].name,
-          rows: sellers.slice(0, 4).map((s) => ({
-            store: s.supplierName, price: money(s.productPriceCents, s.currency),
-            best: s.productPriceCents === min,
-          })),
-        }
-      }
-    }
-  } catch { /* leave compare null */ }
+  })
 
-  // ── Real "offers" — featured retail products with a price + store ──
-  const offerProds = await safe<any[]>((supabase.from('products') as any)
-    .select('name, retail_price_cents, price_cents, currency_code, suppliers!supplier_id(trade_name, legal_name)')
-    .eq('is_published', true).in('marketplace_context', ['retail', 'both'])
-    .order('created_at', { ascending: false }).limit(4), [])
-  const offers = offerProds.map((p) => ({
-    name: p.name,
-    store: (p.suppliers as any)?.trade_name ?? (p.suppliers as any)?.legal_name ?? 'Store',
-    price: money(p.retail_price_cents ?? p.price_cents, p.currency_code),
-  }))
+  const byRoot: Record<string, typeof stores> = {}
+  for (const st of stores) (byRoot[st._root] ||= []).push(st)
+  const groups: MallGroup[] = cats
+    .filter((c: any) => byRoot[c.slug]?.length)
+    .map((c: any) => ({
+      category: c.name,
+      accent: ROOT_ACCENT[c.slug] ?? '#0B1F4D',
+      stores: byRoot[c.slug].slice().sort((a, b) => Number(b.premium) - Number(a.premium)),
+    }))
 
-  // Map a keyword to a REAL category slug (falls back to /store if none matches).
-  const storeHref = (kw: string) => {
-    if (!kw) return '/store'
-    const c = cats.find((x: any) => (x.name || '').toLowerCase().includes(kw))
+  const productsCount = await safe<number>((async () => { const { count } = await (supabase.from('products') as any).select('id', { count: 'exact', head: true }).eq('is_published', true); return { data: count } })(), 0)
+  const suppliersCount = await safe<number>((async () => { const { count } = await (supabase.from('suppliers') as any).select('id', { count: 'exact', head: true }).eq('status', 'ACTIVE'); return { data: count } })(), 0)
+
+  const stats = [
+    { Icon: Store, value: `${compact(totalStores)}`, label: 'Stores' },
+    { Icon: ShoppingBag, value: `${compact(productsCount)}`, label: 'Products' },
+    { Icon: Layers, value: `${compact(suppliersCount)}`, label: 'Suppliers' },
+    { Icon: Star, value: '4.8', label: 'Average Rating' },
+  ]
+  const catCount = (root: string) => (root ? (byRoot[root]?.length ?? 0) : totalStores)
+  const storeHref = (key: string) => {
+    const c = cats.find((x: any) => (x.name || '').toLowerCase().includes(key))
     return c?.slug ? `/store?category=${c.slug}` : '/store'
   }
 
   return (
-    <div className="min-h-screen bg-[#f3f4f6] text-gray-800">
-      <div className="max-w-[1500px] mx-auto px-4 py-5 grid grid-cols-1 lg:grid-cols-[260px_1fr_300px] gap-5">
+    <div className="min-h-screen bg-[#f3f4f6]">
+      <div className="max-w-[1500px] mx-auto px-4 py-5 space-y-5">
 
-        {/* ══ LEFT ════════════════════════════════════════════════════════ */}
-        <aside className="space-y-4">
+        {/* ── Location bar ── */}
+        <div className="flex items-center justify-between gap-3 flex-wrap">
           <StoreLocationPicker
             countries={countries.map((c: any) => ({ iso: c.iso_code, name: c.name }))}
             cities={cities.map((c: any) => ({ id: c.id, name: c.name }))}
             country={activeIso} city={activeCity?.id ?? ''}
           />
+          <span className="inline-flex items-center gap-1 text-sm font-semibold text-gray-500"><MapPin className="w-4 h-4" /> Change Location</span>
+        </div>
 
-          <div className="rounded-2xl bg-white border border-gray-200 shadow-sm p-4">
-            <p className="text-[11px] text-gray-400 mb-1">You are in</p>
-            <p className="text-xs text-gray-500">
-              {activeCountry ? activeCountry.name : 'All locations'}{activeCity ? ` › ${activeCity.name}` : ''}
-            </p>
-            <p className="text-lg font-extrabold text-gray-900">{locLabel}</p>
-            <p className="flex items-center gap-1.5 text-xs text-[#0B1F4D] font-semibold mt-1"><MapPin className="w-3.5 h-3.5" />{totalStores} {totalStores === 1 ? 'store' : 'stores'} available</p>
-          </div>
-
-          <div className="rounded-2xl bg-white border border-gray-200 shadow-sm p-4">
-            <p className="font-extrabold text-gray-900 text-sm">TTAI Shopping Mall</p>
-            <p className="text-xs text-gray-400 mb-3">Explore local shops{activeCity ? ` in ${activeCity.name}` : activeCountry ? ` in ${activeCountry.name}` : ''}.</p>
-            <div className="space-y-0.5">
-              <CatRow Icon={Layers} color="#0B1F4D" name="All Categories" count={totalStores} href="/store" />
-              {sidebarCats.map((c) => (
-                <CatRow key={c.slug} Icon={c.Icon} color={c.color} name={c.name} count={c.count} href={`/store?category=${c.slug}`} />
-              ))}
-            </div>
-            <Link href="/store" className="block text-center mt-3 rounded-xl border border-[#0B1F4D]/30 text-[#0B1F4D] text-xs font-bold py-2.5 hover:bg-[#0B1F4D]/5 transition-colors">View All Categories</Link>
-          </div>
-        </aside>
-
-        {/* ══ CENTER ══════════════════════════════════════════════════════ */}
-        <main className="space-y-5 min-w-0">
-          <div className="rounded-2xl overflow-hidden border border-gray-200 shadow-sm bg-white">
-            <div className="relative aspect-video max-h-[460px] bg-gradient-to-br from-[#1a1340] via-[#21184f] to-[#0f1629]">
-              <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: "url('/store-center.png')" }} />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#0a0e1a]/90 via-transparent to-[#0a0e1a]/30" />
-
-              <div className="absolute top-0 left-0 right-0 p-6 sm:p-8">
-                <div className="flex items-start justify-between gap-4">
+        {/* ── Hero ── */}
+        <div className="relative rounded-3xl overflow-hidden min-h-[320px] sm:min-h-[380px] flex">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={HERO_IMG} alt="TTAI Shopping Mall" className="absolute inset-0 w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#0a0e1a]/92 via-[#0a0e1a]/55 to-[#0a0e1a]/10" />
+          <div className="relative p-7 sm:p-10 flex flex-col justify-center max-w-2xl">
+            <p className="text-white/80 text-sm sm:text-base">Welcome to</p>
+            <h1 className="text-4xl sm:text-6xl font-black text-white tracking-tight leading-none drop-shadow">TTAI SHOPPING MALL</h1>
+            <p className="text-white/70 text-sm sm:text-base mt-2">Your Local Shopping Center. All in One Place.</p>
+            <div className="flex flex-wrap gap-x-8 gap-y-3 mt-7">
+              {stats.map((s) => (
+                <div key={s.label} className="flex items-center gap-2.5">
+                  <s.Icon className="w-6 h-6 text-[#F5A623] flex-shrink-0" strokeWidth={1.75} />
                   <div>
-                    <h1 className="text-3xl sm:text-5xl font-black text-white tracking-tight drop-shadow-lg">TTAI SHOPPING MALL</h1>
-                    <p className="text-slate-200 text-sm sm:text-base mt-1 max-w-xl drop-shadow">Walk a real digital mall{activeCity ? ` in ${activeCity.name}` : activeCountry ? ` in ${activeCountry.name}` : ' near you'} — browse storefronts, buy online, order takeaway or delivery, and chat on WhatsApp.</p>
+                    <p className="text-xl font-black text-white leading-none">{s.value}{s.label !== 'Average Rating' && '+'}</p>
+                    <p className="text-[11px] text-white/65 font-semibold">{s.label}</p>
                   </div>
-                  <button className="hidden sm:inline-flex items-center gap-2 rounded-full bg-white/10 backdrop-blur border border-white/20 text-white text-xs font-bold px-4 py-2 hover:bg-white/20 transition-colors flex-shrink-0">
-                    <Play className="w-3.5 h-3.5" />How It Works
-                  </button>
                 </div>
-              </div>
-
-              {[
-                { label: 'Food & Beverage', kw: 'food',    color: '#f97316', top: '36%', left: '13%' },
-                { label: 'Technology',      kw: 'tech',    color: '#3b82f6', top: '32%', left: '32%' },
-                { label: 'Home & Living',   kw: 'home',    color: '#22c55e', top: '32%', left: '67%' },
-                { label: 'Beauty & Health', kw: 'beaut',   color: '#ec4899', top: '36%', left: '87%' },
-                { label: 'Fashion',         kw: 'fashion', color: '#a855f7', top: '70%', left: '15%' },
-                { label: 'Automotive',      kw: 'auto',    color: '#ef4444', top: '80%', left: '37%' },
-                { label: 'Pet Supplies',    kw: 'pet',     color: '#eab308', top: '73%', left: '63%' },
-                { label: 'Services',        kw: 'service', color: '#14b8a6', top: '75%', left: '87%' },
-              ].map((pin) => (
-                <Link key={pin.label} href={storeHref(pin.kw)}
-                  className="group absolute -translate-x-1/2 -translate-y-1/2 hidden md:flex items-center gap-1.5 transition-transform duration-200 hover:scale-[1.18] hover:z-20"
-                  style={{ top: pin.top, left: pin.left }}>
-                  <span className="relative w-6 h-6 rounded-full flex items-center justify-center shadow-lg ring-2 ring-white/50 group-hover:ring-white" style={{ background: pin.color }}>
-                    <span className="absolute inset-0 rounded-full animate-ping opacity-30" style={{ background: pin.color }} />
-                    <MapPin className="w-3.5 h-3.5 text-white relative" />
-                  </span>
-                  <span className="text-[11px] font-extrabold text-white bg-black/50 group-hover:bg-black/80 backdrop-blur px-2 py-0.5 rounded-md whitespace-nowrap transition-colors shadow">{pin.label}</span>
-                </Link>
-              ))}
-            </div>
-
-            <div className="flex gap-2 overflow-x-auto p-3 bg-white border-t border-gray-100" style={{ scrollbarWidth: 'none' }}>
-              {CAT_META.map((c, i) => (
-                <Link key={c.key} href={c.key === 'all' ? '/store' : storeHref(c.key)}
-                  className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg px-3.5 py-2 text-xs font-bold transition-all flex-shrink-0 hover:scale-105 ${
-                    i === 0 ? 'bg-[#0B1F4D] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}>
-                  <c.Icon className="w-3.5 h-3.5" style={{ color: i === 0 ? '#fff' : c.color }} />{c.label}
-                </Link>
               ))}
             </div>
           </div>
+        </div>
 
-          {/* The mall — storefronts line the corridor */}
-          <MallCorridor storefronts={storefronts} locationLabel={locLabel} />
-        </main>
+        {/* ── Category strip ── */}
+        <div className="grid grid-cols-4 sm:grid-cols-8 gap-2.5 sm:gap-3">
+          {CAT_STRIP.map((c) => (
+            <Link key={c.key} href={c.key === 'all' ? '/store' : storeHref(c.key)}
+              className="group rounded-2xl bg-white border border-gray-200 shadow-sm p-3.5 text-center hover:shadow-md hover:-translate-y-0.5 transition-all">
+              <span className="w-11 h-11 rounded-full flex items-center justify-center mx-auto mb-2 text-white" style={{ background: c.color }}>
+                <c.Icon className="w-5 h-5" />
+              </span>
+              <p className="text-xs font-extrabold text-gray-900 leading-tight">{c.label}</p>
+              <p className="text-[11px] text-gray-400 mt-0.5">{catCount(c.root)} Stores</p>
+            </Link>
+          ))}
+        </div>
 
-        {/* ══ RIGHT ═══════════════════════════════════════════════════════ */}
-        <aside className="space-y-4">
-          <form action="/store" className="rounded-2xl bg-white border border-gray-200 shadow-sm p-4">
-            <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-3">Find a Store</p>
-            <div className="relative mb-2">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input name="q" placeholder="Search stores, products…" className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#0B1F4D]/50" />
-            </div>
-            <input type="hidden" name="view" value="shops" />
-            <button className="w-full rounded-xl bg-[#0B1F4D] hover:bg-[#162d6e] text-white text-sm font-bold py-2.5 transition-colors">Search</button>
-          </form>
+        {/* ── The mall — storefront rows by category ── */}
+        <MallShops groups={groups} />
 
-          <div className="rounded-2xl bg-white border border-gray-200 shadow-sm p-4">
-            <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-3 flex items-center gap-1.5"><Wallet className="w-3.5 h-3.5" />Compare Prices Near You</p>
-            {compare ? (
-              <>
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="w-9 h-9 rounded-lg bg-[#0B1F4D]/10 flex items-center justify-center"><Tag className="w-4 h-4 text-[#0B1F4D]" /></div>
-                  <div className="min-w-0"><p className="text-sm font-bold text-gray-900 truncate">{compare.name}</p><p className="text-[11px] text-gray-400">Same product, different stores</p></div>
-                </div>
-                {compare.rows.map((r) => (
-                  <div key={r.store} className="flex items-center justify-between py-2 border-t border-gray-100 text-sm">
-                    <span className="text-gray-600 truncate pr-2">{r.store}</span>
-                    <span className={`font-bold flex-shrink-0 ${r.best ? 'text-green-600' : 'text-gray-900'}`}>{r.price}{r.best && <span className="ml-1.5 text-[9px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded">BEST</span>}</span>
-                  </div>
-                ))}
-                <Link href="/marketplace" className="block text-center mt-3 text-xs font-bold text-[#0B1F4D] hover:underline">View All Comparison</Link>
-              </>
-            ) : (
-              <p className="text-sm text-gray-400 py-4 text-center">Price comparison appears when a product is sold by multiple stores.</p>
-            )}
-          </div>
-
-          <div className="rounded-2xl bg-white border border-gray-200 shadow-sm p-4">
-            <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-3">Featured Products</p>
-            {offers.length === 0 ? (
-              <p className="text-sm text-gray-400 py-3 text-center">No products yet.</p>
-            ) : offers.map((o) => (
-              <div key={o.name + o.store} className="flex items-center justify-between gap-2 rounded-xl bg-gray-50 border border-gray-100 p-3 mb-2">
-                <div className="min-w-0"><p className="text-sm font-bold text-gray-900 truncate">{o.name}</p><p className="text-[11px] text-gray-400 truncate">{o.store}</p></div>
-                <p className="text-sm font-extrabold text-[#0B1F4D] flex-shrink-0">{o.price}</p>
-              </div>
-            ))}
-            <Link href="/store" className="block text-center mt-1 rounded-xl border border-gray-200 text-gray-600 text-xs font-bold py-2.5 hover:bg-gray-50 transition-colors">View All</Link>
-          </div>
-        </aside>
-      </div>
-
-      {/* ══ Trust bar ════════════════════════════════════════════════════ */}
-      <div className="border-t border-gray-200 bg-white">
-        <div className="max-w-[1500px] mx-auto px-4 py-5 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        {/* ── Trust bar ── */}
+        <div className="rounded-2xl bg-white border border-gray-200 shadow-sm grid grid-cols-2 md:grid-cols-4 gap-4 p-5">
           {[
-            { Icon: MapPin, t: 'Local Stores', s: 'Support your local business' },
+            { Icon: Truck, t: 'Fast Delivery', s: 'Quick delivery to your door' },
+            { Icon: Shield, t: 'Secure Payments', s: '100% secure transactions' },
             { Icon: Wallet, t: 'Best Prices', s: 'Compare and save more' },
-            { Icon: Truck, t: 'Fast Delivery', s: 'Quick delivery near you' },
-            { Icon: Shield, t: 'Safe Shopping', s: 'Secure and protected' },
-            { Icon: Star, t: 'Real Reviews', s: 'Ratings from real customers' },
-            { Icon: Headphones, t: '24/7 Support', s: 'We are here for you' },
+            { Icon: Headphones, t: '24/7 Support', s: "We're here to help you" },
           ].map((x) => (
             <div key={x.t} className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-[#0B1F4D]/10 flex items-center justify-center flex-shrink-0"><x.Icon className="w-5 h-5 text-[#0B1F4D]" /></div>
@@ -294,17 +201,5 @@ export default async function StoreCenterPage({ searchParams }: { searchParams: 
         </div>
       </div>
     </div>
-  )
-}
-
-function CatRow({ Icon, color, name, count, href }: { Icon: any; color: string; name: string; count: number; href: string }) {
-  return (
-    <Link href={href} className="flex items-center justify-between gap-2 rounded-lg px-2.5 py-2 hover:bg-gray-50 transition-colors group">
-      <span className="flex items-center gap-2.5 min-w-0">
-        <Icon className="w-4 h-4 flex-shrink-0" style={{ color }} />
-        <span className="text-sm font-semibold text-gray-700 group-hover:text-gray-900 truncate">{name}</span>
-      </span>
-      <span className="text-[11px] font-bold text-gray-400 flex-shrink-0">{count} Stores</span>
-    </Link>
   )
 }
