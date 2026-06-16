@@ -3,10 +3,11 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import {
-  Star, Heart, X, MapPin, Info, Search, ChevronDown, ShieldCheck,
+  Star, X, MapPin, Info, Search, ChevronDown, ShieldCheck,
   Calendar, Users, Package, Globe, Share2, Bookmark, Factory, Quote,
 } from 'lucide-react'
 import { QuoteModal } from '@/components/shared/QuoteModal'
+import { FavButton } from '@/components/shared/FavButton'
 
 export type CompanyProduct = { name: string; price: string; img: string }
 export type Company = {
@@ -37,12 +38,12 @@ const PIN_POS = [
 
 function WarehouseCard({ c, onOpen }: { c: Company; onOpen: (c: Company) => void }) {
   return (
-    <div className="group rounded-xl bg-white border border-gray-200 overflow-hidden hover:shadow-lg hover:-translate-y-0.5 transition-all">
+    <div className="group relative rounded-xl bg-white border border-gray-200 overflow-hidden hover:shadow-lg hover:-translate-y-0.5 transition-all">
+      <FavButton id={c.id} kind="company" className="absolute top-2 right-2 z-10 w-7 h-7 rounded-full bg-white/90 flex items-center justify-center text-gray-500 hover:text-rose-500" />
       <button onClick={() => onOpen(c)} className="relative block w-full h-28 overflow-hidden text-left">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={c.image} alt={c.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-        <span className="absolute top-2 right-2 w-7 h-7 rounded-full bg-white/90 flex items-center justify-center text-gray-500 hover:text-rose-500"><Heart className="w-3.5 h-3.5" /></span>
         {c.premium && <span className="absolute bottom-2 left-2 rounded bg-[#F5A623] px-1.5 py-0.5 text-[9px] font-extrabold text-[#0B1F4D]">Premium</span>}
       </button>
       <div className="p-3">

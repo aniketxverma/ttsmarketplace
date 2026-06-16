@@ -3,9 +3,10 @@
 import { useRef, useState } from 'react'
 import Link from 'next/link'
 import {
-  Star, Heart, ChevronLeft, ChevronRight, X, MapPin, Truck, ShoppingBag,
+  Star, ChevronLeft, ChevronRight, X, MapPin, Truck, ShoppingBag,
   Package, Store, ShieldCheck, Clock,
 } from 'lucide-react'
+import { FavButton } from '@/components/shared/FavButton'
 
 export type MallProduct = { name: string; price: string; img: string }
 export type MallStore = {
@@ -36,7 +37,8 @@ const ACTIONS = [
 
 function StoreCard({ s, onOpen }: { s: MallStore; onOpen: (s: MallStore) => void }) {
   return (
-    <div className="group snap-start flex-shrink-0 w-[280px] rounded-2xl bg-white border border-gray-200 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+    <div className="group relative snap-start flex-shrink-0 w-[280px] rounded-2xl bg-white border border-gray-200 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+      <FavButton id={s.id} kind="store" className="absolute top-2.5 right-2.5 z-10 w-7 h-7 rounded-full bg-white/90 flex items-center justify-center text-gray-500 hover:text-rose-500 transition-colors" />
       {/* Storefront photo */}
       <button onClick={() => onOpen(s)} className="relative block w-full h-36 text-left overflow-hidden">
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -46,7 +48,6 @@ function StoreCard({ s, onOpen }: { s: MallStore; onOpen: (s: MallStore) => void
         {s.premium && (
           <span className="absolute bottom-2.5 left-2.5 inline-flex items-center rounded-md bg-[#F5A623] px-2 py-0.5 text-[10px] font-extrabold text-[#0B1F4D]">Premium</span>
         )}
-        <span className="absolute top-2.5 right-2.5 w-7 h-7 rounded-full bg-white/90 flex items-center justify-center text-gray-500 hover:text-rose-500 transition-colors"><Heart className="w-4 h-4" /></span>
       </button>
       <div className="p-3">
         <div className="flex items-center justify-between text-xs mb-2.5">
