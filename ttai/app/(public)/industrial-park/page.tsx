@@ -29,8 +29,13 @@ export default async function IndustrialParkPage({ searchParams }: { searchParam
   const cities = activeCountry ? await safe<any[]>((supabase.from('cities') as any).select('id, name').eq('country_id', activeCountry.id).order('name'), []) : []
   const activeCity = cities.find((c: any) => c.id === (searchParams.city ?? '')) ?? null
 
-  // Industrial parks in the selected city.
-  const parks = parksForCity(activeCity?.name, activeCountry?.name)
+  // Industrial parks for the selected location. A city shows its parks; a country
+  // with no city shows one national zone (so it's never an empty screen).
+  const parks = activeCity
+    ? parksForCity(activeCity.name, activeCountry?.name)
+    : activeCountry
+      ? [{ slug: 'all', name: `${activeCountry.name} — Industrial Companies`, area: activeCountry.name, count: 0 }]
+      : []
   const activePark = parks.find((p) => p.slug === searchParams.park) ?? parks[0] ?? null
 
   // Companies = B2B suppliers in the selected city (fallback: country).
@@ -88,7 +93,7 @@ export default async function IndustrialParkPage({ searchParams }: { searchParam
   // column isn't migrated yet, or nobody is assigned, show all city companies so
   // parks are never empty.
   let parkCompanies = companies
-  if (activePark && supIds.length) {
+  if (activePark && activePark.slug !== 'all' && supIds.length) {
     try {
       const { data: pk } = await (supabase.from('suppliers') as any).select('id, industrial_park').in('id', supIds)
       const parkBy: Record<string, string | null> = Object.fromEntries((pk ?? []).map((r: any) => [r.id, r.industrial_park ?? null]))
