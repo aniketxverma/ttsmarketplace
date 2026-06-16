@@ -5,7 +5,7 @@ import { CartProvider } from '@/lib/cart/CartContext'
 import { GlowEffect } from '@/components/GlowEffect'
 import { LocaleProvider } from '@/lib/i18n/client'
 import { getLocale, getMessages } from '@/lib/i18n/server'
-// import { ChatWidget } from '@/components/ai/ChatWidget'  // hidden for now
+import { ChatWidget } from '@/components/ai/ChatWidget'
 import './globals.css'
 
 const inter = Inter({ subsets: ['latin'] })
@@ -26,7 +26,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <LocaleProvider locale={locale} messages={messages}>
           <CartProvider>
             {children}
-            {/* <ChatWidget /> */}
+            <ChatWidget />
           </CartProvider>
           <Toaster />
           <GlowEffect />
