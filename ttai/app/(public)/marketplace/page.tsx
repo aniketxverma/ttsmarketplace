@@ -17,6 +17,7 @@ import { MarketplaceTopBar } from '@/components/marketplace/MarketplaceTopBar'
 import { ShopCard, type ShopCardData } from '@/components/marketplace/ShopCard'
 import { CategoryMall, type MallCat } from '@/components/marketplace/CategoryMall'
 import { SupplierShopHeader } from '@/components/marketplace/SupplierShopHeader'
+import { SmartSearch } from '@/components/marketplace/SmartSearch'
 import { getMarketplaceOpen } from '@/lib/marketplace-phase'
 import { OpeningSoon } from '@/components/OpeningSoon'
 import { Smartphone, UtensilsCrossed, Car, SprayCan, Package } from 'lucide-react'
@@ -398,6 +399,18 @@ export default async function MarketplacePage({
         }
       })
     : []
+  // Most popular / biggest categories first (by product count) — not random.
+  mallCats.sort((a, b) => b.count - a.count)
+
+  // Popular Brands strip — order known brands first, then by presence in catalogue.
+  const BRAND_PRIORITY = ['Apple', 'Samsung', 'Xiaomi', 'Huawei', 'JBL', 'Sony', 'LG', 'Philips', 'Bosch', "De'Longhi", 'Dyson', 'Garmin', 'Fitbit', 'Realme', 'Anker', 'Google', 'Honor', 'Chtaura', 'Nestlé', 'Coca-Cola', 'Pepsi', 'Red Bull', 'Rozil', 'XO']
+  const popularBrands = isGroupedView
+    ? [...brandList].sort((a, b) => {
+        const ia = BRAND_PRIORITY.findIndex((x) => x.toLowerCase() === a.toLowerCase())
+        const ib = BRAND_PRIORITY.findIndex((x) => x.toLowerCase() === b.toLowerCase())
+        return (ia < 0 ? 999 : ia) - (ib < 0 ? 999 : ib) || a.localeCompare(b)
+      }).slice(0, 14)
+    : []
 
   // Supplier Shop sections — group THIS supplier's catalogue into their own
   // sections (like aisles in a store) so the buyer browses & orders it all here.
@@ -540,7 +553,7 @@ export default async function MarketplacePage({
       </div>
 
       <div className="mb-4">
-        <SearchBar defaultValue={searchParams.q} />
+        <SmartSearch defaultValue={searchParams.q} />
       </div>
 
       {/* ── Brand filter ── */}
@@ -745,7 +758,28 @@ export default async function MarketplacePage({
 
             // Homepage → mall directory: big banner per product family (no product wall).
             if (isGroupedView && mallCats.length > 0) {
-              return <CategoryMall categories={mallCats} />
+              return (
+                <div className="space-y-5">
+                  {popularBrands.length > 0 && (
+                    <div className="rounded-2xl bg-white border border-gray-100 shadow-sm p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <h2 className="text-sm font-extrabold text-[#0B1F4D] uppercase tracking-wide">Popular Brands</h2>
+                        <span className="text-[11px] text-gray-400">Shop the brands you trust</span>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {popularBrands.map((b) => (
+                          <Link key={b} href={`/marketplace?brand=${encodeURIComponent(b)}`}
+                            className="group inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2 hover:border-[#0B1F4D] hover:shadow-sm transition-all">
+                            <span className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#0B1F4D] to-[#1a3a7a] text-white text-[10px] font-black flex items-center justify-center">{b.replace(/[^A-Za-z0-9]/g, '').slice(0, 2).toUpperCase()}</span>
+                            <span className="text-sm font-bold text-gray-700 group-hover:text-[#0B1F4D]">{b}</span>
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  <CategoryMall categories={mallCats} />
+                </div>
+              )
             }
 
             if (pageFamilies.length > 0) {
