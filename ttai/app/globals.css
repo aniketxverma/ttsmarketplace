@@ -249,3 +249,8 @@
   50%      { box-shadow: 0 0 14px 3px rgba(255,255,255,0.35); }
 }
 .animate-mall-glow { animation: mallGlow 2.8s ease-in-out infinite; }
+
+/* ── Marquee (auto-scrolling product rails) ── */
+@keyframes marqueeX { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+.animate-marquee { animation: marqueeX linear infinite; }
+.animate-marquee:hover { animation-play-state: paused; }

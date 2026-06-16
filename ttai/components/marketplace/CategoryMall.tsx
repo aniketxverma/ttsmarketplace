@@ -1,8 +1,7 @@
 'use client'
 
-import { useRef } from 'react'
 import Link from 'next/link'
-import { Smartphone, UtensilsCrossed, SprayCan, Car, Package, ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Smartphone, UtensilsCrossed, SprayCan, Car, Package, ArrowRight } from 'lucide-react'
 
 export type MallProduct = { slug: string; name: string; img: string; priceCents: number; currency: string }
 export type MallCat = {
@@ -26,8 +25,6 @@ function price(cents: number, currency: string) {
 
 function Row({ c }: { c: MallCat }) {
   const Icon = ICONS[c.icon] ?? Package
-  const ref = useRef<HTMLDivElement>(null)
-  const slide = (dir: number) => ref.current?.scrollBy({ left: dir * 320, behavior: 'smooth' })
 
   return (
     <div className="overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm hover:shadow-lg transition-shadow duration-300">
@@ -54,34 +51,17 @@ function Row({ c }: { c: MallCat }) {
           </span>
         </Link>
 
-        {/* Sliding product rail */}
-        <div className="relative flex-1 min-w-0 flex items-center bg-gray-50/50 py-3">
-          {c.products.length > 4 && (
-            <>
-              <button
-                type="button" aria-label="Previous" onClick={() => slide(-1)}
-                className="hidden sm:flex absolute left-2 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full bg-white shadow-md border border-gray-100 items-center justify-center text-gray-600 hover:text-[#0B1F4D] hover:scale-105 transition"
-              >
-                <ChevronLeft className="w-5 h-5" />
-              </button>
-              <button
-                type="button" aria-label="Next" onClick={() => slide(1)}
-                className="hidden sm:flex absolute right-2 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full bg-white shadow-md border border-gray-100 items-center justify-center text-gray-600 hover:text-[#0B1F4D] hover:scale-105 transition"
-              >
-                <ChevronRight className="w-5 h-5" />
-              </button>
-            </>
-          )}
+        {/* Auto-scrolling product rail (marquee) — pauses on hover */}
+        <div className="relative flex-1 min-w-0 flex items-center bg-gray-50/50 py-3 overflow-hidden">
           <div
-            ref={ref}
-            className="flex gap-3 overflow-x-auto scroll-smooth snap-x px-3 sm:px-14"
-            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+            className="flex gap-3 px-3 w-max animate-marquee"
+            style={{ animationDuration: `${Math.max(20, c.products.length * 4)}s` }}
           >
-            {c.products.map((p, i) => (
+            {[...c.products, ...c.products].map((p, i) => (
               <Link
                 key={`${p.slug}-${i}`}
                 href={`/product/${p.slug}`}
-                className="group/tile snap-start flex-shrink-0 w-[142px] rounded-2xl bg-white border border-gray-100 overflow-hidden hover:border-gray-300 hover:shadow-md transition-all"
+                className="group/tile flex-shrink-0 w-[142px] rounded-2xl bg-white border border-gray-100 overflow-hidden hover:border-gray-300 hover:shadow-md transition-all"
               >
                 <div className="aspect-square bg-white flex items-center justify-center overflow-hidden">
                   {p.img ? (
@@ -98,6 +78,9 @@ function Row({ c }: { c: MallCat }) {
               </Link>
             ))}
           </div>
+          {/* edge fades */}
+          <div className="pointer-events-none absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-gray-50/80 to-transparent" />
+          <div className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-gray-50/80 to-transparent" />
         </div>
       </div>
 
