@@ -29,6 +29,7 @@ export async function Header() {
     { label: t('nav.regions'),          href: '/regions/europe' },
     { label: t('nav.shopping_mall'),    href: '/store-center' },
     { label: t('nav.industrial_park'),  href: '/industrial-park' },
+    { label: t('nav.outlet_zone'),      href: '/outlet' },
     { label: t('nav.ai_assistant'),     href: '/assistant' },
     { label: t('nav.suppliers'),        href: '/suppliers' },
     { label: t('nav.pricing'),          href: '/pricing' },

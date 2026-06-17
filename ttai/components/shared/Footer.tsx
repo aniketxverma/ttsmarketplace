@@ -11,6 +11,7 @@ const LINKS = {
   Shop: [
     { label: 'Retail Store',     href: '/store' },
     { label: 'Business Shop',    href: '/marketplace' },
+    { label: 'Outlet Zone',      href: '/outlet' },
     { label: 'Trade Hub',        href: '/b2b' },
     { label: 'Channels',         href: '/channels' },
   ],

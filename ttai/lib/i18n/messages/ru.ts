@@ -139,7 +139,7 @@ export default {
   },
   dir: 'ltr',
   nav: {
-    home: 'Главная',
+    outlet_zone: 'Аутлет-зона',    home: 'Главная',
     regions: 'Регионы',
     shopping_mall: 'Торговый центр',
     industrial_park: 'Промпарк',
