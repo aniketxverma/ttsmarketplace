@@ -4,7 +4,11 @@ import { ControlCenterForm } from '@/components/shared/ControlCenterForm'
 
 export const metadata = { title: 'Contact · TTAI EMA', description: 'Get in touch with the TTAI EMA team.' }
 
-export default function ContactPage() {
+const VALID = ['marketplace', 'logistics', 'consulting'] as const
+type Dept = typeof VALID[number]
+
+export default function ContactPage({ searchParams }: { searchParams: { dept?: string } }) {
+  const dept: Dept = (VALID.includes(searchParams.dept as Dept) ? searchParams.dept : 'marketplace') as Dept
   return (
     <div className="bg-gray-50 min-h-screen">
       <div className="bg-gradient-to-br from-[#0B1F4D] to-[#1e3a8a] text-white">
@@ -46,7 +50,7 @@ export default function ContactPage() {
       </div>
 
       <div className="container mx-auto px-4 max-w-3xl pb-14">
-        <ControlCenterForm />
+        <ControlCenterForm defaultDepartment={dept} />
       </div>
     </div>
   )

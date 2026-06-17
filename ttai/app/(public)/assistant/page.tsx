@@ -1,9 +1,12 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
+import Image from 'next/image'
 import {
-  Sparkles, Package, Users, MessageSquare, TrendingUp, Bot, ArrowRight, Radio,
+  Sparkles, Package, Users, MessageSquare, Bot, ArrowRight, Radio,
   Megaphone, Truck, Star, Store, Calendar, FileText, Zap, Target, Send,
 } from 'lucide-react'
+import { OfferRail, type RailOffer } from '@/components/ai/OfferRail'
+import { MatchButton, ExploreButton, ActionTile } from '@/components/ai/AssistantActions'
 
 export const metadata = { title: 'AI Business Assistant · TTAI EMA' }
 export const revalidate = 60
@@ -30,24 +33,41 @@ export default async function AssistantPage() {
   const newPosts = await count((supabase.from('channel_posts') as any).select('id', { count: 'exact', head: true }).gte('created_at', weekAgo))
   const channels = await count((supabase.from('supplier_channels') as any).select('id', { count: 'exact', head: true }).eq('is_active', true))
 
-  // Today's Best Offers — spread across ALL categories (top from each), not just
-  // the newest (which would all be one category).
-  const allCats = await safe<any[]>(supabase.from('categories').select('id, parent_id'), [])
-  const catById: Record<string, any> = Object.fromEntries(allCats.map((c: any) => [c.id, c]))
-  const rootOf = (cid?: string | null): any => { let c = cid ? catById[cid] : null; for (let i = 0; c && c.parent_id && i < 8; i++) c = catById[c.parent_id]; return c ?? null }
-  const offerPool = await safe<any[]>((supabase.from('products') as any)
-    .select('id, name, slug, price_cents, currency_code, created_at, category_id, suppliers!supplier_id!inner(trade_name, legal_name, status, countries(name, iso_code)), product_images(url, sort_order)')
-    .eq('is_published', true).eq('suppliers.status', 'ACTIVE').order('created_at', { ascending: false }).limit(120), [])
-  const offersByRoot = new Map<string, any[]>()
-  for (const p of offerPool) {
-    const r = rootOf(p.category_id); const k = r?.id ?? '_'
-    if (!offersByRoot.has(k)) offersByRoot.set(k, [])
-    offersByRoot.get(k)!.push(p)
-  }
-  const offerLists = Array.from(offersByRoot.values())
-  const offers: any[] = []
-  while (offers.length < 8 && offerLists.some((l) => l.length)) {
-    for (const l of offerLists) { if (l.length) { offers.push(l.shift()); if (offers.length >= 8) break } }
+  // Assistant avatar (generated mascot, stored in app_settings).
+  const avatarRow = await safe<any>(supabase.from('app_settings').select('value').eq('key', 'assistant_avatar_url').single(), null)
+  const avatarUrl: string | null = avatarRow?.value ?? null
+  const isoFlag = (iso?: string | null) => iso && iso.length === 2 ? iso.toUpperCase().replace(/./g, (c) => String.fromCodePoint(127397 + c.charCodeAt(0))) : '🌍'
+
+  // Today's Best Offers — round-robin across SUPPLIERS so the rail is genuinely
+  // varied (food, oil, cleaning, audio, electronics…) instead of 8 items from
+  // whichever supplier imported last. Each active supplier contributes a few of
+  // its products (image-first), then we interleave them.
+  const sups = await safe<any[]>((supabase.from('suppliers') as any)
+    .select('id, trade_name, legal_name, status, countries(iso_code)')
+    .eq('status', 'ACTIVE').limit(24), [])
+  const perSupplier = await Promise.all(sups.map(async (s) => {
+    const list = await safe<any[]>((supabase.from('products') as any)
+      .select('id, name, slug, price_cents, currency_code, created_at, product_images(url, sort_order)')
+      .eq('supplier_id', s.id).eq('is_published', true).order('created_at', { ascending: false }).limit(6), [])
+    // image-first ordering within a supplier
+    list.sort((a, b) => ((b.product_images?.length ? 1 : 0) - (a.product_images?.length ? 1 : 0)))
+    return { s, list }
+  }))
+  const queues = perSupplier.filter((x) => x.list.length)
+  const offers: RailOffer[] = []
+  const MAX = 16
+  while (offers.length < MAX && queues.some((q) => q.list.length)) {
+    for (const q of queues) {
+      const p = q.list.shift()
+      if (!p) continue
+      const img = ((p.product_images ?? []) as any[]).slice().sort((a, b) => a.sort_order - b.sort_order)[0]?.url ?? null
+      offers.push({
+        id: p.id, name: p.name, slug: p.slug ?? p.id, price: money(p.price_cents, p.currency_code),
+        img, supplier: q.s.trade_name ?? q.s.legal_name ?? 'Supplier',
+        flag: isoFlag(q.s.countries?.iso_code), fresh: (Date.now() - new Date(p.created_at).getTime()) < 3 * 864e5,
+      })
+      if (offers.length >= MAX) break
+    }
   }
 
   const posts = await safe<any[]>((supabase.from('channel_posts') as any)
@@ -59,7 +79,6 @@ export default async function AssistantPage() {
     .eq('status', 'ACTIVE').order('reliability_tier', { ascending: true }).limit(6), [])
 
   const opportunities = newOffers + newPosts + recommended.length
-  const isoFlag = (iso?: string | null) => iso && iso.length === 2 ? iso.toUpperCase().replace(/./g, (c) => String.fromCodePoint(127397 + c.charCodeAt(0))) : '🌍'
 
   // AI insight feed — derived from the real signals above (the "I found…" cards).
   const insights = [
@@ -75,16 +94,17 @@ export default async function AssistantPage() {
     { Icon: MessageSquare, value: newPosts, label: 'Channel Updates', sub: 'This week', tint: 'bg-violet-50 text-violet-600' },
     { Icon: Radio, value: channels, label: 'Live Channels', sub: 'Following', tint: 'bg-amber-50 text-amber-600' },
   ]
+  // Each tile either opens the AI assistant (prompt) or goes to a real page (href).
   const RECO = [
     { Icon: Store, title: 'New Suppliers for You', desc: `${recommended.length} verified suppliers`, href: '/suppliers' },
     { Icon: Target, title: 'Franchise Opportunities', desc: 'Expansion options', href: '/projects' },
-    { Icon: Calendar, title: 'Trade Shows & Events', desc: 'Upcoming fairs', href: '/pricing' },
-    { Icon: FileText, title: 'Market Reports', desc: 'Latest insights', href: '/consulting' },
+    { Icon: Calendar, title: 'Trade Shows & Events', desc: 'Ask the assistant', prompt: 'What upcoming trade shows and B2B events across Europe, the Middle East and Africa are relevant for my business?' },
+    { Icon: FileText, title: 'Market Reports', desc: 'Ask the assistant', prompt: 'Give me a quick market overview and the best current offers across categories on TTAI.' },
   ]
   const QUICK = [
-    { Icon: Send, title: 'Post a Request', desc: 'Find products or suppliers', href: '/marketplace' },
+    { Icon: Send, title: 'Post a Request', desc: 'Find products or suppliers', prompt: 'I want to post a sourcing request — help me find products and the right suppliers.' },
     { Icon: Package, title: 'Add Your Products', desc: 'Promote your business', href: '/supplier' },
-    { Icon: Truck, title: 'Request a Shipment', desc: 'Logistics support', href: '/marketplace' },
+    { Icon: Truck, title: 'Request a Shipment', desc: 'Logistics support', href: '/contact?dept=logistics' },
     { Icon: Radio, title: 'Join a Channel', desc: 'Real-time offers', href: '/whatsapp-hub' },
   ]
 
@@ -96,14 +116,24 @@ export default async function AssistantPage() {
           {/* Greeting */}
           <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0B1F4D] via-[#13306e] to-[#0a1733] text-white p-7 sm:p-9">
             <div className="absolute -top-16 -right-10 w-72 h-72 rounded-full bg-[#F5A623]/15 blur-3xl pointer-events-none" />
-            <Bot className="absolute bottom-2 right-4 w-40 h-40 text-white/5 pointer-events-none" strokeWidth={1} />
-            <div className="relative">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 border border-white/15 px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-[#F5A623] mb-3"><Sparkles className="w-3.5 h-3.5" /> AI Business Assistant</span>
-              <h1 className="text-2xl sm:text-4xl font-black leading-tight">Welcome back{firstName ? `, ${firstName}` : ''}! 👋</h1>
-              <p className="text-blue-100/80 mt-2 max-w-xl">I analysed the platform and found <strong className="text-[#F5A623]">{opportunities} new opportunit{opportunities === 1 ? 'y' : 'ies'}</strong> for your business today — offers, suppliers and channel activity worth your attention.</p>
-              <div className="flex flex-wrap gap-3 mt-5">
-                <Link href="/marketplace" className="inline-flex items-center gap-2 rounded-xl bg-[#F5A623] text-[#0B1F4D] px-5 py-2.5 text-sm font-extrabold hover:bg-[#fbb93a] transition-colors">Let&apos;s explore <ArrowRight className="w-4 h-4" /></Link>
-                <span className="inline-flex items-center gap-2 rounded-xl bg-white/10 border border-white/15 px-5 py-2.5 text-sm font-bold"><span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" /> Assistant online</span>
+            <div className="relative flex items-start gap-5">
+              <div className="flex-1 min-w-0">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 border border-white/15 px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-[#F5A623] mb-3"><Sparkles className="w-3.5 h-3.5" /> AI Business Assistant</span>
+                <h1 className="text-2xl sm:text-4xl font-black leading-tight">Welcome back{firstName ? `, ${firstName}` : ''}! 👋</h1>
+                <p className="text-blue-100/80 mt-2 max-w-xl">I analysed the platform and found <strong className="text-[#F5A623]">{opportunities} new opportunit{opportunities === 1 ? 'y' : 'ies'}</strong> for your business today — offers, suppliers and channel activity worth your attention.</p>
+                <div className="flex flex-wrap gap-3 mt-5">
+                  <ExploreButton />
+                  <span className="inline-flex items-center gap-2 rounded-xl bg-white/10 border border-white/15 px-5 py-2.5 text-sm font-bold"><span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" /> Assistant online</span>
+                </div>
+              </div>
+              {/* Assistant avatar */}
+              <div className="hidden sm:block relative flex-shrink-0">
+                <div className="absolute inset-0 rounded-full bg-[#F5A623]/25 blur-2xl" />
+                {avatarUrl ? (
+                  <Image src={avatarUrl} alt="TTAI Assistant" width={132} height={132} className="relative w-28 lg:w-32 h-28 lg:h-32 object-contain drop-shadow-2xl animate-[mallFloat_5s_ease-in-out_infinite]" />
+                ) : (
+                  <Bot className="relative w-28 h-28 text-white/80" strokeWidth={1.2} />
+                )}
               </div>
             </div>
           </div>
@@ -120,28 +150,9 @@ export default async function AssistantPage() {
             ))}
           </div>
 
-          {/* Today's best offers */}
-          <Section title="Today's Best Offers for You" subtitle="Based on recent activity across the marketplace" href="/marketplace" hrefLabel="View all offers">
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {offers.slice(0, 8).map((p) => {
-                const sup = p.suppliers as any
-                const img = ((p.product_images ?? []) as any[]).slice().sort((a, b) => a.sort_order - b.sort_order)[0]?.url
-                const fresh = (Date.now() - new Date(p.created_at).getTime()) < 3 * 864e5
-                return (
-                  <Link key={p.id} href={`/product/${p.slug ?? p.id}`} className="group rounded-xl border border-gray-100 overflow-hidden hover:shadow-md transition-all bg-white">
-                    <div className="relative aspect-square bg-white flex items-center justify-center overflow-hidden">
-                      {img ? (/* eslint-disable-next-line @next/next/no-img-element */<img src={img} alt={p.name} className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform" />) : <Package className="w-7 h-7 text-gray-200" />}
-                      {fresh && <span className="absolute top-1.5 left-1.5 rounded bg-green-500 text-white text-[9px] font-extrabold px-1.5 py-0.5">NEW</span>}
-                    </div>
-                    <div className="p-2.5 border-t border-gray-50">
-                      <p className="text-[11px] font-medium text-gray-600 line-clamp-2 h-[28px] leading-tight">{p.name}</p>
-                      <p className="text-sm font-extrabold text-[#0B1F4D] mt-1">{money(p.price_cents, p.currency_code)}</p>
-                      <p className="text-[10px] text-gray-400 truncate">{isoFlag(sup?.countries?.iso_code)} {sup?.trade_name ?? sup?.legal_name ?? 'Supplier'}</p>
-                    </div>
-                  </Link>
-                )
-              })}
-            </div>
+          {/* Today's best offers — varied across suppliers, auto-scrolling */}
+          <Section title="Today's Best Offers for You" subtitle="A fresh mix from across the marketplace — updated continuously" href="/marketplace" hrefLabel="View all offers">
+            <OfferRail offers={offers} />
           </Section>
 
           {/* Latest from channels */}
@@ -168,11 +179,9 @@ export default async function AssistantPage() {
           <Section title="Recommended for Your Business" subtitle="Opportunities that match your interests">
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
               {RECO.map((r) => (
-                <Link key={r.title} href={r.href} className="rounded-2xl border border-gray-100 bg-white p-4 hover:shadow-md hover:-translate-y-0.5 transition-all">
-                  <span className="w-10 h-10 rounded-xl bg-[#0B1F4D]/5 flex items-center justify-center mb-2.5"><r.Icon className="w-5 h-5 text-[#0B1F4D]" /></span>
-                  <p className="font-extrabold text-gray-900 text-sm">{r.title}</p>
-                  <p className="text-[11px] text-gray-400">{r.desc}</p>
-                </Link>
+                <ActionTile key={r.title} variant="reco"
+                  icon={<r.Icon className="w-5 h-5 text-[#0B1F4D]" />}
+                  title={r.title} desc={r.desc} href={(r as any).href} prompt={(r as any).prompt} />
               ))}
             </div>
           </Section>
@@ -182,7 +191,9 @@ export default async function AssistantPage() {
         <aside className="space-y-4">
           <div className="rounded-2xl bg-white border border-gray-200 shadow-sm overflow-hidden">
             <div className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-[#0B1F4D] to-[#1a3a7a] text-white">
-              <span className="w-7 h-7 rounded-lg bg-white/15 flex items-center justify-center"><Bot className="w-4 h-4 text-[#F5A623]" /></span>
+              <span className="w-8 h-8 rounded-lg bg-white/15 flex items-center justify-center overflow-hidden">
+                {avatarUrl ? <Image src={avatarUrl} alt="" width={32} height={32} className="w-full h-full object-contain" /> : <Bot className="w-4 h-4 text-[#F5A623]" />}
+              </span>
               <div><p className="text-sm font-extrabold leading-none">TTAI AI Assistant</p><p className="text-[10px] text-green-300 flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-green-400" />Online</p></div>
             </div>
             <div className="p-3 space-y-2.5">
@@ -207,17 +218,16 @@ export default async function AssistantPage() {
             <Zap className="w-7 h-7 text-white/80 mb-2" />
             <p className="font-extrabold">Smart Business Matching</p>
             <p className="text-white/75 text-xs mt-1">Let AI find the best suppliers and deals for your business.</p>
-            <Link href="/marketplace" className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-white text-[#5b3fd6] px-4 py-2 text-sm font-extrabold hover:bg-white/90 transition-colors">Start Matching <ArrowRight className="w-4 h-4" /></Link>
+            <MatchButton />
           </div>
 
           <div className="rounded-2xl bg-white border border-gray-200 shadow-sm p-4">
             <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-2">Quick Actions</p>
             <div className="space-y-1">
               {QUICK.map((q) => (
-                <Link key={q.title} href={q.href} className="flex items-center gap-3 rounded-xl px-2.5 py-2 hover:bg-gray-50 transition-colors">
-                  <span className="w-8 h-8 rounded-lg bg-[#0B1F4D]/5 flex items-center justify-center flex-shrink-0"><q.Icon className="w-4 h-4 text-[#0B1F4D]" /></span>
-                  <span><span className="block text-sm font-bold text-gray-800 leading-tight">{q.title}</span><span className="block text-[11px] text-gray-400">{q.desc}</span></span>
-                </Link>
+                <ActionTile key={q.title} variant="quick"
+                  icon={<q.Icon className="w-4 h-4 text-[#0B1F4D]" />}
+                  title={q.title} desc={q.desc} href={(q as any).href} prompt={(q as any).prompt} />
               ))}
             </div>
           </div>

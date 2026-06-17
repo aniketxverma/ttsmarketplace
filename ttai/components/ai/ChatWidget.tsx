@@ -130,6 +130,7 @@ export function ChatWidget() {
   const [hasOpened, setHasOpened] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const sendMessageRef = useRef<((text?: string) => void) | null>(null)
 
   // Fetch user on mount
   useEffect(() => {
@@ -175,6 +176,18 @@ export function ChatWidget() {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, isLoading])
 
+  // Let any page button open the assistant (optionally with a prompt) by
+  // dispatching window.dispatchEvent(new CustomEvent('ttai:assistant', { detail: { prompt } })).
+  useEffect(() => {
+    function onOpen(e: Event) {
+      const prompt = (e as CustomEvent).detail?.prompt as string | undefined
+      setIsOpen(true)
+      if (prompt) setTimeout(() => sendMessageRef.current?.(prompt), 350)
+    }
+    window.addEventListener('ttai:assistant', onOpen as EventListener)
+    return () => window.removeEventListener('ttai:assistant', onOpen as EventListener)
+  }, [])
+
   const sendMessage = useCallback(async (text?: string) => {
     const content = (text ?? input).trim()
     if (!content || isLoading) return
@@ -208,6 +221,10 @@ export function ChatWidget() {
       setTimeout(() => inputRef.current?.focus(), 50)
     }
   }, [input, isLoading, messages, sessionKey])
+
+  // Keep the ref pointed at the latest sendMessage so the window-event listener
+  // (registered once on mount) always calls the current version.
+  useEffect(() => { sendMessageRef.current = sendMessage }, [sendMessage])
 
   const showCategoryChips = messages.length <= 1
 
