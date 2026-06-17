@@ -167,34 +167,92 @@ export async function BrandDirectory({
     premium: !!s.is_featured, products: prodBySup[s.id] ?? [],
   }))
 
+  // ── Mall-style hero data (image + live stats + animated sector pins) ──
+  const heroRow = await (supabase.from('app_settings') as any).select('value').eq('key', 'suppliers_hero_url').maybeSingle()
+  const heroUrl: string | null = heroRow?.data?.value ?? null
+  const productsTotal = Object.values(countBySup).reduce((a, b) => a + b, 0)
+  const countriesTotal = new Set(suppliers.map((s) => (s.countries as any)?.name).filter(Boolean)).size
+  const HERO_STATS = [
+    { value: total,          label: cfg.kindLabel + (total === 1 ? '' : 's') },
+    { value: productsTotal,  label: 'Products' },
+    { value: countriesTotal, label: 'Countries' },
+    { value: total,          label: 'Verified' },
+  ]
+  const HERO_PINS = [
+    { label: 'Electronics',  q: 'electronics', color: '#3b82f6', top: '58%', left: '15%' },
+    { label: 'Food & Agri',  q: 'food',        color: '#f97316', top: '80%', left: '28%' },
+    { label: 'Audio',        q: 'audio',       color: '#a855f7', top: '56%', left: '45%' },
+    { label: 'Cleaning',     q: 'cleaning',    color: '#22c55e', top: '82%', left: '60%' },
+    { label: 'Automotive',   q: 'oil',         color: '#ef4444', top: '58%', left: '76%' },
+    { label: 'Accessories',  q: 'accessories', color: '#14b8a6', top: '80%', left: '88%' },
+  ]
+  const dirBase = `/${kind === 'supplier' ? 'suppliers' : kind === 'distributor' ? 'distributors' : 'factories'}`
+
   return (
     <div className="min-h-screen bg-gray-50">
 
-      {/* ── Hero ──────────────────────────────────────────────────────────── */}
-      <div className="bg-gradient-to-br from-[#0B1F4D] to-[#1a3a7a] text-white py-16 px-4">
-        <div className="container mx-auto max-w-5xl text-center">
-          <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-4 py-1.5 text-xs font-semibold text-white/80 mb-5">
-            <span className="w-1.5 h-1.5 rounded-full bg-green-400" />
-            {cfg.eyebrow}
-          </div>
-          <h1 className="text-4xl sm:text-5xl font-extrabold mb-4 leading-tight">{cfg.title}</h1>
-          <p className="text-blue-200 text-lg max-w-2xl mx-auto">{cfg.blurb}</p>
+      {/* ── Hero: 3D global-trade map with animated sector pins ───────────── */}
+      <div className="container mx-auto max-w-6xl px-4 pt-6">
+        <div className="relative rounded-3xl overflow-hidden border border-gray-200 shadow-sm">
+          <div className="relative aspect-[16/9] sm:aspect-[16/6] min-h-[340px] bg-gradient-to-br from-[#0B1F4D] via-[#13306e] to-[#0a1733]">
+            {heroUrl && <div className="absolute inset-0 bg-cover bg-center animate-mall-kenburns" style={{ backgroundImage: `url('${heroUrl}')` }} />}
+            <div className="absolute inset-0 bg-gradient-to-t from-[#0a0e1a]/90 via-[#0a0e1a]/45 to-[#0a0e1a]/55" />
+            <div className="pointer-events-none absolute -inset-x-1/2 inset-y-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-[shimmer_7s_linear_infinite]" />
 
-          {granted && (
-            <form method="GET" className="mt-8 max-w-xl mx-auto flex gap-2">
-              <div className="relative flex-1">
-                <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-                <input name="q" defaultValue={searchParams.q} placeholder="Search by name, product, category…"
-                  className="w-full rounded-xl border-0 bg-white text-gray-900 pl-10 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#F5A623] shadow-lg" />
+            {/* Title + search (top, centered) */}
+            <div className="absolute top-0 left-0 right-0 z-20 px-4 pt-7 sm:pt-9 flex flex-col items-center text-center">
+              <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-4 py-1.5 text-xs font-semibold text-white/85 mb-3 backdrop-blur">
+                <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+                {cfg.eyebrow}
               </div>
-              <button type="submit"
-                className="rounded-xl bg-[#F5A623] text-[#0B1F4D] px-5 py-3 text-sm font-bold hover:bg-[#fbb93a] transition-colors shadow-lg whitespace-nowrap">
-                Search
-              </button>
-            </form>
-          )}
+              <h1 className="text-3xl sm:text-5xl font-black text-white leading-tight drop-shadow-lg">{cfg.title}</h1>
+              <p className="text-blue-100/85 text-sm sm:text-base max-w-2xl mx-auto mt-2 drop-shadow">{cfg.blurb}</p>
+              {granted && (
+                <form method="GET" className="mt-6 w-full max-w-xl flex gap-2">
+                  <div className="relative flex-1">
+                    <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    <input name="q" defaultValue={searchParams.q} placeholder="Search by name, product, category…"
+                      className="w-full rounded-xl border-0 bg-white text-gray-900 pl-10 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#F5A623] shadow-lg" />
+                  </div>
+                  <button type="submit"
+                    className="rounded-xl bg-[#F5A623] text-[#0B1F4D] px-5 py-3 text-sm font-bold hover:bg-[#fbb93a] transition-colors shadow-lg whitespace-nowrap">
+                    Search
+                  </button>
+                </form>
+              )}
+            </div>
+
+            {/* Animated sector pins — click to filter the directory */}
+            {HERO_PINS.map((pin, i) => {
+              const labelLeft = parseFloat(pin.left) > 55
+              return (
+                <div key={pin.label} className="absolute z-10 -translate-x-1/2 -translate-y-1/2 hidden md:block" style={{ top: pin.top, left: pin.left }}>
+                  <div className="animate-mall-float" style={{ animationDelay: `${(i % 4) * 0.5}s` }}>
+                    <Link href={`${dirBase}?q=${pin.q}`}
+                      className={`group flex items-center gap-2 rounded-full bg-white/95 backdrop-blur shadow-xl ring-1 ring-black/5 py-1 transition-transform duration-200 hover:scale-110 ${labelLeft ? 'flex-row-reverse pl-3 pr-1' : 'pl-1 pr-3'}`}>
+                      <span className="relative w-7 h-7 rounded-full flex items-center justify-center shadow ring-2 ring-white animate-mall-glow flex-shrink-0" style={{ background: pin.color }}>
+                        <span className="absolute inset-0 rounded-full animate-ping opacity-40" style={{ background: pin.color }} />
+                        <svg className="w-4 h-4 text-white relative" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 110-5 2.5 2.5 0 010 5z" /></svg>
+                      </span>
+                      <span className="text-[11px] font-extrabold text-gray-800 whitespace-nowrap">{pin.label}</span>
+                    </Link>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* Stats strip (off the image) */}
+        <div className="mt-4 rounded-2xl bg-white border border-gray-200 shadow-sm grid grid-cols-2 sm:grid-cols-4 divide-x divide-gray-100">
+          {HERO_STATS.map((s) => (
+            <div key={s.label} className="px-3 py-4 text-center">
+              <p className="text-xl sm:text-2xl font-black text-[#0B1F4D] leading-none">{s.value}+</p>
+              <p className="text-[11px] text-gray-400 font-semibold mt-1">{s.label}</p>
+            </div>
+          ))}
         </div>
       </div>
 
