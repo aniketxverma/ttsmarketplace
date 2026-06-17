@@ -140,7 +140,7 @@ export default {
   },
   dir: 'rtl',
   nav: {
-    outlet_zone: 'منطقه آوتلت',    home: 'خانه',
+    more: 'بیشتر',    outlet_zone: 'منطقه آوتلت',    home: 'خانه',
     regions: 'مناطق',
     shopping_mall: 'مرکز خرید',
     industrial_park: 'شهرک صنعتی',

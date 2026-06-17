@@ -140,7 +140,7 @@ export default {
   },
   dir: 'ltr',
   nav: {
-    outlet_zone: 'Outlet Zone',    home: 'Home',
+    more: 'More',    outlet_zone: 'Outlet Zone',    home: 'Home',
     regions: 'Regions',
     shopping_mall: 'Shopping Mall',
     industrial_park: 'Industrial Park',

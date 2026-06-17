@@ -103,12 +103,13 @@ export default async function OutletZonePage({ searchParams }: { searchParams: S
   }
 
   const Chip = ({ active, href, children }: { active: boolean; href: string; children: React.ReactNode }) => (
-    <Link href={href} className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap ${active ? 'bg-[#0B1F4D] text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}>{children}</Link>
+    <Link href={href} className={`px-2.5 py-1 rounded-full text-[11px] font-bold whitespace-nowrap ${active ? 'bg-[#0B1F4D] text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}>{children}</Link>
   )
+  // Vertical filter group for the side panel — label on top, chips wrap below.
   const FilterRow = ({ label, children }: { label: string; children: React.ReactNode }) => (
-    <div className="flex items-center gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
-      <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wide flex-shrink-0 mr-1 w-16">{label}</span>
-      {children}
+    <div className="py-2.5 border-b border-gray-100 last:border-0">
+      <span className="block text-[11px] font-bold text-gray-400 uppercase tracking-wide mb-1.5">{label}</span>
+      <div className="flex flex-wrap gap-1.5">{children}</div>
     </div>
   )
 
@@ -156,18 +157,10 @@ export default async function OutletZonePage({ searchParams }: { searchParams: S
       )}
 
       <div className="max-w-6xl mx-auto px-4 sm:px-8 py-8">
-        {/* Products | Shops toggle */}
-        <div className="flex items-center gap-1 bg-gray-100 rounded-xl p-1 w-max mb-5">
-          {([{ id: 'products', label: 'Lots', Icon: Package }, { id: 'shops', label: 'Sellers', Icon: Warehouse }] as const).map(({ id, label, Icon }) => (
-            <Link key={id} href={chipHref({ view: id === 'products' ? undefined : id })}
-              className={`flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-bold transition-colors ${activeView === id ? 'bg-white text-[#0B1F4D] shadow-sm' : 'text-gray-500 hover:text-[#0B1F4D]'}`}>
-              <Icon className="w-4 h-4" /> {label}
-            </Link>
-          ))}
-        </div>
-
-        {/* Filters */}
-        <div className="space-y-2.5 mb-6">
+       <div className="grid lg:grid-cols-[250px_1fr] gap-6 items-start">
+        {/* ── Filter side panel ── */}
+        <aside className="lg:sticky lg:top-20 rounded-2xl bg-white border border-gray-200 p-4">
+          <p className="font-extrabold text-sm text-[#0B1F4D] mb-1">Filters</p>
           <FilterRow label="Condition">
             <Chip active={!searchParams.cond} href={chipHref({ cond: undefined })}>All</Chip>
             {CONDITIONS.map((c) => <Chip key={c.key} active={searchParams.cond === c.key} href={chipHref({ cond: c.key })}>{c.label}</Chip>)}
@@ -210,6 +203,18 @@ export default async function OutletZonePage({ searchParams }: { searchParams: S
               {sources.map((s) => <Chip key={s} active={searchParams.source === s} href={chipHref({ source: s })}>{s}</Chip>)}
             </FilterRow>
           )}
+        </aside>
+
+        {/* ── Main column ── */}
+        <div className="min-w-0">
+        {/* Products | Sellers toggle */}
+        <div className="flex items-center gap-1 bg-gray-100 rounded-xl p-1 w-max mb-5">
+          {([{ id: 'products', label: 'Lots', Icon: Package }, { id: 'shops', label: 'Sellers', Icon: Warehouse }] as const).map(({ id, label, Icon }) => (
+            <Link key={id} href={chipHref({ view: id === 'products' ? undefined : id })}
+              className={`flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-bold transition-colors ${activeView === id ? 'bg-white text-[#0B1F4D] shadow-sm' : 'text-gray-500 hover:text-[#0B1F4D]'}`}>
+              <Icon className="w-4 h-4" /> {label}
+            </Link>
+          ))}
         </div>
 
         {/* Results */}
@@ -220,7 +225,7 @@ export default async function OutletZonePage({ searchParams }: { searchParams: S
         ) : products.length === 0 ? (
           <EmptyZone />
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {products.map((p) => {
               const sup = p.suppliers as any
               const img = (p.product_images as { url: string; sort_order: number }[])?.sort((a, b) => a.sort_order - b.sort_order)[0]?.url
@@ -257,6 +262,8 @@ export default async function OutletZonePage({ searchParams }: { searchParams: S
             })}
           </div>
         )}
+        </div>{/* /main column */}
+       </div>{/* /filters grid */}
 
         {/* ── Who trades in the Outlet Zone ── */}
         <section className="mt-12">

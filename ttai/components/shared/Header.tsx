@@ -6,6 +6,7 @@ import { CartIcon } from '@/components/cart/CartIcon'
 import { LocaleSwitcher } from '@/components/LocaleSwitcher'
 import { Logo } from '@/components/Logo'
 import { MobileMenu } from './MobileMenu'
+import { MoreMenu } from './MoreMenu'
 import { useServerTranslations } from '@/lib/i18n/server'
 
 export async function Header() {
@@ -23,18 +24,22 @@ export async function Header() {
     profile = data
   }
 
-  const NAV = [
+  // Primary nav kept lean; secondary sections live under "More".
+  const PRIMARY = [
     { label: t('nav.home'),             href: '/' },
     { label: t('nav.marketplace'),      href: '/marketplace' },
-    { label: t('nav.regions'),          href: '/regions/europe' },
-    { label: t('nav.shopping_mall'),    href: '/store-center' },
-    { label: t('nav.industrial_park'),  href: '/industrial-park' },
+    { label: t('nav.suppliers'),        href: '/suppliers' },
     { label: t('nav.outlet_zone'),      href: '/outlet' },
     { label: t('nav.ai_assistant'),     href: '/assistant' },
-    { label: t('nav.suppliers'),        href: '/suppliers' },
     { label: t('nav.pricing'),          href: '/pricing' },
+  ]
+  const MORE = [
+    { label: t('nav.shopping_mall'),    href: '/store-center' },
+    { label: t('nav.industrial_park'),  href: '/industrial-park' },
+    { label: t('nav.regions'),          href: '/regions/europe' },
     { label: t('nav.whatsapp_hub'),     href: '/whatsapp-hub' },
   ]
+  const NAV = [...PRIMARY, ...MORE]
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-gray-100 bg-white/95 backdrop-blur-md shadow-sm">
@@ -45,7 +50,7 @@ export async function Header() {
 
         {/* ── Nav ─────────────────────────────────────────────────────── */}
         <nav className="hidden lg:flex items-center gap-1">
-          {NAV.map((item) => (
+          {PRIMARY.map((item) => (
             <Link
               key={item.href}
               href={item.href}
@@ -54,6 +59,7 @@ export async function Header() {
               {item.label}
             </Link>
           ))}
+          <MoreMenu items={MORE} label={t('nav.more') || 'More'} />
         </nav>
 
         {/* ── Right ───────────────────────────────────────────────────── */}

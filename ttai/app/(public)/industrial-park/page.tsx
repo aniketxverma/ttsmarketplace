@@ -51,11 +51,17 @@ export default async function IndustrialParkPage({ searchParams }: { searchParam
   const supRows = await safe<any[]>(supQ.limit(60), [])
 
   const supIds = supRows.map((s: any) => s.id)
-  const prodRows = await safe<any[]>((supabase.from('products') as any)
-    .select('supplier_id, name, price_cents, retail_price_cents, currency_code, category_id, product_images(url, sort_order)')
-    .in('supplier_id', supIds.length ? supIds : ['__none__']).eq('is_published', true).limit(600), [])
+  // Fetch PER supplier — a single .in() query is capped at ~1000 rows by
+  // PostgREST, so one large supplier (XO/EuroTech) would swallow it and leave
+  // every other company with no product thumbnails.
   const prodBySup: Record<string, any[]> = {}
-  for (const p of prodRows) (prodBySup[p.supplier_id] ||= []).push(p)
+  await Promise.all(supRows.map(async (s: any) => {
+    const rows = await safe<any[]>((supabase.from('products') as any)
+      .select('name, price_cents, retail_price_cents, currency_code, category_id, product_images(url, sort_order)')
+      .eq('supplier_id', s.id).eq('is_published', true).order('created_at', { ascending: false }).limit(48), [])
+    rows.sort((a, b) => ((b.product_images?.length ? 1 : 0) - (a.product_images?.length ? 1 : 0)))
+    prodBySup[s.id] = rows
+  }))
 
   const companies: Company[] = supRows.map((s: any, idx: number) => {
     const ps = prodBySup[s.id] ?? []

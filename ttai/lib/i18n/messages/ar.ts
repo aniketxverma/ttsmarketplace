@@ -140,7 +140,7 @@ export default {
   },
   dir: 'rtl',
   nav: {
-    outlet_zone: 'منطقة الأوتلت',    home: 'الرئيسية',
+    more: 'المزيد',    outlet_zone: 'منطقة الأوتلت',    home: 'الرئيسية',
     regions: 'المناطق',
     shopping_mall: 'مركز التسوق',
     industrial_park: 'المجمع الصناعي',

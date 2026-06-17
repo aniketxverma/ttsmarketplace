@@ -140,7 +140,7 @@ export default {
   },
   dir: 'ltr',
   nav: {
-    outlet_zone: 'Zona Outlet',    home: 'Início',
+    more: 'Mais',    outlet_zone: 'Zona Outlet',    home: 'Início',
     regions: 'Regiões',
     shopping_mall: 'Centro Comercial',
     industrial_park: 'Parque Industrial',
