@@ -204,6 +204,8 @@ export async function POST(req: NextRequest) {
   let collectedProducts: ChatProduct[] = []
   let chatAction: ChatAction | null = null
 
+  try {
+
   let response = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
     messages: apiMessages,
@@ -292,4 +294,15 @@ export async function POST(req: NextRequest) {
   }
 
   return NextResponse.json({ content: finalContent, products: uniqueProducts, action: chatAction })
+
+  } catch (err: any) {
+    const code = err?.status === 401 || /api key/i.test(err?.message ?? '') ? 'key' : 'other'
+    console.error('AI chat error:', err?.status, err?.message)
+    return NextResponse.json({
+      content: code === 'key'
+        ? "I'm not fully set up yet — the AI key needs configuring. Meanwhile, you can browse the Marketplace, Suppliers and Shopping Mall. 🙂"
+        : "I'm having trouble connecting right now. Please try again in a moment.",
+      products: [],
+    })
+  }
 }
