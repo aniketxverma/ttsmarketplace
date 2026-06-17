@@ -10,6 +10,7 @@ import { tierRank } from '@/lib/business-chain'
 import type { PurchaseUnit } from '@/lib/packaging'
 import { minRetailCents, addVatCents } from '@/lib/pricing-rules'
 import { CONDITIONS } from '@/lib/conditions'
+import { CONDITIONS as OUTLET_CONDITIONS, SELLING_UNITS } from '@/lib/outlet'
 import { useT } from '@/lib/i18n/client'
 
 type TemplateField = { key: string; label: string; type?: 'text' | 'number' | 'select'; options?: string[] }
@@ -61,7 +62,7 @@ interface FormState {
   priceNegotiable: boolean; priceOnRequest: boolean
   condition: string; warranty: string; warehouseLocation: string; deliveryDays: string; shipping: string
   retailAvailable: boolean; deliveryScope: string
-  isOutlet: boolean; outletSource: string; lotType: string
+  isOutlet: boolean; outletSource: string; lotType: string; sellingUnit: string
   isPublished: boolean
 }
 
@@ -84,7 +85,7 @@ const INITIAL: FormState = {
   priceNegotiable: false, priceOnRequest: false,
   condition: '', warranty: '', warehouseLocation: '', deliveryDays: '', shipping: '',
   retailAvailable: true, deliveryScope: 'city',
-  isOutlet: false, outletSource: '', lotType: 'pallet',
+  isOutlet: false, outletSource: '', lotType: 'pallet', sellingUnit: 'pallet',
   isPublished: false,
 }
 
@@ -291,6 +292,7 @@ export function ProductForm({
       is_outlet:           form.isOutlet,
       outlet_source:       form.isOutlet ? (form.outletSource.trim() || null) : null,
       lot_type:            form.isOutlet ? (form.lotType || 'pallet') : null,
+      selling_unit:        form.isOutlet ? (form.sellingUnit || null) : null,
       specs:               specs,
       // Cap sell-by units to the seller's plan (locked units can't be enabled).
       sell_piece:          form.sellPiece  && canSellUnit(sellerTier, 'piece'),
@@ -307,7 +309,7 @@ export function ProductForm({
     const OPTIONAL_KEYS = ['box_discount_pct', 'pallet_discount_pct', 'truck_discount_pct',
       'brand_name', 'source_type', 'original_supplier_id', 'current_owner_id', 'created_by', 'price_on_request', 'specs',
       'condition', 'warranty', 'warehouse_location', 'delivery_days', 'shipping_cents',
-      'retail_available', 'delivery_scope', 'is_outlet', 'outlet_source', 'lot_type']
+      'retail_available', 'delivery_scope', 'is_outlet', 'outlet_source', 'lot_type', 'selling_unit']
     const stripOptional = (obj: any) => { const o = { ...obj }; OPTIONAL_KEYS.forEach(k => delete o[k]); return o }
     const isMissingColumn = (msg?: string | null) => !!msg && /column|does not exist|discount_pct/i.test(msg)
 
@@ -977,6 +979,50 @@ export function ProductForm({
               </select>
             </div>
             <p className="text-xs text-gray-400 sm:col-span-2">Tip: attach your <strong>Excel stock list</strong> (Catalogue URL / documents), a <strong>video</strong> and warehouse photos — they matter more than single product photos here.</p>
+          </div>
+        )}
+      </div>
+
+      {/* Outlet Zone listing */}
+      <div className="rounded-xl border border-orange-200 bg-orange-50/40 p-5">
+        <label className="flex items-start gap-3 cursor-pointer">
+          <input type="checkbox" checked={form.isOutlet} onChange={(e) => update('isOutlet', e.target.checked)} className="mt-0.5 w-5 h-5 accent-red-600" />
+          <span>
+            <span className="block font-bold text-[#0B1F4D] text-sm">📦 List this in the Outlet Zone</span>
+            <span className="block text-xs text-gray-500 mt-0.5">Clearance, customer returns, overstock or liquidation — sold by pallet, container or full truckload. Appears in <a href="/outlet" target="_blank" className="underline font-semibold">/outlet</a> with a condition badge.</span>
+          </span>
+        </label>
+
+        {form.isOutlet && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+            <div className="space-y-1.5">
+              <label className={labelCls}>Condition / Grade *</label>
+              <select className={inputCls} value={form.condition} onChange={(e) => update('condition', e.target.value)}>
+                <option value="">Select condition…</option>
+                {OUTLET_CONDITIONS.map((c) => <option key={c.key} value={c.key}>{c.label}</option>)}
+              </select>
+            </div>
+            <div className="space-y-1.5">
+              <label className={labelCls}>Selling unit *</label>
+              <select className={inputCls} value={form.sellingUnit} onChange={(e) => update('sellingUnit', e.target.value)}>
+                {SELLING_UNITS.map((u) => <option key={u.key} value={u.key}>{u.label}</option>)}
+              </select>
+            </div>
+            <div className="space-y-1.5">
+              <label className={labelCls}>Source <span className="text-gray-400 normal-case font-normal">(optional)</span></label>
+              <input className={inputCls} list="outlet-sources" value={form.outletSource} onChange={(e) => update('outletSource', e.target.value)}
+                placeholder="e.g. Amazon Returns, Lidl Overstock, Bosch" />
+              <datalist id="outlet-sources">
+                {['Amazon Returns', 'Lidl Returns', 'Aldi Overstock', 'Carrefour Clearance', 'MediaMarkt Returns', 'El Corte Inglés', 'Costco', 'Walmart', 'Overstock', 'End of Line'].map((s) => <option key={s} value={s} />)}
+              </datalist>
+            </div>
+            <div className="space-y-1.5">
+              <label className={labelCls}>Lot type</label>
+              <select className={inputCls} value={form.lotType} onChange={(e) => update('lotType', e.target.value)}>
+                {[['pallet', 'Pallet'], ['truckload', 'Truckload'], ['container', 'Container'], ['stock', 'Stock lot'], ['mixed', 'Mixed lot']].map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+              </select>
+            </div>
+            <p className="sm:col-span-2 text-[11px] text-gray-500">Tip: attach your stock-list Excel and pallet/truck photos or a video above — buyers rely on these for outlet lots.</p>
           </div>
         )}
       </div>

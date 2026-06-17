@@ -145,6 +145,7 @@ export default async function EditProductPage({ params }: { params: { id: string
             isOutlet:           (product as any).is_outlet ?? false,
             outletSource:       (product as any).outlet_source ?? '',
             lotType:            (product as any).lot_type ?? 'pallet',
+            sellingUnit:        (product as any).selling_unit ?? 'pallet',
             isPublished:        product.is_published ?? false,
           }}
         />

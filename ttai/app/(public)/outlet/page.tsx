@@ -136,7 +136,7 @@ export default async function OutletZonePage({ searchParams }: { searchParams: S
           </div>
           <div className="flex flex-wrap gap-3 mt-7">
             <Link href="/register" className="inline-flex items-center gap-2 rounded-xl bg-[#F5A623] text-[#0B1F4D] px-6 py-3 text-sm font-extrabold hover:bg-[#fbb93a] transition-colors">List an outlet offer <ArrowRight className="w-4 h-4" /></Link>
-            <Link href="/contact?dept=marketplace" className="inline-flex items-center gap-2 rounded-xl bg-white/10 border border-white/20 px-6 py-3 text-sm font-bold hover:bg-white/20 transition-colors">Buy pallets &amp; truckloads</Link>
+            <Link href="/outlet/board" className="inline-flex items-center gap-2 rounded-xl bg-white/10 border border-white/20 px-6 py-3 text-sm font-bold hover:bg-white/20 transition-colors">Trade Board — buy &amp; sell requests</Link>
           </div>
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-6 text-[11px] text-white/55">
             <span className="font-bold text-white/70">Sources include:</span>

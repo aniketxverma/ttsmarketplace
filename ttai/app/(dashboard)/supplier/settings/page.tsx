@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import { ProfileEditForm } from '@/app/(dashboard)/account/ProfileEditForm'
 import { LocationEditor } from '@/components/supplier/LocationEditor'
 import { ShopTypeChooser } from '@/components/supplier/ShopTypeChooser'
+import { OutletRoleChooser } from '@/components/supplier/OutletRoleChooser'
 import { tierRank } from '@/lib/business-chain'
 
 export default async function SupplierSettingsPage() {
@@ -38,6 +39,13 @@ export default async function SupplierSettingsPage() {
     initialPark = data?.industrial_park ?? null
   } catch { /* column not migrated yet */ }
 
+  // Outlet Zone role (defensive — column may be pre-migration).
+  let initialRole: string | null = null
+  try {
+    const { data } = await (supabase.from('suppliers') as any).select('outlet_role').eq('owner_id', user.id).single()
+    initialRole = data?.outlet_role ?? null
+  } catch { /* column not migrated yet */ }
+
   return (
     <div className="space-y-4">
       <div className="mb-2">
@@ -46,6 +54,8 @@ export default async function SupplierSettingsPage() {
       </div>
 
       <ShopTypeChooser initial={(sup.marketplace_context as any) ?? 'wholesale'} paid={paid} />
+
+      <OutletRoleChooser initial={initialRole} />
 
       <ProfileEditForm
         profile={{
