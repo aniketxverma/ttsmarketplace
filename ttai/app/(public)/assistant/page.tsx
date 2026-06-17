@@ -85,7 +85,7 @@ export default async function AssistantPage() {
     newOffers > 0 && { Icon: Megaphone, color: 'text-blue-600 bg-blue-50', title: 'New offers published', body: `${newOffers} new product offer${newOffers !== 1 ? 's' : ''} went live this week — fresh stock to source.`, href: '/marketplace' },
     newPosts > 0 && { Icon: Radio, color: 'text-green-600 bg-green-50', title: 'WhatsApp channel activity', body: `${newPosts} new channel post${newPosts !== 1 ? 's' : ''} from suppliers — offers, stock and deals.`, href: '/whatsapp-hub' },
     recommended.length > 0 && { Icon: Star, color: 'text-amber-600 bg-amber-50', title: 'Recommended suppliers', body: `${recommended.length} verified suppliers match your market — worth a look.`, href: '/suppliers' },
-    { Icon: Truck, color: 'text-violet-600 bg-violet-50', title: 'Logistics opportunity', body: 'Consolidated shipping routes available across Europe this week.', href: '/marketplace' },
+    { Icon: Truck, color: 'text-violet-600 bg-violet-50', title: 'Logistics opportunity', body: 'Consolidated shipping routes available across Europe this week.', href: '/logistics' },
   ].filter(Boolean) as { Icon: any; color: string; title: string; body: string; href: string }[]
 
   const STATS = [
@@ -98,13 +98,13 @@ export default async function AssistantPage() {
   const RECO = [
     { Icon: Store, title: 'New Suppliers for You', desc: `${recommended.length} verified suppliers`, href: '/suppliers' },
     { Icon: Target, title: 'Franchise Opportunities', desc: 'Expansion options', href: '/projects' },
-    { Icon: Calendar, title: 'Trade Shows & Events', desc: 'Ask the assistant', prompt: 'What upcoming trade shows and B2B events across Europe, the Middle East and Africa are relevant for my business?' },
+    { Icon: Calendar, title: 'Business Consulting', desc: 'Market entry & strategy', href: '/consulting' },
     { Icon: FileText, title: 'Market Reports', desc: 'Ask the assistant', prompt: 'Give me a quick market overview and the best current offers across categories on TTAI.' },
   ]
   const QUICK = [
     { Icon: Send, title: 'Post a Request', desc: 'Find products or suppliers', prompt: 'I want to post a sourcing request — help me find products and the right suppliers.' },
     { Icon: Package, title: 'Add Your Products', desc: 'Promote your business', href: '/supplier' },
-    { Icon: Truck, title: 'Request a Shipment', desc: 'Logistics support', href: '/contact?dept=logistics' },
+    { Icon: Truck, title: 'Request a Shipment', desc: 'Logistics support', href: '/logistics' },
     { Icon: Radio, title: 'Join a Channel', desc: 'Real-time offers', href: '/whatsapp-hub' },
   ]
 

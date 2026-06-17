@@ -2,6 +2,12 @@ import Link from 'next/link'
 import { Logo } from '@/components/Logo'
 
 const LINKS = {
+  Departments: [
+    { label: 'Marketplace',          href: '/marketplace' },
+    { label: 'Logistics Hub',        href: '/logistics' },
+    { label: 'Business Consulting',  href: '/consulting' },
+    { label: 'Contact a Team',       href: '/contact' },
+  ],
   Shop: [
     { label: 'Retail Store',     href: '/store' },
     { label: 'Business Shop',    href: '/marketplace' },
@@ -39,7 +45,7 @@ export function Footer() {
 
       {/* Main grid */}
       <div className="container mx-auto px-4 py-14 relative">
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-x-8 gap-y-10">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-x-8 gap-y-10">
 
           {/* Brand column */}
           <div className="col-span-2 lg:col-span-2 space-y-5">
