@@ -5,6 +5,8 @@ import { Reveal } from '@/components/Reveal'
 import { RegionChooser } from '@/components/home/RegionChooser'
 import { LaunchCountdown } from '@/components/home/LaunchCountdown'
 import { getMarketplaceOpen, getLaunchDate } from '@/lib/marketplace-phase'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 import {
   ShieldCheck, Globe2, Headphones, Clock, ArrowRight, ShoppingCart, Boxes, Truck,
   MessageSquare, Share2, BarChart3, Lock, Factory, User, Building2, Store, Users,
@@ -122,6 +124,17 @@ const GROW = [
   { Icon: Headphones, title: 'Dedicated Support', desc: 'Our team is here 24/7 for you.' },
 ] as const
 
+// Inline JSX strings that get wrapped with tt() in the render.
+const HOME_INLINE = [
+  'OPENING SOON', 'Reserve your shop →',
+  'Global Trade Network', 'Powered by', 'Factories, Suppliers, Distributors and Retailers Connected in One Smart Ecosystem.',
+  'Explore Marketplace', 'Become a Supplier',
+  'Verified Suppliers', 'Secure Transactions', 'Global Support', '24/7 Assistance',
+  'Start Local. Grow National. Expand Worldwide.',
+  'Choose Your Marketplace', 'Why TTAI EMA?', 'One Supplier — Three Sales Channels',
+  'Our Global Network', 'Trusted Suppliers & Brands', 'Business Channels', 'Ready To Grow Your Business?',
+]
+
 /* ─────────────────────────── page ─────────────────────────── */
 
 export default async function HomePage({ searchParams }: { searchParams: { code?: string } }) {
@@ -129,6 +142,22 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
 
   const marketplaceOpen = await getMarketplaceOpen()
   const launchDate = marketplaceOpen ? null : await getLaunchDate()
+
+  // Localize every static string on the page (cache-backed, self-filling).
+  const locale = getLocale()
+  const tt = await localizeUI([
+    ...CHANNELS.flatMap((c) => [c.title, c.sub, c.desc, c.cta, c.badge, ...c.tags]),
+    ...WHY.flatMap((w) => [w.title, w.desc]),
+    ...CHAIN.map((c) => c.label),
+    ...SALES.flatMap((s) => [s.title, s.sub]),
+    ...STATS.map((s) => s.label),
+    ...FEED.flatMap((f) => [f.title, f.sub, f.time]),
+    ...CHIPS.flatMap((c) => [c.title, c.sub]),
+    ...GROW_LEVELS.flatMap((g) => [g.title, g.desc]),
+    ...GROW_CAPS.flatMap((g) => [g.title, g.desc]),
+    ...GROW.flatMap((g) => [g.title, g.desc]),
+    ...HOME_INLINE,
+  ], locale)
 
   return (
     <>
@@ -161,17 +190,17 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
         <div className="container mx-auto px-4 relative">
           <div className="max-w-2xl py-20 sm:py-28">
             <h1 className="text-4xl sm:text-6xl font-black text-white leading-[1.05] tracking-tight">
-              Global Trade Network<br />Powered by <span className="text-[#F5A623]">TTAI EMA</span>
+              {tt('Global Trade Network')}<br />{tt('Powered by')} <span className="text-[#F5A623]">TTAI EMA</span>
             </h1>
             <p className="mt-5 text-lg text-blue-100/80 max-w-md leading-relaxed">
-              Factories, Suppliers, Distributors and Retailers Connected in One Smart Ecosystem.
+              {tt('Factories, Suppliers, Distributors and Retailers Connected in One Smart Ecosystem.')}
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link href="/marketplace" className="inline-flex items-center gap-2 rounded-xl bg-[#F5A623] text-[#0B1F4D] px-6 py-3.5 text-sm font-extrabold hover:bg-[#fbb93a] transition-colors shadow-lg shadow-[#F5A623]/20">
-                Explore Marketplace <ArrowRight className="w-4 h-4" />
+                {tt('Explore Marketplace')} <ArrowRight className="w-4 h-4" />
               </Link>
               <Link href="/register" className="inline-flex items-center gap-2 rounded-xl bg-white/5 border border-white/25 text-white px-6 py-3.5 text-sm font-bold hover:bg-white/10 transition-colors backdrop-blur-sm">
-                Become a Supplier
+                {tt('Become a Supplier')}
               </Link>
             </div>
             <div className="mt-10 flex flex-wrap gap-x-7 gap-y-3 text-xs font-semibold text-blue-100/70">
@@ -179,7 +208,7 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
                 { Icon: ShieldCheck, t: 'Verified Suppliers' }, { Icon: Lock, t: 'Secure Transactions' },
                 { Icon: Globe2, t: 'Global Support' }, { Icon: Clock, t: '24/7 Assistance' },
               ].map(({ Icon, t }) => (
-                <span key={t} className="flex items-center gap-2"><Icon className="w-4 h-4 text-[#F5A623]" />{t}</span>
+                <span key={t} className="flex items-center gap-2"><Icon className="w-4 h-4 text-[#F5A623]" />{tt(t)}</span>
               ))}
             </div>
           </div>
@@ -190,7 +219,7 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
       <section className="bg-[#0B1F4D] py-7 px-4">
         <div className="container mx-auto max-w-5xl text-center">
           <div className="flex items-center justify-center gap-2 mb-2">
-            <h2 className="text-xl sm:text-2xl font-black text-white">Start Local. Grow National. Expand Worldwide.</h2>
+            <h2 className="text-xl sm:text-2xl font-black text-white">{tt("Start Local. Grow National. Expand Worldwide.")}</h2>
             <span className="text-[#F5A623] text-lg tracking-tight">★★★★★</span>
           </div>
           <p className="text-blue-200/80 text-sm font-semibold flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
@@ -214,7 +243,7 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
             <div className="inline-flex items-center gap-2 rounded-full bg-[#0B1F4D]/5 px-4 py-1.5 text-xs font-bold uppercase tracking-widest text-[#0B1F4D] mb-3">
               <Zap className="w-4 h-4 text-[#F5A623]" /> Three Channels, One Login
             </div>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-[#0B1F4D]">Choose Your Marketplace</h2>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-[#0B1F4D]">{tt("Choose Your Marketplace")}</h2>
             <p className="text-gray-400 mt-3 max-w-lg mx-auto">From a single piece to a full truckload — trade at any scale across one powerful ecosystem.</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -236,27 +265,27 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
                       </span>
                     </div>
 
-                    <h3 className="text-2xl font-extrabold text-white">{c.title}</h3>
-                    <p className="text-white font-bold text-sm mt-0.5">{c.sub}</p>
-                    <p className="text-white/75 text-sm mt-2 leading-relaxed">{c.desc}</p>
+                    <h3 className="text-2xl font-extrabold text-white">{tt(c.title)}</h3>
+                    <p className="text-white font-bold text-sm mt-0.5">{tt(c.sub)}</p>
+                    <p className="text-white/75 text-sm mt-2 leading-relaxed">{tt(c.desc)}</p>
 
                     <ul className="mt-5 space-y-2">
                       {c.tags.map((t) => (
                         <li key={t} className="flex items-center gap-2 text-sm font-medium text-white/90">
-                          <CheckCircle2 className="w-4 h-4 text-white/80 flex-shrink-0" /> {t}
+                          <CheckCircle2 className="w-4 h-4 text-white/80 flex-shrink-0" /> {tt(t)}
                         </li>
                       ))}
                     </ul>
 
                     <span className={`mt-7 inline-flex items-center justify-center gap-1.5 rounded-xl px-4 py-3 text-sm font-extrabold shadow-sm transition-all ${locked ? 'bg-white/20 text-white/80 border border-white/25' : `bg-white ${c.btn} group-hover:gap-2.5`}`}>
-                      {locked ? <>🔒 Coming Soon</> : <>{c.cta} <ArrowRight className="w-4 h-4" /></>}
+                      {locked ? <>🔒 Coming Soon</> : <>{tt(c.cta)} <ArrowRight className="w-4 h-4" /></>}
                     </span>
                   </div>
                 </>
               )
               const base = `group relative flex h-full flex-col overflow-hidden rounded-3xl bg-gradient-to-br ${c.grad} p-7 shadow-lg ring-1 ring-white/10 transition-all duration-300`
               return (
-                <Reveal key={c.title} from="up" delay={i * 90}>
+                <Reveal key={tt(c.title)} from="up" delay={i * 90}>
                   {locked
                     ? <div className={`${base} opacity-70 cursor-not-allowed`} aria-disabled>{inner}</div>
                     : <Link href={c.href} className={`${base} hover:-translate-y-2 hover:shadow-2xl`}>{inner}</Link>}
@@ -310,18 +339,18 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
       <section className="py-16 px-4 bg-white">
         <div className="container mx-auto max-w-6xl">
           <div className="text-center mb-10">
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-[#0B1F4D]">Why TTAI EMA?</h2>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-[#0B1F4D]">{tt("Why TTAI EMA?")}</h2>
             <p className="text-gray-400 mt-2">Everything you need to grow your business globally.</p>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             {WHY.map((w, i) => (
-              <Reveal key={w.title} from="up" delay={i * 60}>
+              <Reveal key={tt(w.title)} from="up" delay={i * 60}>
                 <div className="h-full rounded-2xl border border-gray-100 bg-white p-5 text-center hover:shadow-lg hover:border-[#F5A623]/30 transition-all">
                   <div className="w-12 h-12 rounded-2xl bg-[#F5A623]/10 flex items-center justify-center mx-auto mb-3">
                     <w.Icon className="w-6 h-6 text-[#F5A623]" />
                   </div>
-                  <h3 className="font-extrabold text-[#0B1F4D] text-sm mb-1.5">{w.title}</h3>
-                  <p className="text-[11px] text-gray-400 leading-relaxed">{w.desc}</p>
+                  <h3 className="font-extrabold text-[#0B1F4D] text-sm mb-1.5">{tt(w.title)}</h3>
+                  <p className="text-[11px] text-gray-400 leading-relaxed">{tt(w.desc)}</p>
                 </div>
               </Reveal>
             ))}
@@ -333,7 +362,7 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
       <section className="py-16 px-4 bg-gray-50">
         <div className="container mx-auto max-w-6xl">
           <div className="text-center mb-10">
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-[#0B1F4D]">One Supplier — Three Sales Channels</h2>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-[#0B1F4D]">{tt("One Supplier — Three Sales Channels")}</h2>
             <p className="text-gray-400 mt-2">One profile can sell through three different channels simultaneously.</p>
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-center">
@@ -341,12 +370,12 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
             <div className="lg:col-span-2 bg-white rounded-3xl border border-gray-100 shadow-sm p-6 sm:p-8">
               <div className="flex items-center justify-center gap-1 sm:gap-3 mb-8 flex-wrap">
                 {CHAIN.map((n, i) => (
-                  <div key={n.label} className="flex items-center gap-1 sm:gap-3">
+                  <div key={tt(n.label)} className="flex items-center gap-1 sm:gap-3">
                     <div className="flex flex-col items-center">
                       <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full border-2 border-[#0B1F4D] flex items-center justify-center text-[#0B1F4D]">
                         <n.Icon className="w-5 h-5 sm:w-6 sm:h-6" />
                       </div>
-                      <span className="text-[11px] sm:text-xs font-bold text-[#0B1F4D] mt-1.5">{n.label}</span>
+                      <span className="text-[11px] sm:text-xs font-bold text-[#0B1F4D] mt-1.5">{tt(n.label)}</span>
                     </div>
                     {i < CHAIN.length - 1 && <ArrowRight className="w-4 h-4 text-gray-300 mb-5" />}
                   </div>
@@ -354,13 +383,13 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
               </div>
               <div className="space-y-2.5 max-w-md mx-auto">
                 {SALES.map((s) => (
-                  <div key={s.title} className={`flex items-center gap-3 rounded-xl bg-gradient-to-r ${s.grad} px-4 py-3`}>
+                  <div key={tt(s.title)} className={`flex items-center gap-3 rounded-xl bg-gradient-to-r ${s.grad} px-4 py-3`}>
                     <div className="w-8 h-8 rounded-lg bg-white/15 flex items-center justify-center flex-shrink-0">
                       <s.Icon className="w-4 h-4 text-white" />
                     </div>
                     <div>
-                      <p className="text-sm font-extrabold text-white leading-tight">{s.title}</p>
-                      <p className="text-[11px] text-white/70">{s.sub}</p>
+                      <p className="text-sm font-extrabold text-white leading-tight">{tt(s.title)}</p>
+                      <p className="text-[11px] text-white/70">{tt(s.sub)}</p>
                     </div>
                   </div>
                 ))}
@@ -407,7 +436,7 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
           {/* growth ladder */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-14 items-end">
             {GROW_LEVELS.map((l, i) => (
-              <Reveal key={l.title} from="up" delay={i * 100}>
+              <Reveal key={tt(l.title)} from="up" delay={i * 100}>
                 <div
                   className={`group relative overflow-hidden rounded-3xl bg-gradient-to-br ${l.grad} p-6 shadow-lg ring-1 ring-white/10 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl`}
                   style={{ minHeight: l.h }}
@@ -419,8 +448,8 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
                       <l.Icon className="w-6 h-6 text-white" />
                     </div>
                     <p className="text-[11px] font-bold uppercase tracking-widest text-white/70 mb-1">Step {l.step}</p>
-                    <h3 className="text-lg font-extrabold text-white leading-tight">{l.title}</h3>
-                    <p className="text-sm text-white/80 mt-1.5 leading-relaxed">{l.desc}</p>
+                    <h3 className="text-lg font-extrabold text-white leading-tight">{tt(l.title)}</h3>
+                    <p className="text-sm text-white/80 mt-1.5 leading-relaxed">{tt(l.desc)}</p>
                   </div>
                 </div>
               </Reveal>
@@ -431,7 +460,7 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
             <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-3">
               {GROW_CAPS.map((c, i) => (
-                <Reveal key={c.title} from="up" delay={i * 60} className="h-full">
+                <Reveal key={tt(c.title)} from="up" delay={i * 60} className="h-full">
                   <div className="group h-full flex items-start gap-3 rounded-2xl border border-gray-100 bg-white p-4 hover:border-[#F5A623]/40 hover:shadow-md transition-all">
                     <div className="w-10 h-10 rounded-xl bg-[#0B1F4D]/5 flex items-center justify-center flex-shrink-0 group-hover:bg-[#F5A623]/10 transition-colors">
                       <c.Icon className="w-5 h-5 text-[#0B1F4D] group-hover:text-[#F5A623] transition-colors" />
@@ -439,9 +468,9 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
                     <div className="min-w-0">
                       <div className="flex items-center gap-1.5">
                         <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />
-                        <p className="font-extrabold text-[#0B1F4D] text-sm">{c.title}</p>
+                        <p className="font-extrabold text-[#0B1F4D] text-sm">{tt(c.title)}</p>
                       </div>
-                      <p className="text-xs text-gray-400 mt-0.5 leading-relaxed">{c.desc}</p>
+                      <p className="text-xs text-gray-400 mt-0.5 leading-relaxed">{tt(c.desc)}</p>
                     </div>
                   </div>
                 </Reveal>
@@ -471,14 +500,14 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
       {/* ═══ GLOBAL NETWORK ═══ */}
       <section className="py-12 px-4 bg-[#0B1F4D]">
         <div className="container mx-auto max-w-6xl">
-          <h2 className="text-center text-2xl sm:text-3xl font-extrabold text-white mb-8">Our Global Network</h2>
+          <h2 className="text-center text-2xl sm:text-3xl font-extrabold text-white mb-8">{tt("Our Global Network")}</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-6 divide-x divide-white/10">
             {STATS.map((s) => (
-              <div key={s.label} className="flex items-center gap-3 justify-center px-2">
+              <div key={tt(s.label)} className="flex items-center gap-3 justify-center px-2">
                 <s.Icon className="w-8 h-8 text-[#F5A623] flex-shrink-0" strokeWidth={1.5} />
                 <div>
                   {s.value && <p className="text-2xl font-black text-white leading-none">{s.value}</p>}
-                  <p className="text-xs text-blue-200/70 font-semibold whitespace-pre-line mt-0.5">{s.label}</p>
+                  <p className="text-xs text-blue-200/70 font-semibold whitespace-pre-line mt-0.5">{tt(s.label)}</p>
                 </div>
               </div>
             ))}
@@ -490,7 +519,7 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
       <section className="py-16 px-4 bg-white">
         <div className="container mx-auto max-w-6xl">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-[#0B1F4D]">Trusted Suppliers &amp; Brands</h2>
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-[#0B1F4D]">{tt("Trusted Suppliers & Brands")}</h2>
             <Link href="/suppliers" className="text-sm font-bold text-[#F5A623] hover:underline flex items-center gap-1">
               View all suppliers <ArrowRight className="w-4 h-4" />
             </Link>
@@ -543,7 +572,7 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
               <span className="inline-flex items-center gap-1.5 rounded-full bg-[#F5A623]/10 text-[#a9690b] px-3 py-1 text-xs font-bold mb-3">
                 <Zap className="w-3 h-3" /> Stay Connected
               </span>
-              <h2 className="text-3xl font-extrabold text-[#0B1F4D] mb-3">Business Channels</h2>
+              <h2 className="text-3xl font-extrabold text-[#0B1F4D] mb-3">{tt("Business Channels")}</h2>
               <p className="text-gray-500 leading-relaxed mb-5">
                 Receive supplier offers directly without WhatsApp chaos or email overload.
               </p>
@@ -561,10 +590,10 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
             {/* chips */}
             <div className="lg:col-span-4 grid grid-cols-2 gap-3">
               {CHIPS.map((c) => (
-                <div key={c.title} className="rounded-2xl border border-gray-100 bg-white p-4">
+                <div key={tt(c.title)} className="rounded-2xl border border-gray-100 bg-white p-4">
                   <c.Icon className={`w-5 h-5 mb-2 ${c.color}`} />
-                  <p className="font-extrabold text-[#0B1F4D] text-xs">{c.title}</p>
-                  <p className="text-[11px] text-gray-400 leading-tight mt-0.5">{c.sub}</p>
+                  <p className="font-extrabold text-[#0B1F4D] text-xs">{tt(c.title)}</p>
+                  <p className="text-[11px] text-gray-400 leading-tight mt-0.5">{tt(c.sub)}</p>
                 </div>
               ))}
             </div>
@@ -590,7 +619,7 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
         <div className="container mx-auto max-w-6xl relative">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
             <div>
-              <h2 className="text-3xl sm:text-4xl font-black text-white mb-3">Ready To Grow Your Business?</h2>
+              <h2 className="text-3xl sm:text-4xl font-black text-white mb-3">{tt("Ready To Grow Your Business?")}</h2>
               <p className="text-blue-100/70 mb-7">Join the next generation of international trade.</p>
               <div className="flex flex-wrap gap-3">
                 <Link href="/register" className="inline-flex items-center gap-2 rounded-xl bg-[#F5A623] text-[#0B1F4D] px-6 py-3.5 text-sm font-extrabold hover:bg-[#fbb93a] transition-colors">
@@ -603,13 +632,13 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
             </div>
             <div className="grid grid-cols-2 gap-x-6 gap-y-6">
               {GROW.map((g) => (
-                <div key={g.title} className="flex gap-3">
+                <div key={tt(g.title)} className="flex gap-3">
                   <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0">
                     <g.Icon className="w-5 h-5 text-[#F5A623]" />
                   </div>
                   <div>
-                    <p className="font-extrabold text-white text-sm">{g.title}</p>
-                    <p className="text-xs text-blue-100/60 leading-relaxed mt-0.5">{g.desc}</p>
+                    <p className="font-extrabold text-white text-sm">{tt(g.title)}</p>
+                    <p className="text-xs text-blue-100/60 leading-relaxed mt-0.5">{tt(g.desc)}</p>
                   </div>
                 </div>
               ))}
