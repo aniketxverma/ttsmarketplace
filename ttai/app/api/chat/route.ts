@@ -3,7 +3,17 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { NextRequest, NextResponse } from 'next/server'
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+// Resolve the OpenAI key: prefer the admin-managed key in app_settings
+// (translation_openai_key) — the same working key the Translations page uses —
+// then fall back to the env var.
+async function getOpenAIKey(): Promise<string | undefined> {
+  try {
+    const admin = createAdminClient()
+    const { data } = await (admin.from('app_settings') as any).select('value').eq('key', 'translation_openai_key').maybeSingle()
+    if (data?.value) return data.value as string
+  } catch { /* fall through */ }
+  return process.env.OPENAI_API_KEY
+}
 
 const SYSTEM_PROMPT = `You are TTAI Assistant — the AI shopping guide for TTAI EMA Marketplace, a global B2B and B2C trade platform with verified suppliers from the Middle East, Europe, Asia, Africa, and the Americas.
 
@@ -182,9 +192,11 @@ async function saveChatMessage(sessionKey: string, userId: string | null, role: 
 }
 
 export async function POST(req: NextRequest) {
-  if (!process.env.OPENAI_API_KEY) {
-    return NextResponse.json({ error: 'AI not configured' }, { status: 503 })
+  const apiKey = await getOpenAIKey()
+  if (!apiKey) {
+    return NextResponse.json({ content: 'The AI assistant is not configured yet. You can still browse the Marketplace, Suppliers and Shopping Mall.', products: [] })
   }
+  const openai = new OpenAI({ apiKey })
 
   const { messages, sessionKey } = await req.json() as {
     messages: { role: 'user' | 'assistant'; content: string }[]
