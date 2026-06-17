@@ -7,6 +7,8 @@ import {
 } from 'lucide-react'
 import { OfferRail, type RailOffer } from '@/components/ai/OfferRail'
 import { MatchButton, ExploreButton, ActionTile } from '@/components/ai/AssistantActions'
+import { OpportunityRail } from '@/components/opportunities/OpportunityRail'
+import { OpportunityCard, type Opp } from '@/components/opportunities/OpportunityCard'
 
 export const metadata = { title: 'AI Business Assistant · TTAI EMA' }
 export const revalidate = 60
@@ -78,7 +80,12 @@ export default async function AssistantPage() {
     .select('id, trade_name, legal_name, logo_url, reliability_tier, tagline, description, countries(name)')
     .eq('status', 'ACTIVE').order('reliability_tier', { ascending: true }).limit(6), [])
 
-  const opportunities = newOffers + newPosts + recommended.length
+  // Business opportunities — factories/suppliers "looking for…" + promotions.
+  const opps = await safe<any[]>((supabase.from('business_opportunities') as any)
+    .select('id, company_name, poster_role, kind, looking_for, title, description, product, category, country_target, contact_email, contact_whatsapp, created_at')
+    .eq('status', 'open').order('created_at', { ascending: false }).limit(12), [])
+
+  const opportunities = newOffers + newPosts + recommended.length + opps.length
 
   // AI insight feed — derived from the real signals above (the "I found…" cards).
   const insights = [
@@ -102,7 +109,7 @@ export default async function AssistantPage() {
     { Icon: FileText, title: 'Market Reports', desc: 'Ask the assistant', prompt: 'Give me a quick market overview and the best current offers across categories on TTAI.' },
   ]
   const QUICK = [
-    { Icon: Send, title: 'Post a Request', desc: 'Find products or suppliers', prompt: 'I want to post a sourcing request — help me find products and the right suppliers.' },
+    { Icon: Send, title: 'Post an Opportunity', desc: 'Looking for partners or clients', href: '/opportunities' },
     { Icon: Package, title: 'Add Your Products', desc: 'Promote your business', href: '/supplier' },
     { Icon: Truck, title: 'Request a Shipment', desc: 'Logistics support', href: '/logistics' },
     { Icon: Radio, title: 'Join a Channel', desc: 'Real-time offers', href: '/whatsapp-hub' },
@@ -154,6 +161,22 @@ export default async function AssistantPage() {
           <Section title="Today's Best Offers for You" subtitle="A fresh mix from across the marketplace — updated continuously" href="/marketplace" hrefLabel="View all offers">
             <OfferRail offers={offers} />
           </Section>
+
+          {/* Today's business opportunities — factories/suppliers looking for partners */}
+          {opps.length > 0 && (
+            <Section title="Today's Business Opportunities" subtitle="Factories & suppliers looking for distributors, agents and clients" href="/opportunities" hrefLabel="View all">
+              <OpportunityRail opps={opps as Opp[]} />
+            </Section>
+          )}
+
+          {/* New opportunities — card list (like a deal board) */}
+          {opps.length > 0 && (
+            <Section title="New Opportunities" subtitle="Open requests across the trade network" href="/opportunities" hrefLabel="Post / view all">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {(opps as Opp[]).slice(0, 4).map((o) => <OpportunityCard key={o.id} o={o} compact />)}
+              </div>
+            </Section>
+          )}
 
           {/* Latest from channels */}
           {posts.length > 0 && (

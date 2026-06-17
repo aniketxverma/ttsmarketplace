@@ -4,6 +4,7 @@ import { Logo } from '@/components/Logo'
 const LINKS = {
   Departments: [
     { label: 'Marketplace',          href: '/marketplace' },
+    { label: 'Opportunities',        href: '/opportunities' },
     { label: 'Logistics Hub',        href: '/logistics' },
     { label: 'Business Consulting',  href: '/consulting' },
     { label: 'Contact a Team',       href: '/contact' },
