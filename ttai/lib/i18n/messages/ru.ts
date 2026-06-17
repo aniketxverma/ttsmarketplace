@@ -102,7 +102,8 @@ export default {
     manage_business: 'Управляйте бизнесом',
   },
   dnav: {
-    control_center: 'Центр управления',    translations: 'Переводы',
+    broker_network: 'Моя сеть',
+    broker_deals: 'Сделки и счета',    control_center: 'Центр управления',    translations: 'Переводы',
     my_profile: 'Мой профиль',
     dashboard: 'Панель',
     products: 'Товары',

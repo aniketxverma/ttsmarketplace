@@ -35,6 +35,8 @@ const SUPPLIER_NAV: NavItem[] = [
 const BROKER_NAV: NavItem[] = [
   { key: 'my_profile',  href: '/account',            icon: <UserIcon /> },
   { key: 'dashboard',   href: '/broker',             icon: <GridIcon /> },
+  { key: 'broker_network', href: '/broker/network',  icon: <NetworkIcon /> },
+  { key: 'broker_deals', href: '/broker/deals',      icon: <DocIcon /> },
   { key: 'suppliers',   href: '/broker/suppliers',   icon: <BoxIcon /> },
   { key: 'promotions',  href: '/broker/promotions',  icon: <StarIcon /> },
   { key: 'subscriptions', href: '/buyer/channels',   icon: <RadioIcon /> },

@@ -102,7 +102,8 @@ export default {
     manage_business: 'أدر عملك',
   },
   dnav: {
-    control_center: 'مركز التحكم',    translations: 'الترجمات',
+    broker_network: 'شبكتي',
+    broker_deals: 'الصفقات والفوترة',    control_center: 'مركز التحكم',    translations: 'الترجمات',
     my_profile: 'ملفي',
     dashboard: 'لوحة التحكم',
     products: 'المنتجات',

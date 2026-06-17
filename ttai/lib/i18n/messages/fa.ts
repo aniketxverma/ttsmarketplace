@@ -102,7 +102,8 @@ export default {
     manage_business: 'کسب‌وکار خود را مدیریت کنید',
   },
   dnav: {
-    control_center: 'مرکز کنترل',    translations: 'ترجمه‌ها',
+    broker_network: 'شبکه من',
+    broker_deals: 'معاملات و صورتحساب',    control_center: 'مرکز کنترل',    translations: 'ترجمه‌ها',
     my_profile: 'پروفایل من',
     dashboard: 'داشبورد',
     products: 'محصولات',

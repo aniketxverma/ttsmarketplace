@@ -102,7 +102,8 @@ export default {
     manage_business: 'Gerencie seu negócio',
   },
   dnav: {
-    control_center: 'Central de Controle',    translations: 'Traduções',
+    broker_network: 'Minha Rede',
+    broker_deals: 'Negócios e Faturação',    control_center: 'Central de Controle',    translations: 'Traduções',
     my_profile: 'Meu perfil',
     dashboard: 'Painel',
     products: 'Produtos',

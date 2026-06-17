@@ -102,7 +102,8 @@ export default {
     manage_business: 'Manage your business',
   },
   dnav: {
-    control_center: 'Control Center',    translations: 'Translations',
+    broker_network: 'My Network',
+    broker_deals: 'Deals & Invoicing',    control_center: 'Control Center',    translations: 'Translations',
     my_profile: 'My Profile',
     dashboard: 'Dashboard',
     products: 'Products',
