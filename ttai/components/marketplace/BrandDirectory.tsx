@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import Link from 'next/link'
 import Image from 'next/image'
 import { SupplierMall } from '@/components/marketplace/SupplierMall'
@@ -168,7 +169,9 @@ export async function BrandDirectory({
   }))
 
   // ── Mall-style hero data (image + live stats + animated sector pins) ──
-  const heroRow = await (supabase.from('app_settings') as any).select('value').eq('key', 'suppliers_hero_url').maybeSingle()
+  // Read via service-role: app_settings isn't anon-readable, so the public
+  // server client would return null and the hero image would never show.
+  const heroRow = await (createAdminClient().from('app_settings') as any).select('value').eq('key', 'suppliers_hero_url').maybeSingle()
   const heroUrl: string | null = heroRow?.data?.value ?? null
   const productsTotal = Object.values(countBySup).reduce((a, b) => a + b, 0)
   const countriesTotal = new Set(suppliers.map((s) => (s.countries as any)?.name).filter(Boolean)).size
@@ -189,42 +192,17 @@ export async function BrandDirectory({
   const dirBase = `/${kind === 'supplier' ? 'suppliers' : kind === 'distributor' ? 'distributors' : 'factories'}`
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 overflow-x-hidden">
 
       {/* ── Hero: 3D global-trade map with animated sector pins ───────────── */}
       <div className="container mx-auto max-w-6xl px-4 pt-6">
         <div className="relative rounded-3xl overflow-hidden border border-gray-200 shadow-sm">
-          <div className="relative aspect-[16/9] sm:aspect-[16/6] min-h-[340px] bg-gradient-to-br from-[#0B1F4D] via-[#13306e] to-[#0a1733]">
+          <div className="relative min-h-[300px] sm:min-h-[380px] bg-gradient-to-br from-[#0B1F4D] via-[#13306e] to-[#0a1733]">
             {heroUrl && <div className="absolute inset-0 bg-cover bg-center animate-mall-kenburns" style={{ backgroundImage: `url('${heroUrl}')` }} />}
-            <div className="absolute inset-0 bg-gradient-to-t from-[#0a0e1a]/90 via-[#0a0e1a]/45 to-[#0a0e1a]/55" />
+            <div className="absolute inset-0 bg-gradient-to-b from-[#0a0e1a]/85 via-[#0a0e1a]/25 to-[#0a0e1a]/55" />
             <div className="pointer-events-none absolute -inset-x-1/2 inset-y-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-[shimmer_7s_linear_infinite]" />
 
-            {/* Title + search (top, centered) */}
-            <div className="absolute top-0 left-0 right-0 z-20 px-4 pt-7 sm:pt-9 flex flex-col items-center text-center">
-              <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-4 py-1.5 text-xs font-semibold text-white/85 mb-3 backdrop-blur">
-                <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-                {cfg.eyebrow}
-              </div>
-              <h1 className="text-3xl sm:text-5xl font-black text-white leading-tight drop-shadow-lg">{cfg.title}</h1>
-              <p className="text-blue-100/85 text-sm sm:text-base max-w-2xl mx-auto mt-2 drop-shadow">{cfg.blurb}</p>
-              {granted && (
-                <form method="GET" className="mt-6 w-full max-w-xl flex gap-2">
-                  <div className="relative flex-1">
-                    <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                    <input name="q" defaultValue={searchParams.q} placeholder="Search by name, product, category…"
-                      className="w-full rounded-xl border-0 bg-white text-gray-900 pl-10 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#F5A623] shadow-lg" />
-                  </div>
-                  <button type="submit"
-                    className="rounded-xl bg-[#F5A623] text-[#0B1F4D] px-5 py-3 text-sm font-bold hover:bg-[#fbb93a] transition-colors shadow-lg whitespace-nowrap">
-                    Search
-                  </button>
-                </form>
-              )}
-            </div>
-
-            {/* Animated sector pins — click to filter the directory */}
+            {/* Animated sector pins — click to filter the directory (desktop only) */}
             {HERO_PINS.map((pin, i) => {
               const labelLeft = parseFloat(pin.left) > 55
               return (
@@ -242,6 +220,31 @@ export async function BrandDirectory({
                 </div>
               )
             })}
+
+            {/* Title + search (normal flow → never overflows on mobile) */}
+            <div className="relative z-20 flex flex-col items-center text-center px-4 pt-8 pb-14 sm:pt-10 sm:pb-20">
+              <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-4 py-1.5 text-xs font-semibold text-white/85 mb-3 backdrop-blur">
+                <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+                {cfg.eyebrow}
+              </div>
+              <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black text-white leading-tight drop-shadow-lg max-w-3xl">{cfg.title}</h1>
+              <p className="text-blue-100/85 text-sm sm:text-base max-w-2xl mt-2 drop-shadow">{cfg.blurb}</p>
+              {granted && (
+                <form method="GET" className="mt-6 w-full max-w-xl flex flex-col sm:flex-row gap-2">
+                  <div className="relative flex-1">
+                    <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    <input name="q" defaultValue={searchParams.q} placeholder="Search by name, product, category…"
+                      className="w-full rounded-xl border-0 bg-white text-gray-900 pl-10 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#F5A623] shadow-lg" />
+                  </div>
+                  <button type="submit"
+                    className="rounded-xl bg-[#F5A623] text-[#0B1F4D] px-5 py-3 text-sm font-bold hover:bg-[#fbb93a] transition-colors shadow-lg whitespace-nowrap">
+                    Search
+                  </button>
+                </form>
+              )}
+            </div>
           </div>
         </div>
 
