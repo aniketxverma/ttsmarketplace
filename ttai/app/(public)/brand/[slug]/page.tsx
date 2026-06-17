@@ -110,7 +110,7 @@ export default async function BrandPage({ params }: { params: { slug: string } }
   const [productsRes, galleryRes, certsRes, reviewsRes, docsRes, posRes, channelRes] = await Promise.all([
     supabase
       .from('products')
-      .select('id, name, slug, price_cents, currency_code, min_order_qty, marketplace_context, description, category_id, product_images(url, sort_order), categories(id, name, parent_id)')
+      .select('id, name, slug, price_cents, currency_code, min_order_qty, marketplace_context, description, brand_name, category_id, product_images(url, sort_order), categories(id, name, parent_id)')
       .eq('supplier_id', supplier.id)
       .eq('is_published', true)
       .order('created_at', { ascending: false })

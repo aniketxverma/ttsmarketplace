@@ -5,6 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { BusinessCard } from '@/components/brand/BusinessCard'
 import { SupplierCatalog } from '@/components/brand/SupplierCatalog'
+import { CatalogueOverview } from '@/components/brand/CatalogueOverview'
 
 const isoFlag = (iso?: string | null) =>
   iso && iso.length === 2 ? iso.toUpperCase().replace(/./g, (c) => String.fromCodePoint(127397 + c.charCodeAt(0))) : ''
@@ -855,10 +856,18 @@ export function BrandTabs({
               )}
             </div>
 
+            {/* Professional catalogue overview — main brands, categories and 4–5
+                featured products each + "View Full Excel Catalogue" (lets large
+                suppliers onboard without uploading thousands of products). */}
+            <CatalogueOverview
+              products={products as any}
+              hasExcel={(documents as any[]).some((d) => /\.(xlsx|xls|csv)(\?|$)/.test(String(d.file_name ?? d.file_url ?? '').toLowerCase()) || ['catalog', 'price_list'].includes(d.doc_type))}
+            />
+
             {/* Right rail only when it has real content (docs/videos) — otherwise
                 the catalogue uses the full width instead of leaving an empty column. */}
             {(documents.length > 0 || sidebarVideos.length > 0) ? (
-              <div data-reveal className="lg:grid lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-7 lg:items-start">
+              <div data-reveal id="sec-products" className="lg:grid lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-7 lg:items-start">
                 <div className="min-w-0">
                   <ProductBrowser products={products} wa={wa} supplierId={supplier.id} canSeeB2B={canSeeB2B} categoryRoots={categoryRoots} />
                 </div>
@@ -872,7 +881,7 @@ export function BrandTabs({
                 />
               </div>
             ) : (
-              <div data-reveal>
+              <div data-reveal id="sec-products">
                 <ProductBrowser products={products} wa={wa} supplierId={supplier.id} canSeeB2B={canSeeB2B} categoryRoots={categoryRoots} />
               </div>
             )}
