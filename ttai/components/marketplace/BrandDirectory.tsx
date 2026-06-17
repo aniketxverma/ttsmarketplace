@@ -132,6 +132,22 @@ export async function BrandDirectory({
 
   const total = suppliers.length
 
+  // Product previews — a few real product images per supplier so buyers see what
+  // each one sells before entering their shop.
+  const thumbsBySup: Record<string, string[]> = {}
+  const countBySup: Record<string, number> = {}
+  if (suppliers.length) {
+    const sids = suppliers.map((s) => s.id)
+    const { data: prodRows } = await (supabase.from('products') as any)
+      .select('supplier_id, product_images(url, sort_order)')
+      .in('supplier_id', sids).eq('is_published', true).limit(600)
+    for (const p of (prodRows ?? []) as any[]) {
+      countBySup[p.supplier_id] = (countBySup[p.supplier_id] ?? 0) + 1
+      const url = ((p.product_images ?? []) as any[]).slice().sort((a, b) => a.sort_order - b.sort_order)[0]?.url
+      if (url && (thumbsBySup[p.supplier_id] ?? []).length < 4) (thumbsBySup[p.supplier_id] ||= []).push(url)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
 
@@ -240,7 +256,7 @@ export async function BrandDirectory({
                 const initials = name.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase()
 
                 return (
-                  <Link key={s.id} href={href}
+                  <div key={s.id}
                     className="group bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200">
                     <div className="relative h-28 bg-gradient-to-br from-[#0B1F4D] to-[#1a3a7a] overflow-hidden">
                       {s.banner_image && (
@@ -269,9 +285,9 @@ export async function BrandDirectory({
                         </span>
                       </div>
                       {(s.tagline || s.description) && (
-                        <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed mb-3">{s.tagline ?? s.description}</p>
+                        <p className="text-xs text-gray-500 line-clamp-1 leading-relaxed mb-2.5">{s.tagline ?? s.description}</p>
                       )}
-                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-400">
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-400 mb-3">
                         {(city || country) && (
                           <span className="flex items-center gap-1">
                             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -281,25 +297,37 @@ export async function BrandDirectory({
                             {[city?.name, country?.name].filter(Boolean).join(', ')}
                           </span>
                         )}
-                        {s.years_experience && (
-                          <span className="flex items-center gap-1">
-                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            {s.years_experience} yrs
+                        {(countBySup[s.id] ?? 0) > 0 && (
+                          <span className="flex items-center gap-1 font-semibold text-[#0B1F4D]">
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
+                            {countBySup[s.id]} products
                           </span>
                         )}
                       </div>
-                      <div className="mt-4 flex items-center justify-between">
-                        <span className="text-xs font-semibold text-[#0B1F4D] group-hover:underline flex items-center gap-1">
-                          View profile
-                          <svg className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
-                          </svg>
-                        </span>
+
+                      {/* Product preview — what this supplier sells */}
+                      {(thumbsBySup[s.id]?.length ?? 0) > 0 && (
+                        <div className="grid grid-cols-4 gap-1.5 mb-3">
+                          {Array.from({ length: 4 }).map((_, i) => {
+                            const t = thumbsBySup[s.id]?.[i]
+                            return (
+                              <div key={i} className="aspect-square rounded-lg bg-gray-50 border border-gray-100 overflow-hidden flex items-center justify-center">
+                                {t ? <Image src={t} alt="" width={80} height={80} className="object-contain w-full h-full p-1 group-hover:scale-105 transition-transform" /> : null}
+                              </div>
+                            )
+                          })}
+                        </div>
+                      )}
+
+                      <div className="grid grid-cols-2 gap-2 mt-1">
+                        <Link href={href} className="inline-flex items-center justify-center gap-1 rounded-lg border border-gray-200 px-3 py-2 text-xs font-bold text-[#0B1F4D] hover:border-[#0B1F4D]/40 transition-colors">View profile</Link>
+                        <Link href={`/marketplace?supplier=${s.id}`} className="inline-flex items-center justify-center gap-1 rounded-lg bg-[#0B1F4D] text-white px-3 py-2 text-xs font-bold hover:bg-[#162d6e] transition-colors">
+                          Enter shop
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" /></svg>
+                        </Link>
                       </div>
                     </div>
-                  </Link>
+                  </div>
                 )
               })}
             </div>
