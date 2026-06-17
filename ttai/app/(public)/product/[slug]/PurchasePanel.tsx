@@ -3,6 +3,8 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useCart } from '@/lib/cart/CartContext'
+import { useAuthGate } from '@/components/shared/AuthGate'
+import { canPurchaseOnline } from '@/lib/retail'
 import { Package, Box, Layers, Truck, ShoppingCart, FileText, Check } from 'lucide-react'
 import {
   availableUnits, piecesIn, cartonsIn, unitPrice, unitsPerPallet,
@@ -42,6 +44,9 @@ export function PurchasePanel({
   const units = preferred.length > 0 ? preferred : allUnits
   const { addItem } = useCart()
   const router = useRouter()
+  const { gate, modal } = useAuthGate({ title: 'Sign in to purchase', subtitle: 'Create a free account or continue with Google to add items and check out. Browsing stays open.' })
+  // Retail (online shop) checkout is limited to onboarded stores for now.
+  const onlineEnabled = canPurchaseOnline(supplierName)
   const [unit, setUnit] = useState<PurchaseUnit>(units[0] ?? 'piece')
   const [qty, setQty_] = useState(1)
   const [added, setAdded] = useState(false)
@@ -135,19 +140,27 @@ export function PurchasePanel({
       </div>
 
       {/* ── Action ── */}
-      <button type="button" onClick={addToCart} disabled={disabled}
-        className={`w-full flex items-center justify-center gap-2 rounded-xl px-4 py-3.5 text-sm font-bold transition-all disabled:opacity-50 ${
-          added ? 'bg-green-50 text-green-700 border-2 border-green-500' : 'bg-[#0B1F4D] text-white hover:bg-[#162d6e]'
-        }`}>
-        {added ? <><Check className="w-4 h-4" /> Added!</> : <><ShoppingCart className="w-4 h-4" /> Add to cart</>}
-      </button>
-      {canQuote && (
+      {retail && !onlineEnabled ? (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-center">
+          <p className="text-sm font-bold text-amber-800">Online purchase coming soon</p>
+          <p className="text-xs text-amber-700 mt-0.5">This store isn&apos;t open for online checkout yet — request a quote to order.</p>
+        </div>
+      ) : (
+        <button type="button" onClick={() => gate(() => addToCart())} disabled={disabled}
+          className={`w-full flex items-center justify-center gap-2 rounded-xl px-4 py-3.5 text-sm font-bold transition-all disabled:opacity-50 ${
+            added ? 'bg-green-50 text-green-700 border-2 border-green-500' : 'bg-[#0B1F4D] text-white hover:bg-[#162d6e]'
+          }`}>
+          {added ? <><Check className="w-4 h-4" /> Added!</> : <><ShoppingCart className="w-4 h-4" /> Add to cart</>}
+        </button>
+      )}
+      {canQuote && (!retail || onlineEnabled) && (
         <button type="button" onClick={requestQuote}
           className="w-full flex items-center justify-center gap-1.5 text-xs font-bold text-[#ea580c] hover:underline">
           <FileText className="w-3.5 h-3.5" /> Or request a custom quote
         </button>
       )}
       {disabled && <p className="text-sm text-red-500 text-center">Out of stock</p>}
+      {modal}
     </div>
   )
 }

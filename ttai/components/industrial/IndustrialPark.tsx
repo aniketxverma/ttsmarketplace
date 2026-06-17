@@ -8,6 +8,7 @@ import {
 } from 'lucide-react'
 import { QuoteModal } from '@/components/shared/QuoteModal'
 import { FavButton } from '@/components/shared/FavButton'
+import { useAuthGate } from '@/components/shared/AuthGate'
 
 export type CompanyProduct = { name: string; price: string; img: string }
 export type Company = {
@@ -69,6 +70,7 @@ function WarehouseCard({ c, onOpen }: { c: Company; onOpen: (c: Company) => void
 function CompanyDrawer({ c, onClose }: { c: Company; onClose: () => void }) {
   const [tab, setTab] = useState<'About Us' | 'Certificates' | 'Company Info' | 'Gallery'>('About Us')
   const [quote, setQuote] = useState(false)
+  const { gate, modal } = useAuthGate({ title: 'Sign in to contact suppliers', subtitle: 'Browsing is open to everyone — registered B2B buyers can request quotes and chat with suppliers.' })
   const wa = c.whatsapp ? `https://wa.me/${c.whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(`Hello ${c.name}, I'd like a quotation.`)}` : null
   const facts = [
     { Icon: Calendar, label: 'Year Established', val: c.founded },
@@ -110,12 +112,13 @@ function CompanyDrawer({ c, onClose }: { c: Company; onClose: () => void }) {
 
           {/* CTAs */}
           <div className="grid grid-cols-2 gap-2 mt-4">
-            <button onClick={() => setQuote(true)} className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#1f7a3a] hover:bg-[#1a6a32] text-white font-extrabold py-2.5 text-sm transition-colors"><Quote className="w-4 h-4" />Request a Quote</button>
+            <button onClick={() => gate(() => setQuote(true))} className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#1f7a3a] hover:bg-[#1a6a32] text-white font-extrabold py-2.5 text-sm transition-colors"><Quote className="w-4 h-4" />Request a Quote</button>
             {wa ? (
-              <a href={wa} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 text-gray-700 font-bold py-2.5 text-sm hover:border-green-500 hover:text-green-600 transition-colors">Chat on WhatsApp</a>
+              <button onClick={() => gate(() => window.open(wa, '_blank', 'noopener'))} className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 text-gray-700 font-bold py-2.5 text-sm hover:border-green-500 hover:text-green-600 transition-colors">Chat on WhatsApp</button>
             ) : <span />}
           </div>
           <QuoteModal open={quote} onClose={() => setQuote(false)} company={c.name} whatsapp={c.whatsapp} />
+          {modal}
 
 
           {/* Featured products */}

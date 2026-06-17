@@ -7,6 +7,7 @@ import {
   Search, Megaphone, Users, Clock, ShieldCheck, Tag, Bell, Package,
   MessagesSquare, Globe, Layers, CheckCircle2,
 } from 'lucide-react'
+import { useAuthGate } from '@/components/shared/AuthGate'
 
 export type HubOffer = { content: string; image: string | null; video: boolean; type: string; created_at: string }
 export type HubChannel = { id: string; name: string; supplier: string; logo: string | null; followers: number; verified: boolean; category: string; offers: HubOffer[] }
@@ -287,6 +288,7 @@ function ChannelCard({ c }: { c: HubChannel }) {
 }
 
 function GroupCard({ g }: { g: HubGroup }) {
+  const { gate, modal } = useAuthGate({ title: 'Sign in to join groups', subtitle: 'Create a free account to join supplier WhatsApp groups and channels.' })
   return (
     <div className="rounded-2xl bg-white border border-gray-200 hover:shadow-lg transition-shadow overflow-hidden flex flex-col">
       <div className="flex items-start gap-3 p-4 flex-1">
@@ -297,9 +299,10 @@ function GroupCard({ g }: { g: HubGroup }) {
           {g.description && <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed">{g.description}</p>}
         </div>
       </div>
-      <a href={g.invite} target="_blank" rel="noopener noreferrer" className="m-3 inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#25D366] hover:bg-[#1ea952] text-white text-sm font-extrabold py-2.5 transition-colors">
+      <button onClick={() => gate(() => window.open(g.invite, '_blank', 'noopener'))} className="m-3 inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#25D366] hover:bg-[#1ea952] text-white text-sm font-extrabold py-2.5 transition-colors">
         <MessagesSquare className="w-4 h-4" />Join group
-      </a>
+      </button>
+      {modal}
     </div>
   )
 }
