@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { BusinessCard } from '@/components/brand/BusinessCard'
+import { SupplierCatalog } from '@/components/brand/SupplierCatalog'
 
 const isoFlag = (iso?: string | null) =>
   iso && iso.length === 2 ? iso.toUpperCase().replace(/./g, (c) => String.fromCodePoint(127397 + c.charCodeAt(0))) : ''
@@ -740,6 +741,9 @@ export function BrandTabs({
 
       {/* ── PAGE CONTENT ───────────────────────────────────────────────────── */}
       <div className="mt-8 flex flex-col gap-16 sm:gap-20 pb-28 sm:pb-14">
+
+        {/* ══════════════ SUPPLIER CATALOG (Excel) ════════════════════════════ */}
+        <section id="sec-catalog" data-reveal><SupplierCatalog documents={documents as any} /></section>
 
         {/* ══════════════ PRODUCTS ════════════════════════════════════════════ */}
         {products.length > 0 && (
