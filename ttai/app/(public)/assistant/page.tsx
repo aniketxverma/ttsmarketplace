@@ -9,6 +9,7 @@ import { OfferRail, type RailOffer } from '@/components/ai/OfferRail'
 import { MatchButton, ExploreButton, ActionTile } from '@/components/ai/AssistantActions'
 import { OpportunityRail } from '@/components/opportunities/OpportunityRail'
 import { OpportunityCard, type Opp } from '@/components/opportunities/OpportunityCard'
+import { AssistantAvatar } from '@/components/ai/AssistantAvatar'
 
 export const metadata = { title: 'AI Business Assistant · TTAI EMA' }
 export const revalidate = 60
@@ -133,14 +134,9 @@ export default async function AssistantPage() {
                   <span className="inline-flex items-center gap-2 rounded-xl bg-white/10 border border-white/15 px-5 py-2.5 text-sm font-bold"><span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" /> Assistant online</span>
                 </div>
               </div>
-              {/* Assistant avatar */}
-              <div className="hidden sm:block relative flex-shrink-0">
-                <div className="absolute inset-0 rounded-full bg-[#F5A623]/25 blur-2xl" />
-                {avatarUrl ? (
-                  <Image src={avatarUrl} alt="TTAI Assistant" width={132} height={132} className="relative w-28 lg:w-32 h-28 lg:h-32 object-contain drop-shadow-2xl animate-[mallFloat_5s_ease-in-out_infinite]" />
-                ) : (
-                  <Bot className="relative w-28 h-28 text-white/80" strokeWidth={1.2} />
-                )}
+              {/* Interactive assistant avatar — click to open the chat */}
+              <div className="hidden sm:block flex-shrink-0">
+                <AssistantAvatar url={avatarUrl} />
               </div>
             </div>
           </div>
