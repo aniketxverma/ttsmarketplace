@@ -102,7 +102,7 @@ export default {
     manage_business: 'أدر عملك',
   },
   dnav: {
-    translations: 'الترجمات',
+    control_center: 'مركز التحكم',    translations: 'الترجمات',
     my_profile: 'ملفي',
     dashboard: 'لوحة التحكم',
     products: 'المنتجات',

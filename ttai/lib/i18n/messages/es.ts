@@ -102,7 +102,7 @@ export default {
     manage_business: 'Gestiona tu negocio',
   },
   dnav: {
-    translations: 'Traducciones',
+    control_center: 'Centro de Control',    translations: 'Traducciones',
     my_profile: 'Mi perfil',
     dashboard: 'Panel',
     products: 'Productos',

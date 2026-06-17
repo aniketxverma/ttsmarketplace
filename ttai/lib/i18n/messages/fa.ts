@@ -102,7 +102,7 @@ export default {
     manage_business: 'کسب‌وکار خود را مدیریت کنید',
   },
   dnav: {
-    translations: 'ترجمه‌ها',
+    control_center: 'مرکز کنترل',    translations: 'ترجمه‌ها',
     my_profile: 'پروفایل من',
     dashboard: 'داشبورد',
     products: 'محصولات',

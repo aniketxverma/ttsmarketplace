@@ -1,5 +1,6 @@
 import { COMPANY } from '@/components/legal/LegalShell'
 import { Mail, MapPin, Building2, Globe } from 'lucide-react'
+import { ControlCenterForm } from '@/components/shared/ControlCenterForm'
 
 export const metadata = { title: 'Contact · TTAI EMA', description: 'Get in touch with the TTAI EMA team.' }
 
@@ -45,13 +46,7 @@ export default function ContactPage() {
       </div>
 
       <div className="container mx-auto px-4 max-w-3xl pb-14">
-        <div className="bg-[#0B1F4D] rounded-2xl p-7 sm:p-9 text-center text-white">
-          <h2 className="text-xl font-extrabold">Looking to sell or source on TTAI?</h2>
-          <p className="text-blue-200 text-sm mt-2 max-w-md mx-auto">Email us your business details and our team will help you get set up as a supplier, distributor or sales point.</p>
-          <a href={`mailto:${COMPANY.email}`} className="inline-flex items-center justify-center mt-5 rounded-xl bg-[#F5A623] text-[#0B1F4D] px-6 py-3 text-sm font-bold hover:bg-[#fbb93a] transition-colors">
-            Email {COMPANY.email}
-          </a>
-        </div>
+        <ControlCenterForm />
       </div>
     </div>
   )

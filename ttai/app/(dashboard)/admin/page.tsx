@@ -26,7 +26,7 @@ export default async function AdminDashboardPage() {
   const [
     pendingCount, activeCount, transactionsRes, disputesCount,
     usersCount, productsCount, ordersCount, categoriesCount,
-    aiChatsCount, recentAudit, pendingApps, pendingAppsTotal,
+    aiChatsCount, recentAudit, pendingApps, pendingAppsTotal, openTicketsCount,
   ] = await Promise.all([
     supabase.from('suppliers').select('id', { count: 'exact', head: true }).in('status', ['PENDING', 'UNDER_REVIEW']),
     supabase.from('suppliers').select('id', { count: 'exact', head: true }).eq('status', 'ACTIVE'),
@@ -45,6 +45,7 @@ export default async function AdminDashboardPage() {
       .order('created_at', { ascending: false })
       .limit(8),
     adminDb.from('profiles').select('id', { count: 'exact', head: true }).eq('approval_status', 'pending'),
+    (adminDb.from('tickets' as any) as any).select('id', { count: 'exact', head: true }).neq('status', 'closed'),
   ])
 
   const apps = pendingApps.data ?? []
@@ -52,6 +53,7 @@ export default async function AdminDashboardPage() {
   const txTotal = transactionsRes.data?.reduce((sum, t) => sum + t.gross_cents, 0) ?? 0
 
   const kpis = [
+    { label: 'Open Tickets',         value: (openTicketsCount as any).count ?? 0, href: '/admin/control-center', color: 'text-rose-600' },
     { label: 'Applications to Review', value: appsTotal,            href: '/admin/users?status=pending',    color: 'text-amber-600' },
     { label: 'Active Suppliers',     value: activeCount.count ?? 0,   href: '/admin/suppliers?status=ACTIVE', color: 'text-green-600' },
     { label: 'Registered Users',     value: usersCount.count ?? 0,    href: '/admin/users',                   color: 'text-blue-600' },
