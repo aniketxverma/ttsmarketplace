@@ -102,7 +102,8 @@ export default {
     manage_business: 'کسب‌وکار خود را مدیریت کنید',
   },
   dnav: {
-    broker_network: 'شبکه من',
+    outlet_offers: 'پیشنهادهای آوتلت',
+    outlet_trade: 'آوتلت و تجارت',    broker_network: 'شبکه من',
     broker_deals: 'معاملات و صورتحساب',    control_center: 'مرکز کنترل',    translations: 'ترجمه‌ها',
     my_profile: 'پروفایل من',
     dashboard: 'داشبورد',

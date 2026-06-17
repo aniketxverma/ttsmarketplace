@@ -102,7 +102,8 @@ export default {
     manage_business: 'Verwalten Sie Ihr Geschäft',
   },
   dnav: {
-    broker_network: 'Mein Netzwerk',
+    outlet_offers: 'Outlet-Angebote',
+    outlet_trade: 'Outlet & Handel',    broker_network: 'Mein Netzwerk',
     broker_deals: 'Deals & Rechnung',    control_center: 'Kontrollzentrum',    translations: 'Übersetzungen',
     my_profile: 'Mein Profil',
     dashboard: 'Dashboard',

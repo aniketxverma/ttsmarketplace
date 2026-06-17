@@ -16,6 +16,7 @@ const SUPPLIER_NAV: NavItem[] = [
   { key: 'my_profile',    href: '/account',                icon: <UserIcon /> },
   { key: 'dashboard',     href: '/supplier',               icon: <GridIcon /> },
   { key: 'products',      href: '/supplier/products',      icon: <BoxIcon /> },
+  { key: 'outlet_offers', href: '/supplier/outlet',         icon: <TagIcon /> },
   { key: 'master_catalog', href: '/supplier/master-catalog', icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z" /></svg> },
   { key: 'sourcing',      href: '/supplier/sourcing',      icon: <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3" /></svg> },
   { key: 'regions',       href: '/supplier/regions',       icon: <GlobeIcon /> },
@@ -57,6 +58,7 @@ const BUYER_NAV: NavItem[] = [
 const ADMIN_NAV: NavItem[] = [
   { key: 'dashboard',    href: '/admin',              icon: <GridIcon /> },
   { key: 'control_center', href: '/admin/control-center', icon: <ChatIcon /> },
+  { key: 'outlet_trade',  href: '/admin/outlet',        icon: <TagIcon /> },
   { key: 'registrations', href: '/admin/registrations', icon: <UserIcon /> },
   { key: 'suppliers',    href: '/admin/suppliers',    icon: <BoxIcon /> },
   { key: 'brokers',      href: '/admin/brokers',      icon: <StarIcon /> },
