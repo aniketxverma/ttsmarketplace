@@ -1,5 +1,7 @@
 import Link from 'next/link'
 import { Logo } from '@/components/Logo'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 
 const LINKS = {
   Departments: [
@@ -38,7 +40,20 @@ const LINKS = {
 
 const PAYMENTS = ['stripe', 'VISA', 'mastercard', 'PayPal', 'DHL', 'FedEx']
 
-export function Footer() {
+// Static footer copy — collected so localizeUI can translate them in one pass.
+const FOOT_STATIC = [
+  'The global B2B marketplace connecting factories, suppliers, distributors and retailers across Europe, the Middle East, and Africa.',
+  'ISO Verified', 'Secure Payments', 'GDPR Compliant',
+  'Stay updated on trade opportunities', 'Get weekly curated supplier news and marketplace updates.',
+  'Subscribe', 'Trusted global commerce', 'Privacy', 'Terms', 'Contact', 'All systems operational',
+]
+
+export async function Footer() {
+  const locale = getLocale()
+  const tt = await localizeUI(
+    [...Object.keys(LINKS), ...Object.values(LINKS).flat().map((i) => i.label), ...FOOT_STATIC],
+    locale,
+  )
   return (
     <footer className="relative bg-gradient-to-b from-[#0a1733] to-[#0B1F4D] text-white overflow-hidden">
       {/* gold accent line + glow */}
@@ -53,8 +68,7 @@ export function Footer() {
           <div className="col-span-2 lg:col-span-2 space-y-5">
             <Logo variant="light" size="lg" />
             <p className="text-blue-200/80 text-sm leading-relaxed max-w-xs">
-              The global B2B marketplace connecting factories, suppliers, distributors and
-              retailers across Europe, the Middle East, and Africa.
+              {tt('The global B2B marketplace connecting factories, suppliers, distributors and retailers across Europe, the Middle East, and Africa.')}
             </p>
             <div className="flex flex-wrap gap-2">
               {['ISO Verified', 'Secure Payments', 'GDPR Compliant'].map((badge) => (
@@ -62,7 +76,7 @@ export function Footer() {
                   <svg className="w-3 h-3 text-[#F5A623]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                   </svg>
-                  {badge}
+                  {tt(badge)}
                 </span>
               ))}
             </div>
@@ -94,12 +108,12 @@ export function Footer() {
           {/* Nav columns */}
           {Object.entries(LINKS).map(([heading, items]) => (
             <div key={heading} className="space-y-4">
-              <h3 className="text-xs font-black uppercase tracking-widest text-[#F5A623]">{heading}</h3>
+              <h3 className="text-xs font-black uppercase tracking-widest text-[#F5A623]">{tt(heading)}</h3>
               <ul className="space-y-2.5">
                 {items.map((item) => (
                   <li key={item.label}>
                     <Link href={item.href} className="text-sm text-blue-200/80 hover:text-white transition-colors hover:translate-x-0.5 inline-block">
-                      {item.label}
+                      {tt(item.label)}
                     </Link>
                   </li>
                 ))}
@@ -112,14 +126,14 @@ export function Footer() {
         <div className="mt-12 pt-10 border-t border-white/10">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
             <div>
-              <h3 className="font-bold text-white text-sm">Stay updated on trade opportunities</h3>
-              <p className="text-blue-300/80 text-xs mt-1">Get weekly curated supplier news and marketplace updates.</p>
+              <h3 className="font-bold text-white text-sm">{tt('Stay updated on trade opportunities')}</h3>
+              <p className="text-blue-300/80 text-xs mt-1">{tt('Get weekly curated supplier news and marketplace updates.')}</p>
             </div>
             <div className="flex gap-2 w-full md:w-auto">
               <input type="email" placeholder="your@email.com"
                 className="flex-1 md:w-56 rounded-xl bg-white/[0.08] border border-white/15 px-4 py-2.5 text-sm text-white placeholder-blue-300/70 focus:outline-none focus:ring-2 focus:ring-[#F5A623]/50 focus:border-[#F5A623]/50 transition-all" />
               <button className="rounded-xl bg-[#F5A623] text-[#0B1F4D] px-5 py-2.5 text-sm font-bold hover:bg-[#fbb93a] transition-colors flex-shrink-0">
-                Subscribe
+                {tt('Subscribe')}
               </button>
             </div>
           </div>
@@ -127,7 +141,7 @@ export function Footer() {
 
         {/* Payment / courier strip */}
         <div className="mt-10 pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <span className="text-[11px] font-bold uppercase tracking-widest text-blue-300/60">Trusted global commerce</span>
+          <span className="text-[11px] font-bold uppercase tracking-widest text-blue-300/60">{tt('Trusted global commerce')}</span>
           <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
             {PAYMENTS.map((p) => (
               <span key={p} className="text-base font-black text-white/70">{p}</span>
@@ -142,11 +156,11 @@ export function Footer() {
           <p className="text-xs text-blue-300/80">© {new Date().getFullYear()} TTAI EMA — FULL SOFTRONIC S.L. All rights reserved.</p>
           <div className="flex items-center gap-5">
             {[['Privacy', '/privacy'], ['Terms', '/terms'], ['Contact', '/contact']].map(([label, href]) => (
-              <Link key={label} href={href} className="text-xs text-blue-300/80 hover:text-white transition-colors">{label}</Link>
+              <Link key={label} href={href} className="text-xs text-blue-300/80 hover:text-white transition-colors">{tt(label)}</Link>
             ))}
             <span className="text-xs text-blue-400 flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-              All systems operational
+              {tt('All systems operational')}
             </span>
           </div>
         </div>
