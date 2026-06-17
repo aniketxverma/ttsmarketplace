@@ -13,7 +13,7 @@ alter table brokers add column if not exists connection_points int not null defa
 -- Companies a broker brings to the platform (suppliers & buyers). Permanently
 -- linked — this protects the broker's network.
 create table if not exists broker_referrals (
-  id             uuid primary key default gen_random_uuid(a),
+  id             uuid primary key default gen_random_uuid(),
   broker_id      uuid not null references brokers(id) on delete cascade,
   company_type   text not null default 'supplier' check (company_type in ('supplier','buyer')),
   company_name   text not null,
