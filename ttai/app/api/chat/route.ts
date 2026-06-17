@@ -97,25 +97,64 @@ const tools: OpenAI.Chat.ChatCompletionTool[] = [
   },
 ]
 
+// Synonyms so natural queries hit the catalogue (e.g. "apple devices" → iphone).
+const SEARCH_ALIASES: Record<string, string[]> = {
+  apple: ['iphone', 'ipad', 'macbook', 'airpods', 'apple'],
+  phone: ['iphone', 'samsung', 'smartphone', 'galaxy'],
+  laptop: ['notebook', 'macbook', 'laptop'],
+  headphone: ['headphone', 'airpods', 'earbuds', 'jbl', 'cuffie'],
+  speaker: ['speaker', 'altoparlanti', 'jbl'],
+  tv: ['tv', 'led', 'television', 'pollici'],
+  watch: ['watch', 'wearable', 'smartwatch'],
+  cleaning: ['rozil', 'detergent', 'cleaner', 'limpiahogar'],
+  oil: ['oil', 'viscosity', 'lubricant', 'engine'],
+  food: ['hummus', 'chtaura', 'olive', 'tahini', 'pickle'],
+}
+
 async function searchProducts(query: string, categorySlug?: string, maxPriceEur?: number): Promise<ChatProduct[]> {
   const supabase = createAdminClient()
-  let q = supabase
-    .from('products')
-    .select('id, name, slug, price_cents, currency_code, categories(name, slug), product_images(url, sort_order)')
-    .eq('is_published', true)
-    .or(`name.ilike.%${query}%,description.ilike.%${query}%`)
-    .limit(5)
+  // Tokenise, drop generic words, strip plurals, expand aliases → forgiving OR search.
+  const STOP = new Set(['product', 'products', 'item', 'items', 'device', 'devices', 'thing', 'things', 'show', 'find', 'get', 'want', 'need', 'looking', 'the', 'for', 'me', 'my', 'some', 'any', 'best', 'good', 'top', 'new', 'available', 'stock', 'wholesale', 'retail', 'please', 'can', 'you', 'and', 'with', 'what', 'which', 'have', 'cheap', 'cheapest', 'budget', 'price', 'prices'])
+  const raw = query.toLowerCase().split(/[^a-z0-9]+/).filter((t) => t.length >= 2 && !STOP.has(t) && !STOP.has(t.replace(/s$/, '')))
+  const terms = new Set<string>()
+  for (const t of raw) {
+    const sing = t.replace(/s$/, '')
+    terms.add(sing); terms.add(t)
+    for (const [k, syns] of Object.entries(SEARCH_ALIASES)) if (t === k || sing === k) syns.forEach((s) => terms.add(s))
+  }
+  const termArr = Array.from(terms)
+  const ors: string[] = []
+  for (const t of termArr) { ors.push(`name.ilike.%${t}%`); ors.push(`brand_name.ilike.%${t}%`) }
 
+  let q = (supabase.from('products') as any)
+    .select('id, name, slug, price_cents, currency_code, brand_name, categories(name, slug), product_images(url, sort_order)')
+    .eq('is_published', true)
+  if (ors.length) q = q.or(ors.join(','))
   if (maxPriceEur) q = q.lte('price_cents', Math.round(maxPriceEur * 100))
+  q = q.limit(50)
 
   const { data } = await q
-  return (data ?? []).map((p) => {
+  const ql = query.toLowerCase().trim()
+  const cheap = /\b(cheap|cheapest|budget|affordable|low ?price)\b/.test(ql)
+  const ACC = /(case|cover|cable|adapter|charger|glass|protector|holder|stand|strap|\bband\b|sticker|skin|pellicola|custodia|cavo)/i
+  const ranked = (data ?? []).map((p: any) => {
+    const n = (p.name ?? '').toLowerCase()
+    let score = 0
+    if (n.includes(ql)) score += 50
+    for (const t of termArr) if (n.includes(t)) score += 6
+    if (p.brand_name && terms.has((p.brand_name as string).toLowerCase())) score += 8
+    if (ACC.test(n) && !ACC.test(ql)) score -= 25 // user asked for a device, not an accessory
+    if ((p.price_cents ?? 0) < 100) score -= 8 // a €0.x item is usually an accessory/part
+    return { p, score }
+  }).filter((x: any) => x.score > -10)
+    .sort((a: any, b: any) => b.score - a.score || (cheap ? a.p.price_cents - b.p.price_cents : b.p.price_cents - a.p.price_cents))
+    .slice(0, 6)
+
+  return ranked.map(({ p }: any) => {
     const cat = p.categories as any as { name: string; slug: string } | null
-    // Filter by category if specified (post-filter since Supabase nested filter is complex)
-    if (categorySlug && cat?.slug && !cat.slug.includes(categorySlug.split('-')[0])) return null
     const imgs = ((p.product_images ?? []) as { url: string; sort_order: number }[]).sort((a, b) => a.sort_order - b.sort_order)
     return { id: p.id, name: p.name, slug: p.slug, price_cents: p.price_cents, currency_code: p.currency_code, category_name: cat?.name ?? null, image_url: imgs[0]?.url ?? null }
-  }).filter(Boolean) as ChatProduct[]
+  }) as ChatProduct[]
 }
 
 async function getSupplierInfo(name: string) {

@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import Image from 'next/image'
+import { SupplierMall } from '@/components/marketplace/SupplierMall'
 import {
   accessFor, chainLevel, directoryAccess, entityKind,
   type ChainLevel, type EntityKind, type DirectoryBucket,
@@ -98,7 +99,7 @@ export async function BrandDirectory({
     let query = (supabase.from('suppliers') as any)
       .select(`
         id, owner_id, legal_name, trade_name, description, tagline, logo_url, banner_image,
-        reliability_tier, brand_slug, is_featured, badges,
+        reliability_tier, brand_slug, is_featured, badges, whatsapp,
         years_experience, countries_served, countries(name, iso_code), cities(name)
       `)
       .eq('status', 'ACTIVE')
@@ -132,21 +133,32 @@ export async function BrandDirectory({
 
   const total = suppliers.length
 
-  // Product previews — a few real product images per supplier so buyers see what
-  // each one sells before entering their shop.
-  const thumbsBySup: Record<string, string[]> = {}
+  // Product previews — real products per supplier so buyers see what each sells
+  // before entering, and to populate the storefront drawer.
+  const money = (c: number, cur = 'EUR') => { try { return new Intl.NumberFormat('en-EU', { style: 'currency', currency: cur }).format((c ?? 0) / 100) } catch { return `€${((c ?? 0) / 100).toFixed(2)}` } }
+  const prodBySup: Record<string, { slug: string; name: string; img: string; price: string }[]> = {}
   const countBySup: Record<string, number> = {}
   if (suppliers.length) {
     const sids = suppliers.map((s) => s.id)
     const { data: prodRows } = await (supabase.from('products') as any)
-      .select('supplier_id, product_images(url, sort_order)')
-      .in('supplier_id', sids).eq('is_published', true).limit(600)
+      .select('supplier_id, name, slug, price_cents, currency_code, product_images(url, sort_order)')
+      .in('supplier_id', sids).eq('is_published', true).limit(1200)
     for (const p of (prodRows ?? []) as any[]) {
       countBySup[p.supplier_id] = (countBySup[p.supplier_id] ?? 0) + 1
-      const url = ((p.product_images ?? []) as any[]).slice().sort((a, b) => a.sort_order - b.sort_order)[0]?.url
-      if (url && (thumbsBySup[p.supplier_id] ?? []).length < 4) (thumbsBySup[p.supplier_id] ||= []).push(url)
+      const img = ((p.product_images ?? []) as any[]).slice().sort((a, b) => a.sort_order - b.sort_order)[0]?.url
+      if (img && (prodBySup[p.supplier_id] ?? []).length < 8) (prodBySup[p.supplier_id] ||= []).push({ slug: p.slug ?? p.id, name: p.name, img, price: money(p.price_cents, p.currency_code) })
     }
   }
+
+  // Mall-style supplier objects (storefronts + drawer).
+  const mallSuppliers = suppliers.map((s) => ({
+    id: s.id, name: s.trade_name ?? s.legal_name, tagline: s.tagline ?? s.description ?? null,
+    logo: s.logo_url ?? null, banner: s.banner_image ?? null,
+    country: (s.countries as any)?.name ?? null, city: (s.cities as any)?.name ?? null,
+    tier: s.reliability_tier ?? null, brandSlug: s.brand_slug ?? null, whatsapp: s.whatsapp ?? null,
+    years: s.years_experience ?? null, count: countBySup[s.id] ?? 0, kindLabel: cfg.kindLabel,
+    premium: !!s.is_featured, products: prodBySup[s.id] ?? [],
+  }))
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -246,91 +258,7 @@ export async function BrandDirectory({
                   className="text-sm text-[#0B1F4D] hover:underline font-medium">Clear search</Link>
               )}
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-              {suppliers.map((s) => {
-                const country = s.countries as { name: string; iso_code: string } | null
-                const city    = s.cities   as { name: string } | null
-                const rel     = RELIABILITY[s.reliability_tier] ?? RELIABILITY.UNVERIFIED
-                const name    = s.trade_name ?? s.legal_name
-                const href    = `/brand/${s.brand_slug ?? s.id}`
-                const initials = name.split(' ').map((w: string) => w[0]).join('').slice(0, 2).toUpperCase()
-
-                return (
-                  <div key={s.id}
-                    className="group bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200">
-                    <div className="relative h-28 bg-gradient-to-br from-[#0B1F4D] to-[#1a3a7a] overflow-hidden">
-                      {s.banner_image && (
-                        <Image src={s.banner_image} alt="" fill className="object-cover opacity-50 group-hover:opacity-60 transition-opacity" sizes="400px" />
-                      )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-                      <div className="absolute top-2.5 right-2.5 flex items-center gap-1 bg-white/90 text-[#0B1F4D] px-2 py-1 rounded-full text-[10px] font-extrabold">
-                        {cfg.kindLabel}
-                      </div>
-                      <div className="absolute -bottom-5 left-4">
-                        <div className="w-12 h-12 rounded-xl border-2 border-white shadow-md overflow-hidden bg-[#0B1F4D] flex items-center justify-center">
-                          {s.logo_url ? (
-                            <Image src={s.logo_url} alt={name} width={48} height={48} className="object-cover w-full h-full" />
-                          ) : (
-                            <span className="text-white font-extrabold text-sm">{initials}</span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="pt-8 px-4 pb-4">
-                      <div className="flex items-start justify-between gap-2 mb-1.5">
-                        <h2 className="font-extrabold text-[#0B1F4D] text-base leading-tight group-hover:text-[#162d6e] transition-colors line-clamp-1">{name}</h2>
-                        <span className={`flex-shrink-0 flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border ${rel.cls}`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${rel.dot}`} />
-                          {rel.label}
-                        </span>
-                      </div>
-                      {(s.tagline || s.description) && (
-                        <p className="text-xs text-gray-500 line-clamp-1 leading-relaxed mb-2.5">{s.tagline ?? s.description}</p>
-                      )}
-                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-400 mb-3">
-                        {(city || country) && (
-                          <span className="flex items-center gap-1">
-                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                            </svg>
-                            {[city?.name, country?.name].filter(Boolean).join(', ')}
-                          </span>
-                        )}
-                        {(countBySup[s.id] ?? 0) > 0 && (
-                          <span className="flex items-center gap-1 font-semibold text-[#0B1F4D]">
-                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
-                            {countBySup[s.id]} products
-                          </span>
-                        )}
-                      </div>
-
-                      {/* Product preview — what this supplier sells */}
-                      {(thumbsBySup[s.id]?.length ?? 0) > 0 && (
-                        <div className="grid grid-cols-4 gap-1.5 mb-3">
-                          {Array.from({ length: 4 }).map((_, i) => {
-                            const t = thumbsBySup[s.id]?.[i]
-                            return (
-                              <div key={i} className="aspect-square rounded-lg bg-gray-50 border border-gray-100 overflow-hidden flex items-center justify-center">
-                                {t ? <Image src={t} alt="" width={80} height={80} className="object-contain w-full h-full p-1 group-hover:scale-105 transition-transform" /> : null}
-                              </div>
-                            )
-                          })}
-                        </div>
-                      )}
-
-                      <div className="grid grid-cols-2 gap-2 mt-1">
-                        <Link href={href} className="inline-flex items-center justify-center gap-1 rounded-lg border border-gray-200 px-3 py-2 text-xs font-bold text-[#0B1F4D] hover:border-[#0B1F4D]/40 transition-colors">View profile</Link>
-                        <Link href={`/marketplace?supplier=${s.id}`} className="inline-flex items-center justify-center gap-1 rounded-lg bg-[#0B1F4D] text-white px-3 py-2 text-xs font-bold hover:bg-[#162d6e] transition-colors">
-                          Enter shop
-                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" /></svg>
-                        </Link>
-                      </div>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
+            <SupplierMall suppliers={mallSuppliers} />
           </>
         ) : (
           <div className="text-center py-24">
