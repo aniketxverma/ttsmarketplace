@@ -111,7 +111,11 @@ export default function SupplierOnboardingPage() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) { setError('Not authenticated'); setLoading(false); return }
 
-    const { error: insertError } = await supabase.from('suppliers').insert({
+    // Carry the Outlet Zone role chosen at registration (user metadata) onto the
+    // supplier so it's set without a second step. Defensive: dropped on retry if
+    // the column isn't migrated yet.
+    const outletRole = (user.user_metadata as any)?.outlet_role || null
+    const supplierRow: Record<string, any> = {
       owner_id:            user.id,
       legal_name:          parsed.data.legalName,
       trade_name:          parsed.data.tradeName,
@@ -123,7 +127,13 @@ export default function SupplierOnboardingPage() {
       postal_code:         parsed.data.postalCode,
       marketplace_context: parsed.data.marketplaceContext,
       description:         parsed.data.description,
-    })
+      ...(outletRole ? { outlet_role: outletRole } : {}),
+    }
+    let { error: insertError } = await (supabase.from('suppliers') as any).insert(supplierRow)
+    if (insertError && /outlet_role|column/i.test(insertError.message)) {
+      delete supplierRow.outlet_role
+      ;({ error: insertError } = await (supabase.from('suppliers') as any).insert(supplierRow))
+    }
 
     if (insertError) {
       setError(insertError.message)

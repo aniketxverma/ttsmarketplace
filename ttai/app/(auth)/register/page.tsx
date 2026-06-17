@@ -96,14 +96,14 @@ type FormData = {
   companyName: string; businessType: string; continent: string
   countryName: string; city: string; category: string
   annualTurnover: string; websiteUrl: string
-  bio: string; productsOffered: string; sellsOutlet: boolean
+  bio: string; productsOffered: string; sellsOutlet: boolean; outletRole: string
 }
 
 const EMPTY: FormData = {
   fullName: '', email: '', phone: '', password: '', username: '', role: '',
   companyName: '', businessType: '', continent: '', countryName: '', city: '',
   category: '', annualTurnover: '', websiteUrl: '',
-  bio: '', productsOffered: '', sellsOutlet: false,
+  bio: '', productsOffered: '', sellsOutlet: false, outletRole: '',
 }
 
 function Label({ text }: { text: string }) {
@@ -246,7 +246,8 @@ export default function RegisterPage() {
           company_name: form.companyName, business_type: form.businessType, continent: form.continent,
           country_name: form.countryName, city: form.city, category: form.category,
           annual_turnover: form.annualTurnover, website_url: form.websiteUrl,
-          bio: form.bio, products_offered: form.productsOffered, sells_outlet: form.sellsOutlet } },
+          bio: form.bio, products_offered: form.productsOffered, sells_outlet: form.sellsOutlet,
+          outlet_role: form.sellsOutlet ? form.outletRole : '' } },
       })
 
       if (signUpError) {
@@ -309,7 +310,7 @@ export default function RegisterPage() {
           fullName: form.fullName, companyName: form.companyName, email: form.email,
           phone: form.phone, countryName: form.countryName, city: form.city,
           accountType: roleObj?.label ?? form.role, businessType: form.businessType,
-          message: `${form.bio}${form.sellsOutlet ? '\n\n★ Wants to sell Outlet / Return Goods / Liquidation Stock' : ''}`.trim(),
+          message: `${form.bio}${form.sellsOutlet ? `\n\n★ Outlet Zone — ${({ direct_supplier: 'Direct Supplier', distributor: 'Distributor', retail_chain: 'Retail Chain', outlet_shop: 'Outlet Retail Shop' } as Record<string, string>)[form.outletRole] ?? 'Seller'} (returns / liquidation stock)` : ''}`.trim(),
           sourcePlatform,
         }),
       }).catch(() => {})
@@ -594,15 +595,28 @@ export default function RegisterPage() {
                   className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B1F4D] focus:border-transparent transition-all resize-none placeholder:text-gray-300" />
               </div>
               {role === 'supplier' && (
-                <label className="flex items-start gap-3 rounded-xl border-2 border-orange-200 bg-orange-50/50 px-4 py-3 cursor-pointer hover:border-orange-300 transition-colors">
-                  <input type="checkbox" checked={form.sellsOutlet}
-                    onChange={(e) => setForm(p => ({ ...p, sellsOutlet: e.target.checked }))}
-                    className="mt-0.5 w-4 h-4 accent-red-500" />
-                  <span>
-                    <span className="block text-sm font-bold text-gray-900">I want to sell Outlet / Amazon Return Goods / Liquidation Stock</span>
-                    <span className="block text-xs text-gray-500 mt-0.5">Register for the Outlet &amp; Return Goods Hub — pallets, truckloads, returns & overstock.</span>
-                  </span>
-                </label>
+                <div className="space-y-2.5">
+                  <label className="flex items-start gap-3 rounded-xl border-2 border-orange-200 bg-orange-50/50 px-4 py-3 cursor-pointer hover:border-orange-300 transition-colors">
+                    <input type="checkbox" checked={form.sellsOutlet}
+                      onChange={(e) => setForm(p => ({ ...p, sellsOutlet: e.target.checked, outletRole: e.target.checked ? (p.outletRole || 'direct_supplier') : '' }))}
+                      className="mt-0.5 w-4 h-4 accent-red-500" />
+                    <span>
+                      <span className="block text-sm font-bold text-gray-900">I want to sell Outlet / Amazon Return Goods / Liquidation Stock</span>
+                      <span className="block text-xs text-gray-500 mt-0.5">Register for the Outlet Zone — pallets, truckloads, returns & overstock.</span>
+                    </span>
+                  </label>
+                  {form.sellsOutlet && (
+                    <div className="rounded-xl border border-gray-200 bg-white px-4 py-3">
+                      <Label text="Your Outlet Zone role" />
+                      <div className="grid grid-cols-2 gap-2 mt-1.5">
+                        {[['direct_supplier', 'Direct Supplier'], ['distributor', 'Distributor'], ['retail_chain', 'Retail Chain'], ['outlet_shop', 'Outlet Retail Shop']].map(([k, l]) => (
+                          <button key={k} type="button" onClick={() => setForm(p => ({ ...p, outletRole: k }))}
+                            className={`rounded-lg border-2 px-3 py-2 text-xs font-bold text-left transition-all ${form.outletRole === k ? 'border-[#0B1F4D] bg-[#0B1F4D]/[0.04] text-[#0B1F4D]' : 'border-gray-200 text-gray-600 hover:border-gray-300'}`}>{l}</button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
               )}
             </div>
             {error && <Err msg={error} />}
