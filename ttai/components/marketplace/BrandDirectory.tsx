@@ -138,17 +138,24 @@ export async function BrandDirectory({
   const money = (c: number, cur = 'EUR') => { try { return new Intl.NumberFormat('en-EU', { style: 'currency', currency: cur }).format((c ?? 0) / 100) } catch { return `€${((c ?? 0) / 100).toFixed(2)}` } }
   const prodBySup: Record<string, { slug: string; name: string; img: string; price: string }[]> = {}
   const countBySup: Record<string, number> = {}
-  if (suppliers.length) {
-    const sids = suppliers.map((s) => s.id)
-    const { data: prodRows } = await (supabase.from('products') as any)
-      .select('supplier_id, name, slug, price_cents, currency_code, product_images(url, sort_order)')
-      .in('supplier_id', sids).eq('is_published', true).limit(1200)
-    for (const p of (prodRows ?? []) as any[]) {
-      countBySup[p.supplier_id] = (countBySup[p.supplier_id] ?? 0) + 1
+  // Fetch PER supplier — a single .in() query is capped at ~1000 rows by
+  // PostgREST, so a couple of large suppliers (XO, EuroTech) would swallow the
+  // whole result and leave every other storefront with blank thumbnails.
+  await Promise.all(suppliers.map(async (s) => {
+    const [{ count }, { data: rows }] = await Promise.all([
+      (supabase.from('products') as any).select('id', { count: 'exact', head: true }).eq('supplier_id', s.id).eq('is_published', true),
+      (supabase.from('products') as any)
+        .select('id, name, slug, price_cents, currency_code, product_images(url, sort_order)')
+        .eq('supplier_id', s.id).eq('is_published', true).order('created_at', { ascending: false }).limit(48),
+    ])
+    countBySup[s.id] = count ?? 0
+    const list: { slug: string; name: string; img: string; price: string }[] = []
+    for (const p of (rows ?? []) as any[]) {
       const img = ((p.product_images ?? []) as any[]).slice().sort((a, b) => a.sort_order - b.sort_order)[0]?.url
-      if (img && (prodBySup[p.supplier_id] ?? []).length < 8) (prodBySup[p.supplier_id] ||= []).push({ slug: p.slug ?? p.id, name: p.name, img, price: money(p.price_cents, p.currency_code) })
+      if (img) { list.push({ slug: p.slug ?? p.id, name: p.name, img, price: money(p.price_cents, p.currency_code) }); if (list.length >= 8) break }
     }
-  }
+    prodBySup[s.id] = list
+  }))
 
   // Mall-style supplier objects (storefronts + drawer).
   const mallSuppliers = suppliers.map((s) => ({
