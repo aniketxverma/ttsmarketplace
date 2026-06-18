@@ -95,7 +95,7 @@ export function SmartSearch({ defaultValue = '' }: { defaultValue?: string }) {
                         {p.img ? (/* eslint-disable-next-line @next/next/no-img-element */<img src={p.img} alt="" className="w-full h-full object-contain p-1" />) : <Package className="w-4 h-4 text-gray-300" />}
                       </div>
                       <span className="flex-1 min-w-0"><span className="block text-sm font-medium text-gray-700 truncate">{p.name}</span>{p.brand && <span className="block text-[11px] text-gray-400">{p.brand}</span>}</span>
-                      <span className="text-sm font-extrabold text-[#0B1F4D] flex-shrink-0">{money(p.price, p.currency)}</span>
+                      <span className="text-sm font-extrabold text-[#0B1F4D] flex-shrink-0">{p.price > 0 ? money(p.price, p.currency) : <span className="text-violet-700 text-xs">On request</span>}</span>
                     </button>
                   ))}
                 </Group>

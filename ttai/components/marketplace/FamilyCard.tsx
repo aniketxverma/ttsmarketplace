@@ -77,8 +77,14 @@ export function FamilyCard({ family, retail = false, shop, brand, sponsored, min
 
           <div className="flex items-center justify-between gap-2">
             <div>
-              <span className="text-xs text-muted-foreground mr-1">from</span>
-              <span className="font-semibold text-sm">{formatPrice(price, rep.currency_code)}</span>
+              {price > 0 ? (
+                <>
+                  <span className="text-xs text-muted-foreground mr-1">from</span>
+                  <span className="font-semibold text-sm">{formatPrice(price, rep.currency_code)}</span>
+                </>
+              ) : (
+                <span className="font-semibold text-sm text-violet-700">Price on request</span>
+              )}
             </div>
             <span className="text-xs font-semibold text-[#0B1F4D] group-hover:underline whitespace-nowrap">
               View range →

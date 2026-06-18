@@ -520,7 +520,7 @@ export default async function ProductPage({ params, searchParams }: { params: { 
                   </div>
                   <div className="p-2.5">
                     <p className="text-xs font-bold text-gray-800 leading-tight line-clamp-2 mb-1">{p.name}</p>
-                    <p className="text-xs font-extrabold text-[#0B1F4D]">{fmt(p.price_cents, p.currency_code)}</p>
+                    <p className="text-xs font-extrabold text-[#0B1F4D]">{p.price_cents > 0 ? fmt(p.price_cents, p.currency_code) : <span className="text-violet-700">On request</span>}</p>
                   </div>
                 </Link>
               ))}

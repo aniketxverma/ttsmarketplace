@@ -74,7 +74,7 @@ function Row({ c }: { c: MallCat }) {
                 <div className="px-3 pb-3 pt-2 border-t border-gray-50">
                   <p className="text-xs font-medium text-gray-600 leading-snug line-clamp-2 h-[32px]">{p.name}</p>
                   <div className="flex items-center justify-between mt-1.5">
-                    <p className="text-base font-extrabold text-[#0B1F4D]">{price(p.priceCents, p.currency)}</p>
+                    <p className="text-base font-extrabold text-[#0B1F4D]">{p.priceCents > 0 ? price(p.priceCents, p.currency) : <span className="text-sm text-violet-700">On request</span>}</p>
                     <span className="w-7 h-7 rounded-full flex items-center justify-center text-white shadow-sm group-hover/tile:scale-110 transition-transform" style={{ background: c.accent }}>
                       <ArrowRight className="w-3.5 h-3.5" />
                     </span>

@@ -153,7 +153,7 @@ export async function BrandDirectory({
     const list: { slug: string; name: string; img: string; price: string }[] = []
     for (const p of (rows ?? []) as any[]) {
       const img = ((p.product_images ?? []) as any[]).slice().sort((a, b) => a.sort_order - b.sort_order)[0]?.url
-      if (img) { list.push({ slug: p.slug ?? p.id, name: p.name, img, price: money(p.price_cents, p.currency_code) }); if (list.length >= 8) break }
+      if (img) { list.push({ slug: p.slug ?? p.id, name: p.name, img, price: p.price_cents > 0 ? money(p.price_cents, p.currency_code) : 'On request' }); if (list.length >= 8) break }
     }
     prodBySup[s.id] = list
   }))

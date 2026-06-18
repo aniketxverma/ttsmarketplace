@@ -127,12 +127,14 @@ export function ProductCard({ product, supplier, mainImageUrl, href, retail = fa
 
           <div className="flex items-center justify-between gap-2">
             <div>
-              {offerCount > 1 && <span className="text-[10px] text-muted-foreground mr-0.5">from</span>}
-              <span className="font-semibold text-sm">{formatPrice(displayPrice, product.currency_code)}</span>
-              {isRetail ? (
-                <span className="text-xs text-muted-foreground ml-1">inc. VAT</span>
+              {displayPrice > 0 ? (
+                <>
+                  {offerCount > 1 && <span className="text-[10px] text-muted-foreground mr-0.5">from</span>}
+                  <span className="font-semibold text-sm">{formatPrice(displayPrice, product.currency_code)}</span>
+                  <span className="text-xs text-muted-foreground ml-1">{isRetail ? 'inc. VAT' : 'ex. VAT'}</span>
+                </>
               ) : (
-                <span className="text-xs text-muted-foreground ml-1">ex. VAT</span>
+                <span className="font-semibold text-sm text-violet-700">Price on request</span>
               )}
             </div>
             {!isRetail && (
