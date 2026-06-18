@@ -14,6 +14,7 @@ import { PromotionBanner } from '@/components/marketplace/PromotionBanner'
 import { SupplierMiniCard, type MiniSupplier } from '@/components/marketplace/SupplierMiniCard'
 import { ShoppingChannels } from '@/components/marketplace/ShoppingChannels'
 import { MarketplaceTopBar } from '@/components/marketplace/MarketplaceTopBar'
+import { SupplierCategoryCard } from '@/components/marketplace/SupplierCategoryCard'
 import { ShopCard, type ShopCardData } from '@/components/marketplace/ShopCard'
 import { CategoryMall, type MallCat } from '@/components/marketplace/CategoryMall'
 import { SupplierShopHeader } from '@/components/marketplace/SupplierShopHeader'
@@ -36,15 +37,21 @@ function ChevronRight() {
 
 // Coloured banner header used by both the homepage category sections and the
 // per-category sub-section rows (Smartphones, Audio…). Keeps classification visible.
-function CatBanner({ name, subs, accent, href, ctaLabel }: {
-  name: string; subs?: string; accent: string; href?: string; ctaLabel?: string
+function CatBanner({ name, subs, accent, href, ctaLabel, image }: {
+  name: string; subs?: string; accent: string; href?: string; ctaLabel?: string; image?: string | null
 }) {
   return (
-    <div className="flex items-center justify-between gap-3 mb-4 rounded-xl px-4 py-3"
+    <div className="flex items-center justify-between gap-3 mb-4 rounded-xl px-3 py-2.5 overflow-hidden"
       style={{ background: `${accent}0F`, borderLeft: `4px solid ${accent}` }}>
-      <div className="min-w-0">
-        <h2 className="text-lg sm:text-xl font-extrabold leading-tight" style={{ color: accent }}>{name}</h2>
-        {subs ? <p className="text-xs text-gray-500 truncate mt-0.5">{subs}</p> : null}
+      <div className="flex items-center gap-3 min-w-0">
+        {image && (
+          /* eslint-disable-next-line @next/next/no-img-element */
+          <img src={image} alt={name} className="hidden sm:block w-16 h-10 rounded-lg object-cover flex-shrink-0 shadow-sm" />
+        )}
+        <div className="min-w-0">
+          <h2 className="text-lg sm:text-xl font-extrabold leading-tight" style={{ color: accent }}>{name}</h2>
+          {subs ? <p className="text-xs text-gray-500 truncate mt-0.5">{subs}</p> : null}
+        </div>
       </div>
       {href ? (
         <Link href={href} className="flex-shrink-0 text-sm font-bold whitespace-nowrap inline-flex items-center gap-1 hover:gap-2 transition-all" style={{ color: accent }}>
@@ -234,7 +241,7 @@ export default async function MarketplacePage({
       .select(
         `id, name, slug, price_cents, retail_price_cents, currency_code, min_order_qty, marketplace_context, vat_rate,
         supplier_id, category_id, product_line, is_family_cover,
-        suppliers!supplier_id!inner(legal_name, trade_name, reliability_tier, status, countries(name, iso_code), cities(name)),
+        suppliers!supplier_id!inner(legal_name, trade_name, brand_slug, reliability_tier, status, countries(name, iso_code), cities(name)),
         categories(name, slug),
         product_images(url, sort_order)`
       )
@@ -356,6 +363,50 @@ export default async function MarketplacePage({
     for (let i = 0; cur && cur.parent_id && i < 10; i++) cur = catById.get(cur.parent_id)
     return cur ?? null
   }
+  // ── Supplier × category catalogue cards (professional B2B presentation) ──
+  // Real featured products + brands + count per supplier/category, instead of
+  // thousands of generic product photos.
+  const cardMap = new Map<string, any>()
+  for (const p of prodList) {
+    const root = rootOf(p.category_id)
+    if (!root) continue
+    const key = p.supplier_id + '|' + root.id
+    let e = cardMap.get(key)
+    if (!e) {
+      const sup = p.suppliers as any
+      e = { supplierId: p.supplier_id, supplierName: sup?.trade_name ?? sup?.legal_name ?? 'Supplier',
+        brandSlug: sup?.brand_slug ?? null, root, products: [] as any[], brands: new Set<string>(), count: 0 }
+      cardMap.set(key, e)
+    }
+    e.count++
+    if (p.brand_name) e.brands.add(p.brand_name)
+    const img = ((p.product_images ?? []) as any[]).slice().sort((a, b) => a.sort_order - b.sort_order)[0]?.url
+    if (img && e.products.length < 6) e.products.push({ img, name: p.name, slug: p.slug ?? p.id })
+  }
+  // Which suppliers have an Excel catalogue (defensive).
+  const cardSupIds = Array.from(new Set(Array.from(cardMap.values()).map((e) => e.supplierId)))
+  const excelSuppliers = new Set<string>()
+  if (cardSupIds.length) {
+    try {
+      const { data } = await (supabase.from('supplier_documents') as any).select('supplier_id, file_name, file_url, doc_type').in('supplier_id', cardSupIds)
+      for (const d of (data ?? [])) {
+        const n = String(d.file_name ?? d.file_url ?? '').toLowerCase()
+        if (/\.(xlsx|xls|csv)(\?|$)/.test(n) || ['catalog', 'price_list'].includes(d.doc_type)) excelSuppliers.add(d.supplier_id)
+      }
+    } catch { /* ignore */ }
+  }
+  const catalogueCards = Array.from(cardMap.values())
+    .filter((e) => e.products.length > 0)
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 12)
+    .map((e) => ({
+      supplierName: e.supplierName, categoryName: e.root.name,
+      categoryImage: e.root.image_url ?? null, accent: CAT_ACCENT[e.root.slug] ?? '#0B1F4D',
+      featured: e.products, brands: Array.from(e.brands) as string[], count: e.count,
+      hasExcel: excelSuppliers.has(e.supplierId),
+      href: `/brand/${e.brandSlug ?? e.supplierId}`,
+    }))
+
   const isGroupedView = !searchParams.category && !searchParams.q && !activeSupplier && !activeBrand
   const categorySections: { cat: Category; families: typeof families }[] = []
   if (isGroupedView) {
@@ -632,6 +683,21 @@ export default async function MarketplacePage({
             )
           ) : (
           <>
+          {/* Supplier catalogues — real featured products by category + Excel */}
+          {!activeSupplier && catalogueCards.length > 0 && (
+            <section className="mb-9">
+              <div className="flex items-end justify-between mb-3">
+                <div>
+                  <h2 className="text-lg font-extrabold text-[#0B1F4D]">Supplier Catalogues</h2>
+                  <p className="text-xs text-gray-400">Real featured products by category — open a card for the full Excel catalogue.</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {catalogueCards.map((c, i) => <SupplierCategoryCard key={`${c.href}-${c.categoryName}-${i}`} card={c} />)}
+              </div>
+            </section>
+          )}
+
           {/* Three ways to shop this collection */}
           {activeCat && (
             <div className="mb-8">
@@ -701,6 +767,7 @@ export default async function MarketplacePage({
                         <CatBanner
                           name={cat.name}
                           accent={accent}
+                          image={(cat as any).image_url ?? rootOf(cat.id)?.image_url ?? null}
                           href={href && fams.length > SUB_SECTION_LIMIT ? href : undefined}
                           ctaLabel={`View all ${fams.length}`}
                         />
@@ -739,6 +806,7 @@ export default async function MarketplacePage({
                         <CatBanner
                           name={cat.name}
                           accent={accent}
+                          image={(cat as any).image_url ?? rootOf(cat.id)?.image_url ?? null}
                           href={isDirect ? undefined : href}
                           ctaLabel={fams.length > SUB_SECTION_LIMIT ? `View all ${fams.length}` : 'View all'}
                         />
