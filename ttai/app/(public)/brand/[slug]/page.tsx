@@ -111,7 +111,7 @@ export default async function BrandPage({ params }: { params: { slug: string } }
   const [productsRes, galleryRes, certsRes, reviewsRes, docsRes, posRes, channelRes] = await Promise.all([
     supabase
       .from('products')
-      .select('id, name, slug, price_cents, currency_code, min_order_qty, marketplace_context, description, brand_name, category_id, product_images(url, sort_order), categories(id, name, parent_id)')
+      .select('id, name, slug, price_cents, currency_code, min_order_qty, marketplace_context, description, brand_name, product_line, category_id, product_images(url, sort_order), categories(id, name, parent_id)')
       .eq('supplier_id', supplier.id)
       .eq('is_published', true)
       .order('created_at', { ascending: false })
@@ -240,7 +240,13 @@ export default async function BrandPage({ params }: { params: { slug: string } }
     const root = rootOf(p.category_id)
     // Pending (unapproved) categories don't group the product in the shop yet.
     const activeRoot = root && isActiveCat(root) ? root : null
-    const family = leaf && activeRoot && leaf.id !== activeRoot.id ? { id: leaf.id, name: leaf.name } : null
+    // A supplier-set product line (e.g. iPhone / Samsung / Xiaomi) is the family;
+    // otherwise fall back to the leaf category. Keeps grouping consistent with the
+    // marketplace family cards (lib/product-family).
+    const line = (p.product_line ?? '').trim()
+    const family = line
+      ? { id: `line:${line.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}`, name: line }
+      : (leaf && activeRoot && leaf.id !== activeRoot.id ? { id: leaf.id, name: leaf.name } : null)
     return {
       ...p,
       thumb: imgs[0]?.url ?? null,
