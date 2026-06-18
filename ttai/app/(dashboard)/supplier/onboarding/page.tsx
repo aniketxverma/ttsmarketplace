@@ -115,6 +115,8 @@ export default function SupplierOnboardingPage() {
     // supplier so it's set without a second step. Defensive: dropped on retry if
     // the column isn't migrated yet.
     const outletRole = (user.user_metadata as any)?.outlet_role || null
+    // Independent Outlet registration → company joins the Outlet module only.
+    const modules = (user.user_metadata as any)?.module === 'outlet' ? ['outlet'] : null
     const supplierRow: Record<string, any> = {
       owner_id:            user.id,
       legal_name:          parsed.data.legalName,
@@ -128,10 +130,12 @@ export default function SupplierOnboardingPage() {
       marketplace_context: parsed.data.marketplaceContext,
       description:         parsed.data.description,
       ...(outletRole ? { outlet_role: outletRole } : {}),
+      ...(modules ? { modules } : {}),
     }
     let { error: insertError } = await (supabase.from('suppliers') as any).insert(supplierRow)
-    if (insertError && /outlet_role|column/i.test(insertError.message)) {
+    if (insertError && /outlet_role|modules|column/i.test(insertError.message)) {
       delete supplierRow.outlet_role
+      delete supplierRow.modules
       ;({ error: insertError } = await (supabase.from('suppliers') as any).insert(supplierRow))
     }
 

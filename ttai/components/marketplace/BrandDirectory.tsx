@@ -158,13 +158,20 @@ export async function BrandDirectory({
     prodBySup[s.id] = list
   }))
 
-  // TTAIEMA Protected + Premium Partner flags (defensive — columns 0073/0074).
+  // TTAIEMA Protected + Premium Partner flags + module gating (defensive —
+  // columns 0073/0074/0075). Outlet-only companies (modules without 'marketplace')
+  // do not appear in the Marketplace directory.
   const protectedById = new Map<string, boolean>()
   const premiumById = new Map<string, boolean>()
+  const moduleHiddenIds = new Set<string>()
   try {
-    const { data } = await (supabase.from('suppliers') as any).select('id, ttaiema_protected, premium_partner').in('id', suppliers.map((s) => s.id))
-    for (const r of (data ?? [])) { protectedById.set(r.id, !!r.ttaiema_protected); premiumById.set(r.id, !!r.premium_partner) }
+    const { data } = await (supabase.from('suppliers') as any).select('id, ttaiema_protected, premium_partner, modules').in('id', suppliers.map((s) => s.id))
+    for (const r of (data ?? [])) {
+      protectedById.set(r.id, !!r.ttaiema_protected); premiumById.set(r.id, !!r.premium_partner)
+      if (Array.isArray(r.modules) && r.modules.length && !r.modules.includes('marketplace')) moduleHiddenIds.add(r.id)
+    }
   } catch { /* columns not migrated yet */ }
+  if (moduleHiddenIds.size) suppliers = suppliers.filter((s) => !moduleHiddenIds.has(s.id))
 
   // Mall-style supplier objects (storefronts + drawer).
   const mallSuppliers = suppliers.map((s) => ({

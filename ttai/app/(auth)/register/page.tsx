@@ -178,6 +178,7 @@ export default function RegisterPage() {
   // Joining a sales network via an invite link → they're becoming a seller (sales point),
   // so pre-select "Supplier" and show a banner. Read from the URL (avoids Suspense issues).
   const [fromInvite, setFromInvite] = useState(false)
+  const [outletOnly, setOutletOnly] = useState(false)
   // Source platform — so the central inbox knows where each registration came from.
   const [sourcePlatform, setSourcePlatform] = useState('TTAI EMA')
   useEffect(() => {
@@ -186,6 +187,8 @@ export default function RegisterPage() {
     if (next.includes('/join/')) { setFromInvite(true); setForm(p => (p.role ? p : { ...p, role: 'supplier' })) }
     const src = (sp.get('source') ?? '').toLowerCase()
     if (src === 'ttaima') setSourcePlatform('TTAIMA')
+    // Independent Outlet Zone registration — company joins Outlet only (not Marketplace).
+    if (sp.get('module') === 'outlet') { setOutletOnly(true); setForm(p => (p.role ? p : { ...p, role: 'supplier', sellsOutlet: true, outletRole: p.outletRole || 'direct_supplier' })) }
   }, [])
 
   function set(k: keyof FormData, v: string) { setForm(p => ({ ...p, [k]: v })) }
@@ -247,7 +250,7 @@ export default function RegisterPage() {
           country_name: form.countryName, city: form.city, category: form.category,
           annual_turnover: form.annualTurnover, website_url: form.websiteUrl,
           bio: form.bio, products_offered: form.productsOffered, sells_outlet: form.sellsOutlet,
-          outlet_role: form.sellsOutlet ? form.outletRole : '' } },
+          outlet_role: form.sellsOutlet ? form.outletRole : '', module: outletOnly ? 'outlet' : '' } },
       })
 
       if (signUpError) {

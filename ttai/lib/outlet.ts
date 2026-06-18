@@ -45,6 +45,30 @@ export function unitInfo(key?: string | null) {
   return SELLING_UNITS.find((u) => u.key === key) ?? null
 }
 
+// ── How a supplier sells in the Outlet Zone — controls the lot CTAs. ──
+export type SellModeKey = 'direct_contact' | 'request_quote' | 'buy_online' | 'b2b_only' | 'retail_b2b'
+
+export const SELL_MODES: { key: SellModeKey; label: string; cta: string; desc: string }[] = [
+  { key: 'direct_contact', label: 'Direct Contact', cta: 'Contact supplier', desc: 'Buyers contact you directly (WhatsApp / email).' },
+  { key: 'request_quote',  label: 'Request a Quote', cta: 'Request a quote',  desc: 'Buyers send a quotation request.' },
+  { key: 'buy_online',     label: 'Buy Online',      cta: 'Buy online',       desc: 'Buyers add to cart and check out online.' },
+  { key: 'b2b_only',       label: 'B2B Only',        cta: 'Request a quote',  desc: 'Wholesale only — quote / direct deal, no online retail.' },
+  { key: 'retail_b2b',     label: 'Retail + B2B',    cta: 'Buy / Quote',      desc: 'Both online retail purchase and B2B quotes.' },
+]
+
+export function sellModeInfo(key?: string | null) {
+  return SELL_MODES.find((m) => m.key === key) ?? null
+}
+export const sellAllowsOnline = (key?: string | null) => key === 'buy_online' || key === 'retail_b2b'
+
+// ── TTAIEMA modules a company can activate (independent registration). ──
+export type ModuleKey = 'marketplace' | 'outlet' | 'logistics' | 'consulting' | 'trade_hub'
+export function hasModule(modules: string[] | null | undefined, key: ModuleKey): boolean {
+  // No modules set (pre-migration / legacy) → treat as enrolled everywhere.
+  if (!modules || !modules.length) return true
+  return modules.includes(key)
+}
+
 export type RoleKey = 'direct_supplier' | 'retail_chain' | 'distributor' | 'broker' | 'outlet_shop'
 
 export const OUTLET_ROLES: { key: RoleKey; label: string; blurb: string }[] = [

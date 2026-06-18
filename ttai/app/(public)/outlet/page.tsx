@@ -5,7 +5,7 @@ import { getMarketplaceOpen, PRE_OPENING_NOTICE } from '@/lib/marketplace-phase'
 import { MARKET_REGIONS } from '@/lib/market-regions'
 import { ShopCard, type ShopCardData } from '@/components/marketplace/ShopCard'
 import { CONDITIONS, SELLING_UNITS, OUTLET_ROLES, RETAIL_CHAINS, conditionInfo, unitInfo,
-  OPPORTUNITIES, RETAIL_CHAIN_BANNERS, OUTLET_BRANDS, opportunityInfo } from '@/lib/outlet'
+  OPPORTUNITIES, RETAIL_CHAIN_BANNERS, OUTLET_BRANDS, opportunityInfo, sellModeInfo } from '@/lib/outlet'
 import {
   FileSpreadsheet, PlayCircle, Truck, Warehouse, MessageCircle, Package, ArrowRight, Lock,
   Building2, Store, Boxes, Handshake, ShoppingCart, Tag, BadgePercent,
@@ -37,13 +37,13 @@ export default async function OutletZonePage({ searchParams }: { searchParams: S
 
   // Defensive fetch: try the rich select (condition / selling_unit / outlet_role
   // from migration 0069); fall back to the base columns if not yet applied.
-  const RICH = `id, name, slug, price_cents, currency_code, min_order_qty, brand_name, outlet_source, lot_type, condition, selling_unit,
+  const RICH = `id, name, slug, price_cents, currency_code, min_order_qty, stock_qty, video_url, brand_name, outlet_source, lot_type, condition, selling_unit,
     categories(name, slug),
-    suppliers!supplier_id!inner(id, trade_name, legal_name, brand_slug, logo_url, reliability_tier, tagline, status, outlet_role, countries(name, iso_code)),
+    suppliers!supplier_id!inner(id, trade_name, legal_name, brand_slug, logo_url, reliability_tier, tagline, status, outlet_role, whatsapp, business_email, countries(name, iso_code)),
     product_images(url, sort_order)`
-  const BASE = `id, name, slug, price_cents, currency_code, min_order_qty, brand_name, outlet_source, lot_type,
+  const BASE = `id, name, slug, price_cents, currency_code, min_order_qty, stock_qty, video_url, brand_name, outlet_source, lot_type,
     categories(name, slug),
-    suppliers!supplier_id!inner(id, trade_name, legal_name, brand_slug, logo_url, reliability_tier, tagline, status, countries(name, iso_code)),
+    suppliers!supplier_id!inner(id, trade_name, legal_name, brand_slug, logo_url, reliability_tier, tagline, status, whatsapp, countries(name, iso_code)),
     product_images(url, sort_order)`
   const run = (sel: string) => (supabase.from('products') as any)
     .select(sel).eq('is_outlet', true).eq('is_published', true).eq('suppliers.status', 'ACTIVE')
@@ -63,6 +63,25 @@ export default async function OutletZonePage({ searchParams }: { searchParams: S
   const opp = opportunityInfo(searchParams.opp)
   const oppConds = opp ? new Set<string>(opp.conditions) : null
   const chain = RETAIL_CHAIN_BANNERS.find((c) => c.match === searchParams.chain) ?? null
+
+  // Per-supplier sell mode (0075) + which suppliers have an Excel catalogue — both
+  // defensive so the page works before migration / with no documents.
+  const supIds = Array.from(new Set(all.map((p) => (p.suppliers as any)?.id).filter(Boolean)))
+  const sellModeBySup = new Map<string, string | null>()
+  const excelSuppliers = new Set<string>()
+  if (supIds.length) {
+    try {
+      const { data } = await (supabase.from('suppliers') as any).select('id, outlet_sell_mode').in('id', supIds)
+      for (const r of (data ?? [])) sellModeBySup.set(r.id, r.outlet_sell_mode ?? null)
+    } catch { /* column not migrated yet */ }
+    try {
+      const { data } = await (supabase.from('supplier_documents') as any).select('supplier_id, file_name, file_url, doc_type').in('supplier_id', supIds)
+      for (const d of (data ?? [])) {
+        const n = String(d.file_name ?? d.file_url ?? '').toLowerCase()
+        if (/\.(xlsx|xls|csv)(\?|$)/.test(n) || ['catalog', 'price_list'].includes(d.doc_type)) excelSuppliers.add(d.supplier_id)
+      }
+    } catch { /* table differences — ignore */ }
+  }
 
   // Dynamic facets from the data.
   const sources = Array.from(new Set(all.map((p) => p.outlet_source).filter(Boolean))) as string[]
@@ -144,7 +163,7 @@ export default async function OutletZonePage({ searchParams }: { searchParams: S
             ))}
           </div>
           <div className="flex flex-wrap gap-3 mt-7">
-            <Link href="/register" className="inline-flex items-center gap-2 rounded-xl bg-[#F5A623] text-[#0B1F4D] px-6 py-3 text-sm font-extrabold hover:bg-[#fbb93a] transition-colors">List an outlet offer <ArrowRight className="w-4 h-4" /></Link>
+            <Link href="/register?module=outlet" className="inline-flex items-center gap-2 rounded-xl bg-[#F5A623] text-[#0B1F4D] px-6 py-3 text-sm font-extrabold hover:bg-[#fbb93a] transition-colors">List an outlet offer <ArrowRight className="w-4 h-4" /></Link>
             <Link href="/outlet/board" className="inline-flex items-center gap-2 rounded-xl bg-white/10 border border-white/20 px-6 py-3 text-sm font-bold hover:bg-white/20 transition-colors">Trade Board — buy &amp; sell requests</Link>
           </div>
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-6 text-[11px] text-white/55">
@@ -301,6 +320,11 @@ export default async function OutletZonePage({ searchParams }: { searchParams: S
               const country = sup?.countries as { name: string; iso_code: string } | null
               const cond = conditionInfo(p.condition)
               const unit = unitInfo(p.selling_unit)
+              const imgCount = (p.product_images ?? []).length
+              const hasVideo = !!p.video_url
+              const hasExcel = excelSuppliers.has(sup?.id)
+              const chainTag = RETAIL_CHAIN_BANNERS.find((c) => (p.outlet_source ?? '').toLowerCase().includes(c.match))
+              const mode = sellModeInfo(sellModeBySup.get(sup?.id))
               return (
                 <Link key={p.id} href={`/product/${p.slug ?? p.id}?shop=b2b`}
                   className="group bg-white rounded-2xl border border-gray-200 overflow-hidden flex flex-col hover:shadow-lg hover:border-orange-300 transition-all">
@@ -311,19 +335,27 @@ export default async function OutletZonePage({ searchParams }: { searchParams: S
                       {cond && <span className={`rounded-full text-[10px] font-extrabold px-2 py-0.5 ${cond.color}`}>{cond.short}</span>}
                       {(unit || p.lot_type) && <span className="rounded-full bg-red-600 text-white text-[10px] font-extrabold px-2 py-0.5">{unit?.label ?? LOT_LABEL[p.lot_type] ?? p.lot_type}</span>}
                     </div>
+                    {/* availability badges */}
+                    <div className="absolute top-2 right-2 flex flex-col gap-1 items-end">
+                      {hasExcel && <span className="rounded bg-green-600 text-white text-[9px] font-extrabold px-1.5 py-0.5">XLS</span>}
+                      {hasVideo && <span className="rounded bg-rose-600 text-white text-[9px] font-extrabold px-1.5 py-0.5">▶ VIDEO</span>}
+                      {imgCount > 1 && <span className="rounded bg-black/55 text-white text-[9px] font-bold px-1.5 py-0.5">📷 {imgCount}</span>}
+                    </div>
                   </div>
                   <div className="p-3 flex flex-col flex-1">
-                    {p.outlet_source && <p className="text-[11px] font-bold text-orange-600 uppercase tracking-wide truncate">{p.outlet_source}</p>}
+                    {chainTag ? <p className="text-[11px] font-bold text-orange-600 uppercase tracking-wide truncate">{chainTag.label}</p>
+                      : p.outlet_source && <p className="text-[11px] font-bold text-orange-600 uppercase tracking-wide truncate">{p.outlet_source}</p>}
                     <h3 className="text-[13.5px] font-bold text-gray-800 leading-snug line-clamp-2">{p.name}</h3>
                     <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-gray-400">
                       {p.brand_name && <span className="inline-flex items-center gap-0.5"><Tag className="w-3 h-3" />{p.brand_name}</span>}
                       {country && <span>{isoFlag(country.iso_code)} {country.name}</span>}
+                      {p.stock_qty > 0 && <span>· {p.stock_qty} avail.</span>}
                     </div>
                     <div className="mt-auto pt-2.5 flex items-center justify-between">
                       <span className="text-[13px] font-extrabold text-[#0B1F4D]">
                         {p.price_cents > 0 ? <>{new Intl.NumberFormat('en-EU', { style: 'currency', currency: p.currency_code }).format(p.price_cents / 100)}{unit?.per && <span className="text-[10px] text-gray-400 font-medium"> {unit.per}</span>}</> : <span className="text-gray-400 italic text-[11px]">Ask price</span>}
                       </span>
-                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-red-600 group-hover:gap-1.5 transition-all">View lot <ArrowRight className="w-3 h-3" /></span>
+                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-red-600 group-hover:gap-1.5 transition-all">{mode?.cta ?? 'View lot'} <ArrowRight className="w-3 h-3" /></span>
                     </div>
                   </div>
                 </Link>
@@ -342,7 +374,7 @@ export default async function OutletZonePage({ searchParams }: { searchParams: S
             {OUTLET_ROLES.map((r) => {
               const Icon = ROLE_ICON[r.key] ?? Building2
               return (
-                <Link key={r.key} href="/register" className="rounded-2xl bg-white border border-gray-100 shadow-sm p-5 hover:shadow-md hover:-translate-y-0.5 transition-all">
+                <Link key={r.key} href="/register?module=outlet" className="rounded-2xl bg-white border border-gray-100 shadow-sm p-5 hover:shadow-md hover:-translate-y-0.5 transition-all">
                   <span className="w-11 h-11 rounded-xl bg-[#0B1F4D]/5 flex items-center justify-center text-[#0B1F4D] mb-3"><Icon className="w-5 h-5" /></span>
                   <p className="font-extrabold text-gray-900">{r.label}</p>
                   <p className="text-sm text-gray-500 mt-1 leading-relaxed">{r.blurb}</p>
@@ -375,7 +407,7 @@ function EmptyZone() {
       <p className="text-gray-700 font-bold text-lg">The Outlet Zone is open for listings</p>
       <p className="text-gray-400 text-sm mt-1 max-w-md mx-auto">Suppliers, chains, distributors and brokers can list clearance, returns and liquidation lots — by pallet, container or full truckload.</p>
       <div className="flex flex-wrap justify-center gap-3 mt-5">
-        <Link href="/register" className="inline-flex items-center gap-2 rounded-xl bg-[#0B1F4D] text-white px-6 py-3 text-sm font-bold hover:bg-[#162d6e] transition-colors">List an outlet offer <ArrowRight className="w-4 h-4" /></Link>
+        <Link href="/register?module=outlet" className="inline-flex items-center gap-2 rounded-xl bg-[#0B1F4D] text-white px-6 py-3 text-sm font-bold hover:bg-[#162d6e] transition-colors">List an outlet offer <ArrowRight className="w-4 h-4" /></Link>
         <Link href="/contact?dept=marketplace" className="inline-flex items-center gap-2 rounded-xl border border-gray-200 text-gray-700 px-6 py-3 text-sm font-bold hover:bg-gray-50 transition-colors">Talk to our team</Link>
       </div>
     </div>

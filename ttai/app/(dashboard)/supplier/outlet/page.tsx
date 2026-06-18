@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { requireAuth } from '@/lib/auth/rbac'
 import { OutletRoleChooser } from '@/components/supplier/OutletRoleChooser'
+import { SellModeChooser } from '@/components/supplier/SellModeChooser'
 import { conditionInfo, unitInfo } from '@/lib/outlet'
 import { Package, Plus, Pencil, ExternalLink } from 'lucide-react'
 
@@ -19,10 +20,12 @@ export default async function SupplierOutletPage() {
 
   const admin = createAdminClient()
   let role: string | null = null
+  let sellMode: string | null = null
   let lots: any[] = []
   try {
-    const { data: s } = await (admin.from('suppliers') as any).select('outlet_role').eq('id', supplier.id).single()
+    const { data: s } = await (admin.from('suppliers') as any).select('outlet_role, outlet_sell_mode').eq('id', supplier.id).single()
     role = s?.outlet_role ?? null
+    sellMode = s?.outlet_sell_mode ?? null
     const { data } = await (admin.from('products') as any)
       .select('id, name, slug, price_cents, currency_code, condition, selling_unit, outlet_source, lot_type, is_published, product_images(url, sort_order)')
       .eq('supplier_id', supplier.id).eq('is_outlet', true).order('created_at', { ascending: false }).limit(200)
@@ -49,8 +52,9 @@ export default async function SupplierOutletPage() {
         ))}
       </div>
 
-      {/* Account setup: outlet role */}
+      {/* Account setup: outlet role + sell mode */}
       <OutletRoleChooser initial={role} />
+      <SellModeChooser initial={sellMode} />
 
       {/* Lots */}
       <div className="rounded-2xl border bg-card overflow-hidden">
