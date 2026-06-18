@@ -12,6 +12,7 @@ import {
   availableUnits, piecesIn, cartonsIn, unitPrice, minUnitsFor,
   UNIT_LABEL, type PurchaseUnit, type PackagingProduct,
 } from '@/lib/packaging'
+import { WantToBuyButton } from '@/components/marketplace/WantToBuyButton'
 
 const UNIT_ICON: Record<PurchaseUnit, typeof Box> = { piece: Package, box: Box, pallet: Layers, truck: Truck }
 const UNIT_ACCENT: Record<PurchaseUnit, string> = { piece: '#16a34a', box: '#0B1F4D', pallet: '#7c3aed', truck: '#ea580c' }
@@ -23,7 +24,7 @@ type ProductImage = { url: string; sort_order: number; image_role?: string | nul
 type Product = PackagingProduct & { id: string; name: string; slug: string; currency_code: string }
 
 export function ProductBuyArea({
-  product, images, retail = false, shopUnits, negotiable = false, priceOnRequest = false, kgMode = false, brand = null, whatsapp, supplierName, imageUrl,
+  product, images, retail = false, shopUnits, negotiable = false, priceOnRequest = false, kgMode = false, wantToBuy = false, brand = null, whatsapp, supplierName, imageUrl,
   categoryName, supplierLabel, supplierHref, shipsFrom, supplierId, supplierMinCents = 0, topSlot, children,
 }: {
   product: Product
@@ -34,6 +35,8 @@ export function ProductBuyArea({
   priceOnRequest?: boolean
   /** Outlet lots sold by weight — buy by the kilogram. */
   kgMode?: boolean
+  /** B2B fast-stock — request to buy (supplier confirms) instead of immediate payment. */
+  wantToBuy?: boolean
   brand?: string | null
   whatsapp?: string | null
   supplierName: string
@@ -207,7 +210,9 @@ export function ProductBuyArea({
                 <span className="text-lg font-extrabold text-[#0B1F4D]">{fmt(kgTotal)}</span>
               </div>
             )}
-            {priceOnRequest ? (
+            {wantToBuy && supplierId ? (
+              <WantToBuyButton productId={product.id} productName={product.name} supplierId={supplierId} supplierName={supplierName} unit="kg" unitLabel="kg" quantity={kg} />
+            ) : priceOnRequest ? (
               <button type="button" onClick={requestQuote} className="w-full flex items-center justify-center gap-2 rounded-xl px-4 py-3.5 text-sm font-bold bg-violet-600 text-white hover:bg-violet-700 transition-all"><FileText className="w-4 h-4" /> Request price / quote</button>
             ) : (
               <button type="button" onClick={addToCartKg} className={`w-full flex items-center justify-center gap-2 rounded-xl px-4 py-3.5 text-sm font-bold transition-all ${added ? 'bg-green-50 text-green-700 border-2 border-green-500' : 'bg-[#0B1F4D] text-white hover:bg-[#162d6e] hover:shadow-lg'}`}>{added ? <><Check className="w-4 h-4" /> Added to cart!</> : <><ShoppingCart className="w-4 h-4" /> Add to cart · {fmt(kgTotal)}</>}</button>
@@ -258,7 +263,9 @@ export function ProductBuyArea({
         </div>
 
         {/* Action */}
-        {priceOnRequest ? (
+        {wantToBuy && supplierId ? (
+          <WantToBuyButton productId={product.id} productName={product.name} supplierId={supplierId} supplierName={supplierName} unit={unit} unitLabel={UNIT_LABEL[unit]} quantity={qty} />
+        ) : priceOnRequest ? (
           <button type="button" onClick={requestQuote}
             className="w-full flex items-center justify-center gap-2 rounded-xl px-4 py-3.5 text-sm font-bold bg-violet-600 text-white hover:bg-violet-700 hover:shadow-lg transition-all">
             <FileText className="w-4 h-4" /> Request price / quote

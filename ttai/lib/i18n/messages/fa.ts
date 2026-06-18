@@ -102,7 +102,7 @@ export default {
     manage_business: 'کسب‌وکار خود را مدیریت کنید',
   },
   dnav: {
-    my_modules: 'ماژول‌های من',    outlet_offers: 'پیشنهادهای آوتلت',
+    purchase_requests: 'درخواست‌های خرید',    my_modules: 'ماژول‌های من',    outlet_offers: 'پیشنهادهای آوتلت',
     outlet_trade: 'آوتلت و تجارت',    broker_network: 'شبکه من',
     broker_deals: 'معاملات و صورتحساب',    control_center: 'مرکز کنترل',    translations: 'ترجمه‌ها',
     my_profile: 'پروفایل من',

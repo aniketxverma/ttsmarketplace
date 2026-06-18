@@ -12,6 +12,7 @@ import { SellerInfoPanel } from '@/components/product/SellerInfoPanel'
 import { QuoteButton } from '@/components/shared/QuoteButton'
 import { getMasterSellers } from '@/lib/offers-server'
 import { unitsPerPallet, unitsPerTruck, cartonsPerTruck, unitsForShop, intersectUnits, retailCostBaseCents } from '@/lib/packaging'
+import { canPurchaseOnline } from '@/lib/retail'
 import { chainLevel, unitsForRole, tierRank } from '@/lib/business-chain'
 import { useServerTranslations, getLocale } from '@/lib/i18n/server'
 import { translateMany } from '@/lib/i18n/content'
@@ -113,6 +114,7 @@ export default async function ProductPage({ params, searchParams }: { params: { 
   // b2b_only / direct_contact) hide online checkout. Defensive (columns 0069/0075).
   let outletQuoteOnly = false
   let kgMode = false
+  let outletOnline = false
   try {
     const { data: o } = await (supabase.from('products') as any).select('is_outlet, selling_unit').eq('id', product.id).single()
     if (o?.is_outlet) {
@@ -121,9 +123,17 @@ export default async function ProductPage({ params, searchParams }: { params: { 
         const { data: s } = await (supabase.from('suppliers') as any).select('outlet_sell_mode').eq('id', supplier.id).single()
         const mode = s?.outlet_sell_mode
         outletQuoteOnly = !!mode && mode !== 'buy_online' && mode !== 'retail_b2b'
+        outletOnline = mode === 'buy_online' || mode === 'retail_b2b'
       }
     }
   } catch { /* columns not migrated yet */ }
+
+  // Two sales models: online-shop suppliers (Rozil/Café/Bullz or buy-online outlet)
+  // sell with add-to-cart + pay now. Everyone else is B2B → "Want to Buy" (request,
+  // supplier confirms stock/price/delivery, then payment).
+  const supName = supplier?.trade_name ?? supplier?.legal_name ?? ''
+  const onlineSale = canPurchaseOnline(supName) || outletOnline
+  const wantToBuy = !onlineSale && !!supplier?.id
 
   // Translate the supplier's content (name/description, written in any language)
   // into the viewer's language. Cached, so each text is translated only once.
@@ -256,6 +266,7 @@ export default async function ProductPage({ params, searchParams }: { params: { 
           negotiable={!!product.price_negotiable}
           priceOnRequest={(!retailView && !!product.price_on_request) || outletQuoteOnly}
           kgMode={kgMode}
+          wantToBuy={wantToBuy && !houseBrand}
           brand={product.brand_name ?? null}
           supplierId={supplier?.id}
           supplierMinCents={supplierMinCents}

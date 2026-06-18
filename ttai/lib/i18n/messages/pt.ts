@@ -102,7 +102,7 @@ export default {
     manage_business: 'Gerencie seu negócio',
   },
   dnav: {
-    my_modules: 'Meus Módulos',    outlet_offers: 'Ofertas Outlet',
+    purchase_requests: 'Pedidos de Compra',    my_modules: 'Meus Módulos',    outlet_offers: 'Ofertas Outlet',
     outlet_trade: 'Outlet e Comércio',    broker_network: 'Minha Rede',
     broker_deals: 'Negócios e Faturação',    control_center: 'Central de Controle',    translations: 'Traduções',
     my_profile: 'Meu perfil',
