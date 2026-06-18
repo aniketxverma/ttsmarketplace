@@ -89,6 +89,22 @@ export default function AdminSupplierDetailPage() {
             }`}>
             {supplier.ttaiema_protected ? '🔵 TTAIEMA Protected' : 'Set TTAIEMA Protected'}
           </button>
+          {/* Premium Partner toggle (🟣) */}
+          <button
+            onClick={async () => {
+              const next = !(supplier.premium_partner as boolean)
+              const res = await fetch(`/api/admin/suppliers/${id}/premium-partner`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ premium: next }),
+              })
+              if (res.ok) setSupplier((prev) => prev ? { ...prev, premium_partner: next } : prev)
+              else alert('Could not update')
+            }}
+            className={`rounded-md px-3 py-1.5 text-xs font-bold border transition-colors ${
+              supplier.premium_partner ? 'border-purple-500 bg-purple-50 text-purple-700' : 'border-gray-300 text-gray-600 hover:bg-gray-50'
+            }`}>
+            {supplier.premium_partner ? '🟣 Premium Partner' : 'Set Premium Partner'}
+          </button>
           <StatusBadge status={status} />
           <div className="flex gap-2">
             {allowed.map((target) => (

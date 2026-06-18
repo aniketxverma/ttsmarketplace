@@ -11,7 +11,7 @@ import { FavButton } from '@/components/shared/FavButton'
 import { useAuthGate } from '@/components/shared/AuthGate'
 import { SupplierStatusBadge } from '@/components/brand/SupplierTrust'
 
-const cStatus = (c: Company) => ({ status: c.status, reliability_tier: c.tier, ttaiema_protected: c.ttaiemaProtected })
+const cStatus = (c: Company) => ({ status: c.status, reliability_tier: c.tier, ttaiema_protected: c.ttaiemaProtected, premium_partner: c.premiumPartner })
 
 export type CompanyProduct = { name: string; price: string; img: string }
 export type Company = {
@@ -23,6 +23,7 @@ export type Company = {
   tier?: string | null
   status?: string | null
   ttaiemaProtected?: boolean
+  premiumPartner?: boolean
   rating: string
   reviews: number
   location: string

@@ -1,6 +1,7 @@
+import Link from 'next/link'
 import { resolveSupplierStatus, type SupplierStatusInfo } from '@/lib/supplier-status'
 
-type Sup = { status?: string | null; reliability_tier?: string | null; ttaiema_protected?: boolean | null }
+type Sup = { status?: string | null; reliability_tier?: string | null; ttaiema_protected?: boolean | null; premium_partner?: boolean | null }
 
 /** The supplier's trust status pill (🟢 Verified / 🟡 Independent / 🔵 Protected / 🔴 Review). */
 export function SupplierStatusBadge({ supplier, size = 'md', withDot = true }: { supplier: Sup; size?: 'sm' | 'md'; withDot?: boolean }) {
@@ -30,7 +31,7 @@ export function HostedByTTAIEMA({ companyName, supplier }: { companyName: string
             <span className="text-sm font-extrabold text-[#0B1F4D]">Hosted by TTAIEMA Marketplace</span>
             <SupplierStatusBadge supplier={supplier} />
           </div>
-          <span className="text-[11px] text-gray-400">Website created by TTAIEMA</span>
+          <Link href="/supplier-status" className="text-[11px] font-semibold text-[#0B1F4D] hover:underline">What do statuses mean? →</Link>
         </div>
         <p className="text-xs text-gray-500 mt-2 leading-relaxed">
           {protectedSvc ? (

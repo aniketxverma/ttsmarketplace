@@ -188,13 +188,15 @@ export default async function BrandPage({ params }: { params: { slug: string } }
   const tier    = TIER_CONFIG[supplier.reliability_tier] ?? TIER_CONFIG.UNVERIFIED
   const sv      = (supplier.section_visibility ?? {}) as Record<string, boolean>
 
-  // TTAIEMA Protected flag (defensive — column from migration 0073).
+  // TTAIEMA Protected + Premium Partner flags (defensive — columns 0073/0074).
   let ttaiemaProtected = false
+  let premiumPartner = false
   try {
-    const { data } = await (supabase.from('suppliers') as any).select('ttaiema_protected').eq('id', supplier.id).single()
+    const { data } = await (supabase.from('suppliers') as any).select('ttaiema_protected, premium_partner').eq('id', supplier.id).single()
     ttaiemaProtected = !!data?.ttaiema_protected
-  } catch { /* column not migrated yet */ }
-  const statusSupplier = { status: supplier.status, reliability_tier: supplier.reliability_tier, ttaiema_protected: ttaiemaProtected }
+    premiumPartner = !!data?.premium_partner
+  } catch { /* columns not migrated yet */ }
+  const statusSupplier = { status: supplier.status, reliability_tier: supplier.reliability_tier, ttaiema_protected: ttaiemaProtected, premium_partner: premiumPartner }
   const companyName = supplier.trade_name ?? supplier.legal_name ?? 'This company'
 
   // Fall back to the owner's account profile so an uploaded avatar / real name

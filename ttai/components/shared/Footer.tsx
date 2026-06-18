@@ -32,6 +32,7 @@ const LINKS = {
   ],
   Company: [
     { label: 'About Us',         href: '/about' },
+    { label: 'Supplier Status',  href: '/supplier-status' },
     { label: 'Contact',          href: '/contact' },
     { label: 'Privacy Policy',   href: '/privacy' },
     { label: 'Terms of Service', href: '/terms' },

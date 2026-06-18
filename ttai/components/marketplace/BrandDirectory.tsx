@@ -158,19 +158,21 @@ export async function BrandDirectory({
     prodBySup[s.id] = list
   }))
 
-  // TTAIEMA Protected flags (defensive — column from migration 0073).
+  // TTAIEMA Protected + Premium Partner flags (defensive — columns 0073/0074).
   const protectedById = new Map<string, boolean>()
+  const premiumById = new Map<string, boolean>()
   try {
-    const { data } = await (supabase.from('suppliers') as any).select('id, ttaiema_protected').in('id', suppliers.map((s) => s.id))
-    for (const r of (data ?? [])) protectedById.set(r.id, !!r.ttaiema_protected)
-  } catch { /* column not migrated yet */ }
+    const { data } = await (supabase.from('suppliers') as any).select('id, ttaiema_protected, premium_partner').in('id', suppliers.map((s) => s.id))
+    for (const r of (data ?? [])) { protectedById.set(r.id, !!r.ttaiema_protected); premiumById.set(r.id, !!r.premium_partner) }
+  } catch { /* columns not migrated yet */ }
 
   // Mall-style supplier objects (storefronts + drawer).
   const mallSuppliers = suppliers.map((s) => ({
     id: s.id, name: s.trade_name ?? s.legal_name, tagline: s.tagline ?? s.description ?? null,
     logo: s.logo_url ?? null, banner: s.banner_image ?? null,
     country: (s.countries as any)?.name ?? null, city: (s.cities as any)?.name ?? null,
-    tier: s.reliability_tier ?? null, status: s.status ?? 'ACTIVE', protected: protectedById.get(s.id) ?? false,
+    tier: s.reliability_tier ?? null, status: s.status ?? 'ACTIVE',
+    protected: protectedById.get(s.id) ?? false, premiumPartner: premiumById.get(s.id) ?? false,
     brandSlug: s.brand_slug ?? null, whatsapp: s.whatsapp ?? null,
     years: s.years_experience ?? null, count: countBySup[s.id] ?? 0, kindLabel: cfg.kindLabel,
     premium: !!s.is_featured, products: prodBySup[s.id] ?? [],

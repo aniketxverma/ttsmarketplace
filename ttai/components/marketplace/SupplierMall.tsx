@@ -10,12 +10,12 @@ export type SupProduct = { slug: string; name: string; img: string; price: strin
 export type MallSupplier = {
   id: string; name: string; tagline: string | null; logo: string | null; banner: string | null
   country: string | null; city: string | null; tier: string | null; brandSlug: string | null
-  status?: string | null; protected?: boolean
+  status?: string | null; protected?: boolean; premiumPartner?: boolean
   whatsapp: string | null; years: number | null; count: number; kindLabel: string; premium: boolean
   products: SupProduct[]
 }
 
-const badgeProps = (s: MallSupplier) => ({ status: s.status, reliability_tier: s.tier, ttaiema_protected: s.protected })
+const badgeProps = (s: MallSupplier) => ({ status: s.status, reliability_tier: s.tier, ttaiema_protected: s.protected, premium_partner: s.premiumPartner })
 
 function Storefront({ s, onOpen, wide = false }: { s: MallSupplier; onOpen: (s: MallSupplier) => void; wide?: boolean }) {
   const initials = s.name.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase()
