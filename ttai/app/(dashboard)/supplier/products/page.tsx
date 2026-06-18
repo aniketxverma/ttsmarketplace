@@ -50,6 +50,13 @@ export default async function SupplierProductsPage() {
         {canManage ? (
           <div className="flex items-center gap-2">
             <Link
+              href="/supplier/products/families"
+              className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white text-[#0B1F4D] px-4 py-2.5 text-sm font-bold hover:border-[#0B1F4D] transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5M19 11a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+              Organize families
+            </Link>
+            <Link
               href="/supplier/master-catalog"
               className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white text-[#0B1F4D] px-4 py-2.5 text-sm font-bold hover:border-[#0B1F4D] transition-colors"
             >
