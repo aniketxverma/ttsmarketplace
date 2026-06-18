@@ -121,6 +121,22 @@ export default function AdminSupplierDetailPage() {
             }`}>
             {supplier.catalogue_service ? '📊 TTAIEMA Catalogue' : 'Set Catalogue Service'}
           </button>
+          {/* TTAIEMA-managed B2B deals (purchase requests routed to Control Center) */}
+          <button
+            onClick={async () => {
+              const next = !(supplier.managed_deals as boolean)
+              const res = await fetch(`/api/admin/suppliers/${id}/managed-deals`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ active: next }),
+              })
+              if (res.ok) setSupplier((prev) => prev ? { ...prev, managed_deals: next } : prev)
+              else alert('Could not update')
+            }}
+            className={`rounded-md px-3 py-1.5 text-xs font-bold border transition-colors ${
+              supplier.managed_deals ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-gray-300 text-gray-600 hover:bg-gray-50'
+            }`}>
+            {supplier.managed_deals ? '🤝 TTAIEMA-managed deals' : 'Set Managed Deals'}
+          </button>
           <StatusBadge status={status} />
           <div className="flex gap-2">
             {allowed.map((target) => (
