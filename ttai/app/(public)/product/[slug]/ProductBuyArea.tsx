@@ -23,7 +23,7 @@ type ProductImage = { url: string; sort_order: number; image_role?: string | nul
 type Product = PackagingProduct & { id: string; name: string; slug: string; currency_code: string }
 
 export function ProductBuyArea({
-  product, images, retail = false, shopUnits, negotiable = false, priceOnRequest = false, brand = null, whatsapp, supplierName, imageUrl,
+  product, images, retail = false, shopUnits, negotiable = false, priceOnRequest = false, kgMode = false, brand = null, whatsapp, supplierName, imageUrl,
   categoryName, supplierLabel, supplierHref, shipsFrom, supplierId, supplierMinCents = 0, topSlot, children,
 }: {
   product: Product
@@ -32,6 +32,8 @@ export function ProductBuyArea({
   shopUnits?: PurchaseUnit[]
   negotiable?: boolean
   priceOnRequest?: boolean
+  /** Outlet lots sold by weight — buy by the kilogram. */
+  kgMode?: boolean
   brand?: string | null
   whatsapp?: string | null
   supplierName: string
@@ -87,6 +89,18 @@ export function ProductBuyArea({
       currency_code: product.currency_code, imageUrl, supplierName, retail,
       supplierId, supplierMinCents: supplierMinCents || undefined,
     }, qty)
+    setAdded(true); setTimeout(() => setAdded(false), 2000)
+  }
+  // ── Buy by the kilogram (outlet weight lots) ──
+  const minKg = Math.max(1, product.min_order_qty ?? 1)
+  const [kg, setKg] = useState(minKg)
+  const kgTotal = product.price_cents * kg
+  function addToCartKg() {
+    addItem({
+      productId: product.id, unit: 'kg' as any, unitLabel: 'kg', name: product.name,
+      price_cents: product.price_cents, currency_code: product.currency_code,
+      imageUrl, supplierName, retail, supplierId, supplierMinCents: supplierMinCents || undefined,
+    }, kg)
     setAdded(true); setTimeout(() => setAdded(false), 2000)
   }
   function requestQuote() {
@@ -155,8 +169,8 @@ export function ProductBuyArea({
           </div>
         ) : (
           <div className="flex items-baseline gap-2 flex-wrap">
-            <span className="text-4xl font-black text-[#0B1F4D]">{fmt(unitPrice(product, unit, retail))}</span>
-            <span className="text-sm text-gray-400 font-medium">/ {UNIT_LABEL[unit].toLowerCase()}</span>
+            <span className="text-4xl font-black text-[#0B1F4D]">{fmt(kgMode ? product.price_cents : unitPrice(product, unit, retail))}</span>
+            <span className="text-sm text-gray-400 font-medium">/ {kgMode ? 'kg' : UNIT_LABEL[unit].toLowerCase()}</span>
           </div>
         )}
         <div>
@@ -174,6 +188,33 @@ export function ProductBuyArea({
           </div>
         )}
 
+        {kgMode ? (
+          <>
+            {/* Weight selector (buy by the kilogram) */}
+            <div className="flex items-center gap-3 flex-wrap">
+              <span className="text-sm font-medium text-gray-700">Weight:</span>
+              <div className="flex items-center border rounded-lg overflow-hidden">
+                <button type="button" onClick={() => setKg(k => Math.max(minKg, k - 10))} disabled={kg <= minKg} className="px-3 py-2 text-gray-600 hover:bg-gray-100 font-bold disabled:opacity-40">−</button>
+                <input type="number" value={kg} min={minKg} onChange={(e) => setKg(Math.max(minKg, parseInt(e.target.value) || minKg))} className="w-20 px-2 py-2 text-center font-semibold text-sm border-x outline-none" />
+                <button type="button" onClick={() => setKg(k => k + 10)} className="px-3 py-2 text-gray-600 hover:bg-gray-100 font-bold">+</button>
+              </div>
+              <span className="text-xs text-gray-400">kg</span>
+              {minKg > 1 && <span className="text-xs font-semibold text-[#F5A623]">Min. {num(minKg)} kg</span>}
+            </div>
+            {!priceOnRequest && (
+              <div className="rounded-xl border border-gray-100 bg-gradient-to-br from-gray-50 to-white p-4 flex items-center justify-between">
+                <span className="text-xs text-gray-500">{num(kg)} kg × {fmt(product.price_cents)}</span>
+                <span className="text-lg font-extrabold text-[#0B1F4D]">{fmt(kgTotal)}</span>
+              </div>
+            )}
+            {priceOnRequest ? (
+              <button type="button" onClick={requestQuote} className="w-full flex items-center justify-center gap-2 rounded-xl px-4 py-3.5 text-sm font-bold bg-violet-600 text-white hover:bg-violet-700 transition-all"><FileText className="w-4 h-4" /> Request price / quote</button>
+            ) : (
+              <button type="button" onClick={addToCartKg} className={`w-full flex items-center justify-center gap-2 rounded-xl px-4 py-3.5 text-sm font-bold transition-all ${added ? 'bg-green-50 text-green-700 border-2 border-green-500' : 'bg-[#0B1F4D] text-white hover:bg-[#162d6e] hover:shadow-lg'}`}>{added ? <><Check className="w-4 h-4" /> Added to cart!</> : <><ShoppingCart className="w-4 h-4" /> Add to cart · {fmt(kgTotal)}</>}</button>
+            )}
+          </>
+        ) : (
+         <>
         {/* Unit option cards */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
           {units.map((u) => {
@@ -238,6 +279,8 @@ export function ProductBuyArea({
           <button type="button" onClick={requestQuote} className="w-full flex items-center justify-center gap-1.5 text-xs font-bold text-[#ea580c] hover:underline">
             <FileText className="w-3.5 h-3.5" /> Or request a custom quote
           </button>
+        )}
+         </>
         )}
 
         {/* Dropship note */}

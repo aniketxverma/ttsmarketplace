@@ -112,12 +112,16 @@ export default async function ProductPage({ params, searchParams }: { params: { 
   // Outlet lots: honour the supplier's sell mode. Quote-only modes (request_quote /
   // b2b_only / direct_contact) hide online checkout. Defensive (columns 0069/0075).
   let outletQuoteOnly = false
+  let kgMode = false
   try {
-    const { data: o } = await (supabase.from('products') as any).select('is_outlet').eq('id', product.id).single()
-    if (o?.is_outlet && supplier?.id) {
-      const { data: s } = await (supabase.from('suppliers') as any).select('outlet_sell_mode').eq('id', supplier.id).single()
-      const mode = s?.outlet_sell_mode
-      outletQuoteOnly = !!mode && mode !== 'buy_online' && mode !== 'retail_b2b'
+    const { data: o } = await (supabase.from('products') as any).select('is_outlet, selling_unit').eq('id', product.id).single()
+    if (o?.is_outlet) {
+      kgMode = o.selling_unit === 'kg'
+      if (supplier?.id) {
+        const { data: s } = await (supabase.from('suppliers') as any).select('outlet_sell_mode').eq('id', supplier.id).single()
+        const mode = s?.outlet_sell_mode
+        outletQuoteOnly = !!mode && mode !== 'buy_online' && mode !== 'retail_b2b'
+      }
     }
   } catch { /* columns not migrated yet */ }
 
@@ -251,6 +255,7 @@ export default async function ProductPage({ params, searchParams }: { params: { 
           shopUnits={shopUnits}
           negotiable={!!product.price_negotiable}
           priceOnRequest={(!retailView && !!product.price_on_request) || outletQuoteOnly}
+          kgMode={kgMode}
           brand={product.brand_name ?? null}
           supplierId={supplier?.id}
           supplierMinCents={supplierMinCents}
