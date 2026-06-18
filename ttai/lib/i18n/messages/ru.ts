@@ -102,7 +102,7 @@ export default {
     manage_business: 'Управляйте бизнесом',
   },
   dnav: {
-    outlet_offers: 'Аутлет-предложения',
+    my_modules: 'Мои модули',    outlet_offers: 'Аутлет-предложения',
     outlet_trade: 'Аутлет и торговля',    broker_network: 'Моя сеть',
     broker_deals: 'Сделки и счета',    control_center: 'Центр управления',    translations: 'Переводы',
     my_profile: 'Мой профиль',

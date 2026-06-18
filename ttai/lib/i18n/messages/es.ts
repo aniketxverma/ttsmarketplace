@@ -102,7 +102,7 @@ export default {
     manage_business: 'Gestiona tu negocio',
   },
   dnav: {
-    outlet_offers: 'Ofertas Outlet',
+    my_modules: 'Mis Módulos',    outlet_offers: 'Ofertas Outlet',
     outlet_trade: 'Outlet y Comercio',    broker_network: 'Mi Red',
     broker_deals: 'Acuerdos y Facturación',    control_center: 'Centro de Control',    translations: 'Traducciones',
     my_profile: 'Mi perfil',

@@ -218,6 +218,16 @@ export default async function MarketplacePage({
     if (!regionSupplierIds.length) regionSupplierIds = ['00000000-0000-0000-0000-000000000000']
   }
 
+  // Outlet-only companies (modules without 'marketplace') don't appear in the
+  // Marketplace. Build a small exclusion list (defensive — column from 0075).
+  let outletOnlyIds: string[] = []
+  try {
+    const { data } = await (supabase.from('suppliers') as any).select('id, modules').not('modules', 'is', null)
+    outletOnlyIds = (data ?? [])
+      .filter((s: any) => Array.isArray(s.modules) && s.modules.length && !s.modules.includes('marketplace'))
+      .map((s: any) => s.id)
+  } catch { /* modules column not migrated yet */ }
+
   // Build a fresh, fully-filtered product query (rebuilt per page so we can paginate).
   const mkQuery = () => {
     let q = (supabase.from('products') as any)
@@ -247,6 +257,7 @@ export default async function MarketplacePage({
     }
     if (searchParams.q) q = q.ilike('name', `%${searchParams.q}%`)
     if (regionSupplierIds) q = q.in('supplier_id', regionSupplierIds)
+    if (outletOnlyIds.length) q = q.not('supplier_id', 'in', `(${outletOnlyIds.join(',')})`)
     return q
   }
 

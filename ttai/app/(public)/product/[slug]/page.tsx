@@ -109,6 +109,18 @@ export default async function ProductPage({ params, searchParams }: { params: { 
   const images   = ((product.product_images ?? []) as any[]).sort((a: any, b: any) => a.sort_order - b.sort_order)
   const tier     = TIER[supplier?.reliability_tier ?? 'UNVERIFIED'] ?? TIER.UNVERIFIED
 
+  // Outlet lots: honour the supplier's sell mode. Quote-only modes (request_quote /
+  // b2b_only / direct_contact) hide online checkout. Defensive (columns 0069/0075).
+  let outletQuoteOnly = false
+  try {
+    const { data: o } = await (supabase.from('products') as any).select('is_outlet').eq('id', product.id).single()
+    if (o?.is_outlet && supplier?.id) {
+      const { data: s } = await (supabase.from('suppliers') as any).select('outlet_sell_mode').eq('id', supplier.id).single()
+      const mode = s?.outlet_sell_mode
+      outletQuoteOnly = !!mode && mode !== 'buy_online' && mode !== 'retail_b2b'
+    }
+  } catch { /* columns not migrated yet */ }
+
   // Translate the supplier's content (name/description, written in any language)
   // into the viewer's language. Cached, so each text is translated only once.
   const locale = getLocale()
@@ -238,7 +250,7 @@ export default async function ProductPage({ params, searchParams }: { params: { 
           retail={retailView}
           shopUnits={shopUnits}
           negotiable={!!product.price_negotiable}
-          priceOnRequest={!retailView && !!product.price_on_request}
+          priceOnRequest={(!retailView && !!product.price_on_request) || outletQuoteOnly}
           brand={product.brand_name ?? null}
           supplierId={supplier?.id}
           supplierMinCents={supplierMinCents}

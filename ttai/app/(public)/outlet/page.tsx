@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { getMarketplaceOpen, PRE_OPENING_NOTICE } from '@/lib/marketplace-phase'
 import { MARKET_REGIONS } from '@/lib/market-regions'
 import { ShopCard, type ShopCardData } from '@/components/marketplace/ShopCard'
@@ -58,6 +59,13 @@ export default async function OutletZonePage({ searchParams }: { searchParams: S
 
   const region = MARKET_REGIONS.find((r) => r.id === searchParams.market && r.enabled) ?? null
   const regionIsos = region ? new Set(region.countries.map((c) => c.iso)) : null
+
+  // Opportunity banner background photos (app_settings, admin-read — not anon).
+  const bannerImg: Record<string, string> = {}
+  try {
+    const { data } = await (createAdminClient().from('app_settings') as any).select('key, value').like('key', 'outlet_banner_%')
+    for (const r of (data ?? [])) bannerImg[r.key.replace('outlet_banner_', '')] = r.value
+  } catch { /* ignore */ }
 
   // Opportunity banner → condition set; Retail-chain banner → source match.
   const opp = opportunityInfo(searchParams.opp)
@@ -194,10 +202,15 @@ export default async function OutletZonePage({ searchParams }: { searchParams: S
               const active = searchParams.opp === o.key
               return (
                 <Link key={o.key} href={chipHref({ opp: active ? undefined : o.key, cond: undefined, chain: undefined, source: undefined })}
-                  className={`relative rounded-2xl bg-gradient-to-br ${o.grad} text-white p-4 overflow-hidden hover:shadow-lg hover:-translate-y-0.5 transition-all ${active ? 'ring-2 ring-offset-2 ring-[#0B1F4D]' : ''}`}>
-                  <span className="text-2xl">{o.emoji}</span>
-                  <p className="font-extrabold text-sm mt-1.5 leading-tight">{o.label}</p>
-                  <p className="text-[11px] text-white/80 mt-0.5">{n} lot{n !== 1 ? 's' : ''}</p>
+                  className={`group/b relative rounded-2xl text-white overflow-hidden h-28 flex flex-col justify-end p-3.5 hover:shadow-lg hover:-translate-y-0.5 transition-all ${active ? 'ring-2 ring-offset-2 ring-[#0B1F4D]' : ''}`}>
+                  {bannerImg[o.key]
+                    ? <>{/* eslint-disable-next-line @next/next/no-img-element */}<img src={bannerImg[o.key]} alt={o.label} className="absolute inset-0 w-full h-full object-cover group-hover/b:scale-105 transition-transform duration-500" /><div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/35 to-black/10" /></>
+                    : <div className={`absolute inset-0 bg-gradient-to-br ${o.grad}`} />}
+                  <div className="relative">
+                    <span className="text-xl drop-shadow">{o.emoji}</span>
+                    <p className="font-extrabold text-sm leading-tight drop-shadow">{o.label}</p>
+                    <p className="text-[11px] text-white/85">{n} lot{n !== 1 ? 's' : ''}</p>
+                  </div>
                 </Link>
               )
             })}

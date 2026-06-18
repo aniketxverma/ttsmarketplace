@@ -102,7 +102,7 @@ export default {
     manage_business: 'أدر عملك',
   },
   dnav: {
-    outlet_offers: 'عروض الأوتلت',
+    my_modules: 'وحداتي',    outlet_offers: 'عروض الأوتلت',
     outlet_trade: 'الأوتلت والتجارة',    broker_network: 'شبكتي',
     broker_deals: 'الصفقات والفوترة',    control_center: 'مركز التحكم',    translations: 'الترجمات',
     my_profile: 'ملفي',

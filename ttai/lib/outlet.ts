@@ -69,6 +69,14 @@ export function hasModule(modules: string[] | null | undefined, key: ModuleKey):
   return modules.includes(key)
 }
 
+export const MODULE_CATALOG: { key: ModuleKey; label: string; emoji: string; desc: string; href: string }[] = [
+  { key: 'outlet',      label: 'Outlet Zone',          emoji: '🏷️', desc: 'Sell clearance, returns, overstock & liquidation lots by pallet, KG, container or truck.', href: '/outlet' },
+  { key: 'marketplace', label: 'TTAI Marketplace',     emoji: '🛍️', desc: 'List your full catalogue in the B2B & retail marketplace with your company website.', href: '/marketplace' },
+  { key: 'trade_hub',   label: 'Trade Hub',            emoji: '🚚', desc: 'Wholesale container & truckload trading for importers, exporters and factories.', href: '/b2b' },
+  { key: 'logistics',   label: 'Logistics Hub',        emoji: '📦', desc: 'Shipping, warehousing, inspection and customs — request logistics quotes.', href: '/logistics' },
+  { key: 'consulting',  label: 'Business Consulting',  emoji: '💼', desc: 'Market entry, partnership & investor matching and growth strategy.', href: '/consulting' },
+]
+
 export type RoleKey = 'direct_supplier' | 'retail_chain' | 'distributor' | 'broker' | 'outlet_shop'
 
 export const OUTLET_ROLES: { key: RoleKey; label: string; blurb: string }[] = [
