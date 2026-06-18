@@ -28,14 +28,17 @@ export function conditionInfo(key?: string | null) {
   return CONDITIONS.find((c) => c.key === key) ?? null
 }
 
-export type UnitKey = 'unit' | 'box' | 'pallet' | 'container' | 'truck'
+export type UnitKey = 'unit' | 'box' | 'mixed_box' | 'kg' | 'pallet' | 'mixed_pallet' | 'container' | 'truck'
 
-export const SELLING_UNITS: { key: UnitKey; label: string; icon: string }[] = [
-  { key: 'unit',      label: 'Unit',       icon: '📦' },
-  { key: 'box',       label: 'Box',        icon: '📦' },
-  { key: 'pallet',    label: 'Pallet',     icon: '🟫' },
-  { key: 'container', label: 'Container',  icon: '🚢' },
-  { key: 'truck',     label: 'Full Truck', icon: '🚚' },
+export const SELLING_UNITS: { key: UnitKey; label: string; icon: string; per?: string }[] = [
+  { key: 'unit',         label: 'Per Unit',     icon: '📦', per: '/ unit' },
+  { key: 'box',          label: 'Per Box',      icon: '📦', per: '/ box' },
+  { key: 'mixed_box',    label: 'Mixed Box',    icon: '🎁', per: '/ box' },
+  { key: 'kg',           label: 'Per KG',       icon: '⚖️', per: '/ kg' },
+  { key: 'pallet',       label: 'Per Pallet',   icon: '🟫', per: '/ pallet' },
+  { key: 'mixed_pallet', label: 'Mixed Pallet', icon: '🧩', per: '/ pallet' },
+  { key: 'container',    label: 'Per Container', icon: '🚢', per: '/ container' },
+  { key: 'truck',        label: 'Full Truck',   icon: '🚚', per: '/ truck' },
 ]
 
 export function unitInfo(key?: string | null) {
@@ -59,8 +62,42 @@ export function roleInfo(key?: string | null) {
 // Retail chains the Direct Suppliers typically work with (marketing + future tags).
 export const RETAIL_CHAINS = ['Amazon', 'Lidl', 'Aldi', 'Carrefour', 'MediaMarkt', 'El Corte Inglés', 'Costco', 'Walmart']
 
-// Example outlet categories (used for the category presentation strip).
+// Example outlet categories (used for the category presentation strip + banner→category flow).
 export const OUTLET_CATEGORIES = [
-  'Electronics', 'Home Appliances', 'Mobile Phones', 'TV & Multimedia', 'Food & Beverage',
-  'Cleaning Products', 'Furniture', 'Clothing', 'Toys', 'Tools', 'Mixed Loads',
+  'Smartphones', 'Mobile Accessories', 'TV & Multimedia', 'White Goods', 'Small Appliances',
+  'DIY & Hardware', 'Gardening', 'Cleaning Products', 'Food & Beverage', 'Furniture',
+  'Toys', 'Beauty & Hair', 'Sports', 'Pet Products',
+]
+
+// ── Featured Opportunity banners (homepage). Each maps to a set of conditions. ──
+export const OPPORTUNITIES: { key: string; label: string; emoji: string; grad: string; conditions: ConditionKey[] }[] = [
+  { key: 'brand_new',   label: 'Brand New Outlet',  emoji: '✨', grad: 'from-emerald-500 to-teal-600',  conditions: ['brand_new'] },
+  { key: 'clearance',   label: 'New Clearance',     emoji: '🏷️', grad: 'from-blue-600 to-indigo-700',   conditions: ['clearance', 'outlet'] },
+  { key: 'returns',     label: 'Customer Returns',  emoji: '↩️', grad: 'from-amber-500 to-orange-600',  conditions: ['return_a', 'return_b', 'return_c', 'return_d'] },
+  { key: 'refurbished', label: 'Refurbished',       emoji: '🔧', grad: 'from-violet-600 to-purple-700', conditions: ['refurbished'] },
+  { key: 'overstock',   label: 'Overstock',         emoji: '📦', grad: 'from-cyan-500 to-sky-600',      conditions: ['overstock'] },
+  { key: 'mixed',       label: 'Mixed Pallets',     emoji: '🧩', grad: 'from-fuchsia-500 to-pink-600',  conditions: ['mixed'] },
+]
+export function opportunityInfo(key?: string | null) {
+  return OPPORTUNITIES.find((o) => o.key === key) ?? null
+}
+
+// ── Featured Retail-chain banners. `match` is an ILIKE on outlet_source. ──
+export const RETAIL_CHAIN_BANNERS: { label: string; match: string; grad: string }[] = [
+  { label: 'Amazon Returns',     match: 'amazon',     grad: 'from-[#232f3e] to-[#ff9900]' },
+  { label: 'Lidl Returns',       match: 'lidl',       grad: 'from-[#0050aa] to-[#ffd500]' },
+  { label: 'Aldi Returns',       match: 'aldi',       grad: 'from-[#00387b] to-[#f7c600]' },
+  { label: 'Carrefour Outlet',   match: 'carrefour',  grad: 'from-[#004e9f] to-[#e30613]' },
+  { label: 'MediaMarkt Returns', match: 'mediamarkt', grad: 'from-[#df0000] to-[#b00000]' },
+  { label: 'Costco Returns',     match: 'costco',     grad: 'from-[#005daa] to-[#e31837]' },
+  { label: 'Walmart Returns',    match: 'walmart',    grad: 'from-[#0071ce] to-[#ffc220]' },
+  { label: 'Tesco Returns',      match: 'tesco',      grad: 'from-[#00539f] to-[#ee1c2e]' },
+  { label: 'Metro Returns',      match: 'metro',      grad: 'from-[#003d7d] to-[#ffd200]' },
+  { label: 'El Corte Inglés',    match: 'corte',      grad: 'from-[#1a7a3c] to-[#0e5a2a]' },
+]
+
+// Popular outlet brands (auto-created from supplier offers; surface the known big ones).
+export const OUTLET_BRANDS = [
+  'Samsung', 'Apple', 'Bosch', 'LG', 'Sony', 'Philips', 'Toshiba', 'Qlima', 'Xiaomi',
+  'JBL', "De'Longhi", 'Dyson', 'Braun', 'Tefal', 'Siemens', 'Whirlpool', 'Beko',
 ]

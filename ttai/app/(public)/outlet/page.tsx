@@ -4,7 +4,8 @@ import { createClient } from '@/lib/supabase/server'
 import { getMarketplaceOpen, PRE_OPENING_NOTICE } from '@/lib/marketplace-phase'
 import { MARKET_REGIONS } from '@/lib/market-regions'
 import { ShopCard, type ShopCardData } from '@/components/marketplace/ShopCard'
-import { CONDITIONS, SELLING_UNITS, OUTLET_ROLES, RETAIL_CHAINS, conditionInfo, unitInfo } from '@/lib/outlet'
+import { CONDITIONS, SELLING_UNITS, OUTLET_ROLES, RETAIL_CHAINS, conditionInfo, unitInfo,
+  OPPORTUNITIES, RETAIL_CHAIN_BANNERS, OUTLET_BRANDS, opportunityInfo } from '@/lib/outlet'
 import {
   FileSpreadsheet, PlayCircle, Truck, Warehouse, MessageCircle, Package, ArrowRight, Lock,
   Building2, Store, Boxes, Handshake, ShoppingCart, Tag, BadgePercent,
@@ -26,7 +27,7 @@ function isoFlag(iso?: string | null) {
 
 type SP = {
   source?: string; category?: string; country?: string; market?: string; view?: string
-  cond?: string; unit?: string; stype?: string; brand?: string
+  cond?: string; unit?: string; stype?: string; brand?: string; opp?: string; chain?: string
 }
 
 export default async function OutletZonePage({ searchParams }: { searchParams: SP }) {
@@ -58,6 +59,11 @@ export default async function OutletZonePage({ searchParams }: { searchParams: S
   const region = MARKET_REGIONS.find((r) => r.id === searchParams.market && r.enabled) ?? null
   const regionIsos = region ? new Set(region.countries.map((c) => c.iso)) : null
 
+  // Opportunity banner → condition set; Retail-chain banner → source match.
+  const opp = opportunityInfo(searchParams.opp)
+  const oppConds = opp ? new Set<string>(opp.conditions) : null
+  const chain = RETAIL_CHAIN_BANNERS.find((c) => c.match === searchParams.chain) ?? null
+
   // Dynamic facets from the data.
   const sources = Array.from(new Set(all.map((p) => p.outlet_source).filter(Boolean))) as string[]
   const categories = Array.from(new Map(all.map((p) => catOf(p)).filter(Boolean).map((c) => [c!.slug, c!])).values())
@@ -70,6 +76,8 @@ export default async function OutletZonePage({ searchParams }: { searchParams: S
     (!searchParams.category || catOf(p)?.slug === searchParams.category) &&
     (!searchParams.country || countryOf(p)?.iso_code === searchParams.country) &&
     (!searchParams.cond || p.condition === searchParams.cond) &&
+    (!oppConds || oppConds.has(p.condition)) &&
+    (!chain || (p.outlet_source ?? '').toLowerCase().includes(chain.match)) &&
     (!searchParams.unit || (p.selling_unit === searchParams.unit || p.lot_type === searchParams.unit)) &&
     (!searchParams.stype || roleOf(p) === searchParams.stype) &&
     (!searchParams.brand || p.brand_name === searchParams.brand) &&
@@ -157,6 +165,67 @@ export default async function OutletZonePage({ searchParams }: { searchParams: S
       )}
 
       <div className="max-w-6xl mx-auto px-4 sm:px-8 py-8">
+
+        {/* ── Featured Opportunity banners ── */}
+        <section className="mb-6">
+          <h2 className="text-lg font-extrabold text-[#0B1F4D] mb-3">Shop by opportunity</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+            {OPPORTUNITIES.map((o) => {
+              const n = all.filter((p) => o.conditions.includes(p.condition)).length
+              const active = searchParams.opp === o.key
+              return (
+                <Link key={o.key} href={chipHref({ opp: active ? undefined : o.key, cond: undefined, chain: undefined, source: undefined })}
+                  className={`relative rounded-2xl bg-gradient-to-br ${o.grad} text-white p-4 overflow-hidden hover:shadow-lg hover:-translate-y-0.5 transition-all ${active ? 'ring-2 ring-offset-2 ring-[#0B1F4D]' : ''}`}>
+                  <span className="text-2xl">{o.emoji}</span>
+                  <p className="font-extrabold text-sm mt-1.5 leading-tight">{o.label}</p>
+                  <p className="text-[11px] text-white/80 mt-0.5">{n} lot{n !== 1 ? 's' : ''}</p>
+                </Link>
+              )
+            })}
+          </div>
+        </section>
+
+        {/* ── Featured Retail-chain banners ── */}
+        <section className="mb-6">
+          <h2 className="text-lg font-extrabold text-[#0B1F4D] mb-3">Shop by retail chain</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+            {RETAIL_CHAIN_BANNERS.map((c) => {
+              const n = all.filter((p) => (p.outlet_source ?? '').toLowerCase().includes(c.match)).length
+              const active = searchParams.chain === c.match
+              return (
+                <Link key={c.match} href={chipHref({ chain: active ? undefined : c.match, opp: undefined })}
+                  className={`relative rounded-xl bg-gradient-to-r ${c.grad} text-white px-4 py-3 overflow-hidden hover:shadow-lg transition-all ${active ? 'ring-2 ring-offset-2 ring-[#0B1F4D]' : ''}`}>
+                  <p className="font-extrabold text-[13px] leading-tight drop-shadow">{c.label}</p>
+                  <p className="text-[10px] text-white/85 mt-0.5">{n} offer{n !== 1 ? 's' : ''}</p>
+                </Link>
+              )
+            })}
+          </div>
+        </section>
+
+        {/* ── Shop by brand ── */}
+        <section className="mb-7">
+          <h2 className="text-lg font-extrabold text-[#0B1F4D] mb-3">Shop by brand</h2>
+          <div className="flex flex-wrap gap-2">
+            {OUTLET_BRANDS.map((b) => {
+              const active = searchParams.brand === b
+              return (
+                <Link key={b} href={chipHref({ brand: active ? undefined : b })}
+                  className={`rounded-full px-3.5 py-1.5 text-xs font-bold border transition-colors ${active ? 'bg-[#0B1F4D] text-white border-[#0B1F4D]' : 'bg-white border-gray-200 text-gray-700 hover:border-[#0B1F4D]'}`}>{b}</Link>
+              )
+            })}
+          </div>
+        </section>
+
+        {/* Active opportunity / chain context */}
+        {(opp || chain) && (
+          <div className="mb-4 flex items-center gap-2 text-sm">
+            <span className="font-extrabold text-[#0B1F4D]">{opp ? `${opp.emoji} ${opp.label}` : chain?.label}</span>
+            <span className="text-gray-400">· {products.length} lot{products.length !== 1 ? 's' : ''} — now filter by category below</span>
+            <Link href="/outlet" className="text-xs font-bold text-red-600 hover:underline">Clear</Link>
+          </div>
+        )}
+
        <div className="grid lg:grid-cols-[250px_1fr] gap-6 items-start">
         {/* ── Filter side panel ── */}
         <aside className="lg:sticky lg:top-20 rounded-2xl bg-white border border-gray-200 p-4">
@@ -252,7 +321,7 @@ export default async function OutletZonePage({ searchParams }: { searchParams: S
                     </div>
                     <div className="mt-auto pt-2.5 flex items-center justify-between">
                       <span className="text-[13px] font-extrabold text-[#0B1F4D]">
-                        {p.price_cents > 0 ? new Intl.NumberFormat('en-EU', { style: 'currency', currency: p.currency_code }).format(p.price_cents / 100) : <span className="text-gray-400 italic text-[11px]">Ask price</span>}
+                        {p.price_cents > 0 ? <>{new Intl.NumberFormat('en-EU', { style: 'currency', currency: p.currency_code }).format(p.price_cents / 100)}{unit?.per && <span className="text-[10px] text-gray-400 font-medium"> {unit.per}</span>}</> : <span className="text-gray-400 italic text-[11px]">Ask price</span>}
                       </span>
                       <span className="inline-flex items-center gap-1 text-[11px] font-bold text-red-600 group-hover:gap-1.5 transition-all">View lot <ArrowRight className="w-3 h-3" /></span>
                     </div>
