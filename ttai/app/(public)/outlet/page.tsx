@@ -224,11 +224,24 @@ export default async function OutletZonePage({ searchParams }: { searchParams: S
             {RETAIL_CHAIN_BANNERS.map((c) => {
               const n = all.filter((p) => (p.outlet_source ?? '').toLowerCase().includes(c.match)).length
               const active = searchParams.chain === c.match
+              const logo = bannerImg['chainlogo_' + c.match]
+              // Brand-colour gradient via inline style so it always renders
+              // (arbitrary Tailwind hex classes aren't always generated).
+              const hex = c.grad.match(/#[0-9a-fA-F]{3,8}/g) ?? ['#0B1F4D', '#162d6e']
               return (
                 <Link key={c.match} href={chipHref({ chain: active ? undefined : c.match, opp: undefined })}
-                  className={`relative rounded-xl bg-gradient-to-r ${c.grad} text-white px-4 py-3 overflow-hidden hover:shadow-lg transition-all ${active ? 'ring-2 ring-offset-2 ring-[#0B1F4D]' : ''}`}>
-                  <p className="font-extrabold text-[13px] leading-tight drop-shadow">{c.label}</p>
-                  <p className="text-[10px] text-white/85 mt-0.5">{n} offer{n !== 1 ? 's' : ''}</p>
+                  style={{ backgroundImage: `linear-gradient(135deg, ${hex[0]}, ${hex[1] ?? hex[0]})` }}
+                  className={`group/c relative rounded-xl text-white overflow-hidden h-16 flex items-center gap-3 px-3 hover:shadow-lg hover:-translate-y-0.5 transition-all ${active ? 'ring-2 ring-offset-2 ring-[#0B1F4D]' : ''}`}>
+                  {logo && (
+                    <span className="flex-shrink-0 w-11 h-11 rounded-lg bg-white/95 flex items-center justify-center p-1.5 shadow-sm">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={logo} alt={c.label} className="max-w-full max-h-full object-contain" />
+                    </span>
+                  )}
+                  <div className="min-w-0 relative">
+                    <p className="font-extrabold text-[13px] leading-tight drop-shadow truncate">{c.label}</p>
+                    <p className="text-[10px] text-white/85 mt-0.5">{n} offer{n !== 1 ? 's' : ''}</p>
+                  </div>
                 </Link>
               )
             })}

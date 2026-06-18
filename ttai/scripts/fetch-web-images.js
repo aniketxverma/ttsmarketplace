@@ -42,6 +42,8 @@ async function searchImages(query) {
 
 const extFromCt = (ct, url) => /png/i.test(ct) || /\.png/i.test(url) ? '.png' : /webp/i.test(ct) || /\.webp/i.test(url) ? '.webp' : '.jpg'
 const GOOD = /media-amazon|samsung|apple|mi\.com|xiaomi|redmi|mediamarkt|ldlc|gsmarena|fnac|coolblue|pccomponentes|cdn|shopify|alicdn|backmarket|phonehouse/i
+// Watermarked stock-photo previews — never usable on a live banner.
+const WATERMARK = /dreamstime|shutterstock|alamy|istockphoto|gettyimages|stock\.adobe|adobestock|123rf|depositphotos|bigstock|canstockphoto|vectorstock|stockphoto|stockfresh|watermark|preview\.epi/i
 
 // Fetch up to `count` valid images for a query. Prefers reputable, large-enough images.
 async function fetchImages(query, { count = 1, min = 9000, max = 6_000_000, minDim = 300 } = {}) {
@@ -49,7 +51,7 @@ async function fetchImages(query, { count = 1, min = 9000, max = 6_000_000, minD
   try { results = await searchImages(query) } catch (e) { console.log('   search err:', e.message); return [] }
   // Keep DuckDuckGo's relevance order (top result = correct model); only push
   // obvious junk/tiny images to the back so the main shot stays accurate.
-  results = results.filter((r) => r.image && !/\.svg($|\?)/i.test(r.image) && !/sprite|logo-|icon/i.test(r.image))
+  results = results.filter((r) => r.image && !/\.svg($|\?)/i.test(r.image) && !/sprite|logo-|icon/i.test(r.image) && !WATERMARK.test(r.image))
   const out = []
   for (const r of results) {
     if (out.length >= count) break
