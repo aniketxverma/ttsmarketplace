@@ -4,6 +4,8 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { requireAuth } from '@/lib/auth/rbac'
 import { ProductActions } from '@/components/supplier/ProductActions'
+import { CatalogueServiceCard } from '@/components/supplier/CatalogueServiceCard'
+import { createAdminClient } from '@/lib/supabase/admin'
 
 function fmt(cents: number, currency: string) {
   return new Intl.NumberFormat('en-EU', { style: 'currency', currency }).format(cents / 100)
@@ -15,11 +17,19 @@ export default async function SupplierProductsPage() {
 
   const { data: supplier } = await supabase
     .from('suppliers')
-    .select('id, status')
+    .select('id, status, trade_name, legal_name')
     .eq('owner_id', user.id)
     .single()
 
   if (!supplier) redirect('/supplier/onboarding')
+
+  // Catalogue-service flag (defensive — column from migration 0076).
+  let catalogueService = false
+  try {
+    const { data } = await (createAdminClient().from('suppliers') as any).select('catalogue_service').eq('id', supplier.id).single()
+    catalogueService = !!data?.catalogue_service
+  } catch { /* column not migrated yet */ }
+  const companyName = (supplier as any).trade_name ?? (supplier as any).legal_name ?? 'My company'
 
   // Suppliers manage their shop while pending review; only suspended accounts lose access.
   const canManage = supplier.status !== 'SUSPENDED'
@@ -71,6 +81,9 @@ export default async function SupplierProductsPage() {
           </div>
         )}
       </div>
+
+      {/* TTAIEMA catalogue service CTA → Control Center (Marketplace team) */}
+      {canManage && <CatalogueServiceCard companyName={companyName} email={user.email ?? ''} active={catalogueService} />}
 
       {!products?.length ? (
         <div className="rounded-2xl border-2 border-dashed border-gray-200 p-12 text-center">
