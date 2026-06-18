@@ -8,6 +8,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { BrandTabs } from './BrandTabs'
 import { BrandLogo } from '@/components/BrandLogo'
+import { SupplierStatusBadge, HostedByTTAIEMA } from '@/components/brand/SupplierTrust'
 import { canSeeB2B, tierRank } from '@/lib/business-chain'
 import { getMarketplaceOpen, PRE_OPENING_NOTICE } from '@/lib/marketplace-phase'
 import { translateCached } from '@/lib/i18n/content'
@@ -187,6 +188,15 @@ export default async function BrandPage({ params }: { params: { slug: string } }
   const tier    = TIER_CONFIG[supplier.reliability_tier] ?? TIER_CONFIG.UNVERIFIED
   const sv      = (supplier.section_visibility ?? {}) as Record<string, boolean>
 
+  // TTAIEMA Protected flag (defensive — column from migration 0073).
+  let ttaiemaProtected = false
+  try {
+    const { data } = await (supabase.from('suppliers') as any).select('ttaiema_protected').eq('id', supplier.id).single()
+    ttaiemaProtected = !!data?.ttaiema_protected
+  } catch { /* column not migrated yet */ }
+  const statusSupplier = { status: supplier.status, reliability_tier: supplier.reliability_tier, ttaiema_protected: ttaiemaProtected }
+  const companyName = supplier.trade_name ?? supplier.legal_name ?? 'This company'
+
   // Fall back to the owner's account profile so an uploaded avatar / real name
   // still shows when the brand logo or trade name haven't been set yet.
   const { data: owner } = await (createAdminClient().from('profiles') as any)
@@ -316,10 +326,8 @@ export default async function BrandPage({ params }: { params: { slug: string } }
                     <span className="inline-flex items-center gap-1 bg-amber-50 text-amber-700 text-xs font-bold px-2.5 py-1 rounded-full">
                       <Lock className="w-3.5 h-3.5" /> Verification Pending
                     </span>
-                  ) : supplier.reliability_tier !== 'UNVERIFIED' && (
-                    <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-xs font-bold px-2.5 py-1 rounded-full">
-                      <ShieldCheck className="w-3.5 h-3.5" /> {tier.label}
-                    </span>
+                  ) : (
+                    <SupplierStatusBadge supplier={statusSupplier} />
                   )}
                 </div>
                 {/* Meta chips */}
@@ -418,6 +426,9 @@ export default async function BrandPage({ params }: { params: { slug: string } }
           ))}
         </div>
       </div>
+
+      {/* ══ HOSTED BY TTAIEMA — brand-protection disclaimer ═══════════════════ */}
+      <HostedByTTAIEMA companyName={companyName} supplier={statusSupplier} />
 
       {/* ══ MOBILE STICKY CTA ════════════════════════════════════════════════ */}
       {(supplier.whatsapp || supplier.phone) && (
