@@ -73,6 +73,22 @@ export default function AdminSupplierDetailPage() {
             }`}>
             {supplier.is_house ? '★ TTAI EMA House Seller (Trade Hub)' : 'Set as House Seller'}
           </button>
+          {/* TTAIEMA Protected Service toggle (🔵 status badge) */}
+          <button
+            onClick={async () => {
+              const next = !(supplier.ttaiema_protected as boolean)
+              const res = await fetch(`/api/admin/suppliers/${id}/protected`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ protected: next }),
+              })
+              if (res.ok) setSupplier((prev) => prev ? { ...prev, ttaiema_protected: next } : prev)
+              else alert('Could not update')
+            }}
+            className={`rounded-md px-3 py-1.5 text-xs font-bold border transition-colors ${
+              supplier.ttaiema_protected ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-300 text-gray-600 hover:bg-gray-50'
+            }`}>
+            {supplier.ttaiema_protected ? '🔵 TTAIEMA Protected' : 'Set TTAIEMA Protected'}
+          </button>
           <StatusBadge status={status} />
           <div className="flex gap-2">
             {allowed.map((target) => (

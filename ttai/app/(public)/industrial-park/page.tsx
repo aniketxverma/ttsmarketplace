@@ -51,6 +51,12 @@ export default async function IndustrialParkPage({ searchParams }: { searchParam
   const supRows = await safe<any[]>(supQ.limit(60), [])
 
   const supIds = supRows.map((s: any) => s.id)
+  // TTAIEMA Protected flags (defensive — column from migration 0073).
+  const protectedById = new Map<string, boolean>()
+  try {
+    const { data } = await (supabase.from('suppliers') as any).select('id, ttaiema_protected').in('id', supIds.length ? supIds : ['__none__'])
+    for (const r of (data ?? [])) protectedById.set(r.id, !!r.ttaiema_protected)
+  } catch { /* column not migrated yet */ }
   // Fetch PER supplier — a single .in() query is capped at ~1000 rows by
   // PostgREST, so one large supplier (XO/EuroTech) would swallow it and leave
   // every other company with no product thumbnails.
@@ -75,6 +81,9 @@ export default async function IndustrialParkPage({ searchParams }: { searchParam
     const category = Object.values(rootCount)[0] ?? 'Wholesale Supplier'
     return {
       id: s.id,
+      tier: s.reliability_tier ?? null,
+      status: 'ACTIVE',
+      ttaiemaProtected: protectedById.get(s.id) ?? false,
       name: s.trade_name ?? s.legal_name ?? 'Company',
       href: `/marketplace?supplier=${s.id}`,
       category,

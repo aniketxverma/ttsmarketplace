@@ -9,6 +9,9 @@ import {
 import { QuoteModal } from '@/components/shared/QuoteModal'
 import { FavButton } from '@/components/shared/FavButton'
 import { useAuthGate } from '@/components/shared/AuthGate'
+import { SupplierStatusBadge } from '@/components/brand/SupplierTrust'
+
+const cStatus = (c: Company) => ({ status: c.status, reliability_tier: c.tier, ttaiema_protected: c.ttaiemaProtected })
 
 export type CompanyProduct = { name: string; price: string; img: string }
 export type Company = {
@@ -17,6 +20,9 @@ export type Company = {
   href: string
   category: string
   premium: boolean
+  tier?: string | null
+  status?: string | null
+  ttaiemaProtected?: boolean
   rating: string
   reviews: number
   location: string
@@ -52,7 +58,7 @@ function WarehouseCard({ c, onOpen }: { c: Company; onOpen: (c: Company) => void
         <p className="text-[11px] text-gray-400 truncate">{c.category}</p>
         <div className="flex items-center gap-2 text-[11px] my-2">
           <span className="inline-flex items-center gap-1 font-bold text-amber-500"><Star className="w-3 h-3 fill-amber-400" />{c.rating} <span className="text-gray-400 font-medium">({c.reviews})</span></span>
-          <span className="inline-flex items-center gap-1 font-bold text-green-600"><ShieldCheck className="w-3 h-3" />Verified</span>
+          <SupplierStatusBadge supplier={cStatus(c)} size="sm" />
         </div>
         <div className="flex items-center gap-1 mb-2.5">
           {c.products.slice(0, 3).map((p, i) => (
@@ -94,7 +100,7 @@ function CompanyDrawer({ c, onClose }: { c: Company; onClose: () => void }) {
           <h2 className="text-xl font-extrabold text-gray-900">{c.name}</h2>
           <div className="flex flex-wrap items-center gap-2 mt-1.5">
             {c.premium && <span className="rounded-md bg-amber-100 text-amber-700 px-2 py-0.5 text-[11px] font-bold">Premium Supplier</span>}
-            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-green-600"><ShieldCheck className="w-3.5 h-3.5" />Verified</span>
+            <SupplierStatusBadge supplier={cStatus(c)} size="sm" />
           </div>
           <p className="text-xs text-gray-500 mt-1">{c.category}</p>
           <p className="flex items-center gap-1 text-xs text-gray-500 mt-1"><MapPin className="w-3.5 h-3.5" />{c.location}</p>

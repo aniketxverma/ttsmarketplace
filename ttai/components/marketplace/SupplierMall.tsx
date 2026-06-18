@@ -2,16 +2,20 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Star, X, MapPin, ShieldCheck, Package, Store, ArrowRight, Clock } from 'lucide-react'
+import { Star, X, MapPin, Package, Store, ArrowRight, Clock } from 'lucide-react'
 import { QuoteButton } from '@/components/shared/QuoteButton'
+import { SupplierStatusBadge } from '@/components/brand/SupplierTrust'
 
 export type SupProduct = { slug: string; name: string; img: string; price: string }
 export type MallSupplier = {
   id: string; name: string; tagline: string | null; logo: string | null; banner: string | null
   country: string | null; city: string | null; tier: string | null; brandSlug: string | null
+  status?: string | null; protected?: boolean
   whatsapp: string | null; years: number | null; count: number; kindLabel: string; premium: boolean
   products: SupProduct[]
 }
+
+const badgeProps = (s: MallSupplier) => ({ status: s.status, reliability_tier: s.tier, ttaiema_protected: s.protected })
 
 function Storefront({ s, onOpen, wide = false }: { s: MallSupplier; onOpen: (s: MallSupplier) => void; wide?: boolean }) {
   const initials = s.name.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase()
@@ -38,7 +42,7 @@ function Storefront({ s, onOpen, wide = false }: { s: MallSupplier; onOpen: (s: 
       </button>
       <div className="p-3.5">
         <div className="flex items-center gap-2 text-[11px] mb-2">
-          <span className="inline-flex items-center gap-1 font-bold text-green-600"><ShieldCheck className="w-3.5 h-3.5" />{s.tier === 'GOLD' ? 'Gold Verified' : 'Verified'}</span>
+          <SupplierStatusBadge supplier={badgeProps(s)} size="sm" />
           {(s.city || s.country) && <span className="inline-flex items-center gap-0.5 text-gray-400"><MapPin className="w-3 h-3" />{[s.city, s.country].filter(Boolean).join(', ')}</span>}
           {s.count > 0 && <span className="ml-auto font-bold text-[#0B1F4D]">{s.count} products</span>}
         </div>
@@ -82,7 +86,7 @@ function SupplierDrawer({ s, onClose }: { s: MallSupplier; onClose: () => void }
           <h2 className="text-xl font-extrabold text-gray-900">{s.name}</h2>
           <div className="flex flex-wrap items-center gap-2 mt-1.5">
             {s.premium && <span className="rounded-md bg-amber-100 text-amber-700 px-2 py-0.5 text-[11px] font-bold">Featured</span>}
-            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-green-600"><ShieldCheck className="w-3.5 h-3.5" />{s.tier === 'GOLD' ? 'Gold Verified' : 'Verified'}</span>
+            <SupplierStatusBadge supplier={badgeProps(s)} size="sm" />
             {(s.city || s.country) && <span className="inline-flex items-center gap-1 text-xs text-gray-500"><MapPin className="w-3.5 h-3.5" />{[s.city, s.country].filter(Boolean).join(', ')}</span>}
           </div>
           {s.tagline && <p className="text-sm text-gray-500 mt-2">{s.tagline}</p>}
