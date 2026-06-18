@@ -191,10 +191,12 @@ export default async function BrandPage({ params }: { params: { slug: string } }
   // TTAIEMA Protected + Premium Partner flags (defensive — columns 0073/0074).
   let ttaiemaProtected = false
   let premiumPartner = false
+  let catalogueService = false
   try {
-    const { data } = await (supabase.from('suppliers') as any).select('ttaiema_protected, premium_partner').eq('id', supplier.id).single()
+    const { data } = await (supabase.from('suppliers') as any).select('ttaiema_protected, premium_partner, catalogue_service').eq('id', supplier.id).single()
     ttaiemaProtected = !!data?.ttaiema_protected
     premiumPartner = !!data?.premium_partner
+    catalogueService = !!data?.catalogue_service
   } catch { /* columns not migrated yet */ }
   const statusSupplier = { status: supplier.status, reliability_tier: supplier.reliability_tier, ttaiema_protected: ttaiemaProtected, premium_partner: premiumPartner }
   const companyName = supplier.trade_name ?? supplier.legal_name ?? 'This company'
@@ -330,6 +332,9 @@ export default async function BrandPage({ params }: { params: { slug: string } }
                     </span>
                   ) : (
                     <SupplierStatusBadge supplier={statusSupplier} />
+                  )}
+                  {catalogueService && (
+                    <span className="inline-flex items-center gap-1 bg-green-50 text-green-700 text-xs font-bold px-2.5 py-1 rounded-full" title="Catalogue built & maintained by TTAIEMA">📊 Powered by TTAIEMA catalogue</span>
                   )}
                 </div>
                 {/* Meta chips */}

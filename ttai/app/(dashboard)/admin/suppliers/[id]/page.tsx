@@ -105,6 +105,22 @@ export default function AdminSupplierDetailPage() {
             }`}>
             {supplier.premium_partner ? '🟣 Premium Partner' : 'Set Premium Partner'}
           </button>
+          {/* TTAIEMA catalogue service (paid) */}
+          <button
+            onClick={async () => {
+              const next = !(supplier.catalogue_service as boolean)
+              const res = await fetch(`/api/admin/suppliers/${id}/catalogue-service`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ active: next }),
+              })
+              if (res.ok) setSupplier((prev) => prev ? { ...prev, catalogue_service: next } : prev)
+              else alert('Could not update')
+            }}
+            className={`rounded-md px-3 py-1.5 text-xs font-bold border transition-colors ${
+              supplier.catalogue_service ? 'border-green-500 bg-green-50 text-green-700' : 'border-gray-300 text-gray-600 hover:bg-gray-50'
+            }`}>
+            {supplier.catalogue_service ? '📊 TTAIEMA Catalogue' : 'Set Catalogue Service'}
+          </button>
           <StatusBadge status={status} />
           <div className="flex gap-2">
             {allowed.map((target) => (

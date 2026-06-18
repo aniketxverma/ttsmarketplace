@@ -10,6 +10,7 @@ export type CatalogueCard = {
   brands: string[]
   count: number
   hasExcel: boolean
+  catalogueService?: boolean
   href: string
 }
 
@@ -34,6 +35,9 @@ export function SupplierCategoryCard({ card }: { card: CatalogueCard }) {
           <p className="text-[11px] font-semibold text-white/80 truncate">{card.supplierName}</p>
           <p className="font-extrabold text-base leading-tight drop-shadow">{card.categoryName}</p>
         </div>
+        {card.catalogueService && (
+          <span className="absolute top-2 right-2 inline-flex items-center gap-1 rounded-full bg-white/90 text-[#0B1F4D] text-[9px] font-extrabold px-2 py-0.5 shadow">📊 TTAIEMA Catalogue</span>
+        )}
       </div>
 
       <div className="p-3.5 flex flex-col flex-1">

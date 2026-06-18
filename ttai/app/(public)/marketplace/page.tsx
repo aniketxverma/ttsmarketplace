@@ -101,7 +101,11 @@ export default async function MarketplacePage({
   const page = parseInt(searchParams.page || '1')
   const activeRegion = searchParams.region ?? null
   const activeSupplier = searchParams.supplier ?? null
-  const activeView: 'products' | 'shops' = searchParams.view === 'shops' ? 'shops' : 'products'
+  // Default view is the professional Supplier Catalogues; "All Products" + Shops
+  // are toggles. Viewing a specific supplier always shows their product catalogue.
+  const rawView: 'products' | 'shops' | 'catalogues' =
+    searchParams.view === 'shops' ? 'shops' : searchParams.view === 'products' ? 'products' : 'catalogues'
+  const activeView: 'products' | 'shops' | 'catalogues' = activeSupplier && rawView === 'catalogues' ? 'products' : rawView
   const activeMarket = searchParams.market ?? 'europe'
   const activeCountryIso = (searchParams.country ?? '').toUpperCase()
 
@@ -386,6 +390,7 @@ export default async function MarketplacePage({
   // Which suppliers have an Excel catalogue (defensive).
   const cardSupIds = Array.from(new Set(Array.from(cardMap.values()).map((e) => e.supplierId)))
   const excelSuppliers = new Set<string>()
+  const catalogueServiceSuppliers = new Set<string>()
   if (cardSupIds.length) {
     try {
       const { data } = await (supabase.from('supplier_documents') as any).select('supplier_id, file_name, file_url, doc_type').in('supplier_id', cardSupIds)
@@ -394,16 +399,21 @@ export default async function MarketplacePage({
         if (/\.(xlsx|xls|csv)(\?|$)/.test(n) || ['catalog', 'price_list'].includes(d.doc_type)) excelSuppliers.add(d.supplier_id)
       }
     } catch { /* ignore */ }
+    try {
+      const { data } = await (supabase.from('suppliers') as any).select('id, catalogue_service').in('id', cardSupIds)
+      for (const r of (data ?? [])) if (r.catalogue_service) catalogueServiceSuppliers.add(r.id)
+    } catch { /* column not migrated yet */ }
   }
   const catalogueCards = Array.from(cardMap.values())
     .filter((e) => e.products.length > 0)
     .sort((a, b) => b.count - a.count)
-    .slice(0, 12)
+    .slice(0, 60)
     .map((e) => ({
       supplierName: e.supplierName, categoryName: e.root.name,
       categoryImage: e.root.image_url ?? null, accent: CAT_ACCENT[e.root.slug] ?? '#0B1F4D',
       featured: e.products, brands: Array.from(e.brands) as string[], count: e.count,
       hasExcel: excelSuppliers.has(e.supplierId),
+      catalogueService: catalogueServiceSuppliers.has(e.supplierId),
       href: `/brand/${e.brandSlug ?? e.supplierId}`,
     }))
 
@@ -681,23 +691,22 @@ export default async function MarketplacePage({
                 <p className="text-sm mt-1">Try a different category or country</p>
               </div>
             )
-          ) : (
-          <>
-          {/* Supplier catalogues — real featured products by category + Excel */}
-          {!activeSupplier && catalogueCards.length > 0 && (
-            <section className="mb-9">
-              <div className="flex items-end justify-between mb-3">
-                <div>
-                  <h2 className="text-lg font-extrabold text-[#0B1F4D]">Supplier Catalogues</h2>
-                  <p className="text-xs text-gray-400">Real featured products by category — open a card for the full Excel catalogue.</p>
+          ) : activeView === 'catalogues' ? (
+            catalogueCards.length > 0 ? (
+              <div>
+                <p className="text-xs text-gray-400 mb-4">Real featured products by category — open a card for the full Excel catalogue. <Link href="/marketplace?view=products" className="text-[#0B1F4D] font-bold hover:underline">See all products →</Link></p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {catalogueCards.map((c, i) => <SupplierCategoryCard key={`${c.href}-${c.categoryName}-${i}`} card={c} />)}
                 </div>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {catalogueCards.map((c, i) => <SupplierCategoryCard key={`${c.href}-${c.categoryName}-${i}`} card={c} />)}
+            ) : (
+              <div className="text-center py-20 text-muted-foreground">
+                <p className="text-lg">No catalogues yet</p>
+                <p className="text-sm mt-1"><Link href="/marketplace?view=products" className="text-[#0B1F4D] font-bold underline">Browse all products →</Link></p>
               </div>
-            </section>
-          )}
-
+            )
+          ) : (
+          <>
           {/* Three ways to shop this collection */}
           {activeCat && (
             <div className="mb-8">

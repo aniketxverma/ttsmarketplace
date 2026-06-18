@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
-import { Package, Store } from 'lucide-react'
+import { Package, Store, LayoutGrid } from 'lucide-react'
 import { MARKET_REGIONS, getRegion } from '@/lib/market-regions'
 
 type Place = { name: string; slug: string }
@@ -16,7 +16,7 @@ export function MarketplaceTopBar({
   activeProvince = '',
   activeCity = '',
 }: {
-  activeView: 'products' | 'shops'
+  activeView: 'products' | 'shops' | 'catalogues'
   activeCountry: string
   activeMarket: string
   categoryLabel: string | null
@@ -53,12 +53,13 @@ export function MarketplaceTopBar({
       {/* ── Products | Shops tabs ── */}
       <div className="flex items-center gap-1 bg-gray-100 rounded-xl p-1 w-max mb-5">
         {([
-          { id: 'products', label: 'Products', Icon: Package },
-          { id: 'shops',    label: 'Shops',    Icon: Store },
+          { id: 'catalogues', label: 'Catalogues',  Icon: LayoutGrid },
+          { id: 'products',   label: 'All Products', Icon: Package },
+          { id: 'shops',      label: 'Shops',        Icon: Store },
         ] as const).map(({ id, label, Icon }) => {
           const active = activeView === id
           return (
-            <button key={id} onClick={() => navigate({ view: id === 'products' ? null : id })}
+            <button key={id} onClick={() => navigate({ view: id === 'catalogues' ? null : id })}
               className={`flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-bold transition-colors ${
                 active ? 'bg-white text-[#0B1F4D] shadow-sm' : 'text-gray-500 hover:text-[#0B1F4D]'}`}>
               <Icon className="w-4 h-4" /> {label}
