@@ -12,14 +12,14 @@ export const metadata = { title: 'TTAI Shopping Mall · TTAI EMA' }
 
 // Animated category pins over the 3D mall map.
 const HERO_PINS = [
-  { label: 'Food & Beverage', kw: 'food',    color: '#f97316', top: '36%', left: '13%' },
-  { label: 'Technology',      kw: 'tech',    color: '#3b82f6', top: '32%', left: '32%' },
-  { label: 'Home & Living',   kw: 'home',    color: '#22c55e', top: '32%', left: '67%' },
-  { label: 'Beauty & Health', kw: 'beaut',   color: '#ec4899', top: '36%', left: '87%' },
-  { label: 'Fashion',         kw: 'fashion', color: '#a855f7', top: '70%', left: '15%' },
-  { label: 'Automotive',      kw: 'auto',    color: '#ef4444', top: '80%', left: '37%' },
-  { label: 'Pet Supplies',    kw: 'pet',     color: '#eab308', top: '73%', left: '63%' },
-  { label: 'Services',        kw: 'service', color: '#14b8a6', top: '75%', left: '87%' },
+  { label: 'Food & Beverage', root: 'food-beverage',         color: '#f97316', top: '36%', left: '13%' },
+  { label: 'Technology',      root: 'electronics-technology', color: '#3b82f6', top: '32%', left: '32%' },
+  { label: 'Home & Living',   root: 'cleaning-household',     color: '#22c55e', top: '32%', left: '67%' },
+  { label: 'Beauty & Health', root: '',                       color: '#ec4899', top: '36%', left: '87%' },
+  { label: 'Fashion',         root: '',                       color: '#a855f7', top: '70%', left: '15%' },
+  { label: 'Automotive',      root: 'automotive-transport',   color: '#ef4444', top: '80%', left: '37%' },
+  { label: 'Pet Supplies',    root: '',                       color: '#eab308', top: '73%', left: '63%' },
+  { label: 'Services',        root: '',                       color: '#14b8a6', top: '75%', left: '87%' },
 ]
 
 const CAT_STRIP: { key: string; label: string; Icon: any; color: string; root: string }[] = [
@@ -157,11 +157,14 @@ export default async function ShoppingMallPage({ searchParams }: { searchParams:
     .filter((d) => d.img)
     .slice(0, 14)
 
-  const catCount = (root: string) => (root ? (byRoot[root]?.length ?? 0) : totalStores)
-  const storeHref = (key: string) => {
-    const c = cats.find((x: any) => (x.name || '').toLowerCase().includes(key))
-    return c?.slug ? `/store?category=${c.slug}` : '/store'
-  }
+  // Only treat a tile's root as real if that category actually exists — otherwise
+  // it must NOT fall back to "all stores" (that opened the wrong shops).
+  const rootSlugs = new Set<string>(cats.map((c: any) => c.slug))
+  const catRoot = (root: string) => (root && rootSlugs.has(root) ? root : null)
+  const catCount = (c: { key: string; root: string }) =>
+    c.key === 'all' ? totalStores : (catRoot(c.root) ? (byRoot[catRoot(c.root)!]?.length ?? 0) : 0)
+  const catLink = (c: { key: string; root: string }) =>
+    c.key === 'all' ? '/store' : (catRoot(c.root) ? `/store?category=${catRoot(c.root)}` : null)
 
   return (
     <div className="min-h-screen bg-[#f3f4f6]">
@@ -204,17 +207,23 @@ export default async function ShoppingMallPage({ searchParams }: { searchParams:
                 separate elements so their transforms don't fight each other. */}
             {HERO_PINS.map((pin, i) => {
               const labelLeft = parseFloat(pin.left) > 55 // right-side pins: label points inward (avoids clipping)
+              const href = catRoot(pin.root) ? `/store?category=${catRoot(pin.root)}` : null
+              const pinCls = `group flex items-center gap-2 rounded-full bg-white/95 backdrop-blur shadow-xl ring-1 ring-black/5 py-1 transition-transform duration-200 hover:scale-110 ${labelLeft ? 'flex-row-reverse pl-3 pr-1' : 'pl-1 pr-3'}`
+              const pinInner = (
+                <>
+                  <span className="relative w-7 h-7 rounded-full flex items-center justify-center shadow ring-2 ring-white animate-mall-glow flex-shrink-0" style={{ background: pin.color }}>
+                    <span className="absolute inset-0 rounded-full animate-ping opacity-40" style={{ background: pin.color }} />
+                    <MapPin className="w-4 h-4 text-white relative" fill="currentColor" />
+                  </span>
+                  <span className="text-[11px] font-extrabold text-gray-800 whitespace-nowrap">{pin.label}</span>
+                </>
+              )
               return (
                 <div key={pin.label} className="absolute z-10 -translate-x-1/2 -translate-y-1/2 hidden md:block" style={{ top: pin.top, left: pin.left }}>
                   <div className="animate-mall-float" style={{ animationDelay: `${(i % 4) * 0.5}s` }}>
-                    <Link href={pin.kw === 'all' ? '/store' : storeHref(pin.kw)}
-                      className={`group flex items-center gap-2 rounded-full bg-white/95 backdrop-blur shadow-xl ring-1 ring-black/5 py-1 transition-transform duration-200 hover:scale-110 ${labelLeft ? 'flex-row-reverse pl-3 pr-1' : 'pl-1 pr-3'}`}>
-                      <span className="relative w-7 h-7 rounded-full flex items-center justify-center shadow ring-2 ring-white animate-mall-glow flex-shrink-0" style={{ background: pin.color }}>
-                        <span className="absolute inset-0 rounded-full animate-ping opacity-40" style={{ background: pin.color }} />
-                        <MapPin className="w-4 h-4 text-white relative" fill="currentColor" />
-                      </span>
-                      <span className="text-[11px] font-extrabold text-gray-800 whitespace-nowrap">{pin.label}</span>
-                    </Link>
+                    {href
+                      ? <Link href={href} className={pinCls}>{pinInner}</Link>
+                      : <span className={`${pinCls} cursor-default`} title="Coming soon">{pinInner}</span>}
                   </div>
                 </div>
               )
@@ -265,16 +274,30 @@ export default async function ShoppingMallPage({ searchParams }: { searchParams:
 
         {/* ── Category strip ── */}
         <div className="grid grid-cols-4 sm:grid-cols-8 gap-2.5 sm:gap-3">
-          {CAT_STRIP.map((c) => (
-            <Link key={c.key} href={c.key === 'all' ? '/store' : storeHref(c.key)}
-              className="group rounded-2xl bg-white border border-gray-200 shadow-sm p-3.5 text-center hover:shadow-md hover:-translate-y-0.5 transition-all">
-              <span className="w-11 h-11 rounded-full flex items-center justify-center mx-auto mb-2 text-white" style={{ background: c.color }}>
-                <c.Icon className="w-5 h-5" />
-              </span>
-              <p className="text-xs font-extrabold text-gray-900 leading-tight">{c.label}</p>
-              <p className="text-[11px] text-gray-400 mt-0.5">{catCount(c.root)} Stores</p>
-            </Link>
-          ))}
+          {CAT_STRIP.map((c) => {
+            const href = catLink(c)
+            const count = catCount(c)
+            const inner = (
+              <>
+                <span className="w-11 h-11 rounded-full flex items-center justify-center mx-auto mb-2 text-white" style={{ background: c.color }}>
+                  <c.Icon className="w-5 h-5" />
+                </span>
+                <p className="text-xs font-extrabold text-gray-900 leading-tight">{c.label}</p>
+                <p className="text-[11px] text-gray-400 mt-0.5">{href ? `${count} Store${count !== 1 ? 's' : ''}` : 'Coming soon'}</p>
+              </>
+            )
+            return href ? (
+              <Link key={c.key} href={href}
+                className="group rounded-2xl bg-white border border-gray-200 shadow-sm p-3.5 text-center hover:shadow-md hover:-translate-y-0.5 transition-all">
+                {inner}
+              </Link>
+            ) : (
+              <div key={c.key} title="No stores in this category yet"
+                className="rounded-2xl bg-white border border-gray-200 shadow-sm p-3.5 text-center opacity-55 cursor-default select-none">
+                {inner}
+              </div>
+            )
+          })}
         </div>
 
         {/* ── The mall — storefront rows by category ── */}
