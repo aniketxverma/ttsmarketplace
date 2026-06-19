@@ -76,7 +76,7 @@ export async function BrandDirectory({
   kind, searchParams,
 }: {
   kind: EntityKind
-  searchParams: { q?: string; tier?: string }
+  searchParams: { q?: string; tier?: string; industry?: string }
 }) {
   const cfg = KIND_CONFIG[kind]
   const supabase = createClient()
@@ -132,7 +132,12 @@ export async function BrandDirectory({
     })
   }
 
-  const total = suppliers.length
+  // ── Industry classification — each supplier's top root category. Same
+  //    category tree used across the marketplace, so it's consistent everywhere.
+  const { data: allCats } = await (supabase.from('categories') as any).select('id, name, slug, parent_id')
+  const catById = new Map<string, any>((allCats ?? []).map((c: any) => [c.id, c]))
+  const rootOf = (id?: string | null): any => { let cur = id ? catById.get(id) : null; for (let i = 0; cur?.parent_id && i < 8; i++) cur = catById.get(cur.parent_id) ?? cur; return cur ?? null }
+  const industryBySup: Record<string, { slug: string; name: string } | null> = {}
 
   // Product previews — real products per supplier so buyers see what each sells
   // before entering, and to populate the storefront drawer.
@@ -146,17 +151,30 @@ export async function BrandDirectory({
     const [{ count }, { data: rows }] = await Promise.all([
       (supabase.from('products') as any).select('id', { count: 'exact', head: true }).eq('supplier_id', s.id).eq('is_published', true),
       (supabase.from('products') as any)
-        .select('id, name, slug, price_cents, currency_code, product_images(url, sort_order)')
+        .select('id, name, slug, price_cents, currency_code, category_id, product_images(url, sort_order)')
         .eq('supplier_id', s.id).eq('is_published', true).order('created_at', { ascending: false }).limit(48),
     ])
     countBySup[s.id] = count ?? 0
     const list: { slug: string; name: string; img: string; price: string }[] = []
+    const tally: Record<string, { n: number; name: string }> = {}
     for (const p of (rows ?? []) as any[]) {
+      const root = rootOf(p.category_id)
+      if (root) { (tally[root.slug] ||= { n: 0, name: root.name }).n++ }
       const img = ((p.product_images ?? []) as any[]).slice().sort((a, b) => a.sort_order - b.sort_order)[0]?.url
-      if (img) { list.push({ slug: p.slug ?? p.id, name: p.name, img, price: p.price_cents > 0 ? money(p.price_cents, p.currency_code) : 'On request' }); if (list.length >= 8) break }
+      if (img && list.length < 8) list.push({ slug: p.slug ?? p.id, name: p.name, img, price: p.price_cents > 0 ? money(p.price_cents, p.currency_code) : 'On request' })
     }
+    const top = Object.entries(tally).sort((a, b) => b[1].n - a[1].n)[0]
+    industryBySup[s.id] = top ? { slug: top[0], name: top[1].name } : null
     prodBySup[s.id] = list
   }))
+
+  // ── Industry facets (counts) + active filter ──
+  const facetMap = new Map<string, { slug: string; name: string; count: number }>()
+  for (const s of suppliers) { const ind = industryBySup[s.id]; if (ind) { const e = facetMap.get(ind.slug) ?? { slug: ind.slug, name: ind.name, count: 0 }; e.count++; facetMap.set(ind.slug, e) } }
+  const industryFacets = Array.from(facetMap.values()).sort((a, b) => b.count - a.count)
+  const activeIndustry = searchParams.industry || null
+  if (activeIndustry) suppliers = suppliers.filter((s) => industryBySup[s.id]?.slug === activeIndustry)
+  const total = suppliers.length
 
   // TTAIEMA Protected + Premium Partner flags + module gating (defensive —
   // columns 0073/0074/0075). Outlet-only companies (modules without 'marketplace')
@@ -182,6 +200,7 @@ export async function BrandDirectory({
     protected: protectedById.get(s.id) ?? false, premiumPartner: premiumById.get(s.id) ?? false,
     brandSlug: s.brand_slug ?? null, whatsapp: s.whatsapp ?? null,
     years: s.years_experience ?? null, count: countBySup[s.id] ?? 0, kindLabel: cfg.kindLabel,
+    industry: industryBySup[s.id]?.name ?? null,
     premium: !!s.is_featured, products: prodBySup[s.id] ?? [],
   }))
 
@@ -198,14 +217,14 @@ export async function BrandDirectory({
     { value: countriesTotal, label: 'Countries' },
     { value: total,          label: 'Verified' },
   ]
-  const HERO_PINS = [
-    { label: 'Electronics',  q: 'electronics', color: '#3b82f6', top: '58%', left: '15%' },
-    { label: 'Food & Agri',  q: 'food',        color: '#f97316', top: '80%', left: '28%' },
-    { label: 'Audio',        q: 'audio',       color: '#a855f7', top: '56%', left: '45%' },
-    { label: 'Cleaning',     q: 'cleaning',    color: '#22c55e', top: '82%', left: '60%' },
-    { label: 'Automotive',   q: 'oil',         color: '#ef4444', top: '58%', left: '76%' },
-    { label: 'Accessories',  q: 'accessories', color: '#14b8a6', top: '80%', left: '88%' },
+  // Map the real industries (top root categories present in the directory) onto
+  // the fixed map positions — clicking a pin filters by that industry.
+  const PIN_POS = [
+    { color: '#3b82f6', top: '58%', left: '15%' }, { color: '#f97316', top: '80%', left: '28%' },
+    { color: '#a855f7', top: '56%', left: '45%' }, { color: '#22c55e', top: '82%', left: '60%' },
+    { color: '#ef4444', top: '58%', left: '76%' }, { color: '#14b8a6', top: '80%', left: '88%' },
   ]
+  const HERO_PINS = industryFacets.slice(0, 6).map((f, i) => ({ label: f.name, slug: f.slug, ...PIN_POS[i % PIN_POS.length] }))
   const dirBase = `/${kind === 'supplier' ? 'suppliers' : kind === 'distributor' ? 'distributors' : 'factories'}`
 
   return (
@@ -225,7 +244,7 @@ export async function BrandDirectory({
               return (
                 <div key={pin.label} className="absolute z-10 -translate-x-1/2 -translate-y-1/2 hidden md:block" style={{ top: pin.top, left: pin.left }}>
                   <div className="animate-mall-float" style={{ animationDelay: `${(i % 4) * 0.5}s` }}>
-                    <Link href={`${dirBase}?q=${pin.q}`}
+                    <Link href={`${dirBase}?industry=${pin.slug}`}
                       className={`group flex items-center gap-2 rounded-full bg-white/95 backdrop-blur shadow-xl ring-1 ring-black/5 py-1 transition-transform duration-200 hover:scale-110 ${labelLeft ? 'flex-row-reverse pl-3 pr-1' : 'pl-1 pr-3'}`}>
                       <span className="relative w-7 h-7 rounded-full flex items-center justify-center shadow ring-2 ring-white animate-mall-glow flex-shrink-0" style={{ background: pin.color }}>
                         <span className="absolute inset-0 rounded-full animate-ping opacity-40" style={{ background: pin.color }} />
@@ -304,6 +323,25 @@ export async function BrandDirectory({
           })}
         </div>
 
+        {/* ── Industry filter (real root categories, consistent everywhere) ── */}
+        {granted && industryFacets.length > 1 && (
+          <div className="mb-7">
+            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wide mb-2">Browse by industry</p>
+            <div className="flex flex-wrap gap-2">
+              <Link href={dirBase + (searchParams.q ? `?q=${searchParams.q}` : '')}
+                className={`px-3.5 py-1.5 rounded-full text-xs font-bold border transition-colors ${!activeIndustry ? 'bg-[#0B1F4D] text-white border-[#0B1F4D]' : 'bg-white border-gray-200 text-gray-600 hover:border-[#0B1F4D]'}`}>
+                All industries
+              </Link>
+              {industryFacets.map((f) => (
+                <Link key={f.slug} href={`${dirBase}?industry=${f.slug}${searchParams.q ? `&q=${searchParams.q}` : ''}`}
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-bold border transition-colors ${activeIndustry === f.slug ? 'bg-[#0B1F4D] text-white border-[#0B1F4D]' : 'bg-white border-gray-200 text-gray-600 hover:border-[#0B1F4D]'}`}>
+                  {f.name} <span className="opacity-60">{f.count}</span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* ── Gate ────────────────────────────────────────────────────────── */}
         {!granted ? (
           <div className="max-w-xl mx-auto text-center py-16">
@@ -337,10 +375,12 @@ export async function BrandDirectory({
         ) : total > 0 ? (
           <>
             <div className="flex items-center justify-between mb-6">
-              <span className="text-sm text-gray-400">{total} {cfg.kindLabel.toLowerCase()}{total !== 1 ? 's' : ''}</span>
-              {searchParams.q && (
-                <Link href={`/${kind === 'supplier' ? 'suppliers' : kind === 'distributor' ? 'distributors' : 'factories'}`}
-                  className="text-sm text-[#0B1F4D] hover:underline font-medium">Clear search</Link>
+              <span className="text-sm text-gray-400">
+                {total} {cfg.kindLabel.toLowerCase()}{total !== 1 ? 's' : ''}
+                {activeIndustry && <span className="text-gray-500"> · {industryFacets.find((f) => f.slug === activeIndustry)?.name ?? ''}</span>}
+              </span>
+              {(searchParams.q || activeIndustry) && (
+                <Link href={dirBase} className="text-sm text-[#0B1F4D] hover:underline font-medium">Clear filters</Link>
               )}
             </div>
             <SupplierMall suppliers={mallSuppliers} />

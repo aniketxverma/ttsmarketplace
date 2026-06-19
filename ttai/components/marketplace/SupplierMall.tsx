@@ -12,6 +12,7 @@ export type MallSupplier = {
   country: string | null; city: string | null; tier: string | null; brandSlug: string | null
   status?: string | null; protected?: boolean; premiumPartner?: boolean
   whatsapp: string | null; years: number | null; count: number; kindLabel: string; premium: boolean
+  industry?: string | null
   products: SupProduct[]
 }
 
@@ -46,6 +47,9 @@ function Storefront({ s, onOpen, wide = false }: { s: MallSupplier; onOpen: (s: 
           {(s.city || s.country) && <span className="inline-flex items-center gap-0.5 text-gray-400"><MapPin className="w-3 h-3" />{[s.city, s.country].filter(Boolean).join(', ')}</span>}
           {s.count > 0 && <span className="ml-auto font-bold text-[#0B1F4D]">{s.count} products</span>}
         </div>
+        {s.industry && (
+          <span className="inline-flex items-center gap-1 rounded-full bg-[#0B1F4D]/5 text-[#0B1F4D] text-[10px] font-bold px-2 py-0.5 mb-2">{s.industry}</span>
+        )}
         {/* product window */}
         <div className={`grid ${wide ? 'grid-cols-6' : 'grid-cols-4'} gap-1.5 mb-3`}>
           {Array.from({ length: wide ? 6 : 4 }).map((_, i) => {

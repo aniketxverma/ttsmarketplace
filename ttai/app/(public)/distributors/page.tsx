@@ -5,7 +5,7 @@ export const metadata = { title: 'Distributors · TTAI EMA' }
 export default function DistributorsPage({
   searchParams,
 }: {
-  searchParams: { q?: string; tier?: string }
+  searchParams: { q?: string; tier?: string; industry?: string }
 }) {
   return <BrandDirectory kind="distributor" searchParams={searchParams} />
 }
