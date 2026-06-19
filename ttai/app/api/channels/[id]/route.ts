@@ -27,13 +27,17 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   if (body.name      !== undefined) update.name        = String(body.name).trim()
   if (body.description !== undefined) update.description = body.description?.trim() || null
   if (body.whatsapp  !== undefined) update.whatsapp    = body.whatsapp?.trim()     || null
+  if (body.whatsapp_channel_url !== undefined) update.whatsapp_channel_url = body.whatsapp_channel_url?.trim() || null
   if (body.is_active !== undefined) update.is_active   = Boolean(body.is_active)
 
-  const { data: channel, error } = await (supabase.from('supplier_channels') as any)
-    .update(update)
-    .eq('id', params.id)
-    .select()
-    .single()
+  const run = (u: Record<string, unknown>) => (supabase.from('supplier_channels') as any)
+    .update(u).eq('id', params.id).select().single()
+  let { data: channel, error } = await run(update)
+  // Defensive: whatsapp_channel_url column may not be migrated yet (0079) → retry without.
+  if (error && /column|whatsapp_channel_url|does not exist/i.test(error.message)) {
+    const { whatsapp_channel_url, ...rest } = update
+    ;({ data: channel, error } = await run(rest))
+  }
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 })
   return NextResponse.json({ channel })

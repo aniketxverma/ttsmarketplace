@@ -34,18 +34,22 @@ export async function POST(req: Request) {
   if (!supplier) return NextResponse.json({ error: 'Not a supplier' }, { status: 403 })
 
   const body = await req.json()
-  const { name, description, whatsapp } = body
+  const { name, description, whatsapp, whatsapp_channel_url } = body
   if (!name?.trim()) return NextResponse.json({ error: 'Channel name is required' }, { status: 400 })
 
-  const { data: channel, error } = await (supabase.from('supplier_channels') as any)
-    .insert({
-      supplier_id: supplier.id,
-      name:        name.trim(),
-      description: description?.trim() || null,
-      whatsapp:    whatsapp?.trim()    || null,
-    })
-    .select()
-    .single()
+  const row: Record<string, any> = {
+    supplier_id: supplier.id,
+    name:        name.trim(),
+    description: description?.trim() || null,
+    whatsapp:    whatsapp?.trim()    || null,
+    whatsapp_channel_url: whatsapp_channel_url?.trim() || null,
+  }
+  let { data: channel, error } = await (supabase.from('supplier_channels') as any).insert(row).select().single()
+  // Defensive: whatsapp_channel_url column may not be migrated yet (0079) → retry without.
+  if (error && /column|whatsapp_channel_url|does not exist/i.test(error.message)) {
+    delete row.whatsapp_channel_url
+    ;({ data: channel, error } = await (supabase.from('supplier_channels') as any).insert(row).select().single())
+  }
 
   if (error) {
     if (error.code === '23505') return NextResponse.json({ error: 'Canal already exists' }, { status: 409 })

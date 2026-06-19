@@ -12,6 +12,7 @@ import {
 // ── Types ─────────────────────────────────────────────────────────────────────
 type Channel = {
   id: string; name: string; description: string | null; whatsapp: string | null
+  whatsapp_channel_url?: string | null
   invite_code: string; is_active: boolean; member_count: number; post_count: number
   created_at: string
 }
@@ -55,9 +56,9 @@ export default function SupplierChannelPage() {
   const imgRef = useRef<HTMLInputElement>(null)
 
   // Forms
-  const [cForm, setCForm] = useState({ name: '', description: '', whatsapp: '' })
+  const [cForm, setCForm] = useState({ name: '', description: '', whatsapp: '', whatsapp_channel_url: '' })
   const [pForm, setPForm] = useState({ content: '', post_type: 'update' as PostType })
-  const [sForm, setSForm] = useState({ name: '', description: '', whatsapp: '' })
+  const [sForm, setSForm] = useState({ name: '', description: '', whatsapp: '', whatsapp_channel_url: '' })
 
   // WhatsApp groups
   const [groups, setGroups]   = useState<Group[]>([])
@@ -72,7 +73,7 @@ export default function SupplierChannelPage() {
     const { channel } = await res.json()
     if (channel) {
       setChannel(channel)
-      setSForm({ name: channel.name, description: channel.description ?? '', whatsapp: channel.whatsapp ?? '' })
+      setSForm({ name: channel.name, description: channel.description ?? '', whatsapp: channel.whatsapp ?? '', whatsapp_channel_url: channel.whatsapp_channel_url ?? '' })
       loadPosts(channel.id)
     }
     setLoading(false)
@@ -143,7 +144,7 @@ export default function SupplierChannelPage() {
     const data = await res.json()
     if (!res.ok) { setError(data.error); setCreating(false); return }
     setChannel(data.channel)
-    setSForm({ name: data.channel.name, description: data.channel.description ?? '', whatsapp: data.channel.whatsapp ?? '' })
+    setSForm({ name: data.channel.name, description: data.channel.description ?? '', whatsapp: data.channel.whatsapp ?? '', whatsapp_channel_url: data.channel.whatsapp_channel_url ?? '' })
     setCreating(false)
   }
 
@@ -272,6 +273,16 @@ export default function SupplierChannelPage() {
               <input type="tel" value={cForm.whatsapp} onChange={e => setCForm(f => ({ ...f, whatsapp: e.target.value }))}
                 placeholder="+34 600 000 000"
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B1F4D]" />
+              <p className="text-[11px] text-gray-400 mt-1">For buyers to contact you directly.</p>
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-1.5">
+                WhatsApp Channel link <span className="text-gray-400 font-normal normal-case">(optional)</span>
+              </label>
+              <input type="url" value={cForm.whatsapp_channel_url} onChange={e => setCForm(f => ({ ...f, whatsapp_channel_url: e.target.value }))}
+                placeholder="https://whatsapp.com/channel/…"
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B1F4D]" />
+              <p className="text-[11px] text-gray-400 mt-1">Your official WhatsApp Channel — buyers can follow it for offers &amp; stock updates.</p>
             </div>
             <button type="submit" disabled={creating || !cForm.name.trim()}
               className="w-full py-3.5 bg-[#0B1F4D] hover:bg-[#162d6e] text-white rounded-xl font-bold text-sm transition-colors disabled:opacity-50 flex items-center justify-center gap-2 shadow-sm">
@@ -357,6 +368,15 @@ export default function SupplierChannelPage() {
                   <p className="text-xs text-white/45 mb-0.5">WhatsApp</p>
                   <p className="text-sm font-bold text-white">{channel.whatsapp}</p>
                 </div>
+              </>
+            )}
+            {channel.whatsapp_channel_url && (
+              <>
+                <div className="w-px h-10 bg-white/15" />
+                <a href={channel.whatsapp_channel_url} target="_blank" rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-[#25D366] hover:bg-[#1ea952] text-white text-xs font-bold px-3.5 py-2 transition-colors">
+                  <MessagesSquare className="w-3.5 h-3.5" /> WhatsApp Channel
+                </a>
               </>
             )}
           </div>
@@ -507,6 +527,13 @@ export default function SupplierChannelPage() {
               <input type="tel" value={sForm.whatsapp} onChange={e => setSForm(f => ({ ...f, whatsapp: e.target.value }))}
                 placeholder="+34 600 000 000"
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B1F4D]" />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-1.5">WhatsApp Channel link</label>
+              <input type="url" value={sForm.whatsapp_channel_url} onChange={e => setSForm(f => ({ ...f, whatsapp_channel_url: e.target.value }))}
+                placeholder="https://whatsapp.com/channel/…"
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B1F4D]" />
+              <p className="text-[11px] text-gray-400 mt-1">Public link buyers can follow for offers, stock updates &amp; announcements.</p>
             </div>
             <div className="flex items-center gap-3 pt-1">
               <button type="submit" className="px-5 py-2.5 bg-[#0B1F4D] text-white rounded-xl text-sm font-bold hover:bg-[#162d6e] transition-colors">

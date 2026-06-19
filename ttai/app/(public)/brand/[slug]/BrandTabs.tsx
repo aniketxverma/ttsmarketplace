@@ -85,6 +85,7 @@ function fmtFileSize(bytes?: number | null) {
 }
 interface Channel {
   id: string; name: string; description: string | null; whatsapp: string | null
+  whatsapp_channel_url?: string | null
   member_count: number; post_count: number
 }
 interface ChannelPost {
@@ -838,6 +839,23 @@ export function BrandTabs({
                   Subscribe <ArrowRight className="w-4 h-4" />
                 </span>
               </button>
+            )}
+
+            {/* ── Follow the supplier's official WhatsApp Channel ── */}
+            {channel?.whatsapp_channel_url && (
+              <a data-reveal href={channel.whatsapp_channel_url} target="_blank" rel="noopener noreferrer"
+                className="group w-full mb-14 -mt-8 flex items-center gap-4 rounded-2xl px-5 sm:px-6 py-4 text-left shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all bg-gradient-to-r from-[#1ea952] to-[#25D366]">
+                <span className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center flex-shrink-0">
+                  <WaIcon className="w-6 h-6 text-white" />
+                </span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-white font-extrabold text-base leading-tight">Follow on WhatsApp Channel</p>
+                  <p className="text-white/80 text-sm">Offers, stock updates &amp; announcements — straight to your WhatsApp</p>
+                </div>
+                <span className="flex-shrink-0 inline-flex items-center gap-1.5 bg-white text-[#1ea952] px-4 py-2 rounded-xl text-sm font-extrabold group-hover:gap-2.5 transition-all">
+                  Follow <ArrowRight className="w-4 h-4" />
+                </span>
+              </a>
             )}
 
             {/* ── Catalogue: left categories rail + sortable/paginated grid ── */}

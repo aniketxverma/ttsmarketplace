@@ -170,6 +170,14 @@ export default async function BrandPage({ params }: { params: { slug: string } }
   ])
 
   const channel      = (channelRes.data ?? null) as any
+  // WhatsApp Channel link (migration 0079) — fetched separately so a schema lag
+  // never breaks the main channel select.
+  if (channel) {
+    try {
+      const { data: wc } = await (supabase.from('supplier_channels') as any).select('whatsapp_channel_url').eq('id', channel.id).single()
+      channel.whatsapp_channel_url = wc?.whatsapp_channel_url ?? null
+    } catch { /* column not migrated yet */ }
+  }
   const channelPostsRes = channel
     ? await (supabase.from('channel_posts' as any) as any)
         .select('*')
