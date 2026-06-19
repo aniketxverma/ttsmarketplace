@@ -9,8 +9,9 @@ export const dynamic = 'force-dynamic'
 export default async function SupplierModulesPage() {
   const user = await requireAuth()
   const supabase = createClient()
-  const { data: supplier } = await (supabase.from('suppliers') as any).select('id').eq('owner_id', user.id).maybeSingle()
+  const { data: supplier } = await (supabase.from('suppliers') as any).select('id, trade_name, legal_name').eq('owner_id', user.id).maybeSingle()
   if (!supplier) redirect('/supplier/onboarding')
+  const companyName = supplier.trade_name ?? supplier.legal_name ?? 'My company'
 
   let modules: string[] = ['marketplace', 'outlet']
   try {
@@ -24,7 +25,7 @@ export default async function SupplierModulesPage() {
         <h1 className="text-2xl font-bold">My Modules</h1>
         <p className="text-muted-foreground text-sm mt-0.5">Activate TTAIEMA modules to expand your business — one company profile, many channels.</p>
       </div>
-      <ModuleActivator initial={modules} />
+      <ModuleActivator initial={modules} companyName={companyName} email={user.email ?? ''} />
       <p className="text-xs text-gray-400">Outlet &amp; Marketplace are part of your base presence. Activating Logistics or Consulting connects you to those teams. Premium membership unlocks advanced features per module.</p>
     </div>
   )

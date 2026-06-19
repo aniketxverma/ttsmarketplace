@@ -24,6 +24,17 @@ export async function POST(req: NextRequest) {
   const current: string[] = Array.isArray((sup as any).modules) && (sup as any).modules.length
     ? (sup as any).modules
     : ['marketplace', 'outlet'] // legacy default
+
+  // One-directional rule: a Marketplace seller can connect into the Outlet Zone
+  // instantly, but an Outlet-only seller cannot self-activate the public
+  // Marketplace — selling NEW goods there needs verification (request → review).
+  if (module === 'marketplace' && active !== false && !current.includes('marketplace')) {
+    return NextResponse.json(
+      { error: 'Marketplace access requires verification. Please request access — our team will review your company.', requiresVerification: true },
+      { status: 403 },
+    )
+  }
+
   let next = current
   if (active === false) next = current.filter((m) => m !== module)
   else if (!current.includes(module)) next = [...current, module]
