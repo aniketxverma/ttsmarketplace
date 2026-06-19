@@ -53,13 +53,13 @@ export function MarketplaceTopBar({
       {/* ── Products | Shops tabs ── */}
       <div className="flex items-center gap-1 bg-gray-100 rounded-xl p-1 w-max mb-5">
         {([
-          { id: 'catalogues', label: 'Catalogues',  Icon: LayoutGrid },
           { id: 'products',   label: 'All Products', Icon: Package },
+          { id: 'catalogues', label: 'Catalogues',  Icon: LayoutGrid },
           { id: 'shops',      label: 'Shops',        Icon: Store },
         ] as const).map(({ id, label, Icon }) => {
           const active = activeView === id
           return (
-            <button key={id} onClick={() => navigate({ view: id === 'catalogues' ? null : id })}
+            <button key={id} onClick={() => navigate({ view: id === 'products' ? null : id })}
               className={`flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-bold transition-colors ${
                 active ? 'bg-white text-[#0B1F4D] shadow-sm' : 'text-gray-500 hover:text-[#0B1F4D]'}`}>
               <Icon className="w-4 h-4" /> {label}

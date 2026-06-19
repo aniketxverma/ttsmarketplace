@@ -101,10 +101,9 @@ export default async function MarketplacePage({
   const page = parseInt(searchParams.page || '1')
   const activeRegion = searchParams.region ?? null
   const activeSupplier = searchParams.supplier ?? null
-  // Default view is the professional Supplier Catalogues; "All Products" + Shops
-  // are toggles. Viewing a specific supplier always shows their product catalogue.
+  // Default view is "All Products"; Supplier Catalogues + Shops are opt-in toggles.
   const rawView: 'products' | 'shops' | 'catalogues' =
-    searchParams.view === 'shops' ? 'shops' : searchParams.view === 'products' ? 'products' : 'catalogues'
+    searchParams.view === 'shops' ? 'shops' : searchParams.view === 'catalogues' ? 'catalogues' : 'products'
   const activeView: 'products' | 'shops' | 'catalogues' = activeSupplier && rawView === 'catalogues' ? 'products' : rawView
   const activeMarket = searchParams.market ?? 'europe'
   const activeCountryIso = (searchParams.country ?? '').toUpperCase()
