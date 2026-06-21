@@ -65,6 +65,20 @@ export async function middleware(request: NextRequest) {
     })
   }
 
+  // ── Auth callback recovery ───────────────────────────────────────────────
+  // Supabase email links redirect to the Site URL root (`/?code=…` or
+  // `/?token_hash=…&type=…`). Our exchange handler lives at /auth/callback, so
+  // forward those params there instead of dropping the user on the homepage
+  // un-authenticated. (Skip if already on /auth.)
+  if (
+    request.nextUrl.pathname === '/' &&
+    (request.nextUrl.searchParams.has('code') || request.nextUrl.searchParams.has('token_hash'))
+  ) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/auth/callback'
+    return NextResponse.redirect(url)
+  }
+
   // ── Supabase client ──────────────────────────────────────────────────────
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
