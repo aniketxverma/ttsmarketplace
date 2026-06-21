@@ -29,6 +29,7 @@
     "jszip": "^3.10.1",
     "lucide-react": "^0.383.0",
     "next": "14.2.3",
+    "nodemailer": "^6.10.1",
     "openai": "^6.35.0",
     "react": "^18",
     "react-dom": "^18",
@@ -43,6 +44,7 @@
   },
   "devDependencies": {
     "@types/node": "^20",
+    "@types/nodemailer": "^6.4.24",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "autoprefixer": "^10.0.1",

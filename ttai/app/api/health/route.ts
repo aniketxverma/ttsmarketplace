@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { getSmtpTransport, isSmtpConfigured } from '@/lib/email/client'
 import Stripe from 'stripe'
 
 export const dynamic = 'force-dynamic'
@@ -8,7 +9,7 @@ export async function GET() {
   const checks: Record<string, 'ok' | 'fail'> = {
     database: 'fail',
     stripe: 'fail',
-    resend: 'fail',
+    email: 'fail',
   }
 
   try {
@@ -23,15 +24,21 @@ export async function GET() {
     checks.stripe = 'ok'
   } catch {}
 
-  if (process.env.RESEND_API_KEY) {
+  // Email: prefer SMTP (Hostinger). Fall back to Resend, else pass when neither is set.
+  if (isSmtpConfigured()) {
+    try {
+      const transport = getSmtpTransport('info')
+      if (transport && (await transport.verify())) checks.email = 'ok'
+    } catch {}
+  } else if (process.env.RESEND_API_KEY) {
     try {
       const res = await fetch('https://api.resend.com/domains', {
         headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
       })
-      if (res.ok) checks.resend = 'ok'
+      if (res.ok) checks.email = 'ok'
     } catch {}
   } else {
-    checks.resend = 'ok'
+    checks.email = 'ok'
   }
 
   const allOk = Object.values(checks).every((v) => v === 'ok')

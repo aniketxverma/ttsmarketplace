@@ -21,6 +21,7 @@ export async function GET(request: Request) {
         if (data.user.email) {
           sendEmailFireAndForget({
             to: data.user.email,
+            role: 'contact',
             subject: 'Welcome to TTAI!',
             react: React.createElement(WelcomeEmail, {
               fullName: profile?.full_name ?? data.user.email,

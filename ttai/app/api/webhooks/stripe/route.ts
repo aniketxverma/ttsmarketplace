@@ -165,6 +165,7 @@ export async function POST(req: NextRequest) {
     if (buyerAuth?.user?.email) {
       sendEmailFireAndForget({
         to: buyerAuth.user.email,
+        role: 'contact',
         subject: `Order confirmed — ${totalFormatted}`,
         react: React.createElement(OrderConfirmationEmail, {
           buyerName: buyerProfile?.full_name ?? 'Buyer',

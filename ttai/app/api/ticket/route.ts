@@ -108,6 +108,7 @@ export async function POST(req: NextRequest) {
 
   sendEmailFireAndForget({
     to: ADMIN_EMAIL,
+    role: 'support',
     subject: `[${dept.label}] ${b.subject || b.companyName || b.clientName || b.email || 'New request'} — for ${assignedTo}`,
     react: body as any,
   })

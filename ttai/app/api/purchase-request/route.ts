@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
         ? 'TTAIEMA coordinates this deal — confirm stock, price & delivery with the supplier, then the buyer.'
         : 'Confirm stock, quantity, price & delivery in your TTAIEMA dashboard → Purchase Requests.'),
     )
-    sendEmailFireAndForget({ to, subject: `${managed ? '[Managed] ' : ''}Purchase request — ${b.productName || 'product'}`, react: body as any })
+    sendEmailFireAndForget({ to, role: 'contact', subject: `${managed ? '[Managed] ' : ''}Purchase request — ${b.productName || 'product'}`, react: body as any })
 
     // Managed deals also enter the Control Center (Marketplace team / Ane).
     if (managed) {
