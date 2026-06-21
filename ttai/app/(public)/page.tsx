@@ -5,6 +5,7 @@ import { Reveal } from '@/components/Reveal'
 import { RegionChooser } from '@/components/home/RegionChooser'
 import { LaunchCountdown } from '@/components/home/LaunchCountdown'
 import { getMarketplaceOpen, getLaunchDate } from '@/lib/marketplace-phase'
+import { createClient } from '@/lib/supabase/server'
 import { getLocale } from '@/lib/i18n/server'
 import { localizeUI } from '@/lib/i18n/ui'
 import {
@@ -42,12 +43,12 @@ const CHANNELS = [
 ] as const
 
 const WHY = [
-  { Icon: ShieldCheck, title: 'Verified Suppliers', desc: 'All suppliers are verified and rated for your complete confidence.' },
-  { Icon: Globe2,      title: 'International Trade', desc: 'Connect with partners worldwide and expand your market.' },
-  { Icon: MessageSquare, title: 'Business Channels', desc: 'Get real-time offers, new products and updates directly in your inbox.' },
-  { Icon: Truck,       title: 'Logistics Support', desc: 'End-to-end logistics solutions for smooth global delivery.' },
-  { Icon: Share2,      title: 'Marketplace Network', desc: 'All-in-one platform connecting the entire supply chain.' },
-  { Icon: BarChart3,   title: 'Global Expansion', desc: 'Tools and opportunities to scale your business internationally.' },
+  { Icon: ShieldCheck,   title: 'Verified Suppliers',  desc: 'All suppliers are verified and rated for your complete confidence.', accent: '#2563eb' },
+  { Icon: Globe2,        title: 'International Trade',  desc: 'Connect with partners worldwide and expand your market.',          accent: '#0ea5e9' },
+  { Icon: MessageSquare, title: 'Business Channels',   desc: 'Get real-time offers, new products and updates directly in your inbox.', accent: '#8b5cf6' },
+  { Icon: Truck,         title: 'Logistics Support',   desc: 'End-to-end logistics solutions for smooth global delivery.',        accent: '#f97316' },
+  { Icon: Share2,        title: 'Marketplace Network', desc: 'All-in-one platform connecting the entire supply chain.',           accent: '#10b981' },
+  { Icon: BarChart3,     title: 'Global Expansion',    desc: 'Tools and opportunities to scale your business internationally.',   accent: '#F5A623' },
 ] as const
 
 const CHAIN = [
@@ -142,6 +143,29 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
 
   const marketplaceOpen = await getMarketplaceOpen()
   const launchDate = marketplaceOpen ? null : await getLaunchDate()
+
+  // ── Real suppliers for the "Trusted Suppliers & Brands" strip ──────────────
+  // Featured + verified first; defensive so a schema lag never breaks the home page.
+  let realBrands: { name: string; place: string; logo: string | null; href: string; tier: string | null; featured: boolean }[] = []
+  try {
+    const supabase = createClient()
+    const { data } = await (supabase.from('suppliers') as any)
+      .select('id, trade_name, legal_name, logo_url, reliability_tier, status, brand_slug, is_featured, countries(name)')
+      .eq('status', 'ACTIVE')
+      .order('is_featured', { ascending: false })
+      .limit(12)
+    realBrands = ((data ?? []) as any[]).map((s) => ({
+      name: s.trade_name ?? s.legal_name ?? 'Supplier',
+      place: s.countries?.name ?? '',
+      logo: s.logo_url ?? null,
+      href: s.brand_slug ? `/brand/${s.brand_slug}` : '/suppliers',
+      tier: s.reliability_tier ?? null,
+      featured: !!s.is_featured,
+    }))
+  } catch { /* fall back to placeholder brands below */ }
+  const brands = realBrands.length
+    ? realBrands
+    : BRANDS.map((b) => ({ name: b.name, place: b.place, logo: null, href: '/suppliers', tier: null, featured: false }))
 
   // Localize every static string on the page (cache-backed, self-filling).
   const locale = getLocale()
@@ -344,10 +368,15 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             {WHY.map((w, i) => (
-              <Reveal key={tt(w.title)} from="up" delay={i * 60}>
-                <div className="h-full rounded-2xl border border-gray-100 bg-white p-5 text-center hover:shadow-lg hover:border-[#F5A623]/30 transition-all">
-                  <div className="w-12 h-12 rounded-2xl bg-[#F5A623]/10 flex items-center justify-center mx-auto mb-3">
-                    <w.Icon className="w-6 h-6 text-[#F5A623]" />
+              <Reveal key={tt(w.title)} from="up" delay={i * 70}>
+                <div className="group relative h-full rounded-2xl border border-gray-100 bg-white p-5 text-center shadow-sm hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 overflow-hidden">
+                  {/* top accent bar (reveals on hover) */}
+                  <span className="absolute top-0 inset-x-0 h-1 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left" style={{ backgroundColor: w.accent }} />
+                  <div
+                    className="w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-3 transition-all duration-300 group-hover:scale-110 group-hover:-rotate-6"
+                    style={{ backgroundColor: `${w.accent}14`, color: w.accent }}
+                  >
+                    <w.Icon className="w-6 h-6" />
                   </div>
                   <h3 className="font-extrabold text-[#0B1F4D] text-sm mb-1.5">{tt(w.title)}</h3>
                   <p className="text-[11px] text-gray-400 leading-relaxed">{tt(w.desc)}</p>
@@ -516,26 +545,54 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
       </section>
 
       {/* ═══ TRUSTED SUPPLIERS & BRANDS ═══ */}
-      <section className="py-16 px-4 bg-white">
+      <section className="py-16 px-4 bg-white overflow-hidden">
         <div className="container mx-auto max-w-6xl">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-[#0B1F4D]">{tt("Trusted Suppliers & Brands")}</h2>
-            <Link href="/suppliers" className="text-sm font-bold text-[#F5A623] hover:underline flex items-center gap-1">
+          <div className="flex items-end justify-between mb-8">
+            <div>
+              <span className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-[#F5A623] mb-2">
+                <Sparkles className="w-3.5 h-3.5" /> Verified network
+              </span>
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-[#0B1F4D]">{tt("Trusted Suppliers & Brands")}</h2>
+            </div>
+            <Link href="/suppliers" className="text-sm font-bold text-[#F5A623] hover:underline flex items-center gap-1 flex-shrink-0">
               View all suppliers <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-            {BRANDS.map((b) => (
-              <Link key={b.name} href="/suppliers" className="rounded-2xl border border-gray-100 bg-white p-4 text-center hover:shadow-md hover:border-[#0B1F4D]/20 transition-all">
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#0B1F4D] to-[#1a3a7a] flex items-center justify-center mx-auto mb-2.5 text-white font-black text-sm">
-                  {b.name.split(' ').map((w) => w[0]).join('').slice(0, 2)}
-                </div>
-                <p className="font-extrabold text-[#0B1F4D] text-xs leading-tight">{b.name}</p>
-                <p className="text-[11px] text-gray-400 mb-2">{b.place}</p>
-                <span className="inline-flex items-center gap-1 rounded-full bg-green-50 text-green-700 px-2 py-0.5 text-[10px] font-bold">
-                  <CheckCircle2 className="w-2.5 h-2.5" /> Verified
-                </span>
-              </Link>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+            {brands.map((b, i) => (
+              <Reveal key={`${b.name}-${i}`} from="up" delay={i * 70}>
+                <Link
+                  href={b.href}
+                  className="group relative block h-full rounded-2xl border border-gray-100 bg-white p-5 text-center shadow-sm hover:shadow-xl hover:-translate-y-1.5 hover:border-[#F5A623]/40 transition-all duration-300 overflow-hidden"
+                >
+                  {b.featured && (
+                    <span className="absolute top-2 right-2 z-10 inline-flex items-center rounded-full bg-[#F5A623] text-[#0B1F4D] text-[9px] font-extrabold px-1.5 py-0.5 shadow">★</span>
+                  )}
+                  {/* moving sheen on hover */}
+                  <span className="pointer-events-none absolute -inset-x-1/2 inset-y-0 bg-gradient-to-r from-transparent via-[#F5A623]/15 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out" />
+                  {/* logo / initials with glow ring */}
+                  <div className="relative w-14 h-14 mx-auto mb-3">
+                    <span className="absolute inset-0 rounded-full bg-gradient-to-br from-[#F5A623] to-[#0B1F4D] opacity-0 group-hover:opacity-100 blur-[7px] transition-opacity duration-300" />
+                    <div className="relative w-14 h-14 rounded-full bg-gradient-to-br from-[#0B1F4D] to-[#1a3a7a] flex items-center justify-center mx-auto text-white font-black text-sm overflow-hidden ring-2 ring-white shadow group-hover:scale-105 transition-transform duration-300">
+                      {b.logo ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={b.logo} alt={b.name} className="w-full h-full object-cover" />
+                      ) : (
+                        b.name.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase()
+                      )}
+                    </div>
+                  </div>
+                  <p className="font-extrabold text-[#0B1F4D] text-xs leading-tight line-clamp-2 min-h-[2rem] flex items-center justify-center">{b.name}</p>
+                  {b.place && (
+                    <p className="text-[11px] text-gray-400 mb-2 inline-flex items-center gap-0.5 justify-center">
+                      <MapPin className="w-2.5 h-2.5" /> {b.place}
+                    </p>
+                  )}
+                  <span className="inline-flex items-center gap-1 rounded-full bg-green-50 text-green-700 px-2 py-0.5 text-[10px] font-bold">
+                    <CheckCircle2 className="w-2.5 h-2.5" /> {b.tier === 'GOLD' ? 'Gold Verified' : 'Verified'}
+                  </span>
+                </Link>
+              </Reveal>
             ))}
           </div>
         </div>
