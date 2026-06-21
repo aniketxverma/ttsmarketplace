@@ -1,24 +1,28 @@
 'use client'
 
 import { useState } from 'react'
-import { X, Send, CheckCircle2, ShoppingBag } from 'lucide-react'
+import { X, Send, CheckCircle2, ShoppingBag, FileText } from 'lucide-react'
 import { useAuthGate } from '@/components/shared/AuthGate'
 
 /**
  * B2B "Want to Buy" — the buyer requests a purchase (no payment yet). The supplier
  * confirms stock, quantity, final price and delivery; only then the buyer pays.
  */
-export function WantToBuyButton({ productId, productName, supplierId, supplierName, unit, unitLabel, quantity }: {
+export function WantToBuyButton({ productId, productName, supplierId, supplierName, unit, unitLabel, quantity, label, quote }: {
   productId: string; productName: string; supplierId: string; supplierName: string
   unit: string; unitLabel: string; quantity: number | string
+  /** Override the button text (e.g. "Request price / quote" for price-on-request lots). */
+  label?: string
+  /** Styles the button as a quote/price request (violet) rather than a purchase (navy). */
+  quote?: boolean
 }) {
   const [open, setOpen] = useState(false)
-  const { gate, modal } = useAuthGate({ title: 'Sign in to request a purchase', subtitle: 'Create a free account to send purchase requests to suppliers.' })
+  const { gate, modal } = useAuthGate({ title: 'Sign in to request a price', subtitle: 'Create a free account — your request and the supplier’s reply land in your dashboard.' })
   return (
     <>
       <button type="button" onClick={() => gate(() => setOpen(true))}
-        className="w-full flex items-center justify-center gap-2 rounded-xl px-4 py-3.5 text-sm font-bold bg-[#0B1F4D] text-white hover:bg-[#162d6e] hover:shadow-lg transition-all">
-        <ShoppingBag className="w-4 h-4" /> Want to Buy — request purchase
+        className={`w-full flex items-center justify-center gap-2 rounded-xl px-4 py-3.5 text-sm font-bold hover:shadow-lg transition-all ${quote ? 'bg-violet-600 text-white hover:bg-violet-700' : 'bg-[#0B1F4D] text-white hover:bg-[#162d6e]'}`}>
+        {quote ? <FileText className="w-4 h-4" /> : <ShoppingBag className="w-4 h-4" />} {label ?? 'Want to Buy — request purchase'}
       </button>
       {modal}
       {open && <RequestModal {...{ productId, productName, supplierId, supplierName, unit, unitLabel, quantity }} onClose={() => setOpen(false)} />}
@@ -59,8 +63,8 @@ function RequestModal({ productId, productName, supplierId, supplierName, unit, 
           <div className="text-center py-4">
             <CheckCircle2 className="w-12 h-12 text-green-500 mx-auto" />
             <h3 className="text-lg font-extrabold text-[#0B1F4D] mt-3">Request sent to {supplierName}</h3>
-            <p className="text-sm text-gray-500 mt-1">The supplier will confirm stock, quantity, final price and delivery time. You only pay after confirmation — no payment now.</p>
-            <button onClick={onClose} className="mt-4 rounded-xl bg-[#0B1F4D] text-white px-5 py-2.5 text-sm font-bold">Done</button>
+            <p className="text-sm text-gray-500 mt-1">The supplier will reply with stock, final price &amp; delivery. Their answer appears in your dashboard → <span className="font-semibold text-[#0B1F4D]">My Purchase Requests</span>. You only pay after confirmation.</p>
+            <a href="/buyer/requests" className="mt-4 inline-block rounded-xl bg-[#0B1F4D] text-white px-5 py-2.5 text-sm font-bold">View in dashboard</a>
           </div>
         ) : (
           <>

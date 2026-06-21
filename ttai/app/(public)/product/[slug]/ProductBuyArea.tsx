@@ -212,6 +212,8 @@ export function ProductBuyArea({
             )}
             {wantToBuy && supplierId ? (
               <WantToBuyButton productId={product.id} productName={product.name} supplierId={supplierId} supplierName={supplierName} unit="kg" unitLabel="kg" quantity={kg} />
+            ) : priceOnRequest && supplierId ? (
+              <WantToBuyButton quote label="Request price / quote" productId={product.id} productName={product.name} supplierId={supplierId} supplierName={supplierName} unit="kg" unitLabel="kg" quantity={kg} />
             ) : priceOnRequest ? (
               <button type="button" onClick={requestQuote} className="w-full flex items-center justify-center gap-2 rounded-xl px-4 py-3.5 text-sm font-bold bg-violet-600 text-white hover:bg-violet-700 transition-all"><FileText className="w-4 h-4" /> Request price / quote</button>
             ) : (
@@ -265,6 +267,8 @@ export function ProductBuyArea({
         {/* Action */}
         {wantToBuy && supplierId ? (
           <WantToBuyButton productId={product.id} productName={product.name} supplierId={supplierId} supplierName={supplierName} unit={unit} unitLabel={UNIT_LABEL[unit]} quantity={qty} />
+        ) : priceOnRequest && supplierId ? (
+          <WantToBuyButton quote label="Request price / quote" productId={product.id} productName={product.name} supplierId={supplierId} supplierName={supplierName} unit={unit} unitLabel={UNIT_LABEL[unit]} quantity={qty} />
         ) : priceOnRequest ? (
           <button type="button" onClick={requestQuote}
             className="w-full flex items-center justify-center gap-2 rounded-xl px-4 py-3.5 text-sm font-bold bg-violet-600 text-white hover:bg-violet-700 hover:shadow-lg transition-all">
