@@ -76,9 +76,16 @@ export function canSeeB2B(role?: string | null, businessType?: string | null): b
 // The marketplace presents each client its counterpart in the chain, and how
 // far it can reach is decided by what it pays (admin-granted `profiles.tier`):
 //
-//   • Shop / retail          standard → Suppliers · pro → +Distributors · full → +Factories
-//   • Supplier / Distributor any paid → Factories  (their counterpart)
-//   • Factory                any paid → Suppliers & Distributors (their counterpart)
+//   Tier ladder (a Retail/buyer client climbs it):
+//     free      €0    browse only — every "get/contact" click is blocked
+//     standard  €79   Retail plan — operate as retail (own shop, distributors)
+//     pro       €158  B2B add-on (Retail + €79) — unlocks Suppliers / wholesale.
+//                      Does NOT grant Supplier seller status, does NOT reach Factory.
+//     full      €210  Factory / Global plan — the ONLY way Retail reaches Factories
+//                      (it is a distinct plan, not a top-up from €79).
+//
+//   • Supplier / Distributor → Factories (their counterpart) + Retail, included.
+//   • Factory                → Suppliers & Distributors (their counterpart).
 //
 //   `canSeeB2B` (above) stays the consumer↔business privacy line; the tier logic
 //   below governs *directory discovery* only.
@@ -134,12 +141,14 @@ export interface DirectoryAccess {
 
 /** What counterpart directories a viewer may browse, by chain level + paid tier.
  *
- *  Client rule — each level has ONE direct (free) relationship; reaching any
- *  OTHER level requires a paid plan:
+ *  Retail/buyer client climbs the tier ladder for upstream access:
+ *    • Distributors — direct counterpart, open from the Retail plan.
+ *    • Suppliers    — B2B tier (pro / €158).
+ *    • Factories    — Factory tier (full / €210) only.
+ *  Supplier & Factory keep their single free direct relationship; the other
+ *  upstream directory is paid (r >= 1):
  *    • Factory  ↔ Supplier
- *    • Distributor ↔ Retail
- *    • Retail   ↔ End user
- *  Everything else is paid (r >= 1). */
+ *    • Distributor ↔ Retail */
 export function directoryAccess(level: ChainLevel, tier?: string | null): DirectoryAccess {
   const r = tierRank(tier)
   const paid = r >= 1
@@ -149,8 +158,8 @@ export function directoryAccess(level: ChainLevel, tier?: string | null): Direct
     case 'consumer':
       return { suppliers: false, distributors: false, factories: false }
     case 'retail':
-      // Direct = Distributors (free). Suppliers & Factories require payment.
-      return { suppliers: paid, distributors: true, factories: paid }
+      // Distributors (direct, free). Suppliers need B2B (pro), Factories need Factory (full).
+      return { suppliers: r >= 2, distributors: true, factories: r >= 3 }
     case 'distributor':
       // Direct = Retail (downstream, no directory). Source upstream → pay.
       return { suppliers: paid, distributors: false, factories: paid }
