@@ -15,7 +15,7 @@ export default function CheckoutPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [payMethod, setPayMethod] = useState<'card' | 'bank_transfer' | 'cod'>('card')
+  // All payments go through Stripe (card / Apple Pay / Google Pay on the Stripe page).
 
   const [form, setForm] = useState({
     fullName: '', line1: '', city: '', postalCode: '', country: 'ES', phone: '', vatNumber: '',
@@ -56,7 +56,7 @@ export default function CheckoutPage() {
         items: items.map(i => ({ productId: i.productId, quantity: i.quantity, unit: i.unit })),
         shippingAddress: { fullName: form.fullName, line1: form.line1, city: form.city, postalCode: form.postalCode, country: form.country, phone: form.phone },
         vatNumber: form.vatNumber || undefined,
-        paymentMethod: payMethod,
+        paymentMethod: 'card',
       }),
     })
 
@@ -68,14 +68,15 @@ export default function CheckoutPage() {
       return
     }
 
-    // Card → redirect to Stripe Checkout. Bank transfer / COD → confirmation page.
+    // Always redirect to Stripe Checkout to pay.
     if (data.checkoutUrl) {
       clearCart()
       window.location.href = data.checkoutUrl
       return
     }
+    // Fallback (no Stripe URL returned) → confirmation page.
     clearCart()
-    router.push(`/checkout/success?id=${data.primaryOrderId}&m=${payMethod}`)
+    router.push(`/checkout/success?id=${data.primaryOrderId}`)
   }
 
   if (items.length === 0) {
@@ -196,25 +197,20 @@ export default function CheckoutPage() {
                   <div className="w-7 h-7 rounded-full bg-[#0B1F4D] text-white text-xs font-black flex items-center justify-center">2</div>
                   Payment
                 </h2>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                  {([
-                    { v: 'card', label: 'Card', sub: 'Visa · Mastercard', icon: 'M3 10h18M7 15h2m-5 4h16a1 1 0 001-1V6a1 1 0 00-1-1H4a1 1 0 00-1 1v12a1 1 0 001 1z' },
-                    { v: 'bank_transfer', label: 'Bank transfer', sub: 'Invoice · pay later', icon: 'M3 21h18M4 10h16M5 10V7l7-4 7 4v3M6 10v8m4-8v8m4-8v8m4-8v8' },
-                    { v: 'cod', label: 'Cash on delivery', sub: 'Pay on arrival', icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8V6m0 12v-2m0 0c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
-                  ] as const).map((m) => (
-                    <button key={m.v} type="button" onClick={() => setPayMethod(m.v)}
-                      className={`text-left rounded-xl border p-3 transition-all ${payMethod === m.v ? 'border-[#0B1F4D] bg-[#0B1F4D]/[0.04] ring-1 ring-[#0B1F4D]' : 'border-gray-200 hover:border-gray-300'}`}>
-                      <svg className={`w-5 h-5 mb-1 ${payMethod === m.v ? 'text-[#0B1F4D]' : 'text-gray-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d={m.icon} /></svg>
-                      <p className="font-bold text-[#0B1F4D] text-sm leading-tight">{m.label}</p>
-                      <p className="text-[11px] text-gray-400">{m.sub}</p>
-                    </button>
-                  ))}
+                <div className="rounded-xl border border-[#0B1F4D] bg-[#0B1F4D]/[0.04] ring-1 ring-[#0B1F4D] p-4 flex items-center gap-3">
+                  <svg className="w-6 h-6 text-[#0B1F4D] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M3 10h18M7 15h2m-5 4h16a1 1 0 001-1V6a1 1 0 00-1-1H4a1 1 0 00-1 1v12a1 1 0 001 1z" /></svg>
+                  <div className="flex-1">
+                    <p className="font-bold text-[#0B1F4D] text-sm leading-tight">Secure payment by Stripe</p>
+                    <p className="text-[11px] text-gray-500 mt-0.5">Visa · Mastercard · Amex · Apple&nbsp;Pay · Google&nbsp;Pay</p>
+                  </div>
+                  <span className="hidden sm:inline-flex items-center gap-1 text-[10px] font-bold text-gray-400 uppercase tracking-wide">
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                    Encrypted
+                  </span>
                 </div>
                 <div className="mt-3 flex items-start gap-2 text-xs text-gray-500 bg-blue-50/60 border border-blue-100 rounded-xl px-3.5 py-2.5">
                   <svg className="w-4 h-4 mt-0.5 text-[#0B1F4D] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                  {payMethod === 'card' && <span><span className="font-semibold text-[#0B1F4D]">Secure card payment.</span> You&apos;ll be redirected to Stripe to pay. Your order is confirmed instantly on payment.</span>}
-                  {payMethod === 'bank_transfer' && <span><span className="font-semibold text-[#0B1F4D]">Bank transfer.</span> We&apos;ll create your order &amp; invoice with the bank details — pay within 24–48h to confirm.</span>}
-                  {payMethod === 'cod' && <span><span className="font-semibold text-[#0B1F4D]">Cash on delivery.</span> Pay the supplier when your order arrives (subject to supplier approval).</span>}
+                  <span><span className="font-semibold text-[#0B1F4D]">Secure payment.</span> You&apos;ll be redirected to Stripe to complete payment. Your order is confirmed instantly once paid.</span>
                 </div>
               </div>
 
@@ -305,14 +301,14 @@ export default function CheckoutPage() {
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                         </svg>
-                        {payMethod === 'card' ? 'Redirecting to payment…' : 'Placing Order...'}
+                        Redirecting to payment…
                       </>
                     ) : (
                       <>
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                         </svg>
-                        {payMethod === 'card' ? 'Pay' : 'Place Order'} · {fmt(grandTotal, currency)}
+                        Pay · {fmt(grandTotal, currency)}
                       </>
                     )}
                   </button>

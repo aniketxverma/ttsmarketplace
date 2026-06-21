@@ -1,5 +1,4 @@
 import * as Sentry from '@sentry/nextjs'
-import { renderToStaticMarkup } from 'react-dom/server'
 import type { ReactElement } from 'react'
 import {
   getResendClient,
@@ -37,6 +36,9 @@ export async function sendEmail(params: SendEmailParams) {
     const creds = smtpCredsForRole(role)
     if (transport && creds) {
       try {
+        // Lazy import keeps react-dom/server out of the static module graph
+        // (Next.js errors if a route-imported module statically imports it).
+        const { renderToStaticMarkup } = await import('react-dom/server')
         const html = '<!DOCTYPE html>' + renderToStaticMarkup(params.react)
         const result = await transport.sendMail({
           from: fromHeader(creds.user, role),
