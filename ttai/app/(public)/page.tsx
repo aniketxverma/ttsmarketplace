@@ -239,24 +239,6 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
         </div>
       </section>
 
-      {/* ═══ SLOGAN BAND ═══ */}
-      <section className="bg-[#0B1F4D] py-7 px-4">
-        <div className="container mx-auto max-w-5xl text-center">
-          <div className="flex items-center justify-center gap-2 mb-2">
-            <h2 className="text-xl sm:text-2xl font-black text-white">{tt("Start Local. Grow National. Expand Worldwide.")}</h2>
-            <span className="text-[#F5A623] text-lg tracking-tight">★★★★★</span>
-          </div>
-          <p className="text-blue-200/80 text-sm font-semibold flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
-            {['Retail', 'B2B', 'Physical Stores', 'Online Marketplace', 'Mobile Business', 'WhatsApp Channels'].map((c, i, a) => (
-              <span key={c} className="inline-flex items-center gap-2">
-                {c}{i < a.length - 1 && <span className="text-[#F5A623]">•</span>}
-              </span>
-            ))}
-          </p>
-          <p className="text-[#F5A623] text-xs font-extrabold uppercase tracking-widest mt-2">One Connected Platform</p>
-        </div>
-      </section>
-
       {/* ═══ LAUNCH COUNTDOWN (pre-opening) ═══ */}
       {launchDate && <LaunchCountdown target={launchDate} />}
 
