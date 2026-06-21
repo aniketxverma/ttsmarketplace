@@ -5,6 +5,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { getMarketplaceOpen, PRE_OPENING_NOTICE } from '@/lib/marketplace-phase'
 import { MARKET_REGIONS } from '@/lib/market-regions'
 import { ShopCard, type ShopCardData } from '@/components/marketplace/ShopCard'
+import { FilterPanel } from '@/components/outlet/FilterPanel'
 import { CONDITIONS, SELLING_UNITS, OUTLET_ROLES, RETAIL_CHAINS, conditionInfo, unitInfo,
   OPPORTUNITIES, RETAIL_CHAIN_BANNERS, OUTLET_BRANDS, opportunityInfo, sellModeInfo } from '@/lib/outlet'
 import {
@@ -144,9 +145,13 @@ export default async function OutletZonePage({ searchParams }: { searchParams: S
   const FilterRow = ({ label, children }: { label: string; children: React.ReactNode }) => (
     <div className="py-2.5 border-b border-gray-100 last:border-0">
       <span className="block text-[11px] font-bold text-gray-400 uppercase tracking-wide mb-1.5">{label}</span>
-      <div className="flex flex-wrap gap-1.5">{children}</div>
+      {/* Mobile: single horizontally-scrollable row (compact). Desktop: wrap. */}
+      <div className="flex gap-1.5 overflow-x-auto pb-1 -mb-1 lg:flex-wrap lg:overflow-visible lg:pb-0 lg:mb-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">{children}</div>
     </div>
   )
+
+  const activeFilterCount = (['cond', 'unit', 'stype', 'market', 'category', 'brand', 'country', 'source'] as const)
+    .filter((k) => searchParams[k]).length
 
   return (
     <div className="min-h-screen bg-[#F4F6FB] overflow-x-hidden">
@@ -272,9 +277,8 @@ export default async function OutletZonePage({ searchParams }: { searchParams: S
         )}
 
        <div className="grid lg:grid-cols-[250px_1fr] gap-6 items-start">
-        {/* ── Filter side panel ── */}
-        <aside className="lg:sticky lg:top-20 rounded-2xl bg-white border border-gray-200 p-4">
-          <p className="font-extrabold text-sm text-[#0B1F4D] mb-1">Filters</p>
+        {/* ── Filter side panel (collapses on mobile) ── */}
+        <FilterPanel activeCount={activeFilterCount}>
           <FilterRow label="Condition">
             <Chip active={!searchParams.cond} href={chipHref({ cond: undefined })}>All</Chip>
             {CONDITIONS.map((c) => <Chip key={c.key} active={searchParams.cond === c.key} href={chipHref({ cond: c.key })}>{c.label}</Chip>)}
@@ -317,7 +321,7 @@ export default async function OutletZonePage({ searchParams }: { searchParams: S
               {sources.map((s) => <Chip key={s} active={searchParams.source === s} href={chipHref({ source: s })}>{s}</Chip>)}
             </FilterRow>
           )}
-        </aside>
+        </FilterPanel>
 
         {/* ── Main column ── */}
         <div className="min-w-0">
