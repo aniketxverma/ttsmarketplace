@@ -1,12 +1,13 @@
 'use client'
 
-import { useState, type ReactNode } from 'react'
+import { useState, useEffect, type ReactNode } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useCart } from '@/lib/cart/CartContext'
 import {
   Package, Box, Layers, Truck, ShoppingCart, FileText, Check, Image as ImageIcon,
+  ChevronLeft, ChevronRight,
 } from 'lucide-react'
 import {
   availableUnits, piecesIn, cartonsIn, unitPrice, minUnitsFor,
@@ -75,7 +76,18 @@ export function ProductBuyArea({
   const sorted = [...images].sort((a, b) => a.sort_order - b.sort_order)
   const roleImgs = sorted.filter(i => !i.image_role || i.image_role === wantRole)
   const gallery = roleImgs.length > 0 ? roleImgs : sorted
-  const mainImg = gallery[Math.min(active, gallery.length - 1)]?.url
+  const safeActive = Math.min(active, gallery.length - 1)
+  const mainImg = gallery[safeActive]?.url
+
+  // ── Gallery carousel: arrows + auto-advance (pauses on hover/interaction) ──
+  const [paused, setPaused] = useState(false)
+  const goPrev = () => setActive(i => (i - 1 + gallery.length) % gallery.length)
+  const goNext = () => setActive(i => (i + 1) % gallery.length)
+  useEffect(() => {
+    if (gallery.length < 2 || paused) return
+    const id = setInterval(() => setActive(i => (i + 1) % gallery.length), 4000)
+    return () => clearInterval(id)
+  }, [gallery.length, paused])
 
   function pickUnit(u: PurchaseUnit) { setUnit(u); setQty(minFor(u)); setActive(0) }
 
@@ -123,24 +135,52 @@ export function ProductBuyArea({
 
       {/* ── Gallery ──────────────────────────────────────────────────────── */}
       <div className="lg:sticky lg:top-20 space-y-3">
-        <div className="relative aspect-square rounded-2xl border border-gray-100 bg-white overflow-hidden shadow-sm">
+        <div
+          className="group relative aspect-square rounded-2xl border border-gray-100 bg-white overflow-hidden shadow-sm"
+          onMouseEnter={() => setPaused(true)}
+          onMouseLeave={() => setPaused(false)}
+        >
           {mainImg ? (
-            <Image src={mainImg} alt={product.name} fill className="object-contain p-4" sizes="(max-width:1024px) 100vw, 50vw" priority />
+            // key on the url so each slide fades in smoothly
+            <Image key={mainImg} src={mainImg} alt={product.name} fill className="object-contain p-4 animate-[fadeIn_0.4s_ease]" sizes="(max-width:1024px) 100vw, 50vw" priority />
           ) : (
             <div className="absolute inset-0 flex items-center justify-center text-gray-200"><ImageIcon className="w-16 h-16" /></div>
           )}
           {unit !== 'piece' && (
-            <span className="absolute top-3 left-3 text-[11px] font-extrabold uppercase tracking-wide px-2.5 py-1 rounded-full text-white shadow"
+            <span className="absolute top-3 left-3 z-10 text-[11px] font-extrabold uppercase tracking-wide px-2.5 py-1 rounded-full text-white shadow"
               style={{ background: UNIT_ACCENT[unit] }}>
               {UNIT_LABEL[unit]} view
             </span>
           )}
+
+          {gallery.length > 1 && (
+            <>
+              {/* Prev / Next arrows */}
+              <button type="button" aria-label="Previous image" onClick={goPrev}
+                className="absolute left-2.5 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-white/90 backdrop-blur shadow-md flex items-center justify-center text-gray-700 hover:bg-white hover:scale-105 transition-all opacity-60 group-hover:opacity-100">
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              <button type="button" aria-label="Next image" onClick={goNext}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-white/90 backdrop-blur shadow-md flex items-center justify-center text-gray-700 hover:bg-white hover:scale-105 transition-all opacity-60 group-hover:opacity-100">
+                <ChevronRight className="w-5 h-5" />
+              </button>
+
+              {/* Counter + dots */}
+              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1.5 bg-black/45 backdrop-blur-sm rounded-full px-2.5 py-1">
+                {gallery.map((_, i) => (
+                  <button key={i} type="button" aria-label={`Go to image ${i + 1}`} onClick={() => setActive(i)}
+                    className={`rounded-full transition-all ${i === safeActive ? 'w-4 h-1.5 bg-white' : 'w-1.5 h-1.5 bg-white/50 hover:bg-white/80'}`} />
+                ))}
+              </div>
+            </>
+          )}
         </div>
+
         {gallery.length > 1 && (
           <div className="flex gap-2.5 flex-wrap">
             {gallery.map((img, i) => (
               <button key={img.url} type="button" onClick={() => setActive(i)}
-                className={`relative w-16 h-16 rounded-xl overflow-hidden border-2 transition-all ${i === active ? 'border-[#0B1F4D]' : 'border-gray-100 hover:border-gray-300'}`}>
+                className={`relative w-16 h-16 rounded-xl overflow-hidden border-2 transition-all ${i === safeActive ? 'border-[#0B1F4D] ring-2 ring-[#0B1F4D]/15 scale-105' : 'border-gray-100 hover:border-gray-300 opacity-80 hover:opacity-100'}`}>
                 <Image src={img.url} alt="" fill className="object-contain p-1" sizes="64px" />
               </button>
             ))}

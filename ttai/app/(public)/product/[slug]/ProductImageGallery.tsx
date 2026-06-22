@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import Image from 'next/image'
 import { Package, ChevronLeft, ChevronRight, Expand } from 'lucide-react'
 
@@ -9,9 +9,17 @@ interface Img { url: string; sort_order: number }
 export function ProductImageGallery({ images, name }: { images: Img[]; name: string }) {
   const [active,   setActive]   = useState(0)
   const [lightbox, setLightbox] = useState(false)
+  const [paused,   setPaused]   = useState(false)
 
   const prev = useCallback(() => setActive(i => (i - 1 + images.length) % images.length), [images.length])
   const next = useCallback(() => setActive(i => (i + 1) % images.length),                 [images.length])
+
+  // Auto-advance every 4s; pauses on hover and while the lightbox is open.
+  useEffect(() => {
+    if (images.length < 2 || paused || lightbox) return
+    const id = setInterval(next, 4000)
+    return () => clearInterval(id)
+  }, [images.length, paused, lightbox, next])
 
   if (!images.length) {
     return (
@@ -28,7 +36,9 @@ export function ProductImageGallery({ images, name }: { images: Img[]; name: str
       <div className="space-y-3">
         {/* ── Main image ──────────────────────────────────────────────── */}
         <div className="relative aspect-square bg-white rounded-3xl overflow-hidden border border-gray-100 shadow-sm group cursor-zoom-in"
-          onClick={() => setLightbox(true)}>
+          onClick={() => setLightbox(true)}
+          onMouseEnter={() => setPaused(true)}
+          onMouseLeave={() => setPaused(false)}>
 
           <Image
             src={img.url}
@@ -50,14 +60,14 @@ export function ProductImageGallery({ images, name }: { images: Img[]; name: str
               <button
                 type="button"
                 onClick={e => { e.stopPropagation(); prev() }}
-                className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/90 backdrop-blur-sm shadow-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white hover:shadow-lg"
+                className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/90 backdrop-blur-sm shadow-md flex items-center justify-center opacity-70 group-hover:opacity-100 transition-all hover:bg-white hover:shadow-lg hover:scale-105"
               >
                 <ChevronLeft className="w-4 h-4 text-gray-700" />
               </button>
               <button
                 type="button"
                 onClick={e => { e.stopPropagation(); next() }}
-                className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/90 backdrop-blur-sm shadow-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white hover:shadow-lg"
+                className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/90 backdrop-blur-sm shadow-md flex items-center justify-center opacity-70 group-hover:opacity-100 transition-all hover:bg-white hover:shadow-lg hover:scale-105"
               >
                 <ChevronRight className="w-4 h-4 text-gray-700" />
               </button>
