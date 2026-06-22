@@ -24,17 +24,18 @@ export async function Header() {
     profile = data
   }
 
-  // Primary nav kept lean; secondary sections live under "More".
+  // Primary nav = the core shopping/business surfaces (always visible);
+  // niche / secondary sections live under "More".
   const PRIMARY = [
     { label: t('nav.home'),             href: '/' },
+    { label: t('nav.shopping_mall'),    href: '/store-center' },
     { label: t('nav.marketplace'),      href: '/marketplace' },
     { label: t('nav.suppliers'),        href: '/suppliers' },
     { label: t('nav.outlet_zone'),      href: '/outlet' },
-    { label: t('nav.ai_assistant'),     href: '/assistant' },
     { label: t('nav.pricing'),          href: '/pricing' },
   ]
   const MORE = [
-    { label: t('nav.shopping_mall'),    href: '/store-center' },
+    { label: t('nav.ai_assistant'),     href: '/assistant' },
     { label: t('nav.industrial_park'),  href: '/industrial-park' },
     { label: t('nav.regions'),          href: '/regions/europe' },
     { label: t('nav.whatsapp_hub'),     href: '/whatsapp-hub' },
