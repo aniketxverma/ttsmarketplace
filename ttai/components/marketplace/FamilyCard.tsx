@@ -16,11 +16,22 @@ function formatPrice(cents: number, currency: string) {
   return new Intl.NumberFormat('en-EU', { style: 'currency', currency, minimumFractionDigits: 2 }).format(cents / 100)
 }
 
+/** 2-letter ISO country code → flag emoji. */
+function isoFlag(iso?: string | null) {
+  return iso && iso.length === 2
+    ? iso.toUpperCase().replace(/./g, (c) => String.fromCodePoint(127397 + c.charCodeAt(0)))
+    : ''
+}
+
 /** One card representing a product family (several variants under one type). */
 export function FamilyCard({ family, retail = false, shop, brand, sponsored, minOrderCents }: { family: Family; retail?: boolean; shop?: string; brand?: string | null; sponsored?: boolean; minOrderCents?: number }) {
   const rep = family.representative
-  const supplier = rep.suppliers as { legal_name: string; trade_name: string | null; reliability_tier: ReliabilityTier } | undefined
+  const supplier = rep.suppliers as { legal_name: string; trade_name: string | null; reliability_tier: ReliabilityTier; countries?: { name: string; iso_code: string } | null; cities?: { name: string } | null } | undefined
   const count = family.members.length
+  // Origin tag (flag · country · city) — hidden for the b2b house brand.
+  const countryIso = supplier?.countries?.iso_code ?? null
+  const countryName = supplier?.countries?.name ?? null
+  const cityName = supplier?.cities?.name ?? null
 
   const isRetail = retail || rep.marketplace_context === 'retail'
   // Trade Hub (b2b) sells under the single house brand (TTAIEMA); retail & business
@@ -41,6 +52,16 @@ export function FamilyCard({ family, retail = false, shop, brand, sponsored, min
     <Link href={href} className="group block">
       <div className="bg-card rounded-xl border overflow-hidden hover:shadow-md transition-shadow">
         <div className="aspect-square relative bg-muted overflow-hidden">
+          {/* Origin country — so buyers instantly see where it ships from */}
+          {!houseBrand && (countryIso || countryName) && (
+            <span className={cn(
+              'absolute left-2 z-10 inline-flex items-center gap-1 rounded-full bg-white/95 text-gray-800 text-[10px] font-bold px-2 py-0.5 shadow',
+              sponsored ? 'top-9' : 'top-2',
+            )}>
+              <span className="text-[12px] leading-none">{isoFlag(countryIso)}</span>
+              <span className="max-w-[120px] truncate">{countryName ?? countryIso}{cityName ? ` · ${cityName}` : ''}</span>
+            </span>
+          )}
           {sponsored && (
             <span className="absolute top-2 left-2 z-10 inline-flex items-center gap-1 rounded-full bg-[#F5A623] text-[#0B1F4D] text-[10px] font-extrabold px-2 py-0.5 shadow">★ Sponsored</span>
           )}
