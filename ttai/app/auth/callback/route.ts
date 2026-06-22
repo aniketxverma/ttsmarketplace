@@ -23,11 +23,13 @@ export async function GET(request: NextRequest) {
     const { data, error } = await supabase.auth.verifyOtp({ token_hash, type })
     if (!error && data.session) {
       const next = searchParams.get('next') ?? '/'
-      // After email confirmation, send buyer to dashboard, others to login
-      const role = (data.session.user.user_metadata as { requested_role?: string })?.requested_role
+      // After email confirmation, route to the dashboard for the role the user
+      // registered as. Signup stores it under `role` in user metadata.
+      const role = String((data.session.user.user_metadata as { role?: string })?.role ?? '').trim()
       let dest = next !== '/' ? next : '/buyer'
       if (role === 'supplier') dest = '/supplier/onboarding'
       else if (role === 'broker') dest = '/broker/register'
+      else if (role === 'business_client') dest = '/buyer'
       return NextResponse.redirect(`${origin}${dest}`)
     }
   }

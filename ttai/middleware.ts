@@ -132,7 +132,23 @@ export async function middleware(request: NextRequest) {
       .single()
 
     const status = profile?.approval_status ?? 'pending'
-    const role   = profile?.role ?? 'buyer'
+    let role     = profile?.role ?? 'buyer'
+
+    // Self-heal a mis-defaulted role: registration stores the chosen role in
+    // user metadata, but the post-signup client update can be blocked (no
+    // session yet / RLS) leaving the profile at the default 'buyer'. If metadata
+    // says supplier/broker/business_client, promote once (NEVER admin — that
+    // must not be self-assignable via signup metadata).
+    if (role === 'buyer') {
+      const metaRole = String((user.user_metadata as { role?: string })?.role ?? '').trim()
+      if (['supplier', 'broker', 'business_client'].includes(metaRole)) {
+        try {
+          const { createAdminClient } = await import('@/lib/supabase/admin')
+          await (createAdminClient().from('profiles') as any).update({ role: metaRole }).eq('id', user.id)
+          role = metaRole
+        } catch { /* non-fatal — will retry next request */ }
+      }
+    }
     const dash   = ROLE_DASH[role] ?? '/buyer'
 
     // Admins are never gated
