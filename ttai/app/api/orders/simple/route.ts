@@ -288,6 +288,7 @@ export async function POST(req: NextRequest) {
         metadata: { order_ids: orderIds.join(','), order_id: orderIds[0] },
         payment_method_types: ['card'],
         billing_address_collection: 'required',
+        allow_promotion_codes: true,
       })
       return NextResponse.json({ orderIds, primaryOrderId: orderIds[0], checkoutUrl: session.url })
     } catch (e: any) {
