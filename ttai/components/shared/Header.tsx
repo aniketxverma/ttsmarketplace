@@ -32,11 +32,11 @@ export async function Header() {
     { label: t('nav.marketplace'),      href: '/marketplace' },
     { label: t('nav.suppliers'),        href: '/suppliers' },
     { label: t('nav.outlet_zone'),      href: '/outlet' },
+    { label: t('nav.industrial_park'),  href: '/industrial-park' },
     { label: t('nav.pricing'),          href: '/pricing' },
   ]
   const MORE = [
     { label: t('nav.ai_assistant'),     href: '/assistant' },
-    { label: t('nav.industrial_park'),  href: '/industrial-park' },
     { label: t('nav.regions'),          href: '/regions/europe' },
     { label: t('nav.whatsapp_hub'),     href: '/whatsapp-hub' },
   ]
@@ -50,12 +50,12 @@ export async function Header() {
         <Logo size="md" />
 
         {/* ── Nav ─────────────────────────────────────────────────────── */}
-        <nav className="hidden lg:flex items-center gap-1">
+        <nav className="hidden lg:flex items-center gap-0.5">
           {PRIMARY.map((item) => (
             <Link
               key={item.href}
               href={item.href}
-              className="relative px-3.5 py-2 text-sm font-medium text-gray-600 hover:text-[#0B1F4D] rounded-lg hover:bg-gray-50 transition-colors"
+              className="relative px-3 py-2 text-sm font-medium text-gray-600 hover:text-[#0B1F4D] rounded-lg hover:bg-gray-50 transition-colors whitespace-nowrap"
             >
               {item.label}
             </Link>
