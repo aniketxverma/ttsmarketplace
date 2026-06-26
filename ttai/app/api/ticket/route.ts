@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import React from 'react'
 import { sendEmailFireAndForget } from '@/lib/email/send'
+import { NotificationEmail } from '@/lib/email/templates/NotificationEmail'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { departmentInfo, defaultAssignee, type Department } from '@/lib/control-center'
 
@@ -79,38 +80,15 @@ export async function POST(req: NextRequest) {
     ['Source', `${source}${b.sourceForm ? ` · ${b.sourceForm}` : ''}`],
   ]
 
-  const body = React.createElement(
-    'div',
-    { style: { fontFamily: 'Arial, sans-serif', color: '#0B1F4D' } },
-    React.createElement('h2', { style: { margin: '0 0 4px' } },
-      `New ticket${ticketNo ? ` #${ticketNo}` : ''} · ${dept.label}`),
-    React.createElement('p', { style: { margin: '0 0 12px', color: '#475569', fontSize: '13px' } },
-      `Assigned to ${assignedTo}`),
-    React.createElement(
-      'table',
-      { cellPadding: 6, style: { borderCollapse: 'collapse', fontSize: '14px' } },
-      React.createElement(
-        'tbody',
-        null,
-        rows
-          .filter(([, v]) => v && String(v).trim())
-          .map(([k, v]) =>
-            React.createElement(
-              'tr',
-              { key: k },
-              React.createElement('td', { style: { fontWeight: 'bold', color: '#475569', verticalAlign: 'top', paddingRight: '16px' } }, k),
-              React.createElement('td', { style: { color: '#0f172a' } }, String(v)),
-            ),
-          ),
-      ),
-    ),
-  )
-
   sendEmailFireAndForget({
     to: ADMIN_EMAIL,
     role: 'support',
     subject: `[${dept.label}] ${b.subject || b.companyName || b.clientName || b.email || 'New request'} — for ${assignedTo}`,
-    react: body as any,
+    react: React.createElement(NotificationEmail, {
+      title: `New ticket${ticketNo ? ` #${ticketNo}` : ''} · ${dept.label}`,
+      intro: `Assigned to ${assignedTo}.`,
+      rows,
+    }),
   })
 
   return NextResponse.json({ ok: true, ticketNo, department, assignedTo }, { headers: CORS })

@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { slugify } from '@/lib/utils'
 import { sendEmailFireAndForget } from '@/lib/email/send'
+import { NotificationEmail } from '@/lib/email/templates/NotificationEmail'
 
 const ADMIN_EMAIL = process.env.ADMIN_NOTIFY_EMAIL || 'info@ttaiema.com'
 
@@ -49,11 +50,11 @@ export async function POST(req: NextRequest) {
   sendEmailFireAndForget({
     to: ADMIN_EMAIL,
     subject: `New category request: "${name.trim()}" — ${supplierName}`,
-    react: React.createElement('div', { style: { fontFamily: 'Arial, sans-serif', color: '#0B1F4D' } },
-      React.createElement('h2', null, 'New category request'),
-      React.createElement('p', null, `${supplierName} requested a new category: `, React.createElement('b', null, name.trim())),
-      React.createElement('p', null, 'Review it in Admin → Categories (approve, rename, merge or reject).'),
-    ) as any,
+    react: React.createElement(NotificationEmail, {
+      title: 'New category request',
+      intro: `${supplierName} requested a new category: ${name.trim()}.`,
+      note: 'Review it in Admin → Categories (approve, rename, merge or reject).',
+    }),
   })
 
   return NextResponse.json({ category: created }, { status: 201 })

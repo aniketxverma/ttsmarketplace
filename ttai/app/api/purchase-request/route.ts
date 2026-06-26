@@ -3,6 +3,7 @@ import React from 'react'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendEmailFireAndForget } from '@/lib/email/send'
+import { NotificationEmail } from '@/lib/email/templates/NotificationEmail'
 
 const ADMIN_EMAIL = process.env.ADMIN_NOTIFY_EMAIL || 'info@ttaiema.com'
 
@@ -32,15 +33,23 @@ export async function POST(req: NextRequest) {
     managed = !!(sup as any)?.managed_deals
     const company = (sup as any)?.trade_name ?? (sup as any)?.legal_name ?? 'Supplier'
     const to = managed ? ADMIN_EMAIL : ((sup as any)?.business_email || ADMIN_EMAIL)
-    const body = React.createElement('div', { style: { fontFamily: 'Arial, sans-serif', color: '#0B1F4D' } },
-      React.createElement('h2', null, managed ? `Managed deal — purchase request (${company})` : 'New purchase request'),
-      React.createElement('p', null, `${b.buyerCompany || b.buyerName || user.email} wants to buy:`),
-      React.createElement('p', null, `${b.quantity || ''} ${b.unit || ''} — ${b.productName || 'product'}`),
-      b.message ? React.createElement('p', null, b.message) : null,
-      React.createElement('p', { style: { color: '#475569' } }, managed
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? ''
+    const body = React.createElement(NotificationEmail, {
+      title: managed ? `Managed deal — purchase request (${company})` : 'New purchase request',
+      intro: `${b.buyerCompany || b.buyerName || user.email} wants to buy:`,
+      rows: [
+        ['Product', b.productName || 'product'],
+        ['Quantity', `${b.quantity || ''} ${b.unit || ''}`.trim()],
+        ['Buyer', b.buyerCompany || b.buyerName || user.email || null],
+        ['Phone', b.buyerPhone || null],
+        ['Message', b.message || null],
+      ] as [string, string | null | undefined][],
+      ctaText: 'Open Purchase Requests',
+      ctaHref: `${appUrl}/supplier/requests`,
+      note: managed
         ? 'TTAIEMA coordinates this deal — confirm stock, price & delivery with the supplier, then the buyer.'
-        : 'Confirm stock, quantity, price & delivery in your TTAIEMA dashboard → Purchase Requests.'),
-    )
+        : 'Confirm stock, quantity, price & delivery in your dashboard → Purchase Requests.',
+    })
     sendEmailFireAndForget({ to, role: 'contact', subject: `${managed ? '[Managed] ' : ''}Purchase request — ${b.productName || 'product'}`, react: body as any })
 
     // Managed deals also enter the Control Center (Marketplace team / Ane).

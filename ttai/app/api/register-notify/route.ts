@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import React from 'react'
+import { NotificationEmail } from '@/lib/email/templates/NotificationEmail'
 import { sendEmailFireAndForget } from '@/lib/email/send'
 import { createAdminClient } from '@/lib/supabase/admin'
 
@@ -44,34 +45,14 @@ export async function POST(req: NextRequest) {
     ['Source platform', source],
   ]
 
-  const body = React.createElement(
-    'div',
-    { style: { fontFamily: 'Arial, sans-serif', color: '#0B1F4D' } },
-    React.createElement('h2', { style: { margin: '0 0 12px' } }, `New registration · ${source}`),
-    React.createElement(
-      'table',
-      { cellPadding: 6, style: { borderCollapse: 'collapse', fontSize: '14px' } },
-      React.createElement(
-        'tbody',
-        null,
-        rows
-          .filter(([, v]) => v && String(v).trim())
-          .map(([k, v]) =>
-            React.createElement(
-              'tr',
-              { key: k },
-              React.createElement('td', { style: { fontWeight: 'bold', color: '#475569', verticalAlign: 'top', paddingRight: '16px' } }, k),
-              React.createElement('td', { style: { color: '#0f172a' } }, String(v)),
-            ),
-          ),
-      ),
-    ),
-  )
-
   sendEmailFireAndForget({
     to: ADMIN_EMAIL,
     subject: `New ${b.accountType || 'registration'} — ${b.companyName || b.fullName || b.email || 'unknown'} · ${source}`,
-    react: body as any,
+    react: React.createElement(NotificationEmail, {
+      title: `New registration · ${source}`,
+      intro: 'A new account just registered on the platform.',
+      rows,
+    }),
   })
 
   // Persist so the admin dashboard has the full list (table from migration 0058).
