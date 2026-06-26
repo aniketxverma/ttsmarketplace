@@ -36,10 +36,13 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 
   if (!p) return {}
   const imgs = ((p.product_images ?? []) as any[]).sort((a: any, b: any) => a.sort_order - b.sort_order)
+  const title = `${p.name} — Wholesale Product · TTAI EMA`
+  const description = (p.description ?? '').slice(0, 160) || `${p.name} on TTAIEMA`
+  const ogImages = imgs[0]?.url ? [{ url: imgs[0].url, width: 1200, height: 1200, alt: p.name }] : []
   return {
-    title: `${p.name} — Wholesale Product · TTAI EMA`,
-    description: p.description?.slice(0, 160),
-    openGraph: { images: imgs[0]?.url ? [{ url: imgs[0].url }] : [] },
+    title, description,
+    openGraph: { title: p.name, description, images: ogImages, type: 'website' },
+    twitter: { card: 'summary_large_image', title: p.name, description, images: ogImages.map((i) => i.url) },
   }
 }
 

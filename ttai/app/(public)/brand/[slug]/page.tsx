@@ -36,19 +36,19 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   const supabase = createClient()
   const { data: s } = await supplierQuery(
     supabase, params.slug,
-    'trade_name, tagline, seo_title, seo_description, seo_keywords, og_image, logo_url'
+    'trade_name, tagline, seo_title, seo_description, seo_keywords, og_image, logo_url, banner_image'
   ) as { data: any }
 
   if (!s) return {}
+  // Prefer a wide image (banner / og) for the link preview; fall back to logo.
+  const shareImg = s.og_image ?? s.banner_image ?? s.logo_url
+  const title = s.seo_title ?? `${s.trade_name} — Official Store · TTAI`
+  const description = s.seo_description ?? s.tagline ?? `Shop ${s.trade_name} wholesale products on TTAI Marketplace`
+  const images = shareImg ? [{ url: shareImg, width: 1200, height: 630, alt: s.trade_name }] : []
   return {
-    title:       s.seo_title       ?? `${s.trade_name} — Official Store · TTAI`,
-    description: s.seo_description ?? s.tagline ?? `Shop ${s.trade_name} wholesale products on TTAI Marketplace`,
-    keywords:    s.seo_keywords,
-    openGraph: {
-      title:       s.seo_title ?? s.trade_name,
-      description: s.seo_description ?? s.tagline ?? '',
-      images:      s.og_image ?? s.logo_url ? [{ url: s.og_image ?? s.logo_url! }] : [],
-    },
+    title, description, keywords: s.seo_keywords,
+    openGraph: { title: s.seo_title ?? s.trade_name, description, images, type: 'website' },
+    twitter: { card: 'summary_large_image', title: s.seo_title ?? s.trade_name, description, images: images.map((i) => i.url) },
   }
 }
 

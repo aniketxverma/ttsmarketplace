@@ -11,6 +11,9 @@ import './globals.css'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
+  // Resolves all relative OG/Twitter image URLs to absolute — required for link
+  // previews (WhatsApp, Facebook, X, etc.) to show images.
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://ttaiz.com'),
   title: 'TTAI — Global Trade Ecosystem',
   description: 'B2B wholesale marketplace and B2C city store platform',
 }
