@@ -179,7 +179,8 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
     liveChannels = ((data ?? []) as any[]).map((c) => ({
       name: c.name,
       brand: c.suppliers?.trade_name ?? null,
-      href: c.whatsapp_channel_url || (c.suppliers?.brand_slug ? `/brand/${c.suppliers.brand_slug}` : '/channels'),
+      // Open the channel itself — the live WhatsApp channel if linked, else the in-app channel page.
+      href: c.whatsapp_channel_url || `/channel/${c.id}`,
       logo: c.suppliers?.logo_url ?? null,
       members: c.member_count ?? 0,
     }))
@@ -672,7 +673,7 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
                 {liveChannels.map((ch, i) => {
                   const initials = (ch.brand || ch.name).split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase()
                   return (
-                    <Link key={i} href={ch.href} className="group flex-shrink-0 inline-flex items-center gap-2.5 rounded-xl border border-gray-100 bg-gray-50 hover:bg-white hover:border-[#5b3fd6]/30 hover:shadow-sm px-3 py-2 transition-all">
+                    <Link key={i} href={ch.href} {...(ch.href.startsWith('http') ? { target: '_blank', rel: 'noopener noreferrer' } : {})} className="group flex-shrink-0 inline-flex items-center gap-2.5 rounded-xl border border-gray-100 bg-gray-50 hover:bg-white hover:border-[#5b3fd6]/30 hover:shadow-sm px-3 py-2 transition-all">
                       <span className="w-8 h-8 rounded-full overflow-hidden bg-gradient-to-br from-[#0B1F4D] to-[#1a3a7a] flex items-center justify-center text-white text-[10px] font-black flex-shrink-0">
                         {ch.logo ? (/* eslint-disable-next-line @next/next/no-img-element */<img src={ch.logo} alt="" className="w-full h-full object-cover" />) : initials}
                       </span>
