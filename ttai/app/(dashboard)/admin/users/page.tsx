@@ -36,6 +36,16 @@ export default async function AdminUsersPage({
 
   const { data: users } = await query
 
+  // Map each owner → their brand store slug, so a supplier's "View profile"
+  // opens their actual shop (/brand/<slug>) rather than the generic profile.
+  const brandByOwner = new Map<string, string>()
+  const userIds = (users ?? []).map((u: any) => u.id)
+  if (userIds.length) {
+    const { data: sups } = await (supabase.from('suppliers') as any)
+      .select('owner_id, brand_slug').in('owner_id', userIds)
+    for (const s of (sups ?? [])) if (s.brand_slug) brandByOwner.set(s.owner_id, s.brand_slug)
+  }
+
   // Counts
   const counts: Record<string, number> = {}
   for (const r of ['buyer', 'business_client', 'supplier', 'broker', 'admin']) {
@@ -189,6 +199,14 @@ export default async function AdminUsersPage({
                     <span>Joined {new Date(u.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
                   </div>
 
+                  {/* What they wrote at registration — so admins can review before approving */}
+                  {(u.bio || u.products_offered) && (
+                    <div className="rounded-lg bg-gray-50 border border-gray-100 p-2.5 space-y-1">
+                      {u.bio && <p className="text-xs text-gray-600"><span className="font-bold text-gray-400">About: </span>{u.bio}</p>}
+                      {u.products_offered && <p className="text-xs text-gray-600"><span className="font-bold text-gray-400">Products/needs: </span>{u.products_offered}</p>}
+                    </div>
+                  )}
+
                   {/* Annual turnover (private) */}
                   {u.annual_turnover && (
                     <p className="text-xs text-gray-400 flex items-center gap-1">
@@ -214,19 +232,23 @@ export default async function AdminUsersPage({
                       <TierChanger userId={u.id} currentTier={(u as any).tier ?? 'free'} />
                     </div>
                   )}
-                  {status === 'approved' && (
-                    <a
-                      href={`/profile/${u.username ?? u.id}`}
-                      target="_blank"
-                      className="text-[11px] text-[#0B1F4D] font-semibold hover:underline flex items-center gap-1"
-                    >
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                          d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                      </svg>
-                      View profile
-                    </a>
-                  )}
+                  {(() => {
+                    const brandSlug = brandByOwner.get(u.id)
+                    const href = brandSlug ? `/brand/${brandSlug}` : `/profile/${u.username ?? u.id}`
+                    return (
+                      <a
+                        href={href}
+                        target="_blank"
+                        className="text-[11px] text-[#0B1F4D] font-semibold hover:underline flex items-center gap-1"
+                      >
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                            d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                        </svg>
+                        {brandSlug ? 'View store' : 'View profile'}
+                      </a>
+                    )
+                  })()}
                 </div>
               </div>
 
