@@ -112,7 +112,9 @@ export default async function AdminEmailsPage({
                 {(rows ?? []).map((r: any) => (
                   <tr key={r.id} className="hover:bg-gray-50/60">
                     <td className="px-4 py-3 font-medium text-gray-800 truncate max-w-[180px]">{r.to_email}</td>
-                    <td className="px-4 py-3 text-gray-600 truncate max-w-[260px]" title={r.error || r.subject}>{r.subject ?? '—'}</td>
+                    <td className="px-4 py-3 truncate max-w-[260px]" title={r.error || r.subject}>
+                      <Link href={`/admin/emails/${r.id}`} className="text-[#0B1F4D] font-medium hover:underline">{r.subject ?? '—'}</Link>
+                    </td>
                     <td className="px-4 py-3">
                       {r.mailbox && <span className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-bold ${MAILBOX_PILL[r.mailbox] ?? 'bg-gray-100 text-gray-600'}`}>{r.mailbox}@</span>}
                     </td>
