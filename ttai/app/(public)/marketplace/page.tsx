@@ -86,7 +86,7 @@ const CAT_ICON: Record<string, typeof Package> = {
 export default async function MarketplacePage({
   searchParams,
 }: {
-  searchParams: { category?: string; q?: string; page?: string; region?: string; supplier?: string; brand?: string; view?: string; country?: string; market?: string; province?: string; city?: string }
+  searchParams: { category?: string; q?: string; page?: string; region?: string; supplier?: string; brand?: string; view?: string; country?: string; market?: string; province?: string; city?: string; hub?: string }
 }) {
   const supabase = createClient()
 
@@ -252,6 +252,7 @@ export default async function MarketplacePage({
       .eq('suppliers.status', 'ACTIVE')
       .in('marketplace_context', ['wholesale', 'both'])
     if (activeSupplier) q = q.eq('supplier_id', activeSupplier)
+    if (searchParams.hub === 'ttaiema') q = q.eq('suppliers.is_house', true) // Trade Hub → our own goods only
     if (activeCountryId) q = q.eq('suppliers.country_id', activeCountryId)
     // Province / City drill-down filter (by the supplier's location).
     if (activeCityId) q = q.eq('suppliers.city_id', activeCityId)

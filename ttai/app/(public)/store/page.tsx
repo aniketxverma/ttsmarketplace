@@ -48,7 +48,7 @@ export default async function StorePage({
   searchParams,
 }: {
   searchParams: { category?: string; q?: string; page?: string; supplier?: string
-    market?: string; country?: string; view?: string }
+    market?: string; country?: string; view?: string; hub?: string }
 }) {
   const supabase = createClient()
 
@@ -120,6 +120,7 @@ export default async function StorePage({
       .in('marketplace_context', ['retail', 'both'])
       .neq('retail_available', false) // exclude products a seller turned off for retail
   }
+  if (searchParams.hub === 'ttaiema') productQuery = productQuery.eq('suppliers.is_house', true) // Trade Hub → our own goods only
 
   // Local retail filter — restrict to sellers in the chosen area.
   if (localSupplierIds) productQuery = productQuery.in('supplier_id', localSupplierIds)
