@@ -59,9 +59,9 @@ const CHAIN = [
 ] as const
 
 const SALES = [
-  { title: 'Online Shop', sub: 'Sell by Piece & Box', grad: 'from-violet-600 to-purple-700', Icon: ShoppingCart },
-  { title: 'Business Shop', sub: 'Sell by Box & Pallet', grad: 'from-blue-600 to-[#0B1F4D]', Icon: Boxes },
-  { title: 'Trade Hub', sub: 'Sell by Pallet & Truck', grad: 'from-amber-500 to-orange-600', Icon: Truck },
+  { title: 'Online Shop', sub: 'Sell by Piece & Box', grad: 'from-violet-600 to-purple-700', Icon: ShoppingCart, href: '/store' },
+  { title: 'Business Shop', sub: 'Sell by Box & Pallet', grad: 'from-blue-600 to-[#0B1F4D]', Icon: Boxes, href: '/marketplace' },
+  { title: 'Trade Hub', sub: 'Sell by Pallet & Truck', grad: 'from-amber-500 to-orange-600', Icon: Truck, href: '/b2b' },
 ] as const
 
 const STATS = [
@@ -394,15 +394,17 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
               </div>
               <div className="space-y-2.5 max-w-md mx-auto">
                 {SALES.map((s) => (
-                  <div key={tt(s.title)} className={`flex items-center gap-3 rounded-xl bg-gradient-to-r ${s.grad} px-4 py-3`}>
+                  <Link key={tt(s.title)} href={s.href}
+                    className={`group flex items-center gap-3 rounded-xl bg-gradient-to-r ${s.grad} px-4 py-3 hover:shadow-lg hover:-translate-y-0.5 transition-all`}>
                     <div className="w-8 h-8 rounded-lg bg-white/15 flex items-center justify-center flex-shrink-0">
                       <s.Icon className="w-4 h-4 text-white" />
                     </div>
-                    <div>
+                    <div className="flex-1">
                       <p className="text-sm font-extrabold text-white leading-tight">{tt(s.title)}</p>
                       <p className="text-[11px] text-white/70">{tt(s.sub)}</p>
                     </div>
-                  </div>
+                    <ArrowRight className="w-4 h-4 text-white/70 group-hover:translate-x-0.5 transition-transform" />
+                  </Link>
                 ))}
               </div>
             </div>
