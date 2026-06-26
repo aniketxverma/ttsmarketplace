@@ -483,22 +483,22 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
             </p>
           </div>
 
-          {/* growth ladder */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-14 items-end">
+          {/* growth ladder — single column on phones, staircase only on desktop */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-12 lg:items-end">
             {GROW_LEVELS.map((l, i) => (
               <Reveal key={tt(l.title)} from="up" delay={i * 100}>
                 <div
-                  className={`group relative overflow-hidden rounded-3xl bg-gradient-to-br ${l.grad} p-6 shadow-lg ring-1 ring-white/10 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl`}
-                  style={{ minHeight: l.h }}
+                  className={`group relative overflow-hidden rounded-3xl bg-gradient-to-br ${l.grad} p-6 shadow-lg ring-1 ring-white/10 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl lg:[min-height:var(--lvl-h)]`}
+                  style={{ '--lvl-h': `${l.h}px` } as React.CSSProperties}
                 >
                   <span className="absolute -bottom-7 -right-2 text-[7rem] font-black leading-none text-white/10 select-none pointer-events-none">{l.step}</span>
-                  <l.Icon className="absolute -top-6 -right-5 w-32 h-32 text-white/10 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3" strokeWidth={1.25} />
+                  <l.Icon className="absolute -top-6 -right-5 w-28 h-28 sm:w-32 sm:h-32 text-white/10 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3" strokeWidth={1.25} />
                   <div className="relative">
                     <div className="w-12 h-12 rounded-2xl bg-white/15 border border-white/25 backdrop-blur flex items-center justify-center mb-4 shadow-inner">
                       <l.Icon className="w-6 h-6 text-white" />
                     </div>
                     <p className="text-[11px] font-bold uppercase tracking-widest text-white/70 mb-1">Step {l.step}</p>
-                    <h3 className="text-lg font-extrabold text-white leading-tight">{tt(l.title)}</h3>
+                    <h3 className="text-lg font-extrabold text-white leading-tight break-words hyphens-auto">{tt(l.title)}</h3>
                     <p className="text-sm text-white/80 mt-1.5 leading-relaxed">{tt(l.desc)}</p>
                   </div>
                 </div>
@@ -749,7 +749,7 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
                 </Link>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-x-6 gap-y-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
               {GROW.map((g) => (
                 <div key={tt(g.title)} className="flex gap-3">
                   <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0">
