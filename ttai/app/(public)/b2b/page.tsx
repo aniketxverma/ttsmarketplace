@@ -50,6 +50,9 @@ export default async function TradeHubPage() {
             sold <span className="font-semibold text-white">dropship</span>: we hold the stock, ship the order and handle payment.
             Choose how you want to buy.
           </p>
+          <Link href="/ttaiema" className="inline-flex items-center gap-1.5 mt-4 text-sm font-bold text-[#F5A623] hover:underline">
+            How dropshipping works with us <ArrowRight className="w-4 h-4" />
+          </Link>
         </div>
       </section>
 
