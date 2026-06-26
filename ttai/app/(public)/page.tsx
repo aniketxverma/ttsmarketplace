@@ -167,6 +167,24 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
     ? realBrands
     : BRANDS.map((b) => ({ name: b.name, place: b.place, logo: null, href: '/suppliers', tier: null, featured: false }))
 
+  // ── Live channels for the "Business Channels" banner ────────────────────────
+  let liveChannels: { name: string; brand: string | null; href: string; logo: string | null; members: number }[] = []
+  try {
+    const supabase = createClient()
+    const { data } = await (supabase.from('supplier_channels') as any)
+      .select('id, name, member_count, whatsapp_channel_url, invite_code, suppliers(trade_name, brand_slug, logo_url)')
+      .eq('is_active', true)
+      .order('member_count', { ascending: false })
+      .limit(8)
+    liveChannels = ((data ?? []) as any[]).map((c) => ({
+      name: c.name,
+      brand: c.suppliers?.trade_name ?? null,
+      href: c.whatsapp_channel_url || (c.suppliers?.brand_slug ? `/brand/${c.suppliers.brand_slug}` : '/channels'),
+      logo: c.suppliers?.logo_url ?? null,
+      members: c.member_count ?? 0,
+    }))
+  } catch { /* table may lag — banner just hides */ }
+
   // Localize every static string on the page (cache-backed, self-filling).
   const locale = getLocale()
   const tt = await localizeUI([
@@ -639,6 +657,35 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
               ))}
             </div>
           </div>
+
+          {/* ── Live channels banner ───────────────────────────────────── */}
+          {liveChannels.length > 0 && (
+            <div className="mt-8 rounded-2xl border border-gray-100 bg-white p-4 sm:p-5 shadow-sm">
+              <div className="flex items-center justify-between mb-3">
+                <span className="inline-flex items-center gap-2 text-xs font-extrabold uppercase tracking-wide text-[#0B1F4D]">
+                  <span className="relative flex h-2 w-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" /><span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" /></span>
+                  Live channels
+                </span>
+                <Link href="/channels" className="text-xs font-bold text-[#5b3fd6] hover:underline">View all →</Link>
+              </div>
+              <div className="flex gap-2.5 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                {liveChannels.map((ch, i) => {
+                  const initials = (ch.brand || ch.name).split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase()
+                  return (
+                    <Link key={i} href={ch.href} className="group flex-shrink-0 inline-flex items-center gap-2.5 rounded-xl border border-gray-100 bg-gray-50 hover:bg-white hover:border-[#5b3fd6]/30 hover:shadow-sm px-3 py-2 transition-all">
+                      <span className="w-8 h-8 rounded-full overflow-hidden bg-gradient-to-br from-[#0B1F4D] to-[#1a3a7a] flex items-center justify-center text-white text-[10px] font-black flex-shrink-0">
+                        {ch.logo ? (/* eslint-disable-next-line @next/next/no-img-element */<img src={ch.logo} alt="" className="w-full h-full object-cover" />) : initials}
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block text-[12px] font-bold text-[#0B1F4D] leading-tight truncate max-w-[140px]">{ch.name}</span>
+                        <span className="block text-[10px] text-gray-400">{ch.members > 0 ? `${ch.members} members` : 'Join channel'}</span>
+                      </span>
+                    </Link>
+                  )
+                })}
+              </div>
+            </div>
+          )}
         </div>
       </section>
 
