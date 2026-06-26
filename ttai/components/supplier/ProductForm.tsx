@@ -222,8 +222,11 @@ export function ProductForm({
       setError(`End-user price ${fmtCur(enteredRetail)} is below the minimum ${fmtCur(floorRetail)} (box price + ${minMarginPct}%). Set it equal or higher.`)
       setLoading(false); return
     }
-    // Empty / valid → store the protected price (auto-calculated to the floor when blank).
-    const finalRetailCents = enteredRetail > 0 ? enteredRetail : floorRetail
+    // Empty / valid → store the protected price. When the product is sold retail
+    // and retail is blank, auto-calc to the floor. But a WHOLESALE-ONLY product
+    // (B2B suppliers that don't sell to end users) keeps retail blank → null.
+    const sellsRetail = form.marketplaceContext !== 'wholesale'
+    const finalRetailCents = enteredRetail > 0 ? enteredRetail : (sellsRetail ? floorRetail : 0)
 
     const payload = {
       category_id:         resolvedCategoryId,
@@ -622,14 +625,17 @@ export function ProductForm({
             const fmtCur = (c: number) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: form.currencyCode }).format(c / 100)
             return (
               <div className="space-y-1.5">
-                <label className={labelCls}>{t('pform.retail_price')}</label>
+                <label className={labelCls}>{t('pform.retail_price')} <span className="text-gray-400 font-normal normal-case">(optional)</span></label>
                 <input
                   className={`${inputCls} ${below ? 'border-red-400 ring-1 ring-red-300' : ''}`}
                   type="number" step="0.01" min="0.01"
                   value={form.retailPriceDisplay}
                   onChange={(e) => update('retailPriceDisplay', e.target.value)}
-                  placeholder={floor > 0 ? (floor / 100).toFixed(2) : '0.00'}
+                  placeholder={form.marketplaceContext === 'wholesale' ? 'Leave blank — B2B only' : (floor > 0 ? (floor / 100).toFixed(2) : '0.00')}
                 />
+                {form.marketplaceContext === 'wholesale' && (
+                  <p className="text-xs text-gray-400">You sell B2B only — leave this blank, no retail price needed.</p>
+                )}
                 {wholesaleCents > 0 ? (
                   <div className="text-xs space-y-0.5">
                     <p className={below ? 'text-red-600 font-bold' : 'text-gray-500'}>
