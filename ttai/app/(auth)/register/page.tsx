@@ -13,7 +13,6 @@ const ROLES = [
     label: 'Buyer',
     sub: 'Import & purchase products',
     color: 'from-green-500 to-emerald-600',
-    disabled: true,
     icon: (
       <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.6}
@@ -27,6 +26,7 @@ const ROLES = [
     label: 'Business Client',
     sub: 'B2B volume purchasing',
     color: 'from-blue-500 to-indigo-600',
+    disabled: true,
     icon: (
       <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.6}
