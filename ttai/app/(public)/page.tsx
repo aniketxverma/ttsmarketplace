@@ -64,13 +64,6 @@ const SALES = [
   { title: 'Trade Hub', sub: 'Sell by Pallet & Truck', grad: 'from-amber-500 to-orange-600', Icon: Truck, href: '/b2b' },
 ] as const
 
-const STATS = [
-  { Icon: Globe2, value: '50+', label: 'Countries' },
-  { Icon: Users, value: '500+', label: 'Suppliers' },
-  { Icon: Package, value: '5,000+', label: 'Products' },
-  { Icon: Truck, value: '', label: 'International\nTrade Network' },
-  { Icon: MessageSquare, value: '', label: 'Business\nChannels' },
-] as const
 
 const BRANDS = [
   { name: 'DOBOS DOBOS', place: 'Spain' },
@@ -186,6 +179,31 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
     }))
   } catch { /* table may lag — banner just hides */ }
 
+  // ── Real "Our Global Network" stats ────────────────────────────────────────
+  const netStats = { countries: 0, suppliers: 0, products: 0, industries: 0, channels: 0 }
+  try {
+    const sb = createClient()
+    const [supRes, prodRes, catRes, chanRes, supCountries] = await Promise.all([
+      sb.from('suppliers').select('id', { count: 'exact', head: true }).eq('status', 'ACTIVE'),
+      sb.from('products').select('id', { count: 'exact', head: true }).eq('is_published', true),
+      sb.from('categories').select('id', { count: 'exact', head: true }).is('parent_id', null),
+      (sb.from('supplier_channels') as any).select('id', { count: 'exact', head: true }).eq('is_active', true),
+      sb.from('suppliers').select('country_id').eq('status', 'ACTIVE'),
+    ])
+    netStats.suppliers = supRes.count ?? 0
+    netStats.products = prodRes.count ?? 0
+    netStats.industries = catRes.count ?? 0
+    netStats.channels = (chanRes as any).count ?? 0
+    netStats.countries = new Set(((supCountries.data ?? []) as any[]).map((s) => s.country_id).filter(Boolean)).size
+  } catch { /* counts default to 0 */ }
+  const NET_STATS = [
+    { Icon: Globe2, value: netStats.countries, label: 'Countries' },
+    { Icon: Users, value: netStats.suppliers, label: 'Verified Suppliers' },
+    { Icon: Package, value: netStats.products, label: 'Products' },
+    { Icon: BarChart3, value: netStats.industries, label: 'Industries' },
+    { Icon: MessageSquare, value: netStats.channels, label: 'Live Channels' },
+  ]
+
   // Localize every static string on the page (cache-backed, self-filling).
   const locale = getLocale()
   const tt = await localizeUI([
@@ -193,7 +211,7 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
     ...WHY.flatMap((w) => [w.title, w.desc]),
     ...CHAIN.map((c) => c.label),
     ...SALES.flatMap((s) => [s.title, s.sub]),
-    ...STATS.map((s) => s.label),
+    ...NET_STATS.map((s) => s.label),
     ...FEED.flatMap((f) => [f.title, f.sub, f.time]),
     ...CHIPS.flatMap((c) => [c.title, c.sub]),
     ...GROW_LEVELS.flatMap((g) => [g.title, g.desc]),
@@ -530,18 +548,30 @@ export default async function HomePage({ searchParams }: { searchParams: { code?
       </section>
 
       {/* ═══ GLOBAL NETWORK ═══ */}
-      <section className="py-12 px-4 bg-[#0B1F4D]">
-        <div className="container mx-auto max-w-6xl">
-          <h2 className="text-center text-2xl sm:text-3xl font-extrabold text-white mb-8">{tt("Our Global Network")}</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-6 divide-x divide-white/10">
-            {STATS.map((s) => (
-              <div key={tt(s.label)} className="flex items-center gap-3 justify-center px-2">
-                <s.Icon className="w-8 h-8 text-[#F5A623] flex-shrink-0" strokeWidth={1.5} />
-                <div>
-                  {s.value && <p className="text-2xl font-black text-white leading-none">{s.value}</p>}
-                  <p className="text-xs text-blue-200/70 font-semibold whitespace-pre-line mt-0.5">{tt(s.label)}</p>
+      <section className="py-14 px-4 bg-gradient-to-br from-[#0B1F4D] to-[#13295c] relative overflow-hidden">
+        {/* subtle glow accents */}
+        <div className="pointer-events-none absolute -top-20 -left-20 w-72 h-72 rounded-full bg-[#F5A623]/10 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-24 -right-16 w-72 h-72 rounded-full bg-blue-400/10 blur-3xl" />
+        <div className="container mx-auto max-w-6xl relative">
+          <div className="text-center mb-10">
+            <span className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-[#F5A623] mb-2">
+              <Sparkles className="w-3.5 h-3.5" /> Live numbers
+            </span>
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-white">{tt("Our Global Network")}</h2>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
+            {NET_STATS.map((s, i) => (
+              <Reveal key={s.label} from="up" delay={i * 70}>
+                <div className="group h-full rounded-2xl bg-white/[0.06] border border-white/10 p-5 text-center hover:bg-white/[0.1] hover:-translate-y-1 transition-all duration-300">
+                  <div className="w-11 h-11 rounded-xl bg-[#F5A623]/15 flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
+                    <s.Icon className="w-5 h-5 text-[#F5A623]" strokeWidth={2} />
+                  </div>
+                  <p className="text-3xl font-black text-white leading-none tabular-nums">
+                    {s.value > 0 ? s.value.toLocaleString('en-US') : '—'}
+                  </p>
+                  <p className="text-[11px] text-blue-200/70 font-bold uppercase tracking-wide mt-2">{tt(s.label)}</p>
                 </div>
-              </div>
+              </Reveal>
             ))}
           </div>
         </div>
