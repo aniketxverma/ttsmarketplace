@@ -14,6 +14,7 @@ import {
   UNIT_LABEL, type PurchaseUnit, type PackagingProduct,
 } from '@/lib/packaging'
 import { WantToBuyButton } from '@/components/marketplace/WantToBuyButton'
+import { ShareButton } from '@/components/product/ShareButton'
 
 const UNIT_ICON: Record<PurchaseUnit, typeof Box> = { piece: Package, box: Box, pallet: Layers, truck: Truck }
 const UNIT_ACCENT: Record<PurchaseUnit, string> = { piece: '#16a34a', box: '#0B1F4D', pallet: '#7c3aed', truck: '#ea580c' }
@@ -200,7 +201,10 @@ export function ProductBuyArea({
             {categoryName && <p className="text-xs font-bold text-[#F5A623] uppercase tracking-widest">{categoryName}</p>}
             {brand && <span className="text-[11px] font-extrabold uppercase tracking-wide bg-[#0B1F4D]/5 text-[#0B1F4D] px-2 py-0.5 rounded">{brand}</span>}
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0B1F4D] leading-tight">{product.name}</h1>
+          <div className="flex items-start justify-between gap-3">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0B1F4D] leading-tight">{product.name}</h1>
+            <div className="flex-shrink-0 pt-1"><ShareButton title={product.name} /></div>
+          </div>
         </div>
 
         {topSlot}
