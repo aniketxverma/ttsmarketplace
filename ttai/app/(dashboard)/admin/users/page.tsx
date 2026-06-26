@@ -3,6 +3,7 @@ import { requireRole } from '@/lib/auth/rbac'
 import { RoleChanger } from './RoleChanger'
 import { ApprovalChanger } from './ApprovalChanger'
 import { TierChanger } from './TierChanger'
+import { ImpersonateButton } from './ImpersonateButton'
 import Image from 'next/image'
 
 const ROLES = ['all', 'buyer', 'business_client', 'supplier', 'broker', 'admin']
@@ -249,6 +250,7 @@ export default async function AdminUsersPage({
                       </a>
                     )
                   })()}
+                  {u.role !== 'admin' && <ImpersonateButton userId={u.id} name={u.full_name ?? 'this user'} />}
                 </div>
               </div>
 
