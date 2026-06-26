@@ -57,6 +57,14 @@ export default function AdminSupplierDetailPage() {
           {(supplier.trade_name as string) && <p className="text-muted-foreground text-sm">{supplier.trade_name as string}</p>}
         </div>
         <div className="flex items-center gap-3 flex-wrap">
+          {/* View the supplier's public shop (opens in a new tab) */}
+          <a
+            href={(supplier.brand_slug as string) ? `/brand/${supplier.brand_slug as string}` : `/marketplace?supplier=${id}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="rounded-md px-3 py-1.5 text-xs font-bold border border-[#0B1F4D] text-[#0B1F4D] hover:bg-[#0B1F4D] hover:text-white transition-colors">
+            View Shop ↗
+          </a>
           {/* Trade Hub house seller (TTAI EMA) toggle */}
           <button
             onClick={async () => {
