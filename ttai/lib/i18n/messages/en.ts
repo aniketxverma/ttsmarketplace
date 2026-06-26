@@ -137,6 +137,7 @@ export default {
     transactions: 'Transactions',
     disputes: 'Disputes',
     ai_chats: 'AI Chats',
+    emails: 'Email Center',
     audit_log: 'Audit Log',
   },
   dir: 'ltr',

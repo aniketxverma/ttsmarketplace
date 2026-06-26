@@ -17,6 +17,16 @@ interface SendEmailParams {
   idempotencyKey?: string
 }
 
+/** Record the send in email_log (best-effort; never blocks or throws). */
+function logEmail(row: { to_email: string; subject: string; mailbox: string; provider: string; status: 'sent' | 'failed'; error?: string; message_id?: string }) {
+  void (async () => {
+    try {
+      const { createAdminClient } = await import('@/lib/supabase/admin')
+      await (createAdminClient().from('email_log') as any).insert(row)
+    } catch { /* table may not be migrated yet — ignore */ }
+  })()
+}
+
 /** Friendly From header per mailbox, e.g. "TTAI Marketplace <info@ttaiz.com>". */
 function fromHeader(user: string, role: MailRole): string {
   const labels: Record<MailRole, string> = {
@@ -47,8 +57,10 @@ export async function sendEmail(params: SendEmailParams) {
           html,
           headers: params.idempotencyKey ? { 'X-Idempotency-Key': params.idempotencyKey } : undefined,
         })
+        logEmail({ to_email: params.to, subject: params.subject, mailbox: role, provider: 'smtp', status: 'sent', message_id: result.messageId })
         return { id: result.messageId }
       } catch (err) {
+        logEmail({ to_email: params.to, subject: params.subject, mailbox: role, provider: 'smtp', status: 'failed', error: (err as Error)?.message })
         Sentry.captureException(err, { extra: { emailTo: params.to, subject: params.subject, transport: 'smtp', role } })
         throw err
       }
@@ -65,8 +77,10 @@ export async function sendEmail(params: SendEmailParams) {
         react: params.react,
         headers: params.idempotencyKey ? { 'X-Idempotency-Key': params.idempotencyKey } : undefined,
       })
+      logEmail({ to_email: params.to, subject: params.subject, mailbox: role, provider: 'resend', status: 'sent', message_id: (result as any)?.data?.id })
       return result
     } catch (err) {
+      logEmail({ to_email: params.to, subject: params.subject, mailbox: role, provider: 'resend', status: 'failed', error: (err as Error)?.message })
       Sentry.captureException(err, { extra: { emailTo: params.to, subject: params.subject, transport: 'resend' } })
       throw err
     }

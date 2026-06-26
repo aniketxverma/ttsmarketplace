@@ -77,6 +77,7 @@ const ADMIN_NAV: NavItem[] = [
   { key: 'transactions', href: '/admin/transactions', icon: <MoneyIcon /> },
   { key: 'disputes',     href: '/admin/disputes',     icon: <AlertIcon /> },
   { key: 'ai_chats',     href: '/admin/ai-chats',     icon: <SparkIcon /> },
+  { key: 'emails',       href: '/admin/emails',       icon: <ChatIcon /> },
   { key: 'audit_log',    href: '/admin/audit-log',    icon: <DocIcon /> },
 ]
 
