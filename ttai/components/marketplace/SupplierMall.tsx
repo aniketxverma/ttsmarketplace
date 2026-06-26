@@ -104,7 +104,7 @@ function SupplierDrawer({ s, onClose }: { s: MallSupplier; onClose: () => void }
           </div>
 
           <div className="grid grid-cols-2 gap-2 mt-4">
-            <Link href={`/marketplace?supplier=${s.id}`} className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#0B1F4D] text-white font-extrabold py-2.5 text-sm hover:bg-[#162d6e] transition-colors"><Store className="w-4 h-4" />Enter Shop</Link>
+            <Link href={s.brandSlug ? `/brand/${s.brandSlug}` : `/marketplace?supplier=${s.id}`} className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#0B1F4D] text-white font-extrabold py-2.5 text-sm hover:bg-[#162d6e] transition-colors"><Store className="w-4 h-4" />Enter Shop</Link>
             <QuoteButton company={s.name} whatsapp={s.whatsapp} className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#F5A623] text-[#0B1F4D] font-extrabold py-2.5 text-sm hover:bg-[#fbb93a] transition-colors" />
           </div>
           {wa && <a href={wa} target="_blank" rel="noopener noreferrer" className="mt-2 block text-center rounded-xl border border-green-200 text-green-600 font-bold py-2.5 text-sm hover:bg-green-50 transition-colors">Chat on WhatsApp</a>}

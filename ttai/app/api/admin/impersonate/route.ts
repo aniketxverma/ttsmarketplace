@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { signImpersonation, IMP_COOKIE, IMP_LABEL_COOKIE } from '@/lib/impersonation'
 
 const ROLE_DASH: Record<string, string> = {
   buyer: '/buyer', business_client: '/buyer', supplier: '/supplier', broker: '/broker', admin: '/admin',
@@ -39,5 +40,11 @@ export async function POST(req: NextRequest) {
 
   const next = ROLE_DASH[role] ?? '/buyer'
   const url = `/auth/callback?token_hash=${encodeURIComponent(link.properties.hashed_token)}&type=magiclink&next=${encodeURIComponent(next)}`
-  return NextResponse.json({ url })
+
+  // Remember the original admin (signed) + a readable label for the banner.
+  const res = NextResponse.json({ url })
+  const opts = { httpOnly: true, secure: true, sameSite: 'lax' as const, path: '/', maxAge: 8 * 60 * 60 }
+  res.cookies.set(IMP_COOKIE, signImpersonation(user.id), opts)
+  res.cookies.set(IMP_LABEL_COOKIE, encodeURIComponent(email), { ...opts, httpOnly: false })
+  return res
 }

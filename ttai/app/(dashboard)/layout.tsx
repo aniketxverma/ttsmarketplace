@@ -1,6 +1,9 @@
 import { redirect } from 'next/navigation'
+import { cookies } from 'next/headers'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
+import { ReturnToAdmin } from '@/components/dashboard/ReturnToAdmin'
+import { IMP_LABEL_COOKIE } from '@/lib/impersonation'
 import { Header } from '@/components/shared/Header'
 import { DashboardShell } from '@/components/dashboard/DashboardShell'
 import { ChatWidget } from '@/components/ai/ChatWidget'
@@ -37,8 +40,13 @@ export default async function DashboardLayout({ children }: { children: React.Re
       : t('dash.become_supplier'),
   } : null
 
+  // Impersonation banner — show only when an admin is viewing as a non-admin.
+  const impLabel = cookies().get(IMP_LABEL_COOKIE)?.value
+  const impersonating = !!impLabel && profile.role !== 'admin'
+
   return (
     <div className="h-screen flex flex-col overflow-hidden">
+      {impersonating && <ReturnToAdmin label={decodeURIComponent(impLabel!)} />}
       <Header />
       <DashboardShell role={profile.role as UserRole}>
         {isPending && (
