@@ -3,7 +3,9 @@ const crypto = require('crypto')
 const { createClient } = require('@supabase/supabase-js')
 const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
 
-const TARGETS = { es: 'Spanish', ar: 'Arabic', fr: 'French', de: 'German', pt: 'Portuguese', ru: 'Russian', fa: 'Persian (Farsi)' }
+const ALL = { es: 'Spanish', ar: 'Arabic', fr: 'French', de: 'German', pt: 'Portuguese', ru: 'Russian', fa: 'Persian (Farsi)' }
+// Locked to Spanish only (site is en+es). Override with LANGS=es,fr if needed.
+const TARGETS = Object.fromEntries((process.env.LANGS || 'es').split(',').filter((l) => ALL[l]).map((l) => [l, ALL[l]]))
 const MODEL = process.env.OPENAI_TRANSLATE_MODEL || 'gpt-4o-mini'
 const CONCURRENCY = 16
 const sha = (s) => crypto.createHash('sha256').update(String(s).trim()).digest('hex')

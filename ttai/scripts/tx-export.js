@@ -3,7 +3,7 @@ const crypto = require('crypto'), fs = require('fs')
 const { createClient } = require('@supabase/supabase-js')
 const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
 const sha = (s) => crypto.createHash('sha256').update(String(s).trim()).digest('hex')
-const TARGETS = ['es', 'ar', 'fr', 'de', 'pt', 'ru', 'fa']
+const TARGETS = (process.env.LANGS || 'es').split(',')
 
 // Args: FIELD=name|description  LIMIT=40  OUT=path
 const FIELD = process.env.FIELD || 'name'
