@@ -1,4 +1,7 @@
+'use client'
+
 import Link from 'next/link'
+import { useT } from '@/lib/i18n/client'
 import { MapPin, Tag, ArrowRight, Megaphone, Search, Clock } from 'lucide-react'
 import { lookingForLabel, POSTER_BADGE } from '@/lib/opportunities'
 import { OpportunityRespond } from './OpportunityRespond'
@@ -17,6 +20,7 @@ export type Opp = {
 
 /** A single business-opportunity card (used on the board and the assistant page). */
 export function OpportunityCard({ o, compact = false }: { o: Opp; compact?: boolean }) {
+  const t = useT()
   const isPromo = o.kind === 'promotion'
   const lf = lookingForLabel(o.looking_for)
   const wa = o.contact_whatsapp ? `https://wa.me/${String(o.contact_whatsapp).replace(/\D/g, '')}` : null
@@ -26,7 +30,7 @@ export function OpportunityCard({ o, compact = false }: { o: Opp; compact?: bool
       <span className={`absolute left-0 top-0 bottom-0 w-1 ${isPromo ? 'bg-rose-400' : 'bg-indigo-400'}`} />
       <div className="flex items-center gap-2 mb-1.5 pl-1.5">
         <span className={`inline-flex items-center gap-1 rounded-full text-[10px] font-extrabold px-2 py-0.5 ${isPromo ? 'bg-rose-100 text-rose-700' : 'bg-indigo-100 text-indigo-700'}`}>
-          {isPromo ? <Megaphone className="w-3 h-3" /> : <Search className="w-3 h-3" />}{isPromo ? 'Promotion' : 'Looking for'}{!isPromo && lf ? `: ${lf}` : ''}
+          {isPromo ? <Megaphone className="w-3 h-3" /> : <Search className="w-3 h-3" />}{isPromo ? t('Promotion') : t('Looking for')}{!isPromo && lf ? `: ${lf}` : ''}
         </span>
         <span className={`rounded-full text-[10px] font-bold px-2 py-0.5 capitalize ${POSTER_BADGE[o.poster_role] ?? 'bg-gray-100 text-gray-600'}`}>{o.poster_role}</span>
         <span className="ml-auto inline-flex items-center gap-0.5 text-[10px] text-gray-300"><Clock className="w-3 h-3" />{ago(o.created_at)}</span>
@@ -44,19 +48,20 @@ export function OpportunityCard({ o, compact = false }: { o: Opp; compact?: bool
           {wa && <a href={wa} target="_blank" rel="noopener noreferrer" className="rounded-lg border border-green-200 text-green-600 px-3.5 py-1.5 text-xs font-bold hover:bg-green-50">WhatsApp</a>}
         </div>
       )}
-      {compact && <Link href="/opportunities" className="mt-2.5 pl-1.5 inline-flex items-center gap-1 text-[11px] font-bold text-[#0B1F4D] group-hover:gap-1.5 transition-all">View opportunity <ArrowRight className="w-3 h-3" /></Link>}
+      {compact && <Link href="/opportunities" className="mt-2.5 pl-1.5 inline-flex items-center gap-1 text-[11px] font-bold text-[#0B1F4D] group-hover:gap-1.5 transition-all">{t("View opportunity")} <ArrowRight className="w-3 h-3" /></Link>}
     </div>
   )
 }
 
 /** Tight teaser used inside the assistant marquee. */
 export function OpportunityTeaser({ o }: { o: Opp }) {
+  const t = useT()
   const isPromo = o.kind === 'promotion'
   const lf = lookingForLabel(o.looking_for)
   return (
     <Link href="/opportunities" className="flex-shrink-0 w-[260px] rounded-xl border border-gray-100 bg-white p-3.5 hover:shadow-lg hover:-translate-y-0.5 transition-all">
       <div className="flex items-center gap-1.5 mb-1.5">
-        <span className={`rounded-full text-[9px] font-extrabold px-1.5 py-0.5 ${isPromo ? 'bg-rose-100 text-rose-700' : 'bg-indigo-100 text-indigo-700'}`}>{isPromo ? 'PROMOTION' : (lf ? lf.toUpperCase() : 'OPPORTUNITY')}</span>
+        <span className={`rounded-full text-[9px] font-extrabold px-1.5 py-0.5 ${isPromo ? 'bg-rose-100 text-rose-700' : 'bg-indigo-100 text-indigo-700'}`}>{isPromo ? t('PROMOTION') : (lf ? lf.toUpperCase() : t('OPPORTUNITY'))}</span>
         <span className={`rounded-full text-[9px] font-bold px-1.5 py-0.5 capitalize ${POSTER_BADGE[o.poster_role] ?? 'bg-gray-100 text-gray-600'}`}>{o.poster_role}</span>
       </div>
       <p className="text-[13px] font-bold text-gray-900 leading-snug line-clamp-2">{o.title}</p>
@@ -64,7 +69,7 @@ export function OpportunityTeaser({ o }: { o: Opp }) {
         {o.country_target && <span className="inline-flex items-center gap-0.5"><MapPin className="w-3 h-3" />{o.country_target}</span>}
         {o.category && <span>{o.category}</span>}
       </div>
-      <span className="inline-flex items-center gap-1 text-[10px] font-bold text-[#0B1F4D] mt-2">View opportunity <ArrowRight className="w-3 h-3" /></span>
+      <span className="inline-flex items-center gap-1 text-[10px] font-bold text-[#0B1F4D] mt-2">{t("View opportunity")} <ArrowRight className="w-3 h-3" /></span>
     </Link>
   )
 }

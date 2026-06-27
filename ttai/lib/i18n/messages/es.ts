@@ -1,4 +1,8 @@
 export default {
+  "Promotion": "Promoción",
+  "View opportunity": "Ver oportunidad",
+  "PROMOTION": "PROMOCIÓN",
+  "OPPORTUNITY": "OPORTUNIDAD",
   "Supplier Videos": "Vídeos del proveedor",
   "Contact Supplier": "Contactar con el proveedor",
   "Send Message": "Enviar mensaje",
