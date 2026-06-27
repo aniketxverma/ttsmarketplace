@@ -1,5 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { canPurchaseOnline } from '@/lib/retail'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 import { StoreLocationPicker } from '@/components/store/StoreLocationPicker'
 import { MallShops, type MallGroup } from '@/components/store/MallShops'
 import Link from 'next/link'
@@ -43,6 +45,13 @@ const compact = (n: number) => new Intl.NumberFormat('en', { notation: 'compact'
 
 export default async function ShoppingMallPage({ searchParams }: { searchParams: { country?: string; city?: string } }) {
   const supabase = createClient()
+  const locale = getLocale()
+  const tt = await localizeUI([
+    'Welcome to', 'TTAI SHOPPING MALL', 'Your Local Shopping Center. All in One Place.', 'How It Works',
+    'Stores', 'Products', 'Suppliers', 'Average Rating', "Today's Deals", 'Featured', 'Featured by stores in',
+    'Food & Beverage', 'Technology', 'Home & Living', 'Beauty & Health', 'Fashion', 'Automotive',
+    'Pet Supplies', 'Services', 'Electronics', 'All Categories', 'Coming soon',
+  ], locale)
 
   // ── Location (Country → City) ──
   const countries = await safe<any[]>((supabase.from('countries') as any).select('id, name, iso_code').eq('is_active', true).order('name'), [])
@@ -197,12 +206,12 @@ export default async function ShoppingMallPage({ searchParams }: { searchParams:
             <div className="absolute top-0 left-0 right-0 p-6 sm:p-8 pointer-events-none">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-white/80 text-sm">Welcome to</p>
-                  <h1 className="text-3xl sm:text-5xl font-black text-white tracking-tight leading-none drop-shadow-lg">TTAI SHOPPING MALL</h1>
-                  <p className="text-white/70 text-sm mt-1.5 max-w-md drop-shadow">Your Local Shopping Center. All in One Place.</p>
+                  <p className="text-white/80 text-sm">{tt('Welcome to')}</p>
+                  <h1 className="text-3xl sm:text-5xl font-black text-white tracking-tight leading-none drop-shadow-lg">{tt('TTAI SHOPPING MALL')}</h1>
+                  <p className="text-white/70 text-sm mt-1.5 max-w-md drop-shadow">{tt('Your Local Shopping Center. All in One Place.')}</p>
                 </div>
                 <button className="pointer-events-auto hidden sm:inline-flex items-center gap-2 rounded-full bg-white/10 backdrop-blur border border-white/20 text-white text-xs font-bold px-4 py-2 hover:bg-white/20 transition-colors flex-shrink-0">
-                  <Play className="w-3.5 h-3.5" />How It Works
+                  <Play className="w-3.5 h-3.5" />{tt('How It Works')}
                 </button>
               </div>
             </div>
@@ -219,7 +228,7 @@ export default async function ShoppingMallPage({ searchParams }: { searchParams:
                     <span className="absolute inset-0 rounded-full animate-ping opacity-40" style={{ background: pin.color }} />
                     <MapPin className="w-4 h-4 text-white relative" fill="currentColor" />
                   </span>
-                  <span className="text-[11px] font-extrabold text-gray-800 whitespace-nowrap">{pin.label}</span>
+                  <span className="text-[11px] font-extrabold text-gray-800 whitespace-nowrap">{tt(pin.label)}</span>
                 </>
               )
               return (
@@ -242,7 +251,7 @@ export default async function ShoppingMallPage({ searchParams }: { searchParams:
               <s.Icon className="w-7 h-7 text-[#F5A623] flex-shrink-0" strokeWidth={1.6} />
               <div>
                 <p className="text-xl font-black text-gray-900 leading-none">{s.value}{s.label !== 'Average Rating' && '+'}</p>
-                <p className="text-[11px] text-gray-400 font-semibold mt-0.5">{s.label}</p>
+                <p className="text-[11px] text-gray-400 font-semibold mt-0.5">{tt(s.label)}</p>
               </div>
             </div>
           ))}
@@ -252,8 +261,8 @@ export default async function ShoppingMallPage({ searchParams }: { searchParams:
         {deals.length > 0 && (
           <div className="rounded-2xl bg-white border border-gray-200 shadow-sm p-4 sm:p-5">
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-base sm:text-lg font-extrabold text-gray-900 flex items-center gap-2">🔥 Today&apos;s Deals</h2>
-              <span className="text-[11px] font-bold text-gray-400">Featured by stores in {locLabel}</span>
+              <h2 className="text-base sm:text-lg font-extrabold text-gray-900 flex items-center gap-2">🔥 {tt("Today's Deals")}</h2>
+              <span className="text-[11px] font-bold text-gray-400">{tt('Featured by stores in')} {locLabel}</span>
             </div>
             <div className="overflow-hidden">
               <div className="flex gap-3 w-max animate-marquee py-1" style={{ animationDuration: `${Math.max(22, deals.length * 4)}s` }}>
@@ -262,7 +271,7 @@ export default async function ShoppingMallPage({ searchParams }: { searchParams:
                     <div className="relative aspect-square bg-white flex items-center justify-center overflow-hidden">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={d.img} alt={d.name} loading="lazy" className="w-full h-full object-contain p-2 group-hover:scale-110 transition-transform duration-300" />
-                      {d.premium && <span className="absolute top-1.5 left-1.5 rounded bg-[#F5A623] px-1.5 py-0.5 text-[9px] font-extrabold text-[#0B1F4D]">Featured</span>}
+                      {d.premium && <span className="absolute top-1.5 left-1.5 rounded bg-[#F5A623] px-1.5 py-0.5 text-[9px] font-extrabold text-[#0B1F4D]">{tt('Featured')}</span>}
                     </div>
                     <div className="p-2.5 border-t border-gray-50">
                       <p className="text-[11px] font-medium text-gray-600 line-clamp-2 leading-tight h-[28px]">{d.name}</p>
@@ -286,8 +295,8 @@ export default async function ShoppingMallPage({ searchParams }: { searchParams:
                 <span className="w-11 h-11 rounded-full flex items-center justify-center mx-auto mb-2 text-white" style={{ background: c.color }}>
                   <c.Icon className="w-5 h-5" />
                 </span>
-                <p className="text-xs font-extrabold text-gray-900 leading-tight">{c.label}</p>
-                <p className="text-[11px] text-gray-400 mt-0.5">{href ? `${count} Store${count !== 1 ? 's' : ''}` : 'Coming soon'}</p>
+                <p className="text-xs font-extrabold text-gray-900 leading-tight">{tt(c.label)}</p>
+                <p className="text-[11px] text-gray-400 mt-0.5">{href ? `${count} ${tt('Stores')}` : tt('Coming soon')}</p>
               </>
             )
             return href ? (
