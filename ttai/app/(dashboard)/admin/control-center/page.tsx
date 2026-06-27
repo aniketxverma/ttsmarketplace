@@ -2,6 +2,8 @@ import Link from 'next/link'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { requireRole } from '@/lib/auth/rbac'
 import { DEPARTMENTS, STATUSES, MANAGERS, departmentInfo, statusInfo, type Department } from '@/lib/control-center'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 
 export const dynamic = 'force-dynamic'
 
@@ -10,6 +12,14 @@ type SP = { department?: string; status?: string; assigned?: string }
 export default async function ControlCenterPage({ searchParams }: { searchParams: SP }) {
   await requireRole('admin')
   const adminDb = createAdminClient()
+  const locale = getLocale()
+  const tt = await localizeUI([
+    'Control Center', 'Every client request across Marketplace, Logistics & Consulting — one inbox.',
+    'Open tickets', 'Marketplace', 'Logistics Hub', 'Business Consulting',
+    'New', 'In Progress', 'Waiting', 'Closed', 'Dept', 'Status', 'Manager', 'Request',
+    'open tickets unassigned — assign a manager below.',
+    'No tickets yet. Client requests from the website forms will appear here.',
+  ], locale)
 
   const fDept = searchParams.department
   const fStatus = searchParams.status
@@ -34,8 +44,8 @@ export default async function ControlCenterPage({ searchParams }: { searchParams
   const unassigned = open.filter((t) => !t.assigned_to).length
 
   const kpis = [
-    { label: 'Open tickets', value: open.length, color: 'text-[#0B1F4D]', dept: '' as string },
-    ...DEPARTMENTS.map((d) => ({ label: `${d.label.replace('TTAI ', '')} · ${d.manager}`, value: countBy(d.key), color: 'text-blue-600', dept: d.key as string })),
+    { label: tt('Open tickets'), value: open.length, color: 'text-[#0B1F4D]', dept: '' as string },
+    ...DEPARTMENTS.map((d) => ({ label: `${tt(d.label.replace('TTAI ', ''))} · ${d.manager}`, value: countBy(d.key), color: 'text-blue-600', dept: d.key as string })),
   ]
 
   function withParam(key: keyof SP, val: string) {
@@ -48,8 +58,8 @@ export default async function ControlCenterPage({ searchParams }: { searchParams
   return (
     <div className="space-y-6 max-w-6xl">
       <div>
-        <h1 className="text-2xl font-bold">Control Center</h1>
-        <p className="text-muted-foreground text-sm mt-0.5">Every client request across Marketplace, Logistics & Consulting — one inbox.</p>
+        <h1 className="text-2xl font-bold">{tt('Control Center')}</h1>
+        <p className="text-muted-foreground text-sm mt-0.5">{tt('Every client request across Marketplace, Logistics & Consulting — one inbox.')}</p>
       </div>
 
       {/* KPIs */}
@@ -64,17 +74,17 @@ export default async function ControlCenterPage({ searchParams }: { searchParams
       </div>
       {unassigned > 0 && (
         <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-4 py-2">
-          ⚠ {unassigned} open ticket{unassigned !== 1 ? 's' : ''} unassigned — assign a manager below.
+          ⚠ {unassigned} {tt('open tickets unassigned — assign a manager below.')}
         </p>
       )}
 
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-2 text-sm">
-        <FilterGroup label="Dept" current={fDept} base="department"
-          options={DEPARTMENTS.map((d) => ({ v: d.key, l: d.label.replace('TTAI ', '') }))} searchParams={searchParams} />
-        <FilterGroup label="Status" current={fStatus} base="status"
-          options={STATUSES.map((s) => ({ v: s.key, l: s.label }))} searchParams={searchParams} />
-        <FilterGroup label="Manager" current={fAssigned} base="assigned"
+        <FilterGroup label={tt('Dept')} current={fDept} base="department"
+          options={DEPARTMENTS.map((d) => ({ v: d.key, l: tt(d.label.replace('TTAI ', '')) }))} searchParams={searchParams} />
+        <FilterGroup label={tt('Status')} current={fStatus} base="status"
+          options={STATUSES.map((s) => ({ v: s.key, l: tt(s.label) }))} searchParams={searchParams} />
+        <FilterGroup label={tt('Manager')} current={fAssigned} base="assigned"
           options={MANAGERS.map((m) => ({ v: m, l: m }))} searchParams={searchParams} />
       </div>
 
@@ -82,7 +92,7 @@ export default async function ControlCenterPage({ searchParams }: { searchParams
       <div className="rounded-xl border bg-card overflow-hidden">
         {rows.length === 0 ? (
           <div className="px-6 py-12 text-center text-sm text-muted-foreground">
-            No tickets yet. Client requests from the website forms will appear here.
+            {tt('No tickets yet. Client requests from the website forms will appear here.')}
           </div>
         ) : (
           <div className="divide-y">
@@ -94,7 +104,7 @@ export default async function ControlCenterPage({ searchParams }: { searchParams
                   className="flex flex-wrap items-center gap-x-4 gap-y-1 px-5 py-3.5 hover:bg-muted/40 transition-colors">
                   <span className="font-mono text-xs text-gray-400 w-12">#{t.ticket_no ?? '—'}</span>
                   <div className="flex-1 min-w-[180px]">
-                    <p className="font-semibold text-gray-900 text-sm">{t.subject || t.company_name || t.client_name || t.email || 'Request'}</p>
+                    <p className="font-semibold text-gray-900 text-sm">{t.subject || t.company_name || t.client_name || t.email || tt('Request')}</p>
                     <p className="text-xs text-gray-400">
                       {[t.client_name, t.company_name, t.country_name].filter(Boolean).join(' · ')}
                     </p>
