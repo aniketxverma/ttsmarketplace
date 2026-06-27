@@ -6,6 +6,7 @@ import { groupIntoFamilies } from '@/lib/product-family'
 import { dedupeByMaster } from '@/lib/offers'
 import { localizeCategoryNames, localizeNames } from '@/lib/i18n/categories'
 import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 import { ProductGrid } from '@/components/marketplace/ProductGrid'
 import { CategoryNav } from '@/components/marketplace/CategoryNav'
 import { SearchBar } from '@/components/marketplace/SearchBar'
@@ -160,6 +161,11 @@ export default async function MarketplacePage({
   ])
 
   const locale = await getLocale()
+  const tt = await localizeUI([
+    'Brand:', 'All Brands', 'No shops found', 'Try a different category or country', 'See all products →',
+    'No catalogues yet', 'Browse all products →', 'Products', 'Popular Brands', 'Shop the brands you trust',
+    'No products found', 'Try adjusting your filters or search query',
+  ], locale)
   const allCats = await localizeCategoryNames(categoriesRes.data ?? [], locale)
 
   // When scoped to one supplier, this is their SHOP — load full shop data so the
@@ -632,8 +638,8 @@ export default async function MarketplacePage({
       {/* ── Brand filter ── */}
       {brandList.length > 0 && (
         <div className="mb-4 flex items-center gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
-          <span className="text-xs font-bold text-gray-400 uppercase tracking-wide flex-shrink-0 mr-1">Brand:</span>
-          {[{ v: '', label: 'All Brands' }, ...brandList.map((b) => ({ v: b, label: b }))].map(({ v, label }) => {
+          <span className="text-xs font-bold text-gray-400 uppercase tracking-wide flex-shrink-0 mr-1">{tt("Brand:")}</span>
+          {[{ v: '', label: tt("All Brands") }, ...brandList.map((b) => ({ v: b, label: b }))].map(({ v, label }) => {
             const params = new URLSearchParams()
             if (v) params.set('brand', v)
             if (searchParams.category) params.set('category', searchParams.category)
@@ -687,22 +693,22 @@ export default async function MarketplacePage({
               </div>
             ) : (
               <div className="text-center py-20 text-muted-foreground">
-                <p className="text-lg">No shops found</p>
-                <p className="text-sm mt-1">Try a different category or country</p>
+                <p className="text-lg">{tt("No shops found")}</p>
+                <p className="text-sm mt-1">{tt("Try a different category or country")}</p>
               </div>
             )
           ) : activeView === 'catalogues' ? (
             catalogueCards.length > 0 ? (
               <div>
-                <p className="text-xs text-gray-400 mb-4">Real featured products by category — open a card for the full Excel catalogue. <Link href="/marketplace?view=products" className="text-[#0B1F4D] font-bold hover:underline">See all products →</Link></p>
+                <p className="text-xs text-gray-400 mb-4">Real featured products by category — open a card for the full Excel catalogue. <Link href="/marketplace?view=products" className="text-[#0B1F4D] font-bold hover:underline">{tt("See all products →")}</Link></p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {catalogueCards.map((c, i) => <SupplierCategoryCard key={`${c.href}-${c.categoryName}-${i}`} card={c} />)}
                 </div>
               </div>
             ) : (
               <div className="text-center py-20 text-muted-foreground">
-                <p className="text-lg">No catalogues yet</p>
-                <p className="text-sm mt-1"><Link href="/marketplace?view=products" className="text-[#0B1F4D] font-bold underline">Browse all products →</Link></p>
+                <p className="text-lg">{tt("No catalogues yet")}</p>
+                <p className="text-sm mt-1"><Link href="/marketplace?view=products" className="text-[#0B1F4D] font-bold underline">{tt("Browse all products →")}</Link></p>
               </div>
             )
           ) : (
@@ -852,8 +858,8 @@ export default async function MarketplacePage({
                   {popularBrands.length > 0 && (
                     <div className="rounded-2xl bg-white border border-gray-100 shadow-sm p-4">
                       <div className="flex items-center justify-between mb-3">
-                        <h2 className="text-sm font-extrabold text-[#0B1F4D] uppercase tracking-wide">Popular Brands</h2>
-                        <span className="text-[11px] text-gray-400">Shop the brands you trust</span>
+                        <h2 className="text-sm font-extrabold text-[#0B1F4D] uppercase tracking-wide">{tt("Popular Brands")}</h2>
+                        <span className="text-[11px] text-gray-400">{tt("Shop the brands you trust")}</span>
                       </div>
                       <div className="flex flex-wrap gap-2">
                         {popularBrands.map((b) => (
@@ -882,8 +888,8 @@ export default async function MarketplacePage({
 
             return (
               <div className="text-center py-20 text-muted-foreground">
-                <p className="text-lg">No products found</p>
-                <p className="text-sm mt-1">Try adjusting your filters or search query</p>
+                <p className="text-lg">{tt("No products found")}</p>
+                <p className="text-sm mt-1">{tt("Try adjusting your filters or search query")}</p>
               </div>
             )
           })()}
