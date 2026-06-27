@@ -9,10 +9,16 @@ const PROVIDERS = [
   { v: 'deepl', label: 'DeepL' },
 ]
 
+type Stat = { lang: string; name: string; translated: number; total: number; cached: number }
+
 export function TranslationManager({
-  initial,
+  initial, stats, targetLangs, localeNames, totalProducts,
 }: {
   initial: { enabled: boolean; provider: string; hasOpenai: boolean; hasAnthropic: boolean; hasDeepl: boolean }
+  stats: Stat[]
+  targetLangs: string[]
+  localeNames: Record<string, string>
+  totalProducts: number
 }) {
   const router = useRouter()
   const [enabled, setEnabled] = useState(initial.enabled)
@@ -24,6 +30,10 @@ export function TranslationManager({
   const [saved, setSaved] = useState(false)
   const [running, setRunning] = useState(false)
   const [result, setResult] = useState<string | null>(null)
+  const [sel, setSel] = useState<Set<string>>(new Set(targetLangs)) // languages to translate into
+
+  const toggleLang = (l: string) => setSel((p) => { const n = new Set(p); n.has(l) ? n.delete(l) : n.add(l); return n })
+  const allSelected = sel.size === targetLangs.length
 
   async function save() {
     setSaving(true); setSaved(false)
@@ -37,16 +47,18 @@ export function TranslationManager({
   }
 
   async function backfill() {
-    if (!confirm('Translate all published products into every language now? This may take a while.')) return
+    const langs = Array.from(sel)
+    if (!langs.length) { alert('Pick at least one language.'); return }
+    const names = langs.map((l) => localeNames[l] ?? l).join(', ')
+    if (!confirm(`Translate all published products into: ${names}?\nAlready-translated text is skipped.`)) return
     setRunning(true); setResult(null)
 
-    // Run in small resumable batches so a single request never times out.
     let offset = 0, total = 0, texts = 0, languages = 0, guard = 0
     try {
-      while (guard++ < 500) {
+      while (guard++ < 1000) {
         const res = await fetch('/api/admin/translation', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'backfill', offset, batch: 3 }),
+          body: JSON.stringify({ action: 'backfill', offset, batch: 3, langs }),
         })
         const json = await res.json().catch(() => ({}))
         if (!res.ok) { setResult(json.error ?? `Failed (HTTP ${res.status})`); setRunning(false); return }
@@ -76,6 +88,31 @@ export function TranslationManager({
 
   return (
     <div className="space-y-6 max-w-2xl">
+      {/* ── Translation progress per language ── */}
+      <div className="rounded-2xl border border-gray-100 bg-white shadow-sm p-6 space-y-3">
+        <div className="flex items-baseline justify-between">
+          <p className="font-bold text-[#0B1F4D]">Translation progress</p>
+          <p className="text-xs text-gray-400">{totalProducts} products per language</p>
+        </div>
+        <div className="space-y-2.5">
+          {stats.map((st) => {
+            const pct = st.total ? Math.round((st.translated / st.total) * 100) : 0
+            const left = Math.max(st.total - st.translated, 0)
+            return (
+              <div key={st.lang} className="flex items-center gap-3">
+                <span className="w-24 shrink-0 text-sm font-semibold text-gray-700">{st.name}</span>
+                <div className="flex-1 h-2.5 rounded-full bg-gray-100 overflow-hidden">
+                  <div className={`h-full rounded-full ${pct >= 100 ? 'bg-green-500' : pct > 0 ? 'bg-[#F5A623]' : 'bg-gray-300'}`} style={{ width: `${pct}%` }} />
+                </div>
+                <span className="w-12 shrink-0 text-right text-xs font-bold text-[#0B1F4D]">{pct}%</span>
+                <span className="w-32 shrink-0 text-right text-[11px] text-gray-400">{st.translated}/{st.total} · {left} left</span>
+              </div>
+            )
+          })}
+        </div>
+        <p className="text-[11px] text-gray-400">Based on product names found in the translation cache. New products translate automatically on first view.</p>
+      </div>
+
       {/* Settings */}
       <div className="rounded-2xl border border-gray-100 bg-white shadow-sm p-6 space-y-5">
         <div className="flex items-center justify-between">
@@ -112,13 +149,33 @@ export function TranslationManager({
       </div>
 
       {/* Backfill */}
-      <div className="rounded-2xl border border-gray-100 bg-white shadow-sm p-6 space-y-3">
+      <div className="rounded-2xl border border-gray-100 bg-white shadow-sm p-6 space-y-4">
         <p className="font-bold text-[#0B1F4D]">Translate existing products</p>
-        <p className="text-xs text-gray-400">New products are translated automatically when first viewed. Run this to translate all current products into every language now (already-translated text is skipped).</p>
+        <p className="text-xs text-gray-400">Choose which languages to translate into. Already-translated text is skipped, so you can safely re-run to fill the gaps.</p>
+
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Languages</label>
+            <button type="button" onClick={() => setSel(allSelected ? new Set() : new Set(targetLangs))}
+              className="text-xs font-bold text-[#0B1F4D] hover:underline">{allSelected ? 'Clear all' : 'Select all'}</button>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {targetLangs.map((l) => {
+              const on = sel.has(l)
+              return (
+                <button key={l} type="button" onClick={() => toggleLang(l)}
+                  className={`rounded-full px-3 py-1.5 text-xs font-bold border transition-colors ${on ? 'border-[#0B1F4D] bg-[#0B1F4D] text-white' : 'border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
+                  {localeNames[l] ?? l}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
         <div className="flex items-center gap-3">
           <button type="button" onClick={backfill} disabled={running}
             className="rounded-xl bg-[#F5A623] text-[#0B1F4D] px-6 py-2.5 text-sm font-extrabold hover:bg-[#fbb93a] disabled:opacity-60">
-            {running ? 'Translating…' : 'Translate all products'}
+            {running ? 'Translating…' : `Translate into ${sel.size === targetLangs.length ? 'all languages' : `${sel.size} language${sel.size === 1 ? '' : 's'}`}`}
           </button>
           {result && <span className="text-sm text-gray-600">{result}</span>}
         </div>

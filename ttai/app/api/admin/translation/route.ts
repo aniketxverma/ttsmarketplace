@@ -42,7 +42,10 @@ export async function POST(req: NextRequest) {
   // Resumable in small batches so a single request never times out at the gateway.
   if (body.action === 'backfill') {
     try {
-      const targets = SUPPORTED_LOCALES.filter(l => l !== DEFAULT_LOCALE) // skip source default
+      // Default: every language except the source. Admin can restrict to a subset.
+      const all = SUPPORTED_LOCALES.filter(l => l !== DEFAULT_LOCALE)
+      const requested = Array.isArray(body.langs) ? body.langs.filter((l: string) => all.includes(l as any)) : null
+      const targets = requested && requested.length ? requested : all
       const BATCH = Math.min(Math.max(Number(body.batch) || 3, 1), 8)
       const offset = Math.max(Number(body.offset) || 0, 0)
 
@@ -57,7 +60,7 @@ export async function POST(req: NextRequest) {
       let texts = 0
       for (const p of (products ?? []) as any[]) {
         // All languages for this product in parallel (name + description each).
-        await Promise.all(targets.map((lang) => translateMany([p.name, p.description], lang)))
+        await Promise.all(targets.map((lang: string) => translateMany([p.name, p.description], lang)))
         texts += targets.length * 2
       }
 
