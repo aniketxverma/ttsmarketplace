@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useT } from '@/lib/i18n/client'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { createSupplierSchema } from '@/lib/validation/schemas'
@@ -29,6 +30,7 @@ const STEPS = [
 ]
 
 export default function SupplierOnboardingPage() {
+  const t = useT()
   const router = useRouter()
   const [step, setStep] = useState<Step>(1)
   const [form, setForm] = useState<FormState>(INITIAL)
@@ -182,8 +184,8 @@ export default function SupplierOnboardingPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
             </svg>
           </div>
-          <h1 className="text-2xl font-extrabold text-[#0B1F4D]">Supplier Application</h1>
-          <p className="text-gray-500 text-sm mt-1">Complete your profile to start selling on TTAI EMA</p>
+          <h1 className="text-2xl font-extrabold text-[#0B1F4D]">{t("Supplier Application")}</h1>
+          <p className="text-gray-500 text-sm mt-1">{t("Complete your profile to start selling on TTAI EMA")}</p>
         </div>
 
         {/* Step indicators */}
@@ -223,23 +225,23 @@ export default function SupplierOnboardingPage() {
 
           {step === 1 && (
             <>
-              <h2 className="font-bold text-[#0B1F4D] text-base">Company Information</h2>
+              <h2 className="font-bold text-[#0B1F4D] text-base">{t("Company Information")}</h2>
               <div className="space-y-1.5">
-                <label className={labelCls}>Legal Company Name *</label>
-                <input className={inputCls} value={form.legalName} onChange={(e) => update('legalName', e.target.value)} placeholder="e.g. Acme Trading SL" />
+                <label className={labelCls}>{t("Legal Company Name *")}</label>
+                <input className={inputCls} value={form.legalName} onChange={(e) => update('legalName', e.target.value)} placeholder={t("e.g. Acme Trading SL")} />
               </div>
               <div className="space-y-1.5">
-                <label className={labelCls}>Trade Name (public name)</label>
-                <input className={inputCls} placeholder="Shown on marketplace — leave blank to use legal name" value={form.tradeName} onChange={(e) => update('tradeName', e.target.value)} />
+                <label className={labelCls}>{t("Trade Name (public name)")}</label>
+                <input className={inputCls} placeholder={t("Shown on marketplace — leave blank to use legal name")} value={form.tradeName} onChange={(e) => update('tradeName', e.target.value)} />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <label className={labelCls}>Tax ID *</label>
-                  <input className={inputCls} value={form.taxId} onChange={(e) => update('taxId', e.target.value)} placeholder="e.g. B12345678" />
+                  <label className={labelCls}>{t("Tax ID *")}</label>
+                  <input className={inputCls} value={form.taxId} onChange={(e) => update('taxId', e.target.value)} placeholder={t("e.g. B12345678")} />
                 </div>
                 <div className="space-y-1.5">
-                  <label className={labelCls}>VAT Number</label>
-                  <input className={inputCls} placeholder="Optional" value={form.vatNumber} onChange={(e) => update('vatNumber', e.target.value)} />
+                  <label className={labelCls}>{t("VAT Number")}</label>
+                  <input className={inputCls} placeholder={t("Optional")} value={form.vatNumber} onChange={(e) => update('vatNumber', e.target.value)} />
                 </div>
               </div>
             </>
@@ -247,49 +249,49 @@ export default function SupplierOnboardingPage() {
 
           {step === 2 && (
             <>
-              <h2 className="font-bold text-[#0B1F4D] text-base">Business Address</h2>
+              <h2 className="font-bold text-[#0B1F4D] text-base">{t("Business Address")}</h2>
               <div className="space-y-1.5" onClick={loadCountries}>
-                <label className={labelCls}>Country *</label>
+                <label className={labelCls}>{t("Country *")}</label>
                 <select className={inputCls} value={form.countryId} onChange={(e) => onCountry(e.target.value)} onFocus={loadCountries}>
-                  <option value="">Select country...</option>
+                  <option value="">{t("Select country...")}</option>
                   {countries.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
               </div>
               {/* Province + City — pick or add a new one (auto-created on submit) */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <label className={labelCls}>Province</label>
+                  <label className={labelCls}>{t("Province")}</label>
                   <select className={inputCls} value={form.provinceId} disabled={!form.countryId} onChange={(e) => onProvince(e.target.value)}>
                     <option value="">{form.countryId ? 'Select…' : '—'}</option>
                     {provinces.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
                     {form.countryId && <option value="__new__">➕ Add new province…</option>}
                   </select>
                   {form.provinceId === '__new__' && (
-                    <input className={inputCls} placeholder="New province — e.g. Granada" value={form.newProvince} onChange={(e) => update('newProvince', e.target.value)} />
+                    <input className={inputCls} placeholder={t("New province — e.g. Granada")} value={form.newProvince} onChange={(e) => update('newProvince', e.target.value)} />
                   )}
                 </div>
                 <div className="space-y-1.5">
-                  <label className={labelCls}>City / District</label>
+                  <label className={labelCls}>{t("City / District")}</label>
                   <select className={inputCls} value={form.cityId} disabled={!form.provinceId} onChange={(e) => update('cityId', e.target.value)}>
                     <option value="">{form.provinceId ? 'Select…' : '—'}</option>
                     {cities.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                     {form.provinceId && <option value="__new__">➕ Add new city / district…</option>}
                   </select>
                   {form.cityId === '__new__' && (
-                    <input className={inputCls} placeholder="New city / district — e.g. Albaicín" value={form.newCity} onChange={(e) => update('newCity', e.target.value)} />
+                    <input className={inputCls} placeholder={t("New city / district — e.g. Albaicín")} value={form.newCity} onChange={(e) => update('newCity', e.target.value)} />
                   )}
                 </div>
               </div>
               <div className="space-y-1.5">
-                <label className={labelCls}>Address Line 1</label>
-                <input className={inputCls} placeholder="Street, building number" value={form.addressLine1} onChange={(e) => update('addressLine1', e.target.value)} />
+                <label className={labelCls}>{t("Address Line 1")}</label>
+                <input className={inputCls} placeholder={t("Street, building number")} value={form.addressLine1} onChange={(e) => update('addressLine1', e.target.value)} />
               </div>
               <div className="space-y-1.5">
-                <label className={labelCls}>Address Line 2</label>
-                <input className={inputCls} placeholder="Floor, unit — optional" value={form.addressLine2} onChange={(e) => update('addressLine2', e.target.value)} />
+                <label className={labelCls}>{t("Address Line 2")}</label>
+                <input className={inputCls} placeholder={t("Floor, unit — optional")} value={form.addressLine2} onChange={(e) => update('addressLine2', e.target.value)} />
               </div>
               <div className="space-y-1.5">
-                <label className={labelCls}>Postal Code</label>
+                <label className={labelCls}>{t("Postal Code")}</label>
                 <input className={inputCls} value={form.postalCode} onChange={(e) => update('postalCode', e.target.value)} />
               </div>
             </>
@@ -297,8 +299,8 @@ export default function SupplierOnboardingPage() {
 
           {step === 3 && (
             <>
-              <h2 className="font-bold text-[#0B1F4D] text-base">Marketplace Context</h2>
-              <p className="text-sm text-gray-500">Where will you sell your products?</p>
+              <h2 className="font-bold text-[#0B1F4D] text-base">{t("Marketplace Context")}</h2>
+              <p className="text-sm text-gray-500">{t("Where will you sell your products?")}</p>
               <div className="space-y-3">
                 {[
                   { value: 'wholesale', label: 'B2B Wholesale', desc: 'Sell in bulk to businesses. Minimum order quantities apply.', icon: '🏭' },
@@ -335,8 +337,8 @@ export default function SupplierOnboardingPage() {
 
           {step === 4 && (
             <>
-              <h2 className="font-bold text-[#0B1F4D] text-base">Business Description</h2>
-              <p className="text-sm text-gray-500">Tell buyers about your business — this appears on your public supplier profile.</p>
+              <h2 className="font-bold text-[#0B1F4D] text-base">{t("Business Description")}</h2>
+              <p className="text-sm text-gray-500">{t("Tell buyers about your business — this appears on your public supplier profile.")}</p>
               <textarea
                 className={`${inputCls} h-36 resize-none`}
                 placeholder="e.g. We are a certified organic producer in Valencia, Spain, specialising in premium citrus fruits and olive oil. ISO 9001 certified. Cold-chain logistics available for EU delivery..."
@@ -344,7 +346,7 @@ export default function SupplierOnboardingPage() {
                 onChange={(e) => update('description', e.target.value)}
               />
               <div className="rounded-xl bg-blue-50 border border-blue-100 px-4 py-3 text-xs text-blue-800">
-                <strong>What happens next?</strong> Our team will review your application within 48 hours. You'll be notified by email and can upload verification documents once your account is created.
+                <strong>{t("What happens next?")}</strong> Our team will review your application within 48 hours. You'll be notified by email and can upload verification documents once your account is created.
               </div>
             </>
           )}
@@ -367,7 +369,7 @@ export default function SupplierOnboardingPage() {
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
-                Back
+                {t("Back")}
               </button>
             ) : <div />}
 
@@ -376,7 +378,7 @@ export default function SupplierOnboardingPage() {
                 onClick={() => { if (validateStep()) setStep((s) => (s + 1) as Step) }}
                 className="flex items-center gap-2 rounded-xl bg-[#0B1F4D] text-white px-6 py-2.5 text-sm font-bold hover:bg-[#162d6e] transition-colors"
               >
-                Continue
+                {t("Continue")}
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
@@ -393,14 +395,14 @@ export default function SupplierOnboardingPage() {
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                     </svg>
-                    Submitting...
+                    {t("Submitting...")}
                   </>
                 ) : (
                   <>
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                     </svg>
-                    Submit Application
+                    {t("Submit Application")}
                   </>
                 )}
               </button>

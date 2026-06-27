@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useT } from '@/lib/i18n/client'
 import { useRouter } from 'next/navigation'
 
 interface BrokerStatus {
@@ -10,6 +11,7 @@ interface BrokerStatus {
 }
 
 export default function BrokerOnboardingPage() {
+  const t = useT()
   const router = useRouter()
   const [broker, setBroker] = useState<BrokerStatus | null>(null)
   const [loading, setLoading] = useState(true)
@@ -42,27 +44,27 @@ export default function BrokerOnboardingPage() {
     window.location.href = data.url
   }
 
-  if (loading) return <div className="text-sm text-muted-foreground">Loading...</div>
+  if (loading) return <div className="text-sm text-muted-foreground">{t("Loading...")}</div>
 
   return (
     <div className="max-w-lg mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Connect Stripe Account</h1>
+        <h1 className="text-2xl font-bold">{t("Connect Stripe Account")}</h1>
         <p className="text-muted-foreground text-sm mt-0.5">
-          You need a Stripe account to receive payouts as a broker
+          {t("You need a Stripe account to receive payouts as a broker")}
         </p>
       </div>
 
       <div className="rounded-xl border bg-card p-6 space-y-5">
         <div className="space-y-1">
-          <p className="text-sm font-medium">Application Status</p>
+          <p className="text-sm font-medium">{t("Application Status")}</p>
           <p className="text-sm text-muted-foreground">
             {broker?.status === 'pending' ? 'Your broker application is pending admin review.' : `Status: ${broker?.status}`}
           </p>
         </div>
 
         <div className="border-t pt-4 space-y-3">
-          <p className="text-sm font-medium">Why connect Stripe?</p>
+          <p className="text-sm font-medium">{t("Why connect Stripe?")}</p>
           <ul className="space-y-1.5 text-sm text-muted-foreground">
             <li>• Receive your broker commission payouts automatically</li>
             <li>• Full KYC/KYB compliance via Stripe Connect</li>

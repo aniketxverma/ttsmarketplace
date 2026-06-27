@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { useT } from '@/lib/i18n/client'
 import Link from 'next/link'
 import Image from 'next/image'
 import {
@@ -40,6 +41,7 @@ function fmtDate(iso: string) {
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function SupplierChannelPage() {
+  const t = useT()
   const [channel, setChannel]   = useState<Channel | null>(null)
   const [posts,   setPosts]     = useState<Post[]>([])
   const [loading, setLoading]   = useState(true)
@@ -244,7 +246,7 @@ export default function SupplierChannelPage() {
           <div className="w-14 h-14 rounded-2xl bg-[#0B1F4D] flex items-center justify-center mb-5 shadow-md">
             <Radio className="w-7 h-7 text-white" />
           </div>
-          <h1 className="text-2xl font-extrabold text-[#0B1F4D] mb-1">Create Your Canal</h1>
+          <h1 className="text-2xl font-extrabold text-[#0B1F4D] mb-1">{t("Create Your Canal")}</h1>
           <p className="text-sm text-gray-400 mb-7 leading-relaxed">
             Broadcast product updates, exclusive offers and announcements directly to buyers who follow your brand.
           </p>
@@ -255,29 +257,29 @@ export default function SupplierChannelPage() {
 
           <form onSubmit={handleCreate} className="space-y-4">
             <div>
-              <label className="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-1.5">Canal Name *</label>
+              <label className="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-1.5">{t("Canal Name *")}</label>
               <input type="text" value={cForm.name} onChange={e => setCForm(f => ({ ...f, name: e.target.value }))}
-                placeholder="e.g. Rozil Official Canal"
+                placeholder={t("e.g. Rozil Official Canal")}
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B1F4D] focus:border-transparent" required />
             </div>
             <div>
-              <label className="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-1.5">Description</label>
+              <label className="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-1.5">{t("Description")}</label>
               <textarea value={cForm.description} onChange={e => setCForm(f => ({ ...f, description: e.target.value }))}
-                placeholder="What will you share in this canal?"
+                placeholder={t("What will you share in this canal?")}
                 rows={3} className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B1F4D] resize-none" />
             </div>
             <div>
               <label className="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-1.5">
-                WhatsApp Number <span className="text-gray-400 font-normal normal-case">(optional)</span>
+                {t("WhatsApp Number")} <span className="text-gray-400 font-normal normal-case">(optional)</span>
               </label>
               <input type="tel" value={cForm.whatsapp} onChange={e => setCForm(f => ({ ...f, whatsapp: e.target.value }))}
                 placeholder="+34 600 000 000"
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B1F4D]" />
-              <p className="text-[11px] text-gray-400 mt-1">For buyers to contact you directly.</p>
+              <p className="text-[11px] text-gray-400 mt-1">{t("For buyers to contact you directly.")}</p>
             </div>
             <div>
               <label className="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-1.5">
-                WhatsApp Channel link <span className="text-gray-400 font-normal normal-case">(optional)</span>
+                {t("WhatsApp Channel link")} <span className="text-gray-400 font-normal normal-case">(optional)</span>
               </label>
               <input type="url" value={cForm.whatsapp_channel_url} onChange={e => setCForm(f => ({ ...f, whatsapp_channel_url: e.target.value }))}
                 placeholder="https://whatsapp.com/channel/…"
@@ -346,7 +348,7 @@ export default function SupplierChannelPage() {
               </button>
               <Link href={`/channel/${channel.id}`} target="_blank"
                 className="flex items-center gap-1.5 text-xs font-bold px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/20 transition-colors">
-                <ExternalLink className="w-3.5 h-3.5" />Preview
+                <ExternalLink className="w-3.5 h-3.5" />{t("Preview")}
               </Link>
             </div>
           </div>
@@ -354,18 +356,18 @@ export default function SupplierChannelPage() {
           <div className="flex items-center gap-6">
             <div>
               <p className="text-2xl font-extrabold text-white">{channel.member_count.toLocaleString()}</p>
-              <p className="text-xs text-white/45 mt-0.5 flex items-center gap-1"><Users className="w-3 h-3" />Subscribers</p>
+              <p className="text-xs text-white/45 mt-0.5 flex items-center gap-1"><Users className="w-3 h-3" />{t("Subscribers")}</p>
             </div>
             <div className="w-px h-10 bg-white/15" />
             <div>
               <p className="text-2xl font-extrabold text-white">{channel.post_count.toLocaleString()}</p>
-              <p className="text-xs text-white/45 mt-0.5 flex items-center gap-1"><FileText className="w-3 h-3" />Posts</p>
+              <p className="text-xs text-white/45 mt-0.5 flex items-center gap-1"><FileText className="w-3 h-3" />{t("Posts")}</p>
             </div>
             {channel.whatsapp && (
               <>
                 <div className="w-px h-10 bg-white/15" />
                 <div>
-                  <p className="text-xs text-white/45 mb-0.5">WhatsApp</p>
+                  <p className="text-xs text-white/45 mb-0.5">{t("WhatsApp")}</p>
                   <p className="text-sm font-bold text-white">{channel.whatsapp}</p>
                 </div>
               </>
@@ -375,7 +377,7 @@ export default function SupplierChannelPage() {
                 <div className="w-px h-10 bg-white/15" />
                 <a href={channel.whatsapp_channel_url} target="_blank" rel="noopener noreferrer"
                   className="inline-flex items-center gap-1.5 rounded-xl bg-[#25D366] hover:bg-[#1ea952] text-white text-xs font-bold px-3.5 py-2 transition-colors">
-                  <MessagesSquare className="w-3.5 h-3.5" /> WhatsApp Channel
+                  <MessagesSquare className="w-3.5 h-3.5" /> {t("WhatsApp Channel")}
                 </a>
               </>
             )}
@@ -387,7 +389,7 @@ export default function SupplierChannelPage() {
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-50 flex items-center gap-2">
           <Plus className="w-4 h-4 text-[#0B1F4D]" />
-          <h2 className="text-sm font-extrabold text-[#0B1F4D] uppercase tracking-wide">New Post</h2>
+          <h2 className="text-sm font-extrabold text-[#0B1F4D] uppercase tracking-wide">{t("New Post")}</h2>
         </div>
 
         <form onSubmit={handlePost} className="p-6 space-y-4">
@@ -410,7 +412,7 @@ export default function SupplierChannelPage() {
           <textarea
             value={pForm.content}
             onChange={e => setPForm(f => ({ ...f, content: e.target.value }))}
-            placeholder="Write your update, offer, or announcement for your subscribers…"
+            placeholder={t("Write your update, offer, or announcement for your subscribers…")}
             rows={4}
             className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B1F4D] resize-none"
             required
@@ -429,7 +431,7 @@ export default function SupplierChannelPage() {
             <button type="button" onClick={() => imgRef.current?.click()}
               className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-dashed border-gray-200 text-gray-400 hover:border-[#0B1F4D]/40 hover:text-[#0B1F4D] transition-colors text-sm font-semibold">
               <ImagePlus className="w-4 h-4" />
-              Attach Image
+              {t("Attach Image")}
             </button>
           )}
           <input ref={imgRef} type="file" accept="image/*" onChange={handleImageSelect} className="hidden" />
@@ -448,7 +450,7 @@ export default function SupplierChannelPage() {
               className="flex items-center gap-2 px-5 py-2.5 bg-[#0B1F4D] hover:bg-[#162d6e] text-white rounded-xl text-sm font-bold transition-colors disabled:opacity-50 shadow-sm">
               {posting
                 ? <><Loader className="w-4 h-4 animate-spin" />{uploadingImg ? 'Uploading…' : 'Posting…'}</>
-                : <><Send className="w-4 h-4" />Post to Canal</>}
+                : <><Send className="w-4 h-4" />{t("Post to Canal")}</>}
             </button>
           </div>
         </form>
@@ -459,7 +461,7 @@ export default function SupplierChannelPage() {
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-50 flex items-center gap-2">
             <FileText className="w-4 h-4 text-[#0B1F4D]" />
-            <h2 className="text-sm font-extrabold text-[#0B1F4D] uppercase tracking-wide">Recent Posts</h2>
+            <h2 className="text-sm font-extrabold text-[#0B1F4D] uppercase tracking-wide">{t("Recent Posts")}</h2>
           </div>
           <div className="divide-y divide-gray-50">
             {posts.map(post => {
@@ -497,7 +499,7 @@ export default function SupplierChannelPage() {
           <div className="w-12 h-12 rounded-2xl bg-gray-100 flex items-center justify-center mx-auto mb-3">
             <Megaphone className="w-6 h-6 text-gray-300" />
           </div>
-          <p className="text-gray-400 font-medium text-sm">No posts yet — compose your first update above.</p>
+          <p className="text-gray-400 font-medium text-sm">{t("No posts yet — compose your first update above.")}</p>
         </div>
       )}
 
@@ -506,30 +508,30 @@ export default function SupplierChannelPage() {
         <button onClick={() => setSettings(!settings)}
           className="w-full flex items-center justify-between px-6 py-4 hover:bg-gray-50 transition-colors">
           <span className="flex items-center gap-2 font-extrabold text-[#0B1F4D] text-sm">
-            <Settings className="w-4 h-4" />Canal Settings
+            <Settings className="w-4 h-4" />{t("Canal Settings")}
           </span>
           <ChevronRight className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${settings ? 'rotate-90' : ''}`} />
         </button>
         {settings && (
           <form onSubmit={handleSaveSettings} className="px-6 pb-6 space-y-4 border-t border-gray-100 pt-5">
             <div>
-              <label className="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-1.5">Canal Name *</label>
+              <label className="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-1.5">{t("Canal Name *")}</label>
               <input type="text" value={sForm.name} onChange={e => setSForm(f => ({ ...f, name: e.target.value }))}
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B1F4D]" required />
             </div>
             <div>
-              <label className="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-1.5">Description</label>
+              <label className="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-1.5">{t("Description")}</label>
               <textarea value={sForm.description} onChange={e => setSForm(f => ({ ...f, description: e.target.value }))}
                 rows={2} className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B1F4D] resize-none" />
             </div>
             <div>
-              <label className="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-1.5">WhatsApp Number</label>
+              <label className="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-1.5">{t("WhatsApp Number")}</label>
               <input type="tel" value={sForm.whatsapp} onChange={e => setSForm(f => ({ ...f, whatsapp: e.target.value }))}
                 placeholder="+34 600 000 000"
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B1F4D]" />
             </div>
             <div>
-              <label className="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-1.5">WhatsApp Channel link</label>
+              <label className="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-1.5">{t("WhatsApp Channel link")}</label>
               <input type="url" value={sForm.whatsapp_channel_url} onChange={e => setSForm(f => ({ ...f, whatsapp_channel_url: e.target.value }))}
                 placeholder="https://whatsapp.com/channel/…"
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B1F4D]" />
@@ -537,11 +539,11 @@ export default function SupplierChannelPage() {
             </div>
             <div className="flex items-center gap-3 pt-1">
               <button type="submit" className="px-5 py-2.5 bg-[#0B1F4D] text-white rounded-xl text-sm font-bold hover:bg-[#162d6e] transition-colors">
-                Save Changes
+                {t("Save Changes")}
               </button>
               <button type="button" onClick={() => setSettings(false)}
                 className="px-5 py-2.5 border border-gray-200 text-gray-500 rounded-xl text-sm font-medium hover:bg-gray-50 transition-colors">
-                Cancel
+                {t("Cancel")}
               </button>
             </div>
           </form>
@@ -552,31 +554,31 @@ export default function SupplierChannelPage() {
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-50 flex items-center gap-2">
           <MessagesSquare className="w-4 h-4 text-[#1ea952]" />
-          <h2 className="text-sm font-extrabold text-[#0B1F4D] uppercase tracking-wide">WhatsApp Groups</h2>
+          <h2 className="text-sm font-extrabold text-[#0B1F4D] uppercase tracking-wide">{t("WhatsApp Groups")}</h2>
         </div>
 
         <form onSubmit={handleAddGroup} className="p-6 space-y-3 border-b border-gray-50">
           <p className="text-xs text-gray-400">List your public WhatsApp group so buyers can find and join it in the marketplace directory.</p>
           <div className="grid sm:grid-cols-3 gap-3">
             <input value={gForm.name} onChange={e => setGForm(f => ({ ...f, name: e.target.value }))}
-              placeholder="Group name *" className="px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B1F4D]" required />
+              placeholder={t("Group name *")} className="px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B1F4D]" required />
             <input value={gForm.category} onChange={e => setGForm(f => ({ ...f, category: e.target.value }))}
-              placeholder="Category (e.g. Electronics)" className="px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B1F4D]" />
+              placeholder={t("Category (e.g. Electronics)")} className="px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B1F4D]" />
             <select value={gForm.region} onChange={e => setGForm(f => ({ ...f, region: e.target.value }))}
               className="px-4 py-2.5 rounded-xl border border-gray-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#0B1F4D]">
-              <option value="">Region…</option>
+              <option value="">{t("Region…")}</option>
               {['Spain', 'Europe', 'Africa', 'Middle East', 'Latin America', 'Asia', 'North America', 'Global'].map(r => <option key={r} value={r}>{r}</option>)}
             </select>
           </div>
           <input value={gForm.invite_link} onChange={e => setGForm(f => ({ ...f, invite_link: e.target.value }))}
-            placeholder="WhatsApp invite link * — https://chat.whatsapp.com/…"
+            placeholder={t("WhatsApp invite link * — https://chat.whatsapp.com/…")}
             className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B1F4D]" required />
           <input value={gForm.description} onChange={e => setGForm(f => ({ ...f, description: e.target.value }))}
-            placeholder="Short description (optional)" className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B1F4D]" />
+            placeholder={t("Short description (optional)")} className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B1F4D]" />
           {gError && <p className="text-sm text-red-600 bg-red-50 rounded-xl px-4 py-2.5 border border-red-100">{gError}</p>}
           <button type="submit" disabled={gBusy || !gForm.name.trim() || !gForm.invite_link.trim()}
             className="flex items-center gap-2 px-5 py-2.5 bg-[#25D366] hover:bg-[#1ea952] text-white rounded-xl text-sm font-bold transition-colors disabled:opacity-50">
-            {gBusy ? <Loader className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}Add group
+            {gBusy ? <Loader className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}{t("Add group")}
           </button>
         </form>
 
@@ -603,7 +605,7 @@ export default function SupplierChannelPage() {
 
       {/* ── Danger zone ──────────────────────────────────────────────── */}
       <div className="bg-white rounded-2xl border border-red-100 shadow-sm p-6">
-        <h3 className="text-sm font-extrabold text-red-600 mb-4 uppercase tracking-wide">Danger Zone</h3>
+        <h3 className="text-sm font-extrabold text-red-600 mb-4 uppercase tracking-wide">{t("Danger Zone")}</h3>
         <div className="flex items-center justify-between gap-4">
           <div>
             <p className="text-sm font-bold text-gray-800">
@@ -621,7 +623,7 @@ export default function SupplierChannelPage() {
                 ? 'border-red-200 text-red-600 hover:bg-red-50'
                 : 'border-green-200 text-green-700 hover:bg-green-50'
             }`}>
-            {channel.is_active ? <><EyeOff className="w-4 h-4" />Pause</> : <><Eye className="w-4 h-4" />Resume</>}
+            {channel.is_active ? <><EyeOff className="w-4 h-4" />{t("Pause")}</> : <><Eye className="w-4 h-4" />{t("Resume")}</>}
           </button>
         </div>
       </div>

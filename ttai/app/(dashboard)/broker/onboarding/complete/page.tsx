@@ -1,9 +1,11 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useT } from '@/lib/i18n/client'
 import { useRouter } from 'next/navigation'
 
 export default function BrokerOnboardingCompletePage() {
+  const t = useT()
   const router = useRouter()
   const [status, setStatus] = useState<'checking' | 'complete' | 'incomplete'>('checking')
 
@@ -22,7 +24,7 @@ export default function BrokerOnboardingCompletePage() {
   }, [router])
 
   if (status === 'checking') {
-    return <div className="text-sm text-muted-foreground">Verifying Stripe connection...</div>
+    return <div className="text-sm text-muted-foreground">{t("Verifying Stripe connection...")}</div>
   }
 
   if (status === 'complete') {
@@ -33,23 +35,23 @@ export default function BrokerOnboardingCompletePage() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
           </svg>
         </div>
-        <h1 className="text-2xl font-bold">Stripe Connected!</h1>
-        <p className="text-muted-foreground text-sm">Your Stripe account is verified. Redirecting to your dashboard...</p>
+        <h1 className="text-2xl font-bold">{t("Stripe Connected!")}</h1>
+        <p className="text-muted-foreground text-sm">{t("Your Stripe account is verified. Redirecting to your dashboard...")}</p>
       </div>
     )
   }
 
   return (
     <div className="max-w-md mx-auto space-y-4 text-center">
-      <h1 className="text-2xl font-bold">Onboarding Incomplete</h1>
+      <h1 className="text-2xl font-bold">{t("Onboarding Incomplete")}</h1>
       <p className="text-muted-foreground text-sm">
-        Stripe onboarding is not yet complete. Please finish all required steps.
+        {t("Stripe onboarding is not yet complete. Please finish all required steps.")}
       </p>
       <button
         onClick={() => router.push('/broker/onboarding')}
         className="rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm font-medium hover:bg-primary/90"
       >
-        Return to Onboarding
+        {t("Return to Onboarding")}
       </button>
     </div>
   )

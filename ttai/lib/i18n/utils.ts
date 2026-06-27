@@ -21,6 +21,10 @@ export type MessageKey = DotPath<Messages>
 /** Dot-notation getter — t('brand.tab_products') */
 export function createT(messages: Messages) {
   return function t(key: string): string {
+    // Exact top-level match first — lets us key client UI by the English text
+    // itself (including phrases with spaces or periods, which dot-splitting breaks).
+    const exact = (messages as Record<string, unknown>)[key]
+    if (typeof exact === 'string') return exact
     const parts = key.split('.')
     let val: unknown = messages
     for (const part of parts) {

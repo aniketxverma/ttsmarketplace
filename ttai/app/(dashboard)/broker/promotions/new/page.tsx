@@ -1,10 +1,12 @@
 'use client'
 
 import { useState } from 'react'
+import { useT } from '@/lib/i18n/client'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
 export default function NewPromotionPage() {
+  const t = useT()
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -62,8 +64,8 @@ export default function NewPromotionPage() {
   return (
     <div className="max-w-xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">New Promotion</h1>
-        <p className="text-muted-foreground text-sm mt-0.5">Promote a product in one of your 3 marketplace slots</p>
+        <h1 className="text-2xl font-bold">{t("New Promotion")}</h1>
+        <p className="text-muted-foreground text-sm mt-0.5">{t("Promote a product in one of your 3 marketplace slots")}</p>
       </div>
 
       <form onSubmit={handleSubmit} className="rounded-xl border bg-card p-6 space-y-5">
@@ -72,43 +74,43 @@ export default function NewPromotionPage() {
         )}
 
         <div className="space-y-1.5">
-          <label className="text-sm font-medium">Product ID <span className="text-destructive">*</span></label>
+          <label className="text-sm font-medium">{t("Product ID")} <span className="text-destructive">*</span></label>
           <input
             name="product_id"
             required
-            placeholder="Paste product UUID"
+            placeholder={t("Paste product UUID")}
             className="w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
           />
-          <p className="text-xs text-muted-foreground">You can find product IDs in the marketplace URLs</p>
+          <p className="text-xs text-muted-foreground">{t("You can find product IDs in the marketplace URLs")}</p>
         </div>
 
         <div className="space-y-1.5">
-          <label className="text-sm font-medium">Slot <span className="text-destructive">*</span></label>
+          <label className="text-sm font-medium">{t("Slot")} <span className="text-destructive">*</span></label>
           <select
             name="slot"
             required
             className="w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
           >
-            <option value="">Select slot...</option>
-            <option value="1">Slot 1 (Top)</option>
-            <option value="2">Slot 2 (Middle)</option>
-            <option value="3">Slot 3 (Bottom)</option>
+            <option value="">{t("Select slot...")}</option>
+            <option value="1">{t("Slot 1 (Top)")}</option>
+            <option value="2">{t("Slot 2 (Middle)")}</option>
+            <option value="3">{t("Slot 3 (Bottom)")}</option>
           </select>
         </div>
 
         <div className="space-y-1.5">
-          <label className="text-sm font-medium">Custom Pitch</label>
+          <label className="text-sm font-medium">{t("Custom Pitch")}</label>
           <textarea
             name="pitch"
             rows={3}
-            placeholder="Write a compelling message for buyers..."
+            placeholder={t("Write a compelling message for buyers...")}
             className="w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-none"
           />
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <label className="text-sm font-medium">Start Date <span className="text-destructive">*</span></label>
+            <label className="text-sm font-medium">{t("Start Date")} <span className="text-destructive">*</span></label>
             <input
               type="date"
               name="starts_at"
@@ -117,7 +119,7 @@ export default function NewPromotionPage() {
             />
           </div>
           <div className="space-y-1.5">
-            <label className="text-sm font-medium">End Date <span className="text-destructive">*</span></label>
+            <label className="text-sm font-medium">{t("End Date")} <span className="text-destructive">*</span></label>
             <input
               type="date"
               name="ends_at"

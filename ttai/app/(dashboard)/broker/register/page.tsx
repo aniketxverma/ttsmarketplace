@@ -1,10 +1,12 @@
 'use client'
 
 import { useState } from 'react'
+import { useT } from '@/lib/i18n/client'
 import { useRouter } from 'next/navigation'
 import { createBrokerSchema } from '@/lib/validation/schemas'
 
 export default function BrokerRegisterPage() {
+  const t = useT()
   const router = useRouter()
   const [form, setForm] = useState({ legalName: '', taxId: '', vatNumber: '', taxJurisdiction: 'ES' })
   const [error, setError] = useState<string | null>(null)
@@ -35,26 +37,26 @@ export default function BrokerRegisterPage() {
   return (
     <div className="max-w-md mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Register as Broker</h1>
-        <p className="text-muted-foreground text-sm mt-0.5">Apply to join the TTAI broker network</p>
+        <h1 className="text-2xl font-bold">{t("Register as Broker")}</h1>
+        <p className="text-muted-foreground text-sm mt-0.5">{t("Apply to join the TTAI broker network")}</p>
       </div>
 
       <div className="rounded-xl border bg-card p-6 space-y-4">
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1">
-            <label className="text-sm font-medium">Legal Name *</label>
+            <label className="text-sm font-medium">{t("Legal Name *")}</label>
             <input className={inputCls} value={form.legalName} onChange={(e) => setForm((f) => ({ ...f, legalName: e.target.value }))} required />
           </div>
           <div className="space-y-1">
-            <label className="text-sm font-medium">Tax ID (NIF/CIF) *</label>
+            <label className="text-sm font-medium">{t("Tax ID (NIF/CIF) *")}</label>
             <input className={inputCls} value={form.taxId} onChange={(e) => setForm((f) => ({ ...f, taxId: e.target.value }))} required />
           </div>
           <div className="space-y-1">
-            <label className="text-sm font-medium">VAT Number</label>
-            <input className={inputCls} placeholder="Optional" value={form.vatNumber} onChange={(e) => setForm((f) => ({ ...f, vatNumber: e.target.value }))} />
+            <label className="text-sm font-medium">{t("VAT Number")}</label>
+            <input className={inputCls} placeholder={t("Optional")} value={form.vatNumber} onChange={(e) => setForm((f) => ({ ...f, vatNumber: e.target.value }))} />
           </div>
           <div className="space-y-1">
-            <label className="text-sm font-medium">Tax Jurisdiction (Country ISO)</label>
+            <label className="text-sm font-medium">{t("Tax Jurisdiction (Country ISO)")}</label>
             <input className={inputCls} maxLength={2} value={form.taxJurisdiction} onChange={(e) => setForm((f) => ({ ...f, taxJurisdiction: e.target.value.toUpperCase() }))} />
           </div>
 

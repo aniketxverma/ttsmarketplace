@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useT } from '@/lib/i18n/client'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { Heart, Store, MapPin, X, ShoppingBag } from 'lucide-react'
@@ -16,6 +17,7 @@ function readFavs(): string[] {
 }
 
 export default function SavedPage() {
+  const t = useT()
   const [items, setItems] = useState<Saved[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -52,7 +54,7 @@ export default function SavedPage() {
         <div className="flex items-center gap-3 mb-6">
           <span className="w-11 h-11 rounded-2xl bg-rose-50 flex items-center justify-center"><Heart className="w-5 h-5 fill-rose-500 text-rose-500" /></span>
           <div>
-            <h1 className="text-2xl font-extrabold text-[#0B1F4D]">My Saved</h1>
+            <h1 className="text-2xl font-extrabold text-[#0B1F4D]">{t("My Saved")}</h1>
             <p className="text-sm text-gray-400">Stores &amp; companies you saved across the marketplace, mall and industrial park.</p>
           </div>
         </div>
@@ -64,9 +66,9 @@ export default function SavedPage() {
         ) : items.length === 0 ? (
           <div className="rounded-2xl bg-white border border-gray-200 p-14 text-center">
             <Heart className="w-12 h-12 text-gray-200 mx-auto mb-3" />
-            <p className="font-bold text-gray-700">Nothing saved yet</p>
-            <p className="text-sm text-gray-400 mt-1">Tap the ♥ on any store or company to keep it here.</p>
-            <Link href="/store-center" className="mt-5 inline-flex items-center gap-2 rounded-xl bg-[#0B1F4D] text-white text-sm font-bold px-6 py-2.5 hover:bg-[#162d6e] transition-colors"><ShoppingBag className="w-4 h-4" />Explore the Mall</Link>
+            <p className="font-bold text-gray-700">{t("Nothing saved yet")}</p>
+            <p className="text-sm text-gray-400 mt-1">{t("Tap the ♥ on any store or company to keep it here.")}</p>
+            <Link href="/store-center" className="mt-5 inline-flex items-center gap-2 rounded-xl bg-[#0B1F4D] text-white text-sm font-bold px-6 py-2.5 hover:bg-[#162d6e] transition-colors"><ShoppingBag className="w-4 h-4" />{t("Explore the Mall")}</Link>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -83,7 +85,7 @@ export default function SavedPage() {
                   </div>
                 </div>
                 {s.tagline && <p className="text-xs text-gray-400 line-clamp-2 mb-3">{s.tagline}</p>}
-                <Link href={`/marketplace?supplier=${s.id}`} className="block text-center rounded-lg bg-[#0B1F4D] hover:bg-[#162d6e] text-white text-xs font-bold py-2 transition-colors"><Store className="w-3.5 h-3.5 inline mr-1" />Visit shop</Link>
+                <Link href={`/marketplace?supplier=${s.id}`} className="block text-center rounded-lg bg-[#0B1F4D] hover:bg-[#162d6e] text-white text-xs font-bold py-2 transition-colors"><Store className="w-3.5 h-3.5 inline mr-1" />{t("Visit shop")}</Link>
               </div>
             ))}
           </div>

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useT } from '@/lib/i18n/client'
 import { useCart } from '@/lib/cart/CartContext'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -11,6 +12,7 @@ function fmt(cents: number, currency: string) {
 }
 
 export default function CheckoutPage() {
+  const t = useT()
   const { items, totalCents, clearCart } = useCart()
   const router = useRouter()
   const [loading, setLoading] = useState(false)
@@ -87,10 +89,10 @@ export default function CheckoutPage() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
           </svg>
         </div>
-        <h1 className="text-2xl font-bold text-[#0B1F4D] mb-2">Your cart is empty</h1>
-        <p className="text-gray-500 mb-6">Add some products before checking out.</p>
+        <h1 className="text-2xl font-bold text-[#0B1F4D] mb-2">{t("Your cart is empty")}</h1>
+        <p className="text-gray-500 mb-6">{t("Add some products before checking out.")}</p>
         <Link href="/marketplace" className="inline-flex items-center gap-2 rounded-xl bg-[#0B1F4D] text-white px-8 py-3 text-sm font-bold hover:bg-[#162d6e] transition-colors">
-          Browse Marketplace
+          {t("Browse Marketplace")}
         </Link>
       </div>
     )
@@ -101,12 +103,12 @@ export default function CheckoutPage() {
       <div className="container mx-auto px-4 max-w-5xl">
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 text-sm text-gray-400 mb-8">
-          <Link href="/marketplace" className="hover:text-gray-600 transition-colors">Marketplace</Link>
+          <Link href="/marketplace" className="hover:text-gray-600 transition-colors">{t("Marketplace")}</Link>
           <span>/</span>
-          <span className="text-gray-700 font-medium">Checkout</span>
+          <span className="text-gray-700 font-medium">{t("Checkout")}</span>
         </div>
 
-        <h1 className="text-2xl font-extrabold text-[#0B1F4D] mb-8">Complete Your Order</h1>
+        <h1 className="text-2xl font-extrabold text-[#0B1F4D] mb-8">{t("Complete Your Order")}</h1>
 
         <form onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
@@ -118,21 +120,21 @@ export default function CheckoutPage() {
               <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
                 <h2 className="font-bold text-[#0B1F4D] text-base mb-5 flex items-center gap-2">
                   <div className="w-7 h-7 rounded-full bg-[#0B1F4D] text-white text-xs font-black flex items-center justify-center">1</div>
-                  Shipping Details
+                  {t("Shipping Details")}
                 </h2>
 
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1.5 sm:col-span-2">
-                      <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Full Name *</label>
+                      <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">{t("Full Name *")}</label>
                       <input
                         name="fullName" value={form.fullName} onChange={handleChange} required
-                        placeholder="John Doe"
+                        placeholder={t("John Doe")}
                         className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B1F4D] focus:border-transparent transition-all"
                       />
                     </div>
                     <div className="space-y-1.5 sm:col-span-2">
-                      <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Address *</label>
+                      <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">{t("Address *")}</label>
                       <input
                         name="line1" value={form.line1} onChange={handleChange} required
                         placeholder="123 Main Street, Floor 2"
@@ -140,15 +142,15 @@ export default function CheckoutPage() {
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">City *</label>
+                      <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">{t("City *")}</label>
                       <input
                         name="city" value={form.city} onChange={handleChange} required
-                        placeholder="Madrid"
+                        placeholder={t("Madrid")}
                         className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B1F4D] focus:border-transparent transition-all"
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Postal Code *</label>
+                      <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">{t("Postal Code *")}</label>
                       <input
                         name="postalCode" value={form.postalCode} onChange={handleChange} required
                         placeholder="28001"
@@ -156,7 +158,7 @@ export default function CheckoutPage() {
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Country *</label>
+                      <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">{t("Country *")}</label>
                       <select
                         name="country" value={form.country} onChange={handleChange} required
                         className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B1F4D] focus:border-transparent transition-all bg-white"
@@ -171,7 +173,7 @@ export default function CheckoutPage() {
                       </select>
                     </div>
                     <div className="space-y-1.5">
-                      <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Phone</label>
+                      <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">{t("Phone")}</label>
                       <input
                         name="phone" value={form.phone} onChange={handleChange}
                         placeholder="+34 600 000 000"
@@ -179,10 +181,10 @@ export default function CheckoutPage() {
                       />
                     </div>
                     <div className="space-y-1.5 sm:col-span-2">
-                      <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">VAT number <span className="text-gray-400 normal-case font-normal">(businesses — EU reverse charge)</span></label>
+                      <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide">{t("VAT number")} <span className="text-gray-400 normal-case font-normal">(businesses — EU reverse charge)</span></label>
                       <input
                         name="vatNumber" value={form.vatNumber} onChange={handleChange}
-                        placeholder="e.g. DE123456789"
+                        placeholder={t("e.g. DE123456789")}
                         className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B1F4D] focus:border-transparent transition-all"
                       />
                       <p className="text-xs text-gray-400">EU businesses with a valid VAT number in another country may be billed without VAT (intra-community).</p>
@@ -195,22 +197,22 @@ export default function CheckoutPage() {
               <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
                 <h2 className="font-bold text-[#0B1F4D] text-base mb-4 flex items-center gap-2">
                   <div className="w-7 h-7 rounded-full bg-[#0B1F4D] text-white text-xs font-black flex items-center justify-center">2</div>
-                  Payment
+                  {t("Payment")}
                 </h2>
                 <div className="rounded-xl border border-[#0B1F4D] bg-[#0B1F4D]/[0.04] ring-1 ring-[#0B1F4D] p-4 flex items-center gap-3">
                   <svg className="w-6 h-6 text-[#0B1F4D] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M3 10h18M7 15h2m-5 4h16a1 1 0 001-1V6a1 1 0 00-1-1H4a1 1 0 00-1 1v12a1 1 0 001 1z" /></svg>
                   <div className="flex-1">
-                    <p className="font-bold text-[#0B1F4D] text-sm leading-tight">Secure payment by Stripe</p>
+                    <p className="font-bold text-[#0B1F4D] text-sm leading-tight">{t("Secure payment by Stripe")}</p>
                     <p className="text-[11px] text-gray-500 mt-0.5">Visa · Mastercard · Amex · Apple&nbsp;Pay · Google&nbsp;Pay</p>
                   </div>
                   <span className="hidden sm:inline-flex items-center gap-1 text-[10px] font-bold text-gray-400 uppercase tracking-wide">
                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
-                    Encrypted
+                    {t("Encrypted")}
                   </span>
                 </div>
                 <div className="mt-3 flex items-start gap-2 text-xs text-gray-500 bg-blue-50/60 border border-blue-100 rounded-xl px-3.5 py-2.5">
                   <svg className="w-4 h-4 mt-0.5 text-[#0B1F4D] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                  <span><span className="font-semibold text-[#0B1F4D]">Secure payment.</span> You&apos;ll be redirected to Stripe to complete payment. Your order is confirmed instantly once paid.</span>
+                  <span><span className="font-semibold text-[#0B1F4D]">{t("Secure payment.")}</span> You&apos;ll be redirected to Stripe to complete payment. Your order is confirmed instantly once paid.</span>
                 </div>
               </div>
 
@@ -228,8 +230,8 @@ export default function CheckoutPage() {
             <div className="lg:col-span-2">
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm sticky top-20">
                 <div className="p-5 border-b">
-                  <h2 className="font-bold text-[#0B1F4D]">Order Summary</h2>
-                  <p className="text-xs text-gray-400 mt-0.5">{items.length} product{items.length !== 1 ? 's' : ''}</p>
+                  <h2 className="font-bold text-[#0B1F4D]">{t("Order Summary")}</h2>
+                  <p className="text-xs text-gray-400 mt-0.5">{items.length} {t("product")}{items.length !== 1 ? 's' : ''}</p>
                 </div>
 
                 {/* Items */}
@@ -259,19 +261,19 @@ export default function CheckoutPage() {
                 {/* Totals */}
                 <div className="p-5 border-t space-y-3">
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">Subtotal</span>
+                    <span className="text-gray-500">{t("Subtotal")}</span>
                     <span className="font-medium">{fmt(totalCents, currency)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">VAT (est.)</span>
+                    <span className="text-gray-500">{t("VAT (est.)")}</span>
                     <span className="font-medium">{fmt(vatCents, currency)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">Shipping</span>
-                    <span className="text-green-600 font-medium">Free</span>
+                    <span className="text-gray-500">{t("Shipping")}</span>
+                    <span className="text-green-600 font-medium">{t("Free")}</span>
                   </div>
                   <div className="pt-3 border-t flex justify-between">
-                    <span className="font-bold text-[#0B1F4D]">Total</span>
+                    <span className="font-bold text-[#0B1F4D]">{t("Total")}</span>
                     <span className="font-extrabold text-[#0B1F4D] text-lg">{fmt(grandTotal, currency)}</span>
                   </div>
                 </div>
@@ -281,8 +283,8 @@ export default function CheckoutPage() {
                   <div className="px-5 pb-1 space-y-2">
                     {unmetMin.map((g, i) => (
                       <div key={i} className="rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-2.5 text-xs text-amber-800">
-                        <span className="font-bold">{g.name}</span> requires a minimum order of {fmt(g.min, g.currency)}.
-                        Add <span className="font-bold">{fmt(g.min - g.subtotal, g.currency)}</span> more from this supplier to checkout.
+                        <span className="font-bold">{g.name}</span> {t("requires a minimum order of")} {fmt(g.min, g.currency)}.
+                        Add <span className="font-bold">{fmt(g.min - g.subtotal, g.currency)}</span> {t("more from this supplier to checkout.")}
                       </div>
                     ))}
                   </div>
@@ -301,7 +303,7 @@ export default function CheckoutPage() {
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                         </svg>
-                        Redirecting to payment…
+                        {t("Redirecting to payment…")}
                       </>
                     ) : (
                       <>
@@ -313,7 +315,7 @@ export default function CheckoutPage() {
                     )}
                   </button>
                   <p className="text-xs text-center text-gray-400 mt-3">
-                    By placing your order you agree to our terms of service
+                    {t("By placing your order you agree to our terms of service")}
                   </p>
                 </div>
               </div>

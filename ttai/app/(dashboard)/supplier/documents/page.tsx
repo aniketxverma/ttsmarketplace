@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { useT } from '@/lib/i18n/client'
 import { createClient } from '@/lib/supabase/client'
 import { FileSpreadsheet, FileText, FileImage, File, Download, Trash2, Upload, Eye, EyeOff, Loader2 } from 'lucide-react'
 
@@ -47,6 +48,7 @@ function fmtSize(bytes?: number | null) {
 }
 
 export default function SupplierDocumentsPage() {
+  const t = useT()
   const [docs, setDocs] = useState<Doc[]>([])
   const [supplierId, setSupplierId] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
@@ -137,11 +139,11 @@ export default function SupplierDocumentsPage() {
       </div>
 
       <form onSubmit={handleUpload} className="rounded-xl border bg-card p-5 space-y-4">
-        <h2 className="font-semibold flex items-center gap-2"><Upload className="w-4 h-4" /> Upload File</h2>
+        <h2 className="font-semibold flex items-center gap-2"><Upload className="w-4 h-4" /> {t("Upload File")}</h2>
 
         <div className="grid sm:grid-cols-2 gap-4">
           <div className="space-y-1">
-            <label className="text-sm font-medium">Type</label>
+            <label className="text-sm font-medium">{t("Type")}</label>
             <select
               className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
               value={docType}
@@ -151,27 +153,27 @@ export default function SupplierDocumentsPage() {
             </select>
           </div>
           <div className="space-y-1">
-            <label className="text-sm font-medium">Display title <span className="text-muted-foreground font-normal">(optional)</span></label>
+            <label className="text-sm font-medium">{t("Display title")} <span className="text-muted-foreground font-normal">(optional)</span></label>
             <input
               type="text" value={title} onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g. Price List 2026"
+              placeholder={t("e.g. Price List 2026")}
               className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
         </div>
 
         <div className="space-y-1">
-          <label className="text-sm font-medium">File <span className="text-muted-foreground font-normal">(PDF, Excel, Word, image — max 25MB)</span></label>
+          <label className="text-sm font-medium">{t("File")} <span className="text-muted-foreground font-normal">(PDF, Excel, Word, image — max 25MB)</span></label>
           <input ref={fileRef} type="file" accept=".pdf,.xls,.xlsx,.csv,.doc,.docx,.png,.jpg,.jpeg,.webp" required className="w-full text-sm" />
         </div>
 
         <label className="flex items-center gap-2 text-sm">
           <input type="checkbox" checked={isPublic} onChange={(e) => setIsPublic(e.target.checked)} className="rounded border-input" />
-          <span>Show on my public storefront (buyers can download)</span>
+          <span>{t("Show on my public storefront (buyers can download)")}</span>
         </label>
 
         <button type="submit" disabled={uploading || !supplierId} className="inline-flex items-center gap-2 rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm font-medium hover:bg-primary/90 disabled:opacity-50">
-          {uploading ? <><Loader2 className="w-4 h-4 animate-spin" /> Uploading…</> : 'Upload'}
+          {uploading ? <><Loader2 className="w-4 h-4 animate-spin" /> {t("Uploading…")}</> : 'Upload'}
         </button>
       </form>
 
@@ -208,7 +210,7 @@ export default function SupplierDocumentsPage() {
             </div>
           )
         })}
-        {!docs.length && <p className="text-sm text-muted-foreground text-center py-10 border border-dashed rounded-xl">No documents uploaded yet</p>}
+        {!docs.length && <p className="text-sm text-muted-foreground text-center py-10 border border-dashed rounded-xl">{t("No documents uploaded yet")}</p>}
       </div>
     </div>
   )

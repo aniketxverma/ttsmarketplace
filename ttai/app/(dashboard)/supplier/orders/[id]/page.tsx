@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useT } from '@/lib/i18n/client'
 import { useParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { MessageButton } from '@/components/messages/MessageButton'
@@ -17,6 +18,7 @@ const STATUS_STYLES: Record<string, string> = {
 }
 
 export default function SupplierOrderDetailPage() {
+  const t = useT()
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
   const [order, setOrder] = useState<Record<string, unknown> | null>(null)
@@ -58,7 +60,7 @@ export default function SupplierOrderDetailPage() {
   if (!order) {
     return (
       <div className="text-center py-20">
-        <p className="text-gray-500">Order not found</p>
+        <p className="text-gray-500">{t("Order not found")}</p>
         <button onClick={() => router.back()} className="mt-4 text-sm text-[#0B1F4D] hover:underline">← Back</button>
       </div>
     )
@@ -89,9 +91,9 @@ export default function SupplierOrderDetailPage() {
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
-            Back to Orders
+            {t("Back to Orders")}
           </button>
-          <h1 className="text-2xl font-extrabold text-[#0B1F4D]">Order #{shortId}</h1>
+          <h1 className="text-2xl font-extrabold text-[#0B1F4D]">{t("Order #")}{shortId}</h1>
           <p className="text-sm text-gray-500 mt-0.5">{orderDate}</p>
         </div>
         <span className={`px-4 py-2 rounded-full text-sm font-bold border ${statusStyle}`}>
@@ -104,7 +106,7 @@ export default function SupplierOrderDetailPage() {
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
           </svg>
-          Order marked as fulfilled successfully.
+          {t("Order marked as fulfilled successfully.")}
         </div>
       )}
 
@@ -113,7 +115,7 @@ export default function SupplierOrderDetailPage() {
         {/* Order Items */}
         <div className="sm:col-span-2 rounded-2xl border border-gray-100 bg-white overflow-hidden">
           <div className="px-5 py-4 border-b bg-gray-50">
-            <h2 className="font-bold text-[#0B1F4D]">Order Items</h2>
+            <h2 className="font-bold text-[#0B1F4D]">{t("Order Items")}</h2>
           </div>
           <div className="divide-y">
             {items.map((item) => (
@@ -139,7 +141,7 @@ export default function SupplierOrderDetailPage() {
           </div>
           <div className="px-5 py-4 border-t bg-gray-50 space-y-2">
             <div className="flex justify-between text-sm text-gray-500">
-              <span>Subtotal</span>
+              <span>{t("Subtotal")}</span>
               <span>{fmt(order.subtotal_cents as number ?? order.total_cents as number, currency)}</span>
             </div>
             {(order.vat_cents as number) > 0 && (
@@ -149,7 +151,7 @@ export default function SupplierOrderDetailPage() {
               </div>
             )}
             <div className="flex justify-between font-bold text-[#0B1F4D] pt-2 border-t">
-              <span>Total</span>
+              <span>{t("Total")}</span>
               <span>{fmt(order.total_cents as number, currency)}</span>
             </div>
           </div>
@@ -158,7 +160,7 @@ export default function SupplierOrderDetailPage() {
         {/* Buyer Info */}
         <div className="rounded-2xl border border-gray-100 bg-white p-5 space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className="font-bold text-[#0B1F4D]">Buyer</h2>
+            <h2 className="font-bold text-[#0B1F4D]">{t("Buyer")}</h2>
             {typeof order.buyer_id === 'string' && (
               <MessageButton
                 buyerId={order.buyer_id}
@@ -167,7 +169,7 @@ export default function SupplierOrderDetailPage() {
                 redirectBase="/supplier/messages"
                 className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 hover:text-[#0B1F4D] transition-colors"
               >
-                Message Buyer
+                {t("Message Buyer")}
               </MessageButton>
             )}
           </div>
@@ -184,7 +186,7 @@ export default function SupplierOrderDetailPage() {
         {/* Shipping Address */}
         {address && (
           <div className="rounded-2xl border border-gray-100 bg-white p-5 space-y-3">
-            <h2 className="font-bold text-[#0B1F4D]">Ship To</h2>
+            <h2 className="font-bold text-[#0B1F4D]">{t("Ship To")}</h2>
             <div className="text-sm space-y-1">
               <p className="font-semibold text-gray-900">{address.fullName}</p>
               <p className="text-gray-500">{address.line1}</p>
@@ -200,8 +202,8 @@ export default function SupplierOrderDetailPage() {
       {status === 'paid' && !fulfilled && (
         <div className="rounded-2xl border border-blue-100 bg-blue-50 p-5 flex items-center justify-between flex-wrap gap-4">
           <div>
-            <p className="font-bold text-blue-900 text-sm">Ready to fulfill?</p>
-            <p className="text-xs text-blue-700 mt-0.5">Mark this order as fulfilled once items have been shipped.</p>
+            <p className="font-bold text-blue-900 text-sm">{t("Ready to fulfill?")}</p>
+            <p className="text-xs text-blue-700 mt-0.5">{t("Mark this order as fulfilled once items have been shipped.")}</p>
           </div>
           <button
             onClick={handleFulfill}
@@ -214,14 +216,14 @@ export default function SupplierOrderDetailPage() {
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                 </svg>
-                Updating...
+                {t("Updating...")}
               </>
             ) : (
               <>
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                 </svg>
-                Mark as Fulfilled
+                {t("Mark as Fulfilled")}
               </>
             )}
           </button>
