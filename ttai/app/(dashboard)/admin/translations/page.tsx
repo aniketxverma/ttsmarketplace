@@ -28,41 +28,46 @@ export default async function AdminTranslationsPage() {
 
   const targets = SUPPORTED_LOCALES.filter((l) => l !== DEFAULT_LOCALE)
 
-  // Total published products + their name hashes (the per-product translation marker).
+  // Total published products + the hashes of every translatable field (name AND
+  // description). A product counts as translated for a language only when ALL its
+  // fields are cached in that language.
   const { count: productCount } = await admin.from('products').select('id', { count: 'exact', head: true }).eq('is_published', true)
   const total = productCount ?? 0
-  const nameHashes = new Set<string>()
+  const products: { hashes: string[] }[] = []
   for (let off = 0; off < total + 1000; off += 1000) {
-    const { data } = await admin.from('products').select('name').eq('is_published', true).order('id').range(off, off + 999)
+    const { data } = await admin.from('products').select('name, description').eq('is_published', true).order('id').range(off, off + 999)
     if (!data || !data.length) break
-    for (const p of data as any[]) if (p.name) nameHashes.add(sha(String(p.name)))
+    for (const p of data as any[]) {
+      const hashes: string[] = []
+      if (p.name && String(p.name).trim()) hashes.push(sha(String(p.name)))
+      if (p.description && String(p.description).trim()) hashes.push(sha(String(p.description)))
+      if (hashes.length) products.push({ hashes })
+    }
     if (data.length < 1000) break
   }
 
-  // Walk the translation cache once: per language, how many product names are translated + total cached rows.
-  const perLang: Record<string, { products: number; cached: number }> = {}
-  for (const l of targets) perLang[l] = { products: 0, cached: 0 }
+  // Per language: the set of cached source hashes (so we can test full-product coverage).
+  const perLangSet: Record<string, Set<string>> = {}
+  for (const l of targets) perLangSet[l] = new Set()
   let cachedCount = 0
   for (let off = 0; off < 200000; off += 1000) {
     const { data } = await (admin.from('content_translations') as any).select('source_hash, target_lang').order('id').range(off, off + 999)
     if (!data || !data.length) break
     for (const r of data as any[]) {
       cachedCount++
-      const pl = perLang[r.target_lang]
-      if (!pl) continue
-      pl.cached++
-      if (nameHashes.has(r.source_hash)) pl.products++
+      perLangSet[r.target_lang]?.add(r.source_hash)
     }
     if (data.length < 1000) break
   }
 
-  const stats = targets.map((l) => ({
-    lang: l,
-    name: LOCALE_NAMES[l] ?? l.toUpperCase(),
-    translated: Math.min(perLang[l].products, total),
-    total,
-    cached: perLang[l].cached,
-  }))
+  // A product is "translated" in a language only when EVERY field hash is cached.
+  const stats = targets.map((l) => {
+    const set = perLangSet[l]
+    let done = 0
+    for (const p of products) if (p.hashes.every((h) => set.has(h))) done++
+    return { lang: l, name: LOCALE_NAMES[l] ?? l.toUpperCase(), translated: done, total: products.length, cached: set.size }
+  })
+  const totalForUi = products.length
 
   return (
     <div className="space-y-6 max-w-2xl">
@@ -73,7 +78,7 @@ export default async function AdminTranslationsPage() {
           Pick a provider, add your API key, and the marketplace auto-translates content into each visitor&apos;s language.
         </p>
       </div>
-      <TranslationManager initial={initial} stats={stats} targetLangs={targets} localeNames={LOCALE_NAMES} totalProducts={total} />
+      <TranslationManager initial={initial} stats={stats} targetLangs={targets} localeNames={LOCALE_NAMES} totalProducts={totalForUi} />
     </div>
   )
 }

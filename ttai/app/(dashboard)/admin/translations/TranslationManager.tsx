@@ -110,7 +110,7 @@ export function TranslationManager({
             )
           })}
         </div>
-        <p className="text-[11px] text-gray-400">Based on product names found in the translation cache. New products translate automatically on first view.</p>
+        <p className="text-[11px] text-gray-400">A product counts as translated only when its <strong>name and description</strong> are both fully translated. New products translate automatically on first view.</p>
       </div>
 
       {/* Settings */}
