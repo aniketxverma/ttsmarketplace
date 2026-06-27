@@ -16,6 +16,22 @@ export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://ttaiz.com'),
   title: 'TTAI — Global Trade Ecosystem',
   description: 'B2B wholesale marketplace and B2C city store platform',
+  // Default share image (TTAIEMA logo) shown when the site link is shared on
+  // WhatsApp, Facebook, X, etc. Individual product/brand pages override this.
+  openGraph: {
+    title: 'TTAIEMA — Global Trade Ecosystem',
+    description: 'B2B wholesale marketplace and B2C city store platform',
+    siteName: 'TTAIEMA',
+    type: 'website',
+    images: [{ url: '/og-image.jpg', width: 1024, height: 1024, alt: 'TTAIEMA' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'TTAIEMA — Global Trade Ecosystem',
+    description: 'B2B wholesale marketplace and B2C city store platform',
+    images: ['/og-image.jpg'],
+  },
+  icons: { icon: '/og-image.jpg', apple: '/og-image.jpg' },
 }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {

@@ -59,9 +59,9 @@ const CHAIN = [
 ] as const
 
 const SALES = [
-  { title: 'Online Shop', sub: 'Sell by Piece & Box', grad: 'from-violet-600 to-purple-700', Icon: ShoppingCart, href: '/store' },
-  { title: 'Business Shop', sub: 'Sell by Box & Pallet', grad: 'from-blue-600 to-[#0B1F4D]', Icon: Boxes, href: '/marketplace' },
-  { title: 'Trade Hub', sub: 'Sell by Pallet & Truck', grad: 'from-amber-500 to-orange-600', Icon: Truck, href: '/b2b' },
+  { title: 'Online Shop', sub: 'Sell by Piece & Box', grad: 'from-violet-600 to-purple-700', Icon: ShoppingCart, href: '/suppliers' },
+  { title: 'Business Shop', sub: 'Sell by Box & Pallet', grad: 'from-blue-600 to-[#0B1F4D]', Icon: Boxes, href: '/suppliers' },
+  { title: 'Trade Hub', sub: 'Sell by Pallet & Truck', grad: 'from-amber-500 to-orange-600', Icon: Truck, href: '/suppliers' },
 ] as const
 
 
