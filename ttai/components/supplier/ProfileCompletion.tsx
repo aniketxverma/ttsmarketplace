@@ -1,4 +1,6 @@
 import Link from 'next/link'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 
 interface CompletionItem {
   label: string
@@ -11,7 +13,9 @@ interface Props {
   items: CompletionItem[]
 }
 
-export function ProfileCompletion({ items }: Props) {
+export async function ProfileCompletion({ items }: Props) {
+  
+  const tt = await localizeUI(["Profile Completion", "pts", "Complete your profile to rank higher in search results"], getLocale())
   const total = items.reduce((s, i) => s + i.points, 0)
   const earned = items.filter((i) => i.done).reduce((s, i) => s + i.points, 0)
   const pct = Math.round((earned / total) * 100)
@@ -22,7 +26,7 @@ export function ProfileCompletion({ items }: Props) {
   return (
     <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
       <div className="flex items-center justify-between mb-3">
-        <h2 className="font-bold text-[#0B1F4D]">Profile Completion</h2>
+        <h2 className="font-bold text-[#0B1F4D]">{tt("Profile Completion")}</h2>
         <span className={`text-2xl font-extrabold ${textColor}`}>{pct}%</span>
       </div>
       <div className="w-full bg-gray-100 rounded-full h-2.5 mb-4">
@@ -40,13 +44,13 @@ export function ProfileCompletion({ items }: Props) {
               )}
             </span>
             <span className={item.done ? 'line-through text-gray-400' : 'text-gray-700 font-medium'}>{item.label}</span>
-            {!item.done && <span className="ml-auto text-[10px] font-bold text-gray-400">+{item.points}pts</span>}
+            {!item.done && <span className="ml-auto text-[10px] font-bold text-gray-400">+{item.points}{tt("pts")}</span>}
           </Link>
         ))}
       </div>
       {pct < 100 && (
         <p className="text-xs text-gray-400 mt-3 text-center">
-          Complete your profile to rank higher in search results
+          {tt("Complete your profile to rank higher in search results")}
         </p>
       )}
     </div>

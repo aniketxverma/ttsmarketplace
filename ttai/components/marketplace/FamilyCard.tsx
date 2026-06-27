@@ -1,4 +1,6 @@
 import Link from 'next/link'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 import Image from 'next/image'
 import { cn } from '@/lib/utils'
 import { HOUSE_BRAND } from '@/lib/house-brand'
@@ -24,7 +26,9 @@ function isoFlag(iso?: string | null) {
 }
 
 /** One card representing a product family (several variants under one type). */
-export function FamilyCard({ family, retail = false, shop, brand, sponsored, minOrderCents }: { family: Family; retail?: boolean; shop?: string; brand?: string | null; sponsored?: boolean; minOrderCents?: number }) {
+export async function FamilyCard({ family, retail = false, shop, brand, sponsored, minOrderCents }: { family: Family; retail?: boolean; shop?: string; brand?: string | null; sponsored?: boolean; minOrderCents?: number }) {
+  
+  const tt = await localizeUI(["options", "from", "Price on request", "View range →", "Min. order"], getLocale())
   const rep = family.representative
   const supplier = rep.suppliers as { legal_name: string; trade_name: string | null; reliability_tier: ReliabilityTier; countries?: { name: string; iso_code: string } | null; cities?: { name: string } | null } | undefined
   const count = family.members.length
@@ -85,7 +89,7 @@ export function FamilyCard({ family, retail = false, shop, brand, sponsored, min
             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
             </svg>
-            {count} options
+            {count} {tt("options")}
           </span>
         </div>
 
@@ -100,15 +104,15 @@ export function FamilyCard({ family, retail = false, shop, brand, sponsored, min
             <div>
               {price > 0 ? (
                 <>
-                  <span className="text-xs text-muted-foreground mr-1">from</span>
+                  <span className="text-xs text-muted-foreground mr-1">{tt("from")}</span>
                   <span className="font-semibold text-sm">{formatPrice(price, rep.currency_code)}</span>
                 </>
               ) : (
-                <span className="font-semibold text-sm text-violet-700">Price on request</span>
+                <span className="font-semibold text-sm text-violet-700">{tt("Price on request")}</span>
               )}
             </div>
             <span className="text-xs font-semibold text-[#0B1F4D] group-hover:underline whitespace-nowrap">
-              View range →
+              {tt("View range →")}
             </span>
           </div>
 
@@ -123,7 +127,7 @@ export function FamilyCard({ family, retail = false, shop, brand, sponsored, min
           ) : null}
           {!isRetail && minOrderCents ? (
             <span className="ml-1.5 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
-              Min. order {formatPrice(minOrderCents, rep.currency_code)}
+              {tt("Min. order")} {formatPrice(minOrderCents, rep.currency_code)}
             </span>
           ) : null}
         </div>

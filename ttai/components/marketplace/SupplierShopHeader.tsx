@@ -1,4 +1,6 @@
 import Link from 'next/link'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 import Image from 'next/image'
 import { Store, MapPin, ShieldCheck, Package, FileSpreadsheet, FileText, PlayCircle, ArrowLeft } from 'lucide-react'
 import { QuoteButton } from '@/components/shared/QuoteButton'
@@ -29,7 +31,9 @@ function money(cents: number) {
 
 // The Supplier Shop header — the buyer has been guided to ONE supplier and is
 // encouraged to browse and order their whole catalogue here.
-export function SupplierShopHeader({ s, productCount }: { s: ShopSupplier; productCount: number }) {
+export async function SupplierShopHeader({ s, productCount }: { s: ShopSupplier; productCount: number }) {
+  
+  const tt = await localizeUI(["All suppliers", "Official Supplier Shop", "Verified", "products", "Min. order", "Order from", "Catalogue:", "Excel / PDF", "Video", "Company profile", "Browse the full catalogue below — order everything from", "in one place."], getLocale())
   const name = s.trade_name ?? s.legal_name ?? 'Supplier'
   const city = s.cities?.name ?? null
   const country = s.countries?.name ?? null
@@ -42,7 +46,7 @@ export function SupplierShopHeader({ s, productCount }: { s: ShopSupplier; produ
       {/* Banner */}
       <div className="relative bg-gradient-to-br from-[#0B1F4D] via-[#1a3a7a] to-[#0d3060] px-5 sm:px-8 py-7">
         <Link href="/marketplace" className="inline-flex items-center gap-1.5 text-white/70 hover:text-white text-xs font-bold mb-4">
-          <ArrowLeft className="w-3.5 h-3.5" /> All suppliers
+          <ArrowLeft className="w-3.5 h-3.5" /> {tt("All suppliers")}
         </Link>
         <div className="flex flex-col sm:flex-row sm:items-center gap-5">
           <div className="w-20 h-20 rounded-2xl border-2 border-white/30 overflow-hidden bg-white shadow-xl flex-shrink-0">
@@ -54,9 +58,9 @@ export function SupplierShopHeader({ s, productCount }: { s: ShopSupplier; produ
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
-              <span className="text-[10px] font-bold text-[#F5A623] uppercase tracking-widest">Official Supplier Shop</span>
+              <span className="text-[10px] font-bold text-[#F5A623] uppercase tracking-widest">{tt("Official Supplier Shop")}</span>
               {s.reliability_tier && s.reliability_tier !== 'UNVERIFIED' && (
-                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-green-300"><ShieldCheck className="w-3 h-3" /> Verified</span>
+                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-green-300"><ShieldCheck className="w-3 h-3" /> {tt("Verified")}</span>
               )}
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-white leading-tight">{name}</h1>
@@ -67,8 +71,8 @@ export function SupplierShopHeader({ s, productCount }: { s: ShopSupplier; produ
               {(country || city) && (
                 <span className="inline-flex items-center gap-1"><MapPin className="w-3.5 h-3.5" />{isoFlag(s.countries?.iso_code)} {[country, city].filter(Boolean).join(' · ')}</span>
               )}
-              <span className="inline-flex items-center gap-1"><Package className="w-3.5 h-3.5" />{productCount} products</span>
-              {s.min_order_value_cents ? <span>Min. order {money(s.min_order_value_cents)}</span> : null}
+              <span className="inline-flex items-center gap-1"><Package className="w-3.5 h-3.5" />{productCount} {tt("products")}</span>
+              {s.min_order_value_cents ? <span>{tt("Min. order")} {money(s.min_order_value_cents)}</span> : null}
             </div>
           </div>
           <div className="flex-shrink-0 flex flex-col gap-2">
@@ -77,7 +81,7 @@ export function SupplierShopHeader({ s, productCount }: { s: ShopSupplier; produ
             {wa && (
               <a href={wa} target="_blank" rel="noopener noreferrer"
                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-green-500 hover:bg-green-400 text-white px-5 py-3 text-sm font-extrabold shadow-lg transition-colors">
-                Order from {name}
+                {tt("Order from")} {name}
               </a>
             )}
           </div>
@@ -86,27 +90,27 @@ export function SupplierShopHeader({ s, productCount }: { s: ShopSupplier; produ
 
       {/* Action bar — catalogue downloads + brand link */}
       <div className="flex flex-wrap items-center gap-2 bg-white px-5 sm:px-8 py-3 border-t border-gray-100">
-        <span className="text-xs font-bold text-gray-400 uppercase tracking-wide mr-1">Catalogue:</span>
+        <span className="text-xs font-bold text-gray-400 uppercase tracking-wide mr-1">{tt("Catalogue:")}</span>
         {s.catalogue_url && (
           <a href={s.catalogue_url} target="_blank" rel="noopener noreferrer"
             className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-bold text-[#0B1F4D] hover:border-[#0B1F4D] transition-colors">
-            <FileSpreadsheet className="w-4 h-4 text-green-600" /> Excel / PDF
+            <FileSpreadsheet className="w-4 h-4 text-green-600" /> {tt("Excel / PDF")}
           </a>
         )}
         {s.video_url && (
           <a href={s.video_url} target="_blank" rel="noopener noreferrer"
             className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-bold text-[#0B1F4D] hover:border-[#0B1F4D] transition-colors">
-            <PlayCircle className="w-4 h-4 text-red-500" /> Video
+            <PlayCircle className="w-4 h-4 text-red-500" /> {tt("Video")}
           </a>
         )}
         {s.brand_slug && (
           <Link href={`/brand/${s.brand_slug}`}
             className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-bold text-[#0B1F4D] hover:border-[#0B1F4D] transition-colors">
-            <FileText className="w-4 h-4 text-[#0B1F4D]" /> Company profile
+            <FileText className="w-4 h-4 text-[#0B1F4D]" /> {tt("Company profile")}
           </Link>
         )}
         {!s.catalogue_url && !s.video_url && (
-          <span className="text-xs text-gray-400">Browse the full catalogue below — order everything from {name} in one place.</span>
+          <span className="text-xs text-gray-400">{tt("Browse the full catalogue below — order everything from")} {name} {tt("in one place.")}</span>
         )}
       </div>
     </div>

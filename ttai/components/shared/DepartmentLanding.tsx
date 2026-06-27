@@ -1,4 +1,6 @@
 import type { ReactNode } from 'react'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 import { ControlCenterForm } from '@/components/shared/ControlCenterForm'
 import { departmentInfo, type Department } from '@/lib/control-center'
 
@@ -10,7 +12,7 @@ export type Step = { title: string; desc: string }
  * Hero → services → how it works → an embedded Control Center form that routes
  * straight to that department's manager.
  */
-export function DepartmentLanding({
+export async function DepartmentLanding({
   department, kicker, title, subtitle, heroBlurb, services, steps, formTitle, sourceForm,
 }: {
   department: Department
@@ -23,6 +25,8 @@ export function DepartmentLanding({
   formTitle: string
   sourceForm: string
 }) {
+  
+  const tt = await localizeUI(["Request a quote", "Managed by", "What we handle", "End-to-end support from our", "team.", "How it works", "Send your request and", "from our", "team will get back to you."], getLocale())
   const dept = departmentInfo(department)
 
   return (
@@ -36,11 +40,11 @@ export function DepartmentLanding({
           <p className="text-blue-100/85 mt-4 text-base sm:text-lg max-w-2xl">{subtitle}</p>
           <div className="flex flex-wrap items-center gap-3 mt-7">
             <a href="#request" className="inline-flex items-center gap-2 rounded-xl bg-[#F5A623] text-[#0B1F4D] px-6 py-3 text-sm font-extrabold hover:bg-[#fbb93a] transition-colors">
-              Request a quote
+              {tt("Request a quote")}
             </a>
             <span className="inline-flex items-center gap-2 rounded-xl bg-white/10 border border-white/15 px-5 py-3 text-sm font-bold">
               <span className="w-6 h-6 rounded-full bg-[#F5A623] text-[#0B1F4D] flex items-center justify-center text-[11px] font-black">{dept.manager[0]}</span>
-              Managed by {dept.manager}
+              {tt("Managed by")} {dept.manager}
             </span>
           </div>
         </div>
@@ -55,8 +59,8 @@ export function DepartmentLanding({
 
       {/* Services */}
       <section className="container mx-auto px-4 max-w-5xl py-12">
-        <h2 className="text-2xl font-extrabold text-[#0B1F4D]">What we handle</h2>
-        <p className="text-gray-500 text-sm mt-1">End-to-end support from our {dept.label} team.</p>
+        <h2 className="text-2xl font-extrabold text-[#0B1F4D]">{tt("What we handle")}</h2>
+        <p className="text-gray-500 text-sm mt-1">{tt("End-to-end support from our")} {dept.label} {tt("team.")}</p>
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
           {services.map((s) => (
             <div key={s.title} className="rounded-2xl bg-white border border-gray-100 shadow-sm p-5 hover:shadow-md hover:-translate-y-0.5 transition-all">
@@ -71,7 +75,7 @@ export function DepartmentLanding({
       {/* How it works */}
       <section className="bg-white border-y border-gray-100">
         <div className="container mx-auto px-4 max-w-5xl py-12">
-          <h2 className="text-2xl font-extrabold text-[#0B1F4D]">How it works</h2>
+          <h2 className="text-2xl font-extrabold text-[#0B1F4D]">{tt("How it works")}</h2>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
             {steps.map((st, i) => (
               <div key={st.title} className="relative rounded-2xl bg-gray-50 border border-gray-100 p-5">
@@ -88,7 +92,7 @@ export function DepartmentLanding({
       <section id="request" className="container mx-auto px-4 max-w-3xl py-14 scroll-mt-20">
         <div className="text-center mb-6">
           <h2 className="text-2xl font-extrabold text-[#0B1F4D]">{formTitle}</h2>
-          <p className="text-gray-500 text-sm mt-1">Send your request and {dept.manager} from our {dept.label} team will get back to you.</p>
+          <p className="text-gray-500 text-sm mt-1">{tt("Send your request and")} {dept.manager} {tt("from our")} {dept.label} {tt("team will get back to you.")}</p>
         </div>
         <ControlCenterForm defaultDepartment={department} sourceForm={sourceForm} />
       </section>

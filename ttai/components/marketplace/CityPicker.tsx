@@ -1,4 +1,6 @@
 import Link from 'next/link'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 
 interface City {
   id: string
@@ -6,7 +8,9 @@ interface City {
   slug: string
 }
 
-export function CityPicker({ cities }: { cities: City[] }) {
+export async function CityPicker({ cities }: { cities: City[] }) {
+  
+  const tt = await localizeUI(["Shop local"], getLocale())
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
       {cities.map((city) => (
@@ -17,7 +21,7 @@ export function CityPicker({ cities }: { cities: City[] }) {
         >
           <div className="text-3xl mb-2">🏙️</div>
           <p className="font-semibold group-hover:text-primary transition-colors">{city.name}</p>
-          <p className="text-xs text-muted-foreground mt-0.5">Shop local</p>
+          <p className="text-xs text-muted-foreground mt-0.5">{tt("Shop local")}</p>
         </Link>
       ))}
     </div>

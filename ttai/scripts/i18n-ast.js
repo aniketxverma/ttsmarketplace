@@ -30,12 +30,15 @@ const strings = new Set()
 let mainFn = null
 function findMain(node) {
   if (ts.isFunctionDeclaration(node) && node.modifiers &&
-      node.modifiers.some((m) => m.kind === ts.SyntaxKind.ExportKeyword) &&
-      node.modifiers.some((m) => m.kind === ts.SyntaxKind.DefaultKeyword)) { mainFn = node }
+      node.modifiers.some((m) => m.kind === ts.SyntaxKind.ExportKeyword)) {
+    const isDefault = node.modifiers.some((m) => m.kind === ts.SyntaxKind.DefaultKeyword)
+    const isComponent = isDefault || (node.name && /^[A-Z]/.test(node.name.getText(sf)))
+    if (isComponent && (isDefault || !mainFn)) mainFn = node
+  }
   ts.forEachChild(node, findMain)
 }
 findMain(sf)
-if (!mainFn || !mainFn.body) { console.log('WARN no default-export fn:', FILE); process.exit(0) }
+if (!mainFn || !mainFn.body) { console.log('WARN no exported component fn:', FILE); process.exit(0) }
 
 function visit(node) {
   if (ts.isJsxText(node)) {

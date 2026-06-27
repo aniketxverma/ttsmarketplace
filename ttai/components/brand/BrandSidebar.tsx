@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { useT } from '@/lib/i18n/client'
 import {
   FileSpreadsheet, FileText, FileImage, File as FileIcon, Download,
   Play, MessageCircle, Mail, Phone, Lock, Package,
@@ -55,6 +56,7 @@ const Panel = ({ title, children }: { title: string; children: React.ReactNode }
 )
 
 export function BrandSidebar({ documents, videos, supplier, contactUnlocked, isAuthenticated, className }: Props) {
+  const t = useT()
   const name = supplier.trade_name ?? supplier.legal_name ?? 'this supplier'
   const wa = supplier.whatsapp ? supplier.whatsapp.replace(/\D/g, '') : null
   const catalogMsg = encodeURIComponent(`Hi! I found ${name} on TTAI and I'd like to request your full catalogue and price list.`)
@@ -65,7 +67,7 @@ export function BrandSidebar({ documents, videos, supplier, contactUnlocked, isA
 
         {/* ── Supplier Documents ── */}
         {documents.length > 0 && (
-          <Panel title="Supplier Documents">
+          <Panel title={t("Supplier Documents")}>
             <div className="space-y-1.5">
               {documents.map((doc) => {
                 const { Icon, color, bg } = docIcon(doc.file_name ?? doc.file_url)
@@ -77,7 +79,7 @@ export function BrandSidebar({ documents, videos, supplier, contactUnlocked, isA
                       <Icon className={`w-4 h-4 ${color}`} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-[13px] font-semibold text-gray-800 truncate capitalize">{label}</p>
+                      <p className="text-[13px] font-semibold text-gray-800 truncate capitalize">{t(label)}</p>
                       {fmtSize(doc.file_size_bytes) && <p className="text-[11px] text-gray-400">{fmtSize(doc.file_size_bytes)}</p>}
                     </div>
                     <Download className="w-4 h-4 text-gray-300 group-hover:text-[#0B1F4D] transition-colors flex-shrink-0" />
@@ -90,7 +92,7 @@ export function BrandSidebar({ documents, videos, supplier, contactUnlocked, isA
 
         {/* ── Supplier Videos ── */}
         {videos.length > 0 && (
-          <Panel title="Supplier Videos">
+          <Panel title={t("Supplier Videos")}>
             <div className="grid grid-cols-2 gap-2.5">
               {videos.slice(0, 4).map((v) => {
                 const thumb = videoThumb(v.url)
@@ -118,7 +120,7 @@ export function BrandSidebar({ documents, videos, supplier, contactUnlocked, isA
         )}
 
         {/* ── Contact ── */}
-        <Panel title="Contact Supplier">
+        <Panel title={t("Contact Supplier")}>
           {contactUnlocked ? (
             <div className="space-y-2">
               {wa && (
@@ -130,26 +132,26 @@ export function BrandSidebar({ documents, videos, supplier, contactUnlocked, isA
               {supplier.business_email && (
                 <a href={`mailto:${supplier.business_email}`}
                   className="flex items-center justify-center gap-2 w-full rounded-xl border border-gray-200 hover:bg-gray-50 text-[#0B1F4D] py-2.5 text-sm font-bold transition-colors">
-                  <Mail className="w-4 h-4" /> Send Message
+                  <Mail className="w-4 h-4" /> {t("Send Message")}
                 </a>
               )}
               {supplier.phone && (
                 <a href={`tel:${supplier.phone}`}
                   className="flex items-center justify-center gap-2 w-full rounded-xl border border-gray-200 hover:bg-gray-50 text-[#0B1F4D] py-2.5 text-sm font-bold transition-colors">
-                  <Phone className="w-4 h-4" /> Call
+                  <Phone className="w-4 h-4" /> {t("Call")}
                 </a>
               )}
               {wa && (
                 <a href={`https://wa.me/${wa}?text=${catalogMsg}`} target="_blank" rel="noopener noreferrer"
                   className="flex items-center justify-center gap-2 w-full rounded-xl bg-blue-600 hover:bg-blue-700 text-white py-2.5 text-sm font-bold transition-colors">
-                  <Download className="w-4 h-4" /> Request Full Catalog
+                  <Download className="w-4 h-4" /> {t("Request Full Catalog")}
                 </a>
               )}
             </div>
           ) : (
             <Link href={isAuthenticated ? '/pricing' : '/register'}
               className="flex items-center justify-center gap-2 w-full rounded-xl bg-[#F5A623] hover:bg-[#fbb93a] text-[#0B1F4D] py-2.5 text-sm font-extrabold transition-colors">
-              <Lock className="w-4 h-4" /> Unlock contact
+              <Lock className="w-4 h-4" /> {t("Unlock contact")}
             </Link>
           )}
         </Panel>
@@ -160,8 +162,8 @@ export function BrandSidebar({ documents, videos, supplier, contactUnlocked, isA
             <Package className="w-4 h-4 text-white" />
           </div>
           <div>
-            <p className="text-sm font-bold text-[#0B1F4D]">Bulk Orders &amp; Better Prices</p>
-            <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">Contact us for bulk orders, special offers and long-term cooperation.</p>
+            <p className="text-sm font-bold text-[#0B1F4D]">{t("Bulk Orders & Better Prices")}</p>
+            <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">{t("Contact us for bulk orders, special offers and long-term cooperation.")}</p>
           </div>
         </div>
       </div>

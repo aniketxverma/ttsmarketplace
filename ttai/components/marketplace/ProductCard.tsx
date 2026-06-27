@@ -1,4 +1,6 @@
 import Link from 'next/link'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 import Image from 'next/image'
 import { cn } from '@/lib/utils'
 import { HOUSE_BRAND } from '@/lib/house-brand'
@@ -55,8 +57,10 @@ function isoFlag(iso?: string | null) {
     : ''
 }
 
-export function ProductCard({ product, supplier, mainImageUrl, href, retail = false, shop, brand, sponsored, minOrderCents, offerCount = 0 }: ProductCardProps) {
+export async function ProductCard({ product, supplier, mainImageUrl, href, retail = false, shop, brand, sponsored, minOrderCents, offerCount = 0 }: ProductCardProps) {
   // Retail surface (Online Store) OR a retail-only product → consumer presentation.
+  
+  const tt = await localizeUI(["suppliers", "from", "Price on request", "Min. order"], getLocale())
   const isRetail = retail || product.marketplace_context === 'retail'
   // Retail uses the dedicated online-shop price when set; otherwise the
   // wholesale price (+VAT for display). Wholesale shows the bare price ex-VAT.
@@ -98,7 +102,7 @@ export function ProductCard({ product, supplier, mainImageUrl, href, retail = fa
           )}
           {offerCount > 1 && (
             <span className="absolute top-2 right-2 z-10 inline-flex items-center gap-1 rounded-full bg-green-600 text-white text-[10px] font-extrabold px-2 py-0.5 shadow">
-              {offerCount} suppliers
+              {offerCount} {tt("suppliers")}
             </span>
           )}
           {mainImageUrl ? (
@@ -129,12 +133,12 @@ export function ProductCard({ product, supplier, mainImageUrl, href, retail = fa
             <div>
               {displayPrice > 0 ? (
                 <>
-                  {offerCount > 1 && <span className="text-[10px] text-muted-foreground mr-0.5">from</span>}
+                  {offerCount > 1 && <span className="text-[10px] text-muted-foreground mr-0.5">{tt("from")}</span>}
                   <span className="font-semibold text-sm">{formatPrice(displayPrice, product.currency_code)}</span>
                   <span className="text-xs text-muted-foreground ml-1">{isRetail ? 'inc. VAT' : 'ex. VAT'}</span>
                 </>
               ) : (
-                <span className="font-semibold text-sm text-violet-700">Price on request</span>
+                <span className="font-semibold text-sm text-violet-700">{tt("Price on request")}</span>
               )}
             </div>
             {!isRetail && (
@@ -155,7 +159,7 @@ export function ProductCard({ product, supplier, mainImageUrl, href, retail = fa
           )}
           {!isRetail && minOrderCents ? (
             <span className="ml-1.5 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
-              Min. order {formatPrice(minOrderCents, product.currency_code)}
+              {tt("Min. order")} {formatPrice(minOrderCents, product.currency_code)}
             </span>
           ) : null}
         </div>

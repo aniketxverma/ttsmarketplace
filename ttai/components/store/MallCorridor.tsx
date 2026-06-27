@@ -1,4 +1,6 @@
 import Link from 'next/link'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 import { Star, Store, ArrowRight } from 'lucide-react'
 
 export type Storefront = {
@@ -61,12 +63,14 @@ function StorefrontCard({ s }: { s: Storefront }) {
   )
 }
 
-export function MallCorridor({ storefronts, locationLabel }: { storefronts: Storefront[]; locationLabel: string }) {
+export async function MallCorridor({ storefronts, locationLabel }: { storefronts: Storefront[]; locationLabel: string }) {
+  
+  const tt = await localizeUI(["No stores open in this area yet.", "Walk the Mall —", "storefronts"], getLocale())
   if (!storefronts.length) {
     return (
       <div className="rounded-2xl bg-white border border-gray-200 shadow-sm p-12 text-center text-gray-400">
         <Store className="w-10 h-10 mx-auto mb-3 opacity-30" />
-        <p className="text-sm">No stores open in this area yet.</p>
+        <p className="text-sm">{tt("No stores open in this area yet.")}</p>
       </div>
     )
   }
@@ -76,9 +80,9 @@ export function MallCorridor({ storefronts, locationLabel }: { storefronts: Stor
       <div className="flex items-center justify-between px-5 py-3 bg-gradient-to-r from-[#0B1F4D] to-[#1a3a7a]">
         <div>
           <p className="text-[10px] font-bold uppercase tracking-widest text-[#F5A623]">Level 1 · Shops &amp; Food Court</p>
-          <h2 className="text-base sm:text-lg font-extrabold text-white leading-tight">Walk the Mall — {locationLabel}</h2>
+          <h2 className="text-base sm:text-lg font-extrabold text-white leading-tight">{tt("Walk the Mall —")} {locationLabel}</h2>
         </div>
-        <span className="text-[11px] font-bold text-white/70">{storefronts.length} storefronts</span>
+        <span className="text-[11px] font-bold text-white/70">{storefronts.length} {tt("storefronts")}</span>
       </div>
       {/* Corridor: storefronts line both sides of a walkway */}
       <div className="relative bg-[#efe9df] px-3 sm:px-6 py-6"

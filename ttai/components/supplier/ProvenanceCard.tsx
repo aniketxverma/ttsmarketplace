@@ -1,4 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 
 /**
  * Read-only traceability panel: shows a product's full provenance chain (brand,
@@ -7,6 +9,8 @@ import { createClient } from '@/lib/supabase/server'
  * 0038) aren't applied yet — it just shows fewer rows.
  */
 export async function ProvenanceCard({ product }: { product: any }) {
+  
+  const tt = await localizeUI(["No provenance recorded yet (run migration 0038 to enable full traceability)."], getLocale())
   const supabase = createClient()
 
   const supIds = [product.supplier_id, product.original_supplier_id, product.original_factory_id, product.current_owner_id]
@@ -55,7 +59,7 @@ export async function ProvenanceCard({ product }: { product: any }) {
         </span>
       </div>
       {rows.length === 0 ? (
-        <p className="text-xs text-gray-400">No provenance recorded yet (run migration 0038 to enable full traceability).</p>
+        <p className="text-xs text-gray-400">{tt("No provenance recorded yet (run migration 0038 to enable full traceability).")}</p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
           {rows.map((r) => (

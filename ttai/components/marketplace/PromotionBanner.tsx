@@ -1,4 +1,6 @@
 import Link from 'next/link'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 
 interface Promotion {
   id: string
@@ -17,12 +19,14 @@ interface PromotionBannerProps {
   promotions: Promotion[]
 }
 
-export function PromotionBanner({ promotions }: PromotionBannerProps) {
+export async function PromotionBanner({ promotions }: PromotionBannerProps) {
+  
+  const tt = await localizeUI(["Featured by Brokers"], getLocale())
   if (!promotions.length) return null
 
   return (
     <div className="rounded-xl border bg-gradient-to-r from-primary/5 to-primary/10 p-4 mb-6">
-      <p className="text-xs font-semibold text-primary/70 uppercase tracking-wide mb-3">Featured by Brokers</p>
+      <p className="text-xs font-semibold text-primary/70 uppercase tracking-wide mb-3">{tt("Featured by Brokers")}</p>
       <div className="flex gap-4 overflow-x-auto pb-1">
         {promotions.map((promo) => (
           <Link

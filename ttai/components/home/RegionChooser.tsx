@@ -1,4 +1,6 @@
 import Link from 'next/link'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 import { REGIONS } from '@/lib/regions-data'
 import { ArrowRight, Globe2, MapPin } from 'lucide-react'
 
@@ -6,7 +8,9 @@ import { ArrowRight, Globe2, MapPin } from 'lucide-react'
  * Homepage "Shop by region" — pick a region, which opens its dedicated page
  * (/regions/[id]) to choose a country. Server component (CSS-only animations).
  */
-export function RegionChooser() {
+export async function RegionChooser() {
+  
+  const tt = await localizeUI(["Global Trade Network", "Shop by region", "countries", "Explore"], getLocale())
   return (
     <section className="relative overflow-hidden bg-[#070f24] py-20">
       {/* ── Animated ambient background ─────────────────────────────── */}
@@ -23,10 +27,10 @@ export function RegionChooser() {
       <div className="container relative mx-auto max-w-6xl px-4">
         <div className="mb-11 text-center">
           <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.05] px-4 py-1.5 text-xs font-bold uppercase tracking-widest text-[#F5A623] backdrop-blur">
-            <Globe2 className="h-4 w-4 animate-rotate-slow" /> Global Trade Network
+            <Globe2 className="h-4 w-4 animate-rotate-slow" /> {tt("Global Trade Network")}
           </div>
           <h2 className="text-3xl font-extrabold sm:text-4xl">
-            <span className="text-sheen">Shop by region</span>
+            <span className="text-sheen">{tt("Shop by region")}</span>
           </h2>
           <p className="mx-auto mt-3 max-w-xl text-sm text-blue-200/70">
             Pick your market — then choose a country to explore its verified suppliers and curated collections.
@@ -53,10 +57,10 @@ export function RegionChooser() {
                 <p className="mt-1 line-clamp-1 text-xs text-white/75">{r.tagline}</p>
                 <div className="mt-3 flex items-center justify-between">
                   <span className="inline-flex items-center gap-1 text-[11px] font-bold text-white/75">
-                    <MapPin className="h-3 w-3" /> {r.countries.length} countries
+                    <MapPin className="h-3 w-3" /> {r.countries.length} {tt("countries")}
                   </span>
                   <span className="inline-flex items-center gap-1 rounded-full bg-white/15 px-3 py-1.5 text-xs font-extrabold backdrop-blur transition-colors group-hover:bg-white group-hover:text-[#0B1F4D]">
-                    Explore <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+                    {tt("Explore")} <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
                   </span>
                 </div>
               </div>

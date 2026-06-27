@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useT } from '@/lib/i18n/client'
 import Image from 'next/image'
 import {
   Phone, Mail, Globe, MapPin, Share2, Copy, Check, Download, Crown,
@@ -23,6 +24,7 @@ const TEMPLATES: Tpl[] = [
 ]
 
 export function BusinessCard({ data, defaultTemplate }: { data: CardData; defaultTemplate?: string }) {
+  const tr = useT()
   const isGold = (data.tier ?? '').toUpperCase() === 'GOLD'
   const initialTpl = defaultTemplate && TEMPLATES.some((x) => x.id === defaultTemplate) ? defaultTemplate : (isGold ? 'gold' : 'navy')
   const [tplId, setTplId] = useState(initialTpl)
@@ -104,7 +106,7 @@ export function BusinessCard({ data, defaultTemplate }: { data: CardData; defaul
             <div className="flex flex-col justify-between min-w-0 flex-1">
               <div>
                 <p className="font-extrabold text-base truncate">{data.name}</p>
-                <p className={`text-[11px] ${t.sub} mb-2`}>Scan or tap to view the full profile</p>
+                <p className={`text-[11px] ${t.sub} mb-2`}>{tr("Scan or tap to view the full profile")}</p>
               </div>
               <div className="space-y-1.5 text-[12px]">
                 {data.whatsapp && <Row Icon={MessageCircle} text={data.whatsapp} sub={t.sub} />}
