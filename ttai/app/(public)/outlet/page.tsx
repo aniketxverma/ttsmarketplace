@@ -4,6 +4,8 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getMarketplaceOpen, PRE_OPENING_NOTICE } from '@/lib/marketplace-phase'
 import { MARKET_REGIONS } from '@/lib/market-regions'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 import { ShopCard, type ShopCardData } from '@/components/marketplace/ShopCard'
 import { FilterPanel } from '@/components/outlet/FilterPanel'
 import { CONDITIONS, SELLING_UNITS, OUTLET_ROLES, RETAIL_CHAINS, conditionInfo, unitInfo,
@@ -36,6 +38,21 @@ export default async function OutletZonePage({ searchParams }: { searchParams: S
   const supabase = createClient()
   const marketplaceOpen = await getMarketplaceOpen()
   const activeView: 'products' | 'shops' = searchParams.view === 'shops' ? 'shops' : 'products'
+  const tt = await localizeUI([
+    'Outlet Zone', 'Clearance, Returns & Liquidation — one B2B zone.',
+    'Customer returns, overstock, clearance and end-of-line stock from suppliers, retail chains, distributors and brokers — traded by unit, pallet, container and full truckload across Europe, the Middle East and Africa.',
+    'Excel Stock Lists', 'Video & Pallet Photos', 'Pallets & Truckloads', 'Containers', 'Direct Contact',
+    'List an outlet offer', 'Trade Board — buy & sell requests', 'Sources include:',
+    'Independent shops — Verification pending opening day.', 'Shop by opportunity', 'Shop by retail chain', 'Shop by brand', 'Clear', 'All',
+    'Condition', 'Selling unit', 'Source', 'Who trades in the Outlet Zone', 'Register', 'Every offer carries a clear condition',
+    'The Outlet Zone is open for listings', 'Talk to our team', 'Ask price', 'Lots', 'Sellers',
+    ...(CONDITIONS as any[]).map((c) => c.label),
+    ...(SELLING_UNITS as any[]).map((u) => u.label),
+    ...(OUTLET_ROLES as any[]).map((r: any) => r.label ?? r),
+    ...(OPPORTUNITIES as any[]).map((o) => o.label),
+    ...(RETAIL_CHAIN_BANNERS as any[]).map((c) => c.label),
+    ...Object.values(LOT_LABEL),
+  ].filter(Boolean) as string[], getLocale())
 
   // Defensive fetch: try the rich select (condition / selling_unit / outlet_role
   // from migration 0069); fall back to the base columns if not yet applied.
@@ -160,10 +177,10 @@ export default async function OutletZonePage({ searchParams }: { searchParams: S
         <Warehouse className="absolute -bottom-10 right-6 w-72 h-72 text-white/[0.05]" strokeWidth={1} />
         <div className="max-w-6xl mx-auto px-4 sm:px-8 py-12 sm:py-16 relative">
           <div className="flex items-center gap-2.5 mb-3">
-            <span className="inline-flex items-center gap-1 rounded-md bg-red-600 text-white text-[10px] font-extrabold uppercase tracking-wide px-2 py-0.5"><BadgePercent className="w-3 h-3" /> Outlet Zone</span>
+            <span className="inline-flex items-center gap-1 rounded-md bg-red-600 text-white text-[10px] font-extrabold uppercase tracking-wide px-2 py-0.5"><BadgePercent className="w-3 h-3" /> {tt('Outlet Zone')}</span>
           </div>
-          <h1 className="text-3xl sm:text-5xl font-black leading-tight">Clearance, Returns &amp; Liquidation — one B2B zone.</h1>
-          <p className="text-orange-100/80 mt-3 max-w-2xl text-sm sm:text-base">Customer returns, overstock, clearance and end-of-line stock from suppliers, retail chains, distributors and brokers — traded by unit, pallet, container and full truckload across Europe, the Middle East and Africa.</p>
+          <h1 className="text-3xl sm:text-5xl font-black leading-tight">{tt('Clearance, Returns & Liquidation — one B2B zone.')}</h1>
+          <p className="text-orange-100/80 mt-3 max-w-2xl text-sm sm:text-base">{tt('Customer returns, overstock, clearance and end-of-line stock from suppliers, retail chains, distributors and brokers — traded by unit, pallet, container and full truckload across Europe, the Middle East and Africa.')}</p>
           <div className="flex flex-wrap gap-x-5 gap-y-2 mt-5">
             {[
               { Icon: FileSpreadsheet, label: 'Excel Stock Lists', c: 'text-green-400' },
@@ -172,15 +189,15 @@ export default async function OutletZonePage({ searchParams }: { searchParams: S
               { Icon: Warehouse, label: 'Containers', c: 'text-blue-400' },
               { Icon: MessageCircle, label: 'Direct Contact', c: 'text-emerald-400' },
             ].map(({ Icon, label, c }) => (
-              <span key={label} className="inline-flex items-center gap-1.5 text-xs font-semibold text-white/85"><Icon className={`w-4 h-4 ${c}`} /> {label}</span>
+              <span key={label} className="inline-flex items-center gap-1.5 text-xs font-semibold text-white/85"><Icon className={`w-4 h-4 ${c}`} /> {tt(label)}</span>
             ))}
           </div>
           <div className="flex flex-wrap gap-3 mt-7">
-            <Link href="/register?module=outlet" className="inline-flex items-center gap-2 rounded-xl bg-[#F5A623] text-[#0B1F4D] px-6 py-3 text-sm font-extrabold hover:bg-[#fbb93a] transition-colors">List an outlet offer <ArrowRight className="w-4 h-4" /></Link>
-            <Link href="/outlet/board" className="inline-flex items-center gap-2 rounded-xl bg-white/10 border border-white/20 px-6 py-3 text-sm font-bold hover:bg-white/20 transition-colors">Trade Board — buy &amp; sell requests</Link>
+            <Link href="/register?module=outlet" className="inline-flex items-center gap-2 rounded-xl bg-[#F5A623] text-[#0B1F4D] px-6 py-3 text-sm font-extrabold hover:bg-[#fbb93a] transition-colors">{tt('List an outlet offer')} <ArrowRight className="w-4 h-4" /></Link>
+            <Link href="/outlet/board" className="inline-flex items-center gap-2 rounded-xl bg-white/10 border border-white/20 px-6 py-3 text-sm font-bold hover:bg-white/20 transition-colors">{tt('Trade Board — buy & sell requests')}</Link>
           </div>
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-6 text-[11px] text-white/55">
-            <span className="font-bold text-white/70">Sources include:</span>
+            <span className="font-bold text-white/70">{tt('Sources include:')}</span>
             {RETAIL_CHAINS.map((c) => <span key={c} className="rounded bg-white/10 px-2 py-0.5">{c}</span>)}
           </div>
         </div>
@@ -191,7 +208,7 @@ export default async function OutletZonePage({ searchParams }: { searchParams: S
         <div className="bg-amber-50 border-b border-amber-200">
           <div className="max-w-6xl mx-auto px-4 sm:px-8 py-2.5 flex items-start gap-2.5 text-amber-800">
             <Lock className="w-4 h-4 flex-shrink-0 mt-0.5" />
-            <p className="text-[12.5px] leading-snug"><span className="font-bold">Independent shops — Verification pending opening day.</span> {PRE_OPENING_NOTICE}</p>
+            <p className="text-[12.5px] leading-snug"><span className="font-bold">{tt('Independent shops — Verification pending opening day.')}</span> {PRE_OPENING_NOTICE}</p>
           </div>
         </div>
       )}
@@ -200,7 +217,7 @@ export default async function OutletZonePage({ searchParams }: { searchParams: S
 
         {/* ── Featured Opportunity banners ── */}
         <section className="mb-6">
-          <h2 className="text-lg font-extrabold text-[#0B1F4D] mb-3">Shop by opportunity</h2>
+          <h2 className="text-lg font-extrabold text-[#0B1F4D] mb-3">{tt('Shop by opportunity')}</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
             {OPPORTUNITIES.map((o) => {
               const n = all.filter((p) => o.conditions.includes(p.condition)).length
@@ -209,7 +226,7 @@ export default async function OutletZonePage({ searchParams }: { searchParams: S
                 <Link key={o.key} href={chipHref({ opp: active ? undefined : o.key, cond: undefined, chain: undefined, source: undefined })}
                   className={`group/b relative rounded-2xl text-white overflow-hidden h-28 flex flex-col justify-end p-3.5 hover:shadow-lg hover:-translate-y-0.5 transition-all ${active ? 'ring-2 ring-offset-2 ring-[#0B1F4D]' : ''}`}>
                   {bannerImg[o.key]
-                    ? <>{/* eslint-disable-next-line @next/next/no-img-element */}<img src={bannerImg[o.key]} alt={o.label} className="absolute inset-0 w-full h-full object-cover group-hover/b:scale-105 transition-transform duration-500" /><div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/35 to-black/10" /></>
+                    ? <>{/* eslint-disable-next-line @next/next/no-img-element */}<img src={bannerImg[o.key]} alt={tt(o.label)} className="absolute inset-0 w-full h-full object-cover group-hover/b:scale-105 transition-transform duration-500" /><div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/35 to-black/10" /></>
                     : <div className={`absolute inset-0 bg-gradient-to-br ${o.grad}`} />}
                   <div className="relative">
                     <span className="text-xl drop-shadow">{o.emoji}</span>
@@ -224,7 +241,7 @@ export default async function OutletZonePage({ searchParams }: { searchParams: S
 
         {/* ── Featured Retail-chain banners ── */}
         <section className="mb-6">
-          <h2 className="text-lg font-extrabold text-[#0B1F4D] mb-3">Shop by retail chain</h2>
+          <h2 className="text-lg font-extrabold text-[#0B1F4D] mb-3">{tt('Shop by retail chain')}</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
             {RETAIL_CHAIN_BANNERS.map((c) => {
               const n = all.filter((p) => (p.outlet_source ?? '').toLowerCase().includes(c.match)).length
@@ -240,11 +257,11 @@ export default async function OutletZonePage({ searchParams }: { searchParams: S
                   {logo && (
                     <span className="flex-shrink-0 w-11 h-11 rounded-lg bg-white/95 flex items-center justify-center p-1.5 shadow-sm">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={logo} alt={c.label} className="max-w-full max-h-full object-contain" />
+                      <img src={logo} alt={tt(c.label)} className="max-w-full max-h-full object-contain" />
                     </span>
                   )}
                   <div className="min-w-0 relative">
-                    <p className="font-extrabold text-[13px] leading-tight drop-shadow truncate">{c.label}</p>
+                    <p className="font-extrabold text-[13px] leading-tight drop-shadow truncate">{tt(c.label)}</p>
                     <p className="text-[10px] text-white/85 mt-0.5">{n} offer{n !== 1 ? 's' : ''}</p>
                   </div>
                 </Link>
@@ -255,7 +272,7 @@ export default async function OutletZonePage({ searchParams }: { searchParams: S
 
         {/* ── Shop by brand ── */}
         <section className="mb-7">
-          <h2 className="text-lg font-extrabold text-[#0B1F4D] mb-3">Shop by brand</h2>
+          <h2 className="text-lg font-extrabold text-[#0B1F4D] mb-3">{tt('Shop by brand')}</h2>
           <div className="flex flex-wrap gap-2">
             {OUTLET_BRANDS.map((b) => {
               const active = searchParams.brand === b
@@ -272,7 +289,7 @@ export default async function OutletZonePage({ searchParams }: { searchParams: S
           <div className="mb-4 flex items-center gap-2 text-sm">
             <span className="font-extrabold text-[#0B1F4D]">{opp ? `${opp.emoji} ${opp.label}` : chain?.label}</span>
             <span className="text-gray-400">· {products.length} lot{products.length !== 1 ? 's' : ''} — now filter by category below</span>
-            <Link href="/outlet" className="text-xs font-bold text-red-600 hover:underline">Clear</Link>
+            <Link href="/outlet" className="text-xs font-bold text-red-600 hover:underline">{tt('Clear')}</Link>
           </div>
         )}
 
@@ -281,7 +298,7 @@ export default async function OutletZonePage({ searchParams }: { searchParams: S
         <FilterPanel activeCount={activeFilterCount}>
           <FilterRow label="Condition">
             <Chip active={!searchParams.cond} href={chipHref({ cond: undefined })}>All</Chip>
-            {CONDITIONS.map((c) => <Chip key={c.key} active={searchParams.cond === c.key} href={chipHref({ cond: c.key })}>{c.label}</Chip>)}
+            {CONDITIONS.map((c) => <Chip key={c.key} active={searchParams.cond === c.key} href={chipHref({ cond: c.key })}>{tt(c.label)}</Chip>)}
           </FilterRow>
           <FilterRow label="Unit">
             <Chip active={!searchParams.unit} href={chipHref({ unit: undefined })}>All</Chip>
@@ -398,7 +415,7 @@ export default async function OutletZonePage({ searchParams }: { searchParams: S
 
         {/* ── Who trades in the Outlet Zone ── */}
         <section className="mt-12">
-          <h2 className="text-xl font-extrabold text-[#0B1F4D]">Who trades in the Outlet Zone</h2>
+          <h2 className="text-xl font-extrabold text-[#0B1F4D]">{tt("Who trades in the Outlet Zone")}</h2>
           <p className="text-gray-500 text-sm mt-1">One professional B2B marketplace connecting every link of the clearance chain.</p>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-5">
             {OUTLET_ROLES.map((r) => {
@@ -417,11 +434,11 @@ export default async function OutletZonePage({ searchParams }: { searchParams: S
 
         {/* ── Conditions explainer ── */}
         <section className="mt-12 rounded-2xl bg-white border border-gray-100 shadow-sm p-6">
-          <h2 className="text-lg font-extrabold text-[#0B1F4D]">Every offer carries a clear condition</h2>
+          <h2 className="text-lg font-extrabold text-[#0B1F4D]">{tt("Every offer carries a clear condition")}</h2>
           <p className="text-gray-500 text-sm mt-1">Buy with confidence — each lot states its grade up front.</p>
           <div className="flex flex-wrap gap-2 mt-4">
             {CONDITIONS.map((c) => (
-              <Link key={c.key} href={chipHref({ cond: c.key, view: undefined })} className={`rounded-full text-xs font-bold px-3 py-1.5 ${c.color} hover:opacity-80 transition-opacity`}>{c.label}</Link>
+              <Link key={c.key} href={chipHref({ cond: c.key, view: undefined })} className={`rounded-full text-xs font-bold px-3 py-1.5 ${c.color} hover:opacity-80 transition-opacity`}>{tt(c.label)}</Link>
             ))}
           </div>
         </section>
@@ -434,11 +451,11 @@ function EmptyZone() {
   return (
     <div className="text-center py-16 bg-white rounded-2xl border border-gray-100">
       <Warehouse className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-      <p className="text-gray-700 font-bold text-lg">The Outlet Zone is open for listings</p>
+      <p className="text-gray-700 font-bold text-lg">{tt("The Outlet Zone is open for listings")}</p>
       <p className="text-gray-400 text-sm mt-1 max-w-md mx-auto">Suppliers, chains, distributors and brokers can list clearance, returns and liquidation lots — by pallet, container or full truckload.</p>
       <div className="flex flex-wrap justify-center gap-3 mt-5">
         <Link href="/register?module=outlet" className="inline-flex items-center gap-2 rounded-xl bg-[#0B1F4D] text-white px-6 py-3 text-sm font-bold hover:bg-[#162d6e] transition-colors">List an outlet offer <ArrowRight className="w-4 h-4" /></Link>
-        <Link href="/contact?dept=marketplace" className="inline-flex items-center gap-2 rounded-xl border border-gray-200 text-gray-700 px-6 py-3 text-sm font-bold hover:bg-gray-50 transition-colors">Talk to our team</Link>
+        <Link href="/contact?dept=marketplace" className="inline-flex items-center gap-2 rounded-xl border border-gray-200 text-gray-700 px-6 py-3 text-sm font-bold hover:bg-gray-50 transition-colors">{tt("Talk to our team")}</Link>
       </div>
     </div>
   )
