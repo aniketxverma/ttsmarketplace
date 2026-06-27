@@ -1,4 +1,6 @@
 import Link from 'next/link'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 import { resolveSupplierStatus, type SupplierStatusInfo } from '@/lib/supplier-status'
 
 type Sup = { status?: string | null; reliability_tier?: string | null; ttaiema_protected?: boolean | null; premium_partner?: boolean | null }
@@ -20,7 +22,8 @@ export function SupplierStatusBadge({ supplier, size = 'md', withDot = true }: {
  * clear TTAIEMA hosts/built the site but the company is independently operated
  * (unless TTAIEMA Protected). Protects the TTAIEMA brand from supplier disputes.
  */
-export function HostedByTTAIEMA({ companyName, supplier }: { companyName: string; supplier: Sup }) {
+export async function HostedByTTAIEMA({ companyName, supplier }: { companyName: string; supplier: Sup }) {
+  const tt = await localizeUI(['Hosted by TTAIEMA Marketplace','What do statuses mean? →'], getLocale())
   const s = resolveSupplierStatus(supplier)
   const protectedSvc = s.key === 'protected'
   return (
@@ -28,10 +31,10 @@ export function HostedByTTAIEMA({ companyName, supplier }: { companyName: string
       <div className="rounded-2xl border border-gray-200 bg-gray-50/70 p-5 sm:p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
-            <span className="text-sm font-extrabold text-[#0B1F4D]">Hosted by TTAIEMA Marketplace</span>
+            <span className="text-sm font-extrabold text-[#0B1F4D]">{tt("Hosted by TTAIEMA Marketplace")}</span>
             <SupplierStatusBadge supplier={supplier} />
           </div>
-          <Link href="/supplier-status" className="text-[11px] font-semibold text-[#0B1F4D] hover:underline">What do statuses mean? →</Link>
+          <Link href="/supplier-status" className="text-[11px] font-semibold text-[#0B1F4D] hover:underline">{tt("What do statuses mean? →")}</Link>
         </div>
         <p className="text-xs text-gray-500 mt-2 leading-relaxed">
           {protectedSvc ? (

@@ -1,4 +1,6 @@
 import Link from 'next/link'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 import { BrandLogo } from '@/components/BrandLogo'
 import {
   ShieldCheck, Clock, Lock, MapPin, Building2, Phone, Mail, MessageCircle, ArrowRight,
@@ -10,7 +12,7 @@ import {
  * conversion funnel (FOMO): tease the verified seller, then a two-step CTA —
  * logged-out → register free, free plan → upgrade — with benefit bullets + social proof.
  */
-export function SellerInfoPanel({
+export async function SellerInfoPanel({
   supplier, locked, loggedIn,
 }: {
   supplier: any
@@ -18,6 +20,7 @@ export function SellerInfoPanel({
   loggedIn: boolean
 }) {
   const name = supplier?.trade_name ?? supplier?.legal_name ?? 'Supplier'
+  const tt = await localizeUI(['Seller details','This verified seller wants your order','Verified Supplier Co.','Free to join · then pick a plan to message sellers','See membership plans →'], getLocale())
 
   // ── UNLOCKED: real details ──────────────────────────────────────────────
   if (!locked) {
@@ -30,7 +33,7 @@ export function SellerInfoPanel({
     ]
     return (
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-        <h3 className="text-sm font-extrabold text-[#0B1F4D] mb-3">Seller details</h3>
+        <h3 className="text-sm font-extrabold text-[#0B1F4D] mb-3">{tt("Seller details")}</h3>
         <div className="flex items-center gap-3 mb-3">
           <div className="w-12 h-12 rounded-xl overflow-hidden border border-gray-100 flex-shrink-0 bg-white">
             <BrandLogo src={supplier?.logo_url} name={name} size={48} textClass="text-lg" />
@@ -75,13 +78,13 @@ export function SellerInfoPanel({
         <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wide text-amber-300 mb-2">
           <Lock className="w-3.5 h-3.5" /> Members only
         </div>
-        <p className="text-base font-extrabold leading-tight">This verified seller wants your order</p>
+        <p className="text-base font-extrabold leading-tight">{tt("This verified seller wants your order")}</p>
         <div className="flex items-center gap-3 mt-2.5">
           <div className="w-10 h-10 rounded-full bg-white/15 flex items-center justify-center flex-shrink-0">
             <Lock className="w-4 h-4 text-white" />
           </div>
           <div>
-            <p className={`font-bold text-sm ${blur}`}>Verified Supplier Co.</p>
+            <p className={`font-bold text-sm ${blur}`}>{tt("Verified Supplier Co.")}</p>
             <div className="flex items-center gap-2 mt-0.5">
               <span className="inline-flex items-center gap-1 text-[10px] font-bold text-green-300"><ShieldCheck className="w-3 h-3" /> Verified</span>
               <span className="inline-flex items-center gap-1 text-[10px] text-blue-200"><Clock className="w-3 h-3" /> Replies fast</span>
@@ -117,14 +120,14 @@ export function SellerInfoPanel({
             <Link href="/register" className="mt-4 w-full inline-flex items-center justify-center gap-2 rounded-xl bg-[#F5A623] text-[#0B1F4D] py-3 text-sm font-extrabold hover:bg-[#fbb93a] transition-colors shadow-sm">
               Create free account <ArrowRight className="w-4 h-4" />
             </Link>
-            <p className="text-[11px] text-gray-400 text-center mt-2">Free to join · then pick a plan to message sellers</p>
+            <p className="text-[11px] text-gray-400 text-center mt-2">{tt("Free to join · then pick a plan to message sellers")}</p>
           </>
         ) : (
           <>
             <Link href="/pricing" className="mt-4 w-full inline-flex items-center justify-center gap-2 rounded-xl bg-[#F5A623] text-[#0B1F4D] py-3 text-sm font-extrabold hover:bg-[#fbb93a] transition-colors shadow-sm">
               <Lock className="w-4 h-4" /> Unlock with a plan <ArrowRight className="w-4 h-4" />
             </Link>
-            <Link href="/pricing" className="block text-center text-[11px] font-bold text-[#2563eb] hover:underline mt-2">See membership plans →</Link>
+            <Link href="/pricing" className="block text-center text-[11px] font-bold text-[#2563eb] hover:underline mt-2">{tt("See membership plans →")}</Link>
           </>
         )}
 

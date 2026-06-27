@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useT } from '@/lib/i18n/client'
 import Link from 'next/link'
 import { Star, X, MapPin, Package, Store, ArrowRight, Clock } from 'lucide-react'
 import { QuoteButton } from '@/components/shared/QuoteButton'
@@ -70,6 +71,7 @@ function Storefront({ s, onOpen, wide = false }: { s: MallSupplier; onOpen: (s: 
 }
 
 function SupplierDrawer({ s, onClose }: { s: MallSupplier; onClose: () => void }) {
+  const tr = useT()
   const initials = s.name.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase()
   const wa = s.whatsapp ? `https://wa.me/${s.whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(`Hello ${s.name}, I'm interested in your products on TTAI EMA.`)}` : null
   return (
@@ -89,7 +91,7 @@ function SupplierDrawer({ s, onClose }: { s: MallSupplier; onClose: () => void }
           </div>
           <h2 className="text-xl font-extrabold text-gray-900">{s.name}</h2>
           <div className="flex flex-wrap items-center gap-2 mt-1.5">
-            {s.premium && <span className="rounded-md bg-amber-100 text-amber-700 px-2 py-0.5 text-[11px] font-bold">Featured</span>}
+            {s.premium && <span className="rounded-md bg-amber-100 text-amber-700 px-2 py-0.5 text-[11px] font-bold">{tr("Featured")}</span>}
             <SupplierStatusBadge supplier={badgeProps(s)} size="sm" />
             {(s.city || s.country) && <span className="inline-flex items-center gap-1 text-xs text-gray-500"><MapPin className="w-3.5 h-3.5" />{[s.city, s.country].filter(Boolean).join(', ')}</span>}
           </div>
@@ -104,14 +106,14 @@ function SupplierDrawer({ s, onClose }: { s: MallSupplier; onClose: () => void }
           </div>
 
           <div className="grid grid-cols-2 gap-2 mt-4">
-            <Link href={s.brandSlug ? `/brand/${s.brandSlug}` : `/marketplace?supplier=${s.id}`} className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#0B1F4D] text-white font-extrabold py-2.5 text-sm hover:bg-[#162d6e] transition-colors"><Store className="w-4 h-4" />Enter Shop</Link>
+            <Link href={s.brandSlug ? `/brand/${s.brandSlug}` : `/marketplace?supplier=${s.id}`} className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#0B1F4D] text-white font-extrabold py-2.5 text-sm hover:bg-[#162d6e] transition-colors"><Store className="w-4 h-4" />{tr("Enter Shop")}</Link>
             <QuoteButton company={s.name} whatsapp={s.whatsapp} className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#F5A623] text-[#0B1F4D] font-extrabold py-2.5 text-sm hover:bg-[#fbb93a] transition-colors" />
           </div>
-          {wa && <a href={wa} target="_blank" rel="noopener noreferrer" className="mt-2 block text-center rounded-xl border border-green-200 text-green-600 font-bold py-2.5 text-sm hover:bg-green-50 transition-colors">Chat on WhatsApp</a>}
+          {wa && <a href={wa} target="_blank" rel="noopener noreferrer" className="mt-2 block text-center rounded-xl border border-green-200 text-green-600 font-bold py-2.5 text-sm hover:bg-green-50 transition-colors">{tr("Chat on WhatsApp")}</a>}
 
           {s.products.length > 0 && (
             <>
-              <p className="text-sm font-extrabold text-gray-900 mt-5 mb-2">Products</p>
+              <p className="text-sm font-extrabold text-gray-900 mt-5 mb-2">{tr("Products")}</p>
               <div className="overflow-hidden">
                 <div className="flex gap-2 w-max animate-marquee" style={{ animationDuration: `${Math.max(16, s.products.length * 3.5)}s` }}>
                   {[...s.products, ...s.products].map((p, i) => (
@@ -128,7 +130,7 @@ function SupplierDrawer({ s, onClose }: { s: MallSupplier; onClose: () => void }
             </>
           )}
 
-          {s.brandSlug && <Link href={`/brand/${s.brandSlug}`} className="mt-5 block text-center text-xs font-bold text-[#0B1F4D] hover:underline">View full company profile →</Link>}
+          {s.brandSlug && <Link href={`/brand/${s.brandSlug}`} className="mt-5 block text-center text-xs font-bold text-[#0B1F4D] hover:underline">{tr("View full company profile →")}</Link>}
         </div>
       </div>
     </div>
