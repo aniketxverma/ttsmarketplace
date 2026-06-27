@@ -2,6 +2,8 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { requireRole } from '@/lib/auth/rbac'
 import { formatCents } from '@/lib/utils'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 import { StatusBadge } from '@/components/dashboard/StatusBadge'
 
 const STATUSES = ['all', 'pending', 'paid', 'fulfilled', 'delivered', 'cancelled', 'refunded', 'disputed']
@@ -12,6 +14,8 @@ export default async function AdminOrdersPage({
   searchParams: { status?: string }
 }) {
   await requireRole('admin')
+
+  const tt = await localizeUI(["Orders", "Order ID", "Buyer", "Supplier", "Total", "Status", "Context", "Date", "No orders found"], getLocale())
   const supabase = createClient()
 
   const status = searchParams.status ?? 'all'
@@ -49,7 +53,7 @@ export default async function AdminOrdersPage({
   return (
     <div className="space-y-6 max-w-6xl">
       <div>
-        <h1 className="text-2xl font-bold">Orders</h1>
+        <h1 className="text-2xl font-bold">{tt("Orders")}</h1>
         <p className="text-muted-foreground text-sm mt-0.5">{counts.all} orders total</p>
       </div>
 
@@ -75,13 +79,13 @@ export default async function AdminOrdersPage({
         <table className="w-full text-sm">
           <thead className="bg-muted/50">
             <tr>
-              <th className="text-left px-4 py-3 font-medium">Order ID</th>
-              <th className="text-left px-4 py-3 font-medium hidden sm:table-cell">Buyer</th>
-              <th className="text-left px-4 py-3 font-medium hidden md:table-cell">Supplier</th>
-              <th className="text-left px-4 py-3 font-medium">Total</th>
-              <th className="text-left px-4 py-3 font-medium">Status</th>
-              <th className="text-left px-4 py-3 font-medium hidden md:table-cell">Context</th>
-              <th className="text-left px-4 py-3 font-medium hidden lg:table-cell">Date</th>
+              <th className="text-left px-4 py-3 font-medium">{tt("Order ID")}</th>
+              <th className="text-left px-4 py-3 font-medium hidden sm:table-cell">{tt("Buyer")}</th>
+              <th className="text-left px-4 py-3 font-medium hidden md:table-cell">{tt("Supplier")}</th>
+              <th className="text-left px-4 py-3 font-medium">{tt("Total")}</th>
+              <th className="text-left px-4 py-3 font-medium">{tt("Status")}</th>
+              <th className="text-left px-4 py-3 font-medium hidden md:table-cell">{tt("Context")}</th>
+              <th className="text-left px-4 py-3 font-medium hidden lg:table-cell">{tt("Date")}</th>
             </tr>
           </thead>
           <tbody className="divide-y">
@@ -112,7 +116,7 @@ export default async function AdminOrdersPage({
             })}
             {!orders?.length && (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">No orders found</td>
+                <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">{tt("No orders found")}</td>
               </tr>
             )}
           </tbody>

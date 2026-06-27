@@ -2,6 +2,8 @@ import { createHash } from 'crypto'
 import { requireRole } from '@/lib/auth/rbac'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { SUPPORTED_LOCALES, DEFAULT_LOCALE } from '@/lib/i18n/locales'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 import { TranslationManager } from './TranslationManager'
 
 export const dynamic = 'force-dynamic'
@@ -14,6 +16,8 @@ const sha = (s: string) => createHash('sha256').update(s.trim()).digest('hex')
 
 export default async function AdminTranslationsPage() {
   await requireRole('admin')
+
+  const tt = await localizeUI(["Translations"], getLocale())
   const admin = createAdminClient()
 
   const { data: settingsRows } = await (admin.from('app_settings') as any).select('key, value').like('key', 'translation_%')
@@ -72,7 +76,7 @@ export default async function AdminTranslationsPage() {
   return (
     <div className="space-y-6 max-w-2xl">
       <div>
-        <h1 className="text-2xl font-bold">Translations</h1>
+        <h1 className="text-2xl font-bold">{tt("Translations")}</h1>
         <p className="text-muted-foreground text-sm mt-0.5">
           {total} published products · {cachedCount} cached translations across {targets.length} languages.
           Pick a provider, add your API key, and the marketplace auto-translates content into each visitor&apos;s language.

@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { requireRole } from '@/lib/auth/rbac'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 import { StatusBadge } from '@/components/dashboard/StatusBadge'
 
 const STATUSES = ['ALL', 'PENDING', 'UNDER_REVIEW', 'ACTIVE', 'SUSPENDED']
@@ -11,6 +13,8 @@ export default async function AdminSuppliersPage({
   searchParams: { status?: string }
 }) {
   await requireRole('admin')
+
+  const tt = await localizeUI(["Suppliers", "Supplier", "Country", "Status", "Submitted", "Review", "No suppliers found"], getLocale())
   const supabase = createClient()
 
   const status = searchParams.status
@@ -35,7 +39,7 @@ export default async function AdminSuppliersPage({
 
   return (
     <div className="space-y-6 max-w-6xl">
-      <h1 className="text-2xl font-bold">Suppliers</h1>
+      <h1 className="text-2xl font-bold">{tt("Suppliers")}</h1>
 
       <div className="flex gap-2 flex-wrap">
         {STATUSES.map((s) => {
@@ -59,10 +63,10 @@ export default async function AdminSuppliersPage({
         <table className="w-full text-sm">
           <thead className="bg-muted/50">
             <tr>
-              <th className="text-left px-4 py-3 font-medium">Supplier</th>
-              <th className="text-left px-4 py-3 font-medium">Country</th>
-              <th className="text-left px-4 py-3 font-medium">Status</th>
-              <th className="text-left px-4 py-3 font-medium">Submitted</th>
+              <th className="text-left px-4 py-3 font-medium">{tt("Supplier")}</th>
+              <th className="text-left px-4 py-3 font-medium">{tt("Country")}</th>
+              <th className="text-left px-4 py-3 font-medium">{tt("Status")}</th>
+              <th className="text-left px-4 py-3 font-medium">{tt("Submitted")}</th>
               <th className="px-4 py-3" />
             </tr>
           </thead>
@@ -79,14 +83,14 @@ export default async function AdminSuppliersPage({
                   <td className="px-4 py-3"><StatusBadge status={s.status} /></td>
                   <td className="px-4 py-3 text-muted-foreground">{new Date(s.created_at).toLocaleDateString()}</td>
                   <td className="px-4 py-3 text-right">
-                    <Link href={`/admin/suppliers/${s.id}`} className="text-xs text-primary hover:underline">Review</Link>
+                    <Link href={`/admin/suppliers/${s.id}`} className="text-xs text-primary hover:underline">{tt("Review")}</Link>
                   </td>
                 </tr>
               )
             })}
             {!suppliers?.length && (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">No suppliers found</td>
+                <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">{tt("No suppliers found")}</td>
               </tr>
             )}
           </tbody>

@@ -451,11 +451,11 @@ function EmptyZone() {
   return (
     <div className="text-center py-16 bg-white rounded-2xl border border-gray-100">
       <Warehouse className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-      <p className="text-gray-700 font-bold text-lg">{tt("The Outlet Zone is open for listings")}</p>
+      <p className="text-gray-700 font-bold text-lg">The Outlet Zone is open for listings</p>
       <p className="text-gray-400 text-sm mt-1 max-w-md mx-auto">Suppliers, chains, distributors and brokers can list clearance, returns and liquidation lots — by pallet, container or full truckload.</p>
       <div className="flex flex-wrap justify-center gap-3 mt-5">
         <Link href="/register?module=outlet" className="inline-flex items-center gap-2 rounded-xl bg-[#0B1F4D] text-white px-6 py-3 text-sm font-bold hover:bg-[#162d6e] transition-colors">List an outlet offer <ArrowRight className="w-4 h-4" /></Link>
-        <Link href="/contact?dept=marketplace" className="inline-flex items-center gap-2 rounded-xl border border-gray-200 text-gray-700 px-6 py-3 text-sm font-bold hover:bg-gray-50 transition-colors">{tt("Talk to our team")}</Link>
+        <Link href="/contact?dept=marketplace" className="inline-flex items-center gap-2 rounded-xl border border-gray-200 text-gray-700 px-6 py-3 text-sm font-bold hover:bg-gray-50 transition-colors">Talk to our team</Link>
       </div>
     </div>
   )

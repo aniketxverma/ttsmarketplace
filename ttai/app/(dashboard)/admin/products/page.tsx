@@ -4,6 +4,8 @@ import { createClient } from '@/lib/supabase/server'
 import { requireRole } from '@/lib/auth/rbac'
 import { formatCents } from '@/lib/utils'
 import { PublishToggle } from './PublishToggle'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 import { LinkDuplicatesButton } from './LinkDuplicatesButton'
 
 const FILTERS = ['all', 'published', 'draft']
@@ -14,6 +16,8 @@ export default async function AdminProductsPage({
   searchParams: { filter?: string; supplier?: string }
 }) {
   await requireRole('admin')
+
+  const tt = await localizeUI(["Products", "Product", "Supplier", "Category", "Price", "Stock", "Published", "No products found"], getLocale())
   const supabase = createClient()
 
   const filter = searchParams.filter ?? 'all'
@@ -44,7 +48,7 @@ export default async function AdminProductsPage({
     <div className="space-y-6 max-w-6xl">
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-2xl font-bold">Products</h1>
+          <h1 className="text-2xl font-bold">{tt("Products")}</h1>
           <p className="text-muted-foreground text-sm mt-0.5">{counts.all} products across all suppliers</p>
         </div>
         <LinkDuplicatesButton />
@@ -72,12 +76,12 @@ export default async function AdminProductsPage({
         <table className="w-full text-sm">
           <thead className="bg-muted/50">
             <tr>
-              <th className="text-left px-4 py-3 font-medium">Product</th>
-              <th className="text-left px-4 py-3 font-medium hidden md:table-cell">Supplier</th>
-              <th className="text-left px-4 py-3 font-medium hidden sm:table-cell">Category</th>
-              <th className="text-left px-4 py-3 font-medium">Price</th>
-              <th className="text-left px-4 py-3 font-medium hidden md:table-cell">Stock</th>
-              <th className="text-left px-4 py-3 font-medium">Published</th>
+              <th className="text-left px-4 py-3 font-medium">{tt("Product")}</th>
+              <th className="text-left px-4 py-3 font-medium hidden md:table-cell">{tt("Supplier")}</th>
+              <th className="text-left px-4 py-3 font-medium hidden sm:table-cell">{tt("Category")}</th>
+              <th className="text-left px-4 py-3 font-medium">{tt("Price")}</th>
+              <th className="text-left px-4 py-3 font-medium hidden md:table-cell">{tt("Stock")}</th>
+              <th className="text-left px-4 py-3 font-medium">{tt("Published")}</th>
             </tr>
           </thead>
           <tbody className="divide-y">
@@ -127,7 +131,7 @@ export default async function AdminProductsPage({
             })}
             {!products?.length && (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">No products found</td>
+                <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">{tt("No products found")}</td>
               </tr>
             )}
           </tbody>

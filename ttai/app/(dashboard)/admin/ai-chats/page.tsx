@@ -1,6 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { requireRole } from '@/lib/auth/rbac'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 import { ChatSessionList } from './ChatSessionList'
 
 export const revalidate = 30
@@ -8,6 +10,8 @@ export const revalidate = 30
 export default async function AdminAiChatsPage() {
   await requireRole('admin')
 
+
+  const tt = await localizeUI(["AI Chat History"], getLocale())
   const supabase = createAdminClient()
 
   // Fetch recent messages — group by session client-side
@@ -67,7 +71,7 @@ export default async function AdminAiChatsPage() {
   return (
     <div className="space-y-6 max-w-5xl">
       <div>
-        <h1 className="text-2xl font-bold">AI Chat History</h1>
+        <h1 className="text-2xl font-bold">{tt("AI Chat History")}</h1>
         <p className="text-muted-foreground text-sm mt-0.5">
           {totalSessions} sessions · {totalMessages} messages · {loggedInSessions} from logged-in users
         </p>

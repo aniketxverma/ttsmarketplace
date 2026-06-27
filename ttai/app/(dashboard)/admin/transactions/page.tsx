@@ -1,9 +1,13 @@
 import { createClient } from '@/lib/supabase/server'
 import { requireRole } from '@/lib/auth/rbac'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 import { formatCents } from '@/lib/utils'
 
 export default async function AdminTransactionsPage() {
   await requireRole('admin')
+
+  const tt = await localizeUI(["Transactions", "Order", "Gross", "Broker", "Supplier", "Date", "No transactions yet"], getLocale())
   const supabase = createClient()
 
   const { data: ledger } = await supabase
@@ -14,18 +18,18 @@ export default async function AdminTransactionsPage() {
 
   return (
     <div className="space-y-6 max-w-6xl">
-      <h1 className="text-2xl font-bold">Transactions</h1>
+      <h1 className="text-2xl font-bold">{tt("Transactions")}</h1>
       <div className="rounded-xl border overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-muted/50">
             <tr>
-              <th className="text-left px-4 py-3 font-medium whitespace-nowrap">Order</th>
-              <th className="text-left px-4 py-3 font-medium whitespace-nowrap">Gross</th>
+              <th className="text-left px-4 py-3 font-medium whitespace-nowrap">{tt("Order")}</th>
+              <th className="text-left px-4 py-3 font-medium whitespace-nowrap">{tt("Gross")}</th>
               <th className="text-left px-4 py-3 font-medium whitespace-nowrap">TTAI</th>
-              <th className="text-left px-4 py-3 font-medium whitespace-nowrap">Broker</th>
-              <th className="text-left px-4 py-3 font-medium whitespace-nowrap">Supplier</th>
+              <th className="text-left px-4 py-3 font-medium whitespace-nowrap">{tt("Broker")}</th>
+              <th className="text-left px-4 py-3 font-medium whitespace-nowrap">{tt("Supplier")}</th>
               <th className="text-left px-4 py-3 font-medium whitespace-nowrap">VAT</th>
-              <th className="text-left px-4 py-3 font-medium whitespace-nowrap">Date</th>
+              <th className="text-left px-4 py-3 font-medium whitespace-nowrap">{tt("Date")}</th>
             </tr>
           </thead>
           <tbody className="divide-y">
@@ -42,7 +46,7 @@ export default async function AdminTransactionsPage() {
             ))}
             {!ledger?.length && (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">No transactions yet</td>
+                <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">{tt("No transactions yet")}</td>
               </tr>
             )}
           </tbody>

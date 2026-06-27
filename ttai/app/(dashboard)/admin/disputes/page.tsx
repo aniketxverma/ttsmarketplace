@@ -1,10 +1,14 @@
 import { createClient } from '@/lib/supabase/server'
 import { requireRole } from '@/lib/auth/rbac'
 import { StatusBadge } from '@/components/dashboard/StatusBadge'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 import { formatCents } from '@/lib/utils'
 
 export default async function AdminDisputesPage() {
   await requireRole('admin')
+
+  const tt = await localizeUI(["Disputes", "Full dispute resolution coming in Phase 1", "Order", "Buyer", "Amount", "Status", "Date", "No open disputes"], getLocale())
   const supabase = createClient()
 
   const { data: orders } = await supabase
@@ -15,19 +19,19 @@ export default async function AdminDisputesPage() {
 
   return (
     <div className="space-y-6 max-w-5xl">
-      <h1 className="text-2xl font-bold">Disputes</h1>
-      <p className="text-muted-foreground text-sm">Full dispute resolution coming in Phase 1</p>
+      <h1 className="text-2xl font-bold">{tt("Disputes")}</h1>
+      <p className="text-muted-foreground text-sm">{tt("Full dispute resolution coming in Phase 1")}</p>
 
       {orders?.length ? (
         <div className="rounded-xl border overflow-hidden">
           <table className="w-full text-sm">
             <thead className="bg-muted/50">
               <tr>
-                <th className="text-left px-4 py-3 font-medium">Order</th>
-                <th className="text-left px-4 py-3 font-medium">Buyer</th>
-                <th className="text-left px-4 py-3 font-medium">Amount</th>
-                <th className="text-left px-4 py-3 font-medium">Status</th>
-                <th className="text-left px-4 py-3 font-medium">Date</th>
+                <th className="text-left px-4 py-3 font-medium">{tt("Order")}</th>
+                <th className="text-left px-4 py-3 font-medium">{tt("Buyer")}</th>
+                <th className="text-left px-4 py-3 font-medium">{tt("Amount")}</th>
+                <th className="text-left px-4 py-3 font-medium">{tt("Status")}</th>
+                <th className="text-left px-4 py-3 font-medium">{tt("Date")}</th>
               </tr>
             </thead>
             <tbody className="divide-y">
@@ -47,7 +51,7 @@ export default async function AdminDisputesPage() {
           </table>
         </div>
       ) : (
-        <p className="text-sm text-muted-foreground">No open disputes</p>
+        <p className="text-sm text-muted-foreground">{tt("No open disputes")}</p>
       )}
     </div>
   )

@@ -3,12 +3,16 @@ import { notFound } from 'next/navigation'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { requireRole } from '@/lib/auth/rbac'
 import { departmentInfo, statusInfo } from '@/lib/control-center'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 import { TicketControls, NoteForm } from '../TicketControls'
 
 export const dynamic = 'force-dynamic'
 
 export default async function TicketDetailPage({ params }: { params: { id: string } }) {
   await requireRole('admin')
+
+  const tt = await localizeUI(["Client details", "Reply by email", "WhatsApp", "View attachment", "Message", "Internal notes", "Visible to the admin & managers only.", "No notes yet."], getLocale())
   const adminDb = createAdminClient()
 
   const { data: t } = await (adminDb.from('tickets') as any)
@@ -56,7 +60,7 @@ export default async function TicketDetailPage({ params }: { params: { id: strin
 
       {/* Client facts */}
       <div className="rounded-xl border bg-card p-5">
-        <h2 className="font-semibold mb-3 text-sm">Client details</h2>
+        <h2 className="font-semibold mb-3 text-sm">{tt("Client details")}</h2>
         <dl className="grid sm:grid-cols-2 gap-x-6 gap-y-2 text-sm">
           {facts.filter(([, v]) => v).map(([k, v]) => (
             <div key={k} className="flex gap-2">
@@ -66,24 +70,24 @@ export default async function TicketDetailPage({ params }: { params: { id: strin
           ))}
         </dl>
         <div className="flex flex-wrap gap-2 mt-4">
-          {t.email && <a href={`mailto:${t.email}`} className="rounded-lg bg-[#0B1F4D] text-white px-3.5 py-1.5 text-xs font-bold hover:bg-[#162d6e]">Reply by email</a>}
-          {wa && <a href={wa} target="_blank" rel="noopener noreferrer" className="rounded-lg border border-green-200 text-green-600 px-3.5 py-1.5 text-xs font-bold hover:bg-green-50">WhatsApp</a>}
-          {t.attachment_url && <a href={t.attachment_url} target="_blank" rel="noopener noreferrer" className="rounded-lg border border-gray-200 text-gray-600 px-3.5 py-1.5 text-xs font-bold hover:bg-gray-50">View attachment</a>}
+          {t.email && <a href={`mailto:${t.email}`} className="rounded-lg bg-[#0B1F4D] text-white px-3.5 py-1.5 text-xs font-bold hover:bg-[#162d6e]">{tt("Reply by email")}</a>}
+          {wa && <a href={wa} target="_blank" rel="noopener noreferrer" className="rounded-lg border border-green-200 text-green-600 px-3.5 py-1.5 text-xs font-bold hover:bg-green-50">{tt("WhatsApp")}</a>}
+          {t.attachment_url && <a href={t.attachment_url} target="_blank" rel="noopener noreferrer" className="rounded-lg border border-gray-200 text-gray-600 px-3.5 py-1.5 text-xs font-bold hover:bg-gray-50">{tt("View attachment")}</a>}
         </div>
       </div>
 
       {/* Message */}
       {t.message && (
         <div className="rounded-xl border bg-card p-5">
-          <h2 className="font-semibold mb-2 text-sm">Message</h2>
+          <h2 className="font-semibold mb-2 text-sm">{tt("Message")}</h2>
           <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">{t.message}</p>
         </div>
       )}
 
       {/* Internal notes */}
       <div className="rounded-xl border bg-card p-5">
-        <h2 className="font-semibold mb-1 text-sm">Internal notes</h2>
-        <p className="text-xs text-gray-400 mb-3">Visible to the admin & managers only.</p>
+        <h2 className="font-semibold mb-1 text-sm">{tt("Internal notes")}</h2>
+        <p className="text-xs text-gray-400 mb-3">{tt("Visible to the admin & managers only.")}</p>
         <div className="space-y-2">
           {(notes ?? []).map((n: any) => (
             <div key={n.id} className="rounded-lg bg-muted/50 px-3 py-2">
@@ -93,7 +97,7 @@ export default async function TicketDetailPage({ params }: { params: { id: strin
               </p>
             </div>
           ))}
-          {!notes?.length && <p className="text-sm text-gray-400">No notes yet.</p>}
+          {!notes?.length && <p className="text-sm text-gray-400">{tt("No notes yet.")}</p>}
         </div>
         <NoteForm ticketId={t.id} />
       </div>

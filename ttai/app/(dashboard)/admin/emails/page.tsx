@@ -1,5 +1,7 @@
 import Link from 'next/link'
 import { requireRole } from '@/lib/auth/rbac'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 export const dynamic = 'force-dynamic'
@@ -20,6 +22,8 @@ export default async function AdminEmailsPage({
   searchParams: { status?: string; q?: string; page?: string }
 }) {
   await requireRole('admin')
+
+  const tt = await localizeUI(["Email Center", "Recipient", "Subject", "From", "Status", "When", "No emails found.", "Next →", "Search recipient or subject…"], getLocale())
   const admin = createAdminClient()
   const page = Math.max(1, parseInt(searchParams.page || '1'))
   const pageSize = 50
@@ -61,7 +65,7 @@ export default async function AdminEmailsPage({
   return (
     <div className="space-y-6 max-w-6xl">
       <div>
-        <h1 className="text-2xl font-bold">Email Center</h1>
+        <h1 className="text-2xl font-bold">{tt("Email Center")}</h1>
         <p className="text-muted-foreground text-sm mt-0.5">Every transactional email sent by the platform — who, what, from which mailbox, and delivery status.</p>
       </div>
 
@@ -91,7 +95,7 @@ export default async function AdminEmailsPage({
             ))}
             <form action="/admin/emails" className="ml-auto">
               {searchParams.status && <input type="hidden" name="status" value={searchParams.status} />}
-              <input name="q" defaultValue={searchParams.q ?? ''} placeholder="Search recipient or subject…"
+              <input name="q" defaultValue={searchParams.q ?? ''} placeholder={tt("Search recipient or subject…")}
                 className="rounded-xl border border-gray-200 px-3 py-1.5 text-sm w-64 focus:border-[#0B1F4D] outline-none" />
             </form>
           </div>
@@ -101,11 +105,11 @@ export default async function AdminEmailsPage({
             <table className="w-full text-sm">
               <thead className="bg-gray-50 text-gray-500">
                 <tr>
-                  <th className="text-left px-4 py-3 font-semibold">Recipient</th>
-                  <th className="text-left px-4 py-3 font-semibold">Subject</th>
-                  <th className="text-left px-4 py-3 font-semibold">From</th>
-                  <th className="text-left px-4 py-3 font-semibold">Status</th>
-                  <th className="text-left px-4 py-3 font-semibold">When</th>
+                  <th className="text-left px-4 py-3 font-semibold">{tt("Recipient")}</th>
+                  <th className="text-left px-4 py-3 font-semibold">{tt("Subject")}</th>
+                  <th className="text-left px-4 py-3 font-semibold">{tt("From")}</th>
+                  <th className="text-left px-4 py-3 font-semibold">{tt("Status")}</th>
+                  <th className="text-left px-4 py-3 font-semibold">{tt("When")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y">
@@ -125,7 +129,7 @@ export default async function AdminEmailsPage({
                   </tr>
                 ))}
                 {(rows ?? []).length === 0 && (
-                  <tr><td colSpan={5} className="px-4 py-12 text-center text-gray-400">No emails found.</td></tr>
+                  <tr><td colSpan={5} className="px-4 py-12 text-center text-gray-400">{tt("No emails found.")}</td></tr>
                 )}
               </tbody>
             </table>
@@ -137,7 +141,7 @@ export default async function AdminEmailsPage({
               <span className="text-gray-400">{(count ?? 0).toLocaleString()} emails · page {page} / {totalPages}</span>
               <div className="flex gap-2">
                 {page > 1 && <Link href={link({ page: String(page - 1) })} className="rounded-lg border px-3 py-1.5 font-semibold hover:bg-gray-50">← Prev</Link>}
-                {page < totalPages && <Link href={link({ page: String(page + 1) })} className="rounded-lg border px-3 py-1.5 font-semibold hover:bg-gray-50">Next →</Link>}
+                {page < totalPages && <Link href={link({ page: String(page + 1) })} className="rounded-lg border px-3 py-1.5 font-semibold hover:bg-gray-50">{tt("Next →")}</Link>}
               </div>
             </div>
           )}

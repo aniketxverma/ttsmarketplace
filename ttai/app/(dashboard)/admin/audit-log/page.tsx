@@ -1,5 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { requireRole } from '@/lib/auth/rbac'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 
 export default async function AdminAuditLogPage({
   searchParams,
@@ -7,6 +9,8 @@ export default async function AdminAuditLogPage({
   searchParams: { target_type?: string; page?: string }
 }) {
   await requireRole('admin')
+
+  const tt = await localizeUI(["Audit Log", "Action", "Target", "Actor", "Date"], getLocale())
   const supabase = createClient()
   const page = parseInt(searchParams.page || '1')
   const pageSize = 50
@@ -26,17 +30,17 @@ export default async function AdminAuditLogPage({
 
   return (
     <div className="space-y-6 max-w-5xl">
-      <h1 className="text-2xl font-bold">Audit Log</h1>
+      <h1 className="text-2xl font-bold">{tt("Audit Log")}</h1>
       <p className="text-muted-foreground text-sm">{count ?? 0} total entries</p>
 
       <div className="rounded-xl border overflow-hidden">
         <table className="w-full text-sm">
           <thead className="bg-muted/50">
             <tr>
-              <th className="text-left px-4 py-3 font-medium">Action</th>
-              <th className="text-left px-4 py-3 font-medium">Target</th>
-              <th className="text-left px-4 py-3 font-medium">Actor</th>
-              <th className="text-left px-4 py-3 font-medium">Date</th>
+              <th className="text-left px-4 py-3 font-medium">{tt("Action")}</th>
+              <th className="text-left px-4 py-3 font-medium">{tt("Target")}</th>
+              <th className="text-left px-4 py-3 font-medium">{tt("Actor")}</th>
+              <th className="text-left px-4 py-3 font-medium">{tt("Date")}</th>
             </tr>
           </thead>
           <tbody className="divide-y">

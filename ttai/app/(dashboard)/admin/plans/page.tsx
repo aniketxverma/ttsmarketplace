@@ -3,6 +3,8 @@ import { createClient } from '@/lib/supabase/server'
 import { requireRole } from '@/lib/auth/rbac'
 import { PLANS } from '@/lib/pricing'
 import { directoryAccess, unitsForRole } from '@/lib/business-chain'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 import { UNIT_LABEL, unitsForShop, type PurchaseUnit } from '@/lib/packaging'
 
 const TIER_ACCENT: Record<string, string> = { free: '#64748b', standard: '#2563eb', pro: '#7c3aed', full: '#d97706' }
@@ -20,6 +22,8 @@ function Units({ units }: { units: PurchaseUnit[] | undefined }) {
 
 export default async function AdminPlansPage() {
   await requireRole('admin')
+
+  const tt = await localizeUI(["Users", "Membership plans (matchmaking access)", "Units sold per shop"], getLocale())
   const supabase = createClient()
 
   // Count members per tier.
@@ -33,13 +37,13 @@ export default async function AdminPlansPage() {
         <h1 className="text-2xl font-bold">Plans &amp; Access</h1>
         <p className="text-muted-foreground text-sm mt-0.5">
           The membership tiers, role permissions and shop rules that govern the marketplace.
-          Assign a member&apos;s plan or role in <Link href="/admin/users" className="text-[#0B1F4D] font-semibold hover:underline">Users</Link>.
+          Assign a member&apos;s plan or role in <Link href="/admin/users" className="text-[#0B1F4D] font-semibold hover:underline">{tt("Users")}</Link>.
         </p>
       </div>
 
       {/* ── Membership plans ── */}
       <section>
-        <h2 className="text-sm font-extrabold text-[#0B1F4D] uppercase tracking-widest mb-3">Membership plans (matchmaking access)</h2>
+        <h2 className="text-sm font-extrabold text-[#0B1F4D] uppercase tracking-widest mb-3">{tt("Membership plans (matchmaking access)")}</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {PLANS.map((p) => {
             const acc = directoryAccess('retail', p.tier) // what a shop unlocks at this tier
@@ -88,7 +92,7 @@ export default async function AdminPlansPage() {
 
       {/* ── Per-shop units ── */}
       <section>
-        <h2 className="text-sm font-extrabold text-[#0B1F4D] uppercase tracking-widest mb-3">Units sold per shop</h2>
+        <h2 className="text-sm font-extrabold text-[#0B1F4D] uppercase tracking-widest mb-3">{tt("Units sold per shop")}</h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {[
             { name: 'Online Store (TTAI Retail)', shop: 'online', who: 'End users / families' },

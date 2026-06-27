@@ -1,5 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { requireRole } from '@/lib/auth/rbac'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 
 const REGION_LABELS: Record<string, string> = {
   'middle-east': 'Middle East',
@@ -19,6 +21,8 @@ const REGION_FLAGS: Record<string, string> = {
 
 export default async function AdminRegionsPage() {
   await requireRole('admin')
+
+  const tt = await localizeUI(["Regions", "Supplier", "Coverage", "Entire region"], getLocale())
   const supabase = createClient()
 
   const { data: rows } = await (supabase.from('supplier_regions' as any) as any)
@@ -46,7 +50,7 @@ export default async function AdminRegionsPage() {
   return (
     <div className="space-y-6 max-w-5xl">
       <div>
-        <h1 className="text-2xl font-bold">Regions</h1>
+        <h1 className="text-2xl font-bold">{tt("Regions")}</h1>
         <p className="text-muted-foreground text-sm mt-0.5">
           {totalSuppliers} supplier{totalSuppliers !== 1 ? 's' : ''} have declared {totalAssignments} region assignment{totalAssignments !== 1 ? 's' : ''}
         </p>
@@ -89,8 +93,8 @@ export default async function AdminRegionsPage() {
             <table className="w-full text-sm">
               <thead className="bg-muted/20">
                 <tr>
-                  <th className="text-left px-4 py-2.5 font-medium text-xs">Supplier</th>
-                  <th className="text-left px-4 py-2.5 font-medium text-xs">Coverage</th>
+                  <th className="text-left px-4 py-2.5 font-medium text-xs">{tt("Supplier")}</th>
+                  <th className="text-left px-4 py-2.5 font-medium text-xs">{tt("Coverage")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y">
@@ -99,7 +103,7 @@ export default async function AdminRegionsPage() {
                     <td className="px-4 py-3 font-medium">{supplierName}</td>
                     <td className="px-4 py-3 text-muted-foreground">
                       {countries.length === 0
-                        ? <span className="text-xs font-semibold text-[#0B1F4D]">Entire region</span>
+                        ? <span className="text-xs font-semibold text-[#0B1F4D]">{tt("Entire region")}</span>
                         : <span className="text-xs">{countries.join(', ')}</span>
                       }
                     </td>

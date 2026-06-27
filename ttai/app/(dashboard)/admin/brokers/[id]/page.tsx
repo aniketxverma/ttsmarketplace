@@ -1,10 +1,14 @@
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { requireRole } from '@/lib/auth/rbac'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 import { StatusBadge } from '@/components/dashboard/StatusBadge'
 
 export default async function AdminBrokerDetailPage({ params }: { params: { id: string } }) {
   await requireRole('admin')
+
+  const tt = await localizeUI(["Broker", "No suppliers assigned"], getLocale())
   const supabase = createClient()
 
   const { data: broker } = await supabase
@@ -25,7 +29,7 @@ export default async function AdminBrokerDetailPage({ params }: { params: { id: 
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">{broker.legal_name}</h1>
-          <p className="text-muted-foreground text-sm">Broker</p>
+          <p className="text-muted-foreground text-sm">{tt("Broker")}</p>
         </div>
         <StatusBadge status={broker.status} />
       </div>
@@ -61,7 +65,7 @@ export default async function AdminBrokerDetailPage({ params }: { params: { id: 
               </div>
             )
           })}
-          {!assignments?.length && <p className="text-sm text-muted-foreground">No suppliers assigned</p>}
+          {!assignments?.length && <p className="text-sm text-muted-foreground">{tt("No suppliers assigned")}</p>}
         </div>
       </div>
     </div>

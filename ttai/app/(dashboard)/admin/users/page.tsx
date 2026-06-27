@@ -4,6 +4,8 @@ import { RoleChanger } from './RoleChanger'
 import { ApprovalChanger } from './ApprovalChanger'
 import { TierChanger } from './TierChanger'
 import { ImpersonateButton } from './ImpersonateButton'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 import Image from 'next/image'
 
 const ROLES = ['all', 'buyer', 'business_client', 'supplier', 'broker', 'admin']
@@ -22,6 +24,8 @@ export default async function AdminUsersPage({
   searchParams: { role?: string; status?: string }
 }) {
   await requireRole('admin')
+
+  const tt = await localizeUI(["Users", "About:", "Products/needs:", "(private)", "Role:", "Plan:", "About", "Products / Services"], getLocale())
   const supabase = createClient()
 
   const selectedRole   = searchParams.role   ?? 'all'
@@ -65,7 +69,7 @@ export default async function AdminUsersPage({
       {/* ── Header ── */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-2xl font-bold">Users</h1>
+          <h1 className="text-2xl font-bold">{tt("Users")}</h1>
           <p className="text-muted-foreground text-sm mt-0.5">{counts['all']} registered accounts</p>
         </div>
         {(pendingTotal ?? 0) > 0 && (
@@ -203,8 +207,8 @@ export default async function AdminUsersPage({
                   {/* What they wrote at registration — so admins can review before approving */}
                   {(u.bio || u.products_offered) && (
                     <div className="rounded-lg bg-gray-50 border border-gray-100 p-2.5 space-y-1">
-                      {u.bio && <p className="text-xs text-gray-600"><span className="font-bold text-gray-400">About: </span>{u.bio}</p>}
-                      {u.products_offered && <p className="text-xs text-gray-600"><span className="font-bold text-gray-400">Products/needs: </span>{u.products_offered}</p>}
+                      {u.bio && <p className="text-xs text-gray-600"><span className="font-bold text-gray-400">{tt("About:")} </span>{u.bio}</p>}
+                      {u.products_offered && <p className="text-xs text-gray-600"><span className="font-bold text-gray-400">{tt("Products/needs:")} </span>{u.products_offered}</p>}
                     </div>
                   )}
 
@@ -215,7 +219,7 @@ export default async function AdminUsersPage({
                         <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
                       </svg>
                       Turnover: <strong className="text-gray-600">{u.annual_turnover}</strong>
-                      <span className="text-gray-300">(private)</span>
+                      <span className="text-gray-300">{tt("(private)")}</span>
                     </p>
                   )}
                 </div>
@@ -224,12 +228,12 @@ export default async function AdminUsersPage({
                 <div className="flex flex-col items-end gap-2 flex-shrink-0">
                   <ApprovalChanger userId={u.id} currentStatus={status} />
                   <div className="flex items-center gap-1.5">
-                    <span className="text-[10px] text-gray-400">Role:</span>
+                    <span className="text-[10px] text-gray-400">{tt("Role:")}</span>
                     <RoleChanger userId={u.id} currentRole={u.role} />
                   </div>
                   {u.role !== 'admin' && (
                     <div className="flex items-center gap-1.5">
-                      <span className="text-[10px] text-gray-400">Plan:</span>
+                      <span className="text-[10px] text-gray-400">{tt("Plan:")}</span>
                       <TierChanger userId={u.id} currentTier={(u as any).tier ?? 'free'} />
                     </div>
                   )}
@@ -259,13 +263,13 @@ export default async function AdminUsersPage({
                 <div className="bg-gray-50 border-t border-gray-100 px-5 py-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                   {u.bio && (
                     <div>
-                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-1">About</p>
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-1">{tt("About")}</p>
                       <p className="text-xs text-gray-600 leading-relaxed line-clamp-3">{u.bio}</p>
                     </div>
                   )}
                   {u.products_offered && (
                     <div>
-                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-1">Products / Services</p>
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-1">{tt("Products / Services")}</p>
                       <p className="text-xs text-gray-600 leading-relaxed line-clamp-3">{u.products_offered}</p>
                     </div>
                   )}

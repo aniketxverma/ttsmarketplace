@@ -1,9 +1,13 @@
 import { requireRole } from '@/lib/auth/rbac'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 import { SponsorshipsManager } from './SponsorshipsManager'
 
 export default async function AdminSponsorshipsPage() {
   await requireRole('admin')
+
+  const tt = await localizeUI(["Sponsored placements"], getLocale())
   const admin = createAdminClient()
 
   // Active placements (defensive — table may not be migrated)
@@ -26,7 +30,7 @@ export default async function AdminSponsorshipsPage() {
   return (
     <div className="space-y-6 max-w-3xl">
       <div>
-        <h1 className="text-2xl font-bold">Sponsored placements</h1>
+        <h1 className="text-2xl font-bold">{tt("Sponsored placements")}</h1>
         <p className="text-muted-foreground text-sm mt-0.5">
           Promote products to the top of the marketplace (and category sections). A paid revenue lever.
         </p>

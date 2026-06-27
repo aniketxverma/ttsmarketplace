@@ -4,6 +4,8 @@ import { AddCategoryForm } from './AddCategoryForm'
 import { DeleteCategory } from './DeleteCategory'
 import { CategoryTemplateEditor } from './CategoryTemplateEditor'
 import { CategoryPriority } from './CategoryPriority'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 import { PendingCategories } from './PendingCategories'
 
 type Cat = {
@@ -21,6 +23,8 @@ type Cat = {
 
 export default async function AdminCategoriesPage() {
   await requireRole('admin')
+
+  const tt = await localizeUI(["Categories", "Name", "Slug", "Context", "Depth", "Priority", "Fields", "Root", "Sub", "No categories yet"], getLocale())
   const supabase = createClient()
 
   // Select status/requested_by defensively (columns from migration 0057).
@@ -69,7 +73,7 @@ export default async function AdminCategoriesPage() {
     <div className="space-y-6 max-w-4xl">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Categories</h1>
+          <h1 className="text-2xl font-bold">{tt("Categories")}</h1>
           <p className="text-muted-foreground text-sm mt-0.5">{categories?.length ?? 0} categories total</p>
         </div>
       </div>
@@ -85,12 +89,12 @@ export default async function AdminCategoriesPage() {
         <table className="w-full text-sm">
           <thead className="bg-muted/50">
             <tr>
-              <th className="text-left px-4 py-3 font-medium">Name</th>
-              <th className="text-left px-4 py-3 font-medium hidden sm:table-cell">Slug</th>
-              <th className="text-left px-4 py-3 font-medium">Context</th>
-              <th className="text-left px-4 py-3 font-medium hidden md:table-cell">Depth</th>
-              <th className="text-left px-4 py-3 font-medium" title="Higher = appears first">Priority</th>
-              <th className="text-left px-4 py-3 font-medium">Fields</th>
+              <th className="text-left px-4 py-3 font-medium">{tt("Name")}</th>
+              <th className="text-left px-4 py-3 font-medium hidden sm:table-cell">{tt("Slug")}</th>
+              <th className="text-left px-4 py-3 font-medium">{tt("Context")}</th>
+              <th className="text-left px-4 py-3 font-medium hidden md:table-cell">{tt("Depth")}</th>
+              <th className="text-left px-4 py-3 font-medium" title="Higher = appears first">{tt("Priority")}</th>
+              <th className="text-left px-4 py-3 font-medium">{tt("Fields")}</th>
               <th className="px-4 py-3" />
             </tr>
           </thead>
@@ -105,7 +109,7 @@ export default async function AdminCategoriesPage() {
                       {root.marketplace_context}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">Root</td>
+                  <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">{tt("Root")}</td>
                   <td className="px-4 py-3"><CategoryPriority id={root.id} initial={(root as any).priority ?? 0} /></td>
                   <td className="px-4 py-3">
                     <CategoryTemplateEditor categoryId={root.id} categoryName={root.name} initialFields={(root as any).template_fields ?? []} />
@@ -123,7 +127,7 @@ export default async function AdminCategoriesPage() {
                         {child.marketplace_context}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">Sub</td>
+                    <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">{tt("Sub")}</td>
                     <td className="px-4 py-3"><CategoryPriority id={child.id} initial={(child as any).priority ?? 0} /></td>
                     <td className="px-4 py-3">
                       <CategoryTemplateEditor categoryId={child.id} categoryName={child.name} initialFields={(child as any).template_fields ?? []} />
@@ -137,7 +141,7 @@ export default async function AdminCategoriesPage() {
             ))}
             {!roots.length && (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">No categories yet</td>
+                <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">{tt("No categories yet")}</td>
               </tr>
             )}
           </tbody>

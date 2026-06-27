@@ -6,6 +6,8 @@ import { requireRole } from '@/lib/auth/rbac'
 import { formatCents } from '@/lib/utils'
 import { ApprovalChanger } from './users/ApprovalChanger'
 import { MarketplacePhaseToggle } from '@/components/admin/MarketplacePhaseToggle'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 import { getMarketplaceOpen, getLaunchDate } from '@/lib/marketplace-phase'
 
 const ROLE_COLORS: Record<string, string> = {
@@ -18,6 +20,8 @@ const ROLE_COLORS: Record<string, string> = {
 
 export default async function AdminDashboardPage() {
   await requireRole('admin')
+
+  const tt = await localizeUI(["Admin Dashboard", "Platform overview", "Applications Awaiting Review", "All caught up — no pending applications 🎉", "Recent Activity", "No recent activity"], getLocale())
   const supabase = createClient()
   const adminDb = createAdminClient()
   const marketplaceOpen = await getMarketplaceOpen()
@@ -68,8 +72,8 @@ export default async function AdminDashboardPage() {
   return (
     <div className="space-y-8 max-w-5xl">
       <div>
-        <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-        <p className="text-muted-foreground text-sm mt-0.5">Platform overview</p>
+        <h1 className="text-2xl font-bold">{tt("Admin Dashboard")}</h1>
+        <p className="text-muted-foreground text-sm mt-0.5">{tt("Platform overview")}</p>
       </div>
 
       {/* ── Marketplace phase (Pre-Opening / Opening Day) ───────────────── */}
@@ -85,7 +89,7 @@ export default async function AdminDashboardPage() {
               </svg>
             </div>
             <div>
-              <h2 className="font-extrabold text-amber-900 text-base leading-tight">Applications Awaiting Review</h2>
+              <h2 className="font-extrabold text-amber-900 text-base leading-tight">{tt("Applications Awaiting Review")}</h2>
               <p className="text-xs text-amber-700">Verify each applicant&apos;s details, then approve or reject</p>
             </div>
           </div>
@@ -105,7 +109,7 @@ export default async function AdminDashboardPage() {
 
         {apps.length === 0 ? (
           <div className="px-6 py-8 text-center">
-            <p className="text-sm text-amber-700/80 font-medium">All caught up — no pending applications 🎉</p>
+            <p className="text-sm text-amber-700/80 font-medium">{tt("All caught up — no pending applications 🎉")}</p>
           </div>
         ) : (
           <div className="divide-y divide-amber-100/70">
@@ -170,7 +174,7 @@ export default async function AdminDashboardPage() {
       </div>
 
       <div className="rounded-xl border bg-card p-5">
-        <h2 className="font-semibold mb-4">Recent Activity</h2>
+        <h2 className="font-semibold mb-4">{tt("Recent Activity")}</h2>
         <div className="space-y-2">
           {recentAudit.data?.map((entry) => {
             const actor = entry.profiles as any as { full_name: string | null } | null
@@ -187,7 +191,7 @@ export default async function AdminDashboardPage() {
               </div>
             )
           })}
-          {!recentAudit.data?.length && <p className="text-sm text-muted-foreground">No recent activity</p>}
+          {!recentAudit.data?.length && <p className="text-sm text-muted-foreground">{tt("No recent activity")}</p>}
         </div>
       </div>
     </div>

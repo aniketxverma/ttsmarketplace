@@ -3,12 +3,16 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { requireRole } from '@/lib/auth/rbac'
 import { conditionInfo, unitInfo } from '@/lib/outlet'
 import { lookingForLabel } from '@/lib/opportunities'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 import { Package, Megaphone, ShoppingCart, Briefcase, ExternalLink } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 
 export default async function AdminOutletPage() {
   await requireRole('admin')
+
+  const tt = await localizeUI(["Moderate outlet lots, trade-board posts and business opportunities.", "Open →", "Nothing yet."], getLocale())
   const admin = createAdminClient()
 
   const safeCount = async (q: any) => { try { const { count } = await q; return count ?? 0 } catch { return 0 } }
@@ -36,7 +40,7 @@ export default async function AdminOutletPage() {
     <div className="space-y-6 max-w-5xl">
       <div>
         <h1 className="text-2xl font-bold">Outlet &amp; Trade</h1>
-        <p className="text-muted-foreground text-sm mt-0.5">Moderate outlet lots, trade-board posts and business opportunities.</p>
+        <p className="text-muted-foreground text-sm mt-0.5">{tt("Moderate outlet lots, trade-board posts and business opportunities.")}</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

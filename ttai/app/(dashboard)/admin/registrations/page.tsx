@@ -1,5 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { requireRole } from '@/lib/auth/rbac'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 
 type Reg = {
   id: string
@@ -18,6 +20,8 @@ type Reg = {
 
 export default async function AdminRegistrationsPage() {
   await requireRole('admin')
+
+  const tt = await localizeUI(["Registrations", "No registrations yet.", "When", "Source", "Type", "Name / Company", "Contact", "Location", "Notes"], getLocale())
   const supabase = createClient()
 
   let regs: Reg[] = []
@@ -30,7 +34,7 @@ export default async function AdminRegistrationsPage() {
   return (
     <div className="space-y-6 max-w-6xl">
       <div>
-        <h1 className="text-2xl font-bold">Registrations</h1>
+        <h1 className="text-2xl font-bold">{tt("Registrations")}</h1>
         <p className="text-muted-foreground text-sm mt-0.5">
           Every registration request from TTAI EMA &amp; TTAIMA — {regs.length} total.
         </p>
@@ -41,19 +45,19 @@ export default async function AdminRegistrationsPage() {
           Run migration <code>0058_registration_requests.sql</code> to start collecting registrations here.
         </div>
       ) : regs.length === 0 ? (
-        <div className="rounded-xl border border-dashed p-10 text-center text-muted-foreground text-sm">No registrations yet.</div>
+        <div className="rounded-xl border border-dashed p-10 text-center text-muted-foreground text-sm">{tt("No registrations yet.")}</div>
       ) : (
         <div className="rounded-xl border overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="bg-muted/50">
               <tr>
-                <th className="text-left px-4 py-3 font-medium">When</th>
-                <th className="text-left px-4 py-3 font-medium">Source</th>
-                <th className="text-left px-4 py-3 font-medium">Type</th>
-                <th className="text-left px-4 py-3 font-medium">Name / Company</th>
-                <th className="text-left px-4 py-3 font-medium">Contact</th>
-                <th className="text-left px-4 py-3 font-medium hidden md:table-cell">Location</th>
-                <th className="text-left px-4 py-3 font-medium hidden lg:table-cell">Notes</th>
+                <th className="text-left px-4 py-3 font-medium">{tt("When")}</th>
+                <th className="text-left px-4 py-3 font-medium">{tt("Source")}</th>
+                <th className="text-left px-4 py-3 font-medium">{tt("Type")}</th>
+                <th className="text-left px-4 py-3 font-medium">{tt("Name / Company")}</th>
+                <th className="text-left px-4 py-3 font-medium">{tt("Contact")}</th>
+                <th className="text-left px-4 py-3 font-medium hidden md:table-cell">{tt("Location")}</th>
+                <th className="text-left px-4 py-3 font-medium hidden lg:table-cell">{tt("Notes")}</th>
               </tr>
             </thead>
             <tbody className="divide-y">
