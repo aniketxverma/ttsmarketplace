@@ -1,6 +1,8 @@
 export type Locale = 'en' | 'es' | 'ar' | 'fr' | 'de' | 'pt' | 'ru' | 'fa'
 
-export const SUPPORTED_LOCALES: Locale[] = ['en', 'es', 'ar', 'fr', 'de', 'pt', 'ru', 'fa']
+// Locked to English + Spanish for now. The other languages (ar, fr, de, pt, ru,
+// fa) stay fully wired below — add them back here to re-enable.
+export const SUPPORTED_LOCALES: Locale[] = ['en', 'es']
 
 export const DEFAULT_LOCALE: Locale = 'en'
 

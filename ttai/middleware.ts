@@ -41,12 +41,11 @@ function detectLocale(request: NextRequest): Locale {
     request.headers.get('x-vercel-ip-country') ??
     request.headers.get('cf-ipcountry') ??
     ''
-  if (country && COUNTRY_TO_LOCALE[country.toUpperCase()]) {
-    return COUNTRY_TO_LOCALE[country.toUpperCase()]
-  }
+  const byCountry = country ? COUNTRY_TO_LOCALE[country.toUpperCase()] : undefined
+  if (byCountry && SUPPORTED_LOCALES.includes(byCountry)) return byCountry
 
   const fromHeader = parseAcceptLanguage(request.headers.get('accept-language'))
-  if (fromHeader) return fromHeader
+  if (fromHeader && SUPPORTED_LOCALES.includes(fromHeader)) return fromHeader
 
   return DEFAULT_LOCALE
 }
