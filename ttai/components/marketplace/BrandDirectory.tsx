@@ -2,6 +2,8 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import Link from 'next/link'
 import Image from 'next/image'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 import { SupplierMall } from '@/components/marketplace/SupplierMall'
 import {
   accessFor, chainLevel, directoryAccess, entityKind,
@@ -80,6 +82,12 @@ export async function BrandDirectory({
 }) {
   const cfg = KIND_CONFIG[kind]
   const supabase = createClient()
+  const tt = await localizeUI([
+    cfg.eyebrow, cfg.title, cfg.blurb, 'Search by name, product, category…', 'Search',
+    'Products', 'Countries', 'Verified', 'Suppliers', 'Distributors', 'Factories',
+    'Browse by industry', 'All industries', 'Clear filters', 'Try different keywords',
+    'They will appear here once verified', 'Standard', 'Pro', 'Full pack', '+ Distributors', '+ Factories',
+  ], getLocale())
 
   // ── Viewer + matchmaking gate ──────────────────────────────────────────
   const { data: { user } } = await supabase.auth.getUser()
@@ -261,22 +269,22 @@ export async function BrandDirectory({
             <div className="relative z-20 flex flex-col items-center text-center px-4 pt-8 pb-14 sm:pt-10 sm:pb-20">
               <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-4 py-1.5 text-xs font-semibold text-white/85 mb-3 backdrop-blur">
                 <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-                {cfg.eyebrow}
+                {tt(cfg.eyebrow)}
               </div>
-              <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black text-white leading-tight drop-shadow-lg max-w-3xl">{cfg.title}</h1>
-              <p className="text-blue-100/85 text-sm sm:text-base max-w-2xl mt-2 drop-shadow">{cfg.blurb}</p>
+              <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black text-white leading-tight drop-shadow-lg max-w-3xl">{tt(cfg.title)}</h1>
+              <p className="text-blue-100/85 text-sm sm:text-base max-w-2xl mt-2 drop-shadow">{tt(cfg.blurb)}</p>
               {granted && (
                 <form method="GET" className="mt-6 w-full max-w-xl flex flex-col sm:flex-row gap-2">
                   <div className="relative flex-1">
                     <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
-                    <input name="q" defaultValue={searchParams.q} placeholder="Search by name, product, category…"
+                    <input name="q" defaultValue={searchParams.q} placeholder={tt('Search by name, product, category…')}
                       className="w-full rounded-xl border-0 bg-white text-gray-900 pl-10 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#F5A623] shadow-lg" />
                   </div>
                   <button type="submit"
                     className="rounded-xl bg-[#F5A623] text-[#0B1F4D] px-5 py-3 text-sm font-bold hover:bg-[#fbb93a] transition-colors shadow-lg whitespace-nowrap">
-                    Search
+                    {tt('Search')}
                   </button>
                 </form>
               )}
@@ -289,7 +297,7 @@ export async function BrandDirectory({
           {HERO_STATS.map((s) => (
             <div key={s.label} className="px-3 py-4 text-center">
               <p className="text-xl sm:text-2xl font-black text-[#0B1F4D] leading-none">{s.value}+</p>
-              <p className="text-[11px] text-gray-400 font-semibold mt-1">{s.label}</p>
+              <p className="text-[11px] text-gray-400 font-semibold mt-1">{tt(s.label)}</p>
             </div>
           ))}
         </div>
@@ -312,7 +320,7 @@ export async function BrandDirectory({
                   isActive ? 'bg-[#0B1F4D] text-white border-[#0B1F4D]'
                            : 'bg-white text-gray-600 border-gray-200 hover:border-[#0B1F4D]'
                 }`}>
-                {tab.label}
+                {tt(tab.label)}
                 {!open && (
                   <svg className="w-3 h-3 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
@@ -326,11 +334,11 @@ export async function BrandDirectory({
         {/* ── Industry filter (real root categories, consistent everywhere) ── */}
         {granted && industryFacets.length > 1 && (
           <div className="mb-7">
-            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wide mb-2">Browse by industry</p>
+            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wide mb-2">{tt('Browse by industry')}</p>
             <div className="flex flex-wrap gap-2">
               <Link href={dirBase + (searchParams.q ? `?q=${searchParams.q}` : '')}
                 className={`px-3.5 py-1.5 rounded-full text-xs font-bold border transition-colors ${!activeIndustry ? 'bg-[#0B1F4D] text-white border-[#0B1F4D]' : 'bg-white border-gray-200 text-gray-600 hover:border-[#0B1F4D]'}`}>
-                All industries
+                {tt('All industries')}
               </Link>
               {industryFacets.map((f) => (
                 <Link key={f.slug} href={`${dirBase}?industry=${f.slug}${searchParams.q ? `&q=${searchParams.q}` : ''}`}
@@ -350,11 +358,11 @@ export async function BrandDirectory({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
               </svg>
             </div>
-            <h2 className="text-2xl font-extrabold text-[#0B1F4D] mb-2">{gate.title}</h2>
-            <p className="text-gray-500 leading-relaxed mb-7">{gate.body}</p>
+            <h2 className="text-2xl font-extrabold text-[#0B1F4D] mb-2">{tt(gate.title)}</h2>
+            <p className="text-gray-500 leading-relaxed mb-7">{tt(gate.body)}</p>
             <Link href={gate.href}
               className="inline-flex items-center gap-2 rounded-xl bg-[#0B1F4D] text-white px-7 py-3.5 text-sm font-bold hover:bg-[#162d6e] transition-colors">
-              {gate.cta}
+              {tt(gate.cta)}
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
               </svg>
@@ -366,8 +374,8 @@ export async function BrandDirectory({
                 { t: 'Full pack', d: '+ Factories' },
               ].map((p) => (
                 <div key={p.t} className="rounded-xl border border-gray-100 bg-white px-3 py-2.5">
-                  <p className="text-[11px] font-extrabold text-[#0B1F4D]">{p.t}</p>
-                  <p className="text-[11px] text-gray-400">{p.d}</p>
+                  <p className="text-[11px] font-extrabold text-[#0B1F4D]">{tt(p.t)}</p>
+                  <p className="text-[11px] text-gray-400">{tt(p.d)}</p>
                 </div>
               ))}
             </div>
@@ -380,7 +388,7 @@ export async function BrandDirectory({
                 {activeIndustry && <span className="text-gray-500"> · {industryFacets.find((f) => f.slug === activeIndustry)?.name ?? ''}</span>}
               </span>
               {(searchParams.q || activeIndustry) && (
-                <Link href={dirBase} className="text-sm text-[#0B1F4D] hover:underline font-medium">Clear filters</Link>
+                <Link href={dirBase} className="text-sm text-[#0B1F4D] hover:underline font-medium">{tt('Clear filters')}</Link>
               )}
             </div>
             <SupplierMall suppliers={mallSuppliers} />
@@ -391,7 +399,7 @@ export async function BrandDirectory({
               {searchParams.q ? `No ${cfg.kindLabel.toLowerCase()}s match your search` : `No ${cfg.kindLabel.toLowerCase()}s listed yet`}
             </p>
             <p className="text-gray-400 text-sm mt-1">
-              {searchParams.q ? 'Try different keywords' : 'They will appear here once verified'}
+              {searchParams.q ? tt('Try different keywords') : tt('They will appear here once verified')}
             </p>
           </div>
         )}
