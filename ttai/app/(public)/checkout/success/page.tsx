@@ -1,4 +1,6 @@
 import Link from 'next/link'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 
@@ -11,6 +13,8 @@ export default async function CheckoutSuccessPage({
 }: {
   searchParams: { id?: string; m?: string }
 }) {
+  
+  const tt = await localizeUI(["Order ID", "Date", "Status", "Total", "Order Items", "Supplier", "Invoice will be sent within 24 hours", "Ship To", "View Invoice", "View My Orders", "Continue Shopping", "Questions? Contact us at", "support@ttaima.com"], getLocale())
   const orderId = searchParams.id
   if (!orderId) notFound()
 
@@ -81,22 +85,22 @@ export default async function CheckoutSuccessPage({
           <div className="p-6 border-b bg-gradient-to-r from-[#0B1F4D] to-[#162d6e] text-white">
             <div className="flex items-center justify-between flex-wrap gap-4">
               <div>
-                <p className="text-xs text-blue-200 uppercase tracking-widest font-semibold">Order ID</p>
+                <p className="text-xs text-blue-200 uppercase tracking-widest font-semibold">{tt("Order ID")}</p>
                 <p className="font-mono font-bold text-lg mt-0.5">#{shortId}</p>
               </div>
               <div className="text-right">
-                <p className="text-xs text-blue-200 uppercase tracking-widest font-semibold">Date</p>
+                <p className="text-xs text-blue-200 uppercase tracking-widest font-semibold">{tt("Date")}</p>
                 <p className="font-medium text-sm mt-0.5">{orderDate}</p>
               </div>
               <div>
-                <p className="text-xs text-blue-200 uppercase tracking-widest font-semibold">Status</p>
+                <p className="text-xs text-blue-200 uppercase tracking-widest font-semibold">{tt("Status")}</p>
                 <span className={`inline-flex items-center gap-1.5 mt-0.5 px-2.5 py-1 rounded-full text-xs font-bold border ${paid ? 'bg-green-400/20 text-green-300 border-green-400/30' : 'bg-amber-400/20 text-amber-200 border-amber-400/30'}`}>
                   <span className={`w-1.5 h-1.5 rounded-full ${paid ? 'bg-green-400' : 'bg-amber-300'}`} />
                   {paid ? 'Paid' : 'Pending payment'}
                 </span>
               </div>
               <div className="text-right">
-                <p className="text-xs text-blue-200 uppercase tracking-widest font-semibold">Total</p>
+                <p className="text-xs text-blue-200 uppercase tracking-widest font-semibold">{tt("Total")}</p>
                 <p className="font-extrabold text-xl mt-0.5 text-[#F5A623]">{fmt(order.total_cents, order.currency_code)}</p>
               </div>
             </div>
@@ -104,7 +108,7 @@ export default async function CheckoutSuccessPage({
 
           {/* Items */}
           <div className="p-6 border-b">
-            <h2 className="font-bold text-[#0B1F4D] text-sm mb-4 uppercase tracking-wide">Order Items</h2>
+            <h2 className="font-bold text-[#0B1F4D] text-sm mb-4 uppercase tracking-wide">{tt("Order Items")}</h2>
             <div className="space-y-3">
               {items.map((item, i) => (
                 <div key={i} className="flex items-center justify-between gap-4 py-2">
@@ -132,13 +136,13 @@ export default async function CheckoutSuccessPage({
           {/* Supplier + Shipping */}
           <div className="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-gray-100">
             <div className="p-6">
-              <h2 className="font-bold text-[#0B1F4D] text-sm mb-3 uppercase tracking-wide">Supplier</h2>
+              <h2 className="font-bold text-[#0B1F4D] text-sm mb-3 uppercase tracking-wide">{tt("Supplier")}</h2>
               <p className="text-sm font-medium text-gray-900">{supplierName}</p>
-              <p className="text-xs text-gray-400 mt-1">Invoice will be sent within 24 hours</p>
+              <p className="text-xs text-gray-400 mt-1">{tt("Invoice will be sent within 24 hours")}</p>
             </div>
             {address && (
               <div className="p-6">
-                <h2 className="font-bold text-[#0B1F4D] text-sm mb-3 uppercase tracking-wide">Ship To</h2>
+                <h2 className="font-bold text-[#0B1F4D] text-sm mb-3 uppercase tracking-wide">{tt("Ship To")}</h2>
                 <p className="text-sm font-medium text-gray-900">{address.fullName}</p>
                 <p className="text-xs text-gray-500 mt-1 leading-relaxed">
                   {address.line1}<br />
@@ -181,7 +185,7 @@ export default async function CheckoutSuccessPage({
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
-            View Invoice
+            {tt("View Invoice")}
           </Link>
           <Link
             href="/buyer/orders"
@@ -190,7 +194,7 @@ export default async function CheckoutSuccessPage({
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
             </svg>
-            View My Orders
+            {tt("View My Orders")}
           </Link>
           <Link
             href="/marketplace"
@@ -199,12 +203,12 @@ export default async function CheckoutSuccessPage({
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
             </svg>
-            Continue Shopping
+            {tt("Continue Shopping")}
           </Link>
         </div>
 
         <p className="text-center text-xs text-gray-400 mt-6">
-          Questions? Contact us at <span className="text-[#0B1F4D] font-medium">support@ttaima.com</span>
+          {tt("Questions? Contact us at")} <span className="text-[#0B1F4D] font-medium">{tt("support@ttaima.com")}</span>
         </p>
 
       </div>

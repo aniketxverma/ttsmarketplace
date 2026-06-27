@@ -1,4 +1,6 @@
 import Link from 'next/link'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 import { REGIONS } from '@/lib/regions-data'
 import { ArrowRight, Globe2, MapPin } from 'lucide-react'
 
@@ -7,15 +9,17 @@ export const metadata = {
   description: 'Explore verified suppliers and curated product collections by region and country.',
 }
 
-export default function RegionsIndexPage() {
+export default async function RegionsIndexPage() {
+  
+  const tt = await localizeUI(["Global Trade Network", "Shop by region", "countries", "Explore"], getLocale())
   return (
     <div className="bg-gradient-to-b from-white to-gray-50 min-h-screen">
       <div className="container mx-auto px-4 max-w-6xl py-12">
         <div className="text-center mb-9">
           <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#F5A623] mb-2">
-            <Globe2 className="w-4 h-4" /> Global Trade Network
+            <Globe2 className="w-4 h-4" /> {tt("Global Trade Network")}
           </div>
-          <h1 className="text-3xl font-extrabold text-[#0B1F4D]">Shop by region</h1>
+          <h1 className="text-3xl font-extrabold text-[#0B1F4D]">{tt("Shop by region")}</h1>
           <p className="text-gray-500 text-sm mt-2 max-w-xl mx-auto">Pick your market — then choose a country to explore its verified suppliers and curated collections.</p>
         </div>
 
@@ -31,9 +35,9 @@ export default function RegionsIndexPage() {
                 <p className="text-2xl font-extrabold leading-tight">{r.name}</p>
                 <p className="text-xs text-white/75 mt-1 line-clamp-1">{r.tagline}</p>
                 <div className="flex items-center justify-between mt-3">
-                  <span className="inline-flex items-center gap-1 text-[11px] font-bold text-white/75"><MapPin className="w-3 h-3" /> {r.countries.length} countries</span>
+                  <span className="inline-flex items-center gap-1 text-[11px] font-bold text-white/75"><MapPin className="w-3 h-3" /> {r.countries.length} {tt("countries")}</span>
                   <span className="inline-flex items-center gap-1 text-xs font-extrabold bg-white/15 backdrop-blur px-3 py-1.5 rounded-full group-hover:bg-white group-hover:text-[#0B1F4D] transition-colors">
-                    Explore <ArrowRight className="w-3.5 h-3.5" />
+                    {tt("Explore")} <ArrowRight className="w-3.5 h-3.5" />
                   </span>
                 </div>
               </div>

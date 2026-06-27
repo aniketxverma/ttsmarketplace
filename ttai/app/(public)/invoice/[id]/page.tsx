@@ -1,4 +1,6 @@
 import { notFound, redirect } from 'next/navigation'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
@@ -15,6 +17,8 @@ function fmt(cents: number, currency: string) {
 }
 
 export default async function InvoicePage({ params }: { params: { id: string } }) {
+  
+  const tt = await localizeUI(["Invoice", "Seller", "Country:", "Bill to", "VAT No:", "Product", "Qty", "Unit price", "Total", "Subtotal", "Tax treatment:"], getLocale())
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect(`/login?next=/invoice/${params.id}`)
@@ -53,7 +57,7 @@ export default async function InvoicePage({ params }: { params: { id: string } }
           {/* Header */}
           <div className="flex items-start justify-between mb-8">
             <div>
-              <p className="text-2xl font-black text-[#0B1F4D]">Invoice</p>
+              <p className="text-2xl font-black text-[#0B1F4D]">{tt("Invoice")}</p>
               <p className="text-sm text-gray-400 mt-0.5">{invoice?.invoice_number ?? order.id}</p>
             </div>
             <div className="text-right">
@@ -65,17 +69,17 @@ export default async function InvoicePage({ params }: { params: { id: string } }
           {/* Parties */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
             <div>
-              <p className="text-[11px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Seller</p>
+              <p className="text-[11px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">{tt("Seller")}</p>
               <p className="font-bold text-[#0B1F4D]">{supplier?.trade_name ?? supplier?.legal_name}</p>
               <p className="text-sm text-gray-500">{[supplier?.cities?.name, supplier?.countries?.name].filter(Boolean).join(', ')}</p>
-              {payload.seller_country && <p className="text-xs text-gray-400">Country: {payload.seller_country}</p>}
+              {payload.seller_country && <p className="text-xs text-gray-400">{tt("Country:")} {payload.seller_country}</p>}
             </div>
             <div>
-              <p className="text-[11px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">Bill to</p>
+              <p className="text-[11px] font-extrabold text-gray-400 uppercase tracking-widest mb-1.5">{tt("Bill to")}</p>
               <p className="font-bold text-[#0B1F4D]">{payload.buyer_company || addr?.fullName}</p>
               {payload.buyer_company && addr?.fullName && <p className="text-sm text-gray-500">{addr.fullName}</p>}
               <p className="text-sm text-gray-500">{[addr?.line1, addr?.city, addr?.postalCode, addr?.country].filter(Boolean).join(', ')}</p>
-              {invoice?.buyer_vat_number && <p className="text-xs text-gray-500 mt-0.5">VAT No: <span className="font-semibold">{invoice.buyer_vat_number}</span></p>}
+              {invoice?.buyer_vat_number && <p className="text-xs text-gray-500 mt-0.5">{tt("VAT No:")} <span className="font-semibold">{invoice.buyer_vat_number}</span></p>}
             </div>
           </div>
 
@@ -83,10 +87,10 @@ export default async function InvoicePage({ params }: { params: { id: string } }
           <table className="w-full text-sm mb-6">
             <thead>
               <tr className="border-b border-gray-200 text-left text-[11px] font-extrabold text-gray-400 uppercase tracking-wide">
-                <th className="py-2">Product</th>
-                <th className="py-2 text-center">Qty</th>
-                <th className="py-2 text-right">Unit price</th>
-                <th className="py-2 text-right">Total</th>
+                <th className="py-2">{tt("Product")}</th>
+                <th className="py-2 text-center">{tt("Qty")}</th>
+                <th className="py-2 text-right">{tt("Unit price")}</th>
+                <th className="py-2 text-right">{tt("Total")}</th>
               </tr>
             </thead>
             <tbody>
@@ -103,13 +107,13 @@ export default async function InvoicePage({ params }: { params: { id: string } }
 
           {/* Totals */}
           <div className="ml-auto w-full sm:w-64 space-y-2 text-sm">
-            <div className="flex justify-between"><span className="text-gray-500">Subtotal</span><span className="font-medium">{fmt(order.subtotal_cents, currency)}</span></div>
+            <div className="flex justify-between"><span className="text-gray-500">{tt("Subtotal")}</span><span className="font-medium">{fmt(order.subtotal_cents, currency)}</span></div>
             <div className="flex justify-between">
               <span className="text-gray-500">VAT ({payload.vat_rate ?? 0}%)</span>
               <span className="font-medium">{fmt(order.vat_cents, currency)}</span>
             </div>
             <div className="flex justify-between pt-2 border-t border-gray-200">
-              <span className="font-bold text-[#0B1F4D]">Total</span>
+              <span className="font-bold text-[#0B1F4D]">{tt("Total")}</span>
               <span className="font-extrabold text-[#0B1F4D] text-lg">{fmt(order.total_cents, currency)}</span>
             </div>
           </div>
@@ -117,7 +121,7 @@ export default async function InvoicePage({ params }: { params: { id: string } }
           {/* Tax treatment note */}
           <div className="mt-8 rounded-xl bg-gray-50 border border-gray-100 px-4 py-3">
             <p className="text-xs text-gray-500">
-              <span className="font-bold text-[#0B1F4D] uppercase tracking-wide">Tax treatment:</span>{' '}
+              <span className="font-bold text-[#0B1F4D] uppercase tracking-wide">{tt("Tax treatment:")}</span>{' '}
               {TREATMENT_NOTE[treatment] ?? TREATMENT_NOTE.standard}
             </p>
           </div>

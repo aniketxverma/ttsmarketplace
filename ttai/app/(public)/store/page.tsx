@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { localizeUI } from '@/lib/i18n/ui'
 import { ProductCard } from '@/components/marketplace/ProductCard'
 import { FamilyCard } from '@/components/marketplace/FamilyCard'
 import { groupIntoFamilies } from '@/lib/product-family'
@@ -50,6 +51,8 @@ export default async function StorePage({
   searchParams: { category?: string; q?: string; page?: string; supplier?: string
     market?: string; country?: string; view?: string; hub?: string }
 }) {
+  
+  const tt = await localizeUI(["Direct from Suppliers", "TTAI Retail Store", "Wholesale Marketplace →", "No shops found", "Try a different category or area", "View all", "product", "No products found", "Try adjusting your filters or search query", "Clear filters"], getLocale())
   const supabase = createClient()
 
   // Pre-Opening: the public retail store opens on launch day (admins preview; a
@@ -263,10 +266,10 @@ export default async function StorePage({
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
             <div>
               <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 text-white/80 text-xs font-bold uppercase tracking-widest px-3 py-1.5 rounded-full mb-3">
-                <Zap className="w-3 h-3 text-[#F5A623]" />Direct from Suppliers
+                <Zap className="w-3 h-3 text-[#F5A623]" />{tt("Direct from Suppliers")}
               </div>
               <h1 className="text-3xl sm:text-4xl font-extrabold text-white leading-tight mb-1">
-                TTAI Retail Store
+                {tt("TTAI Retail Store")}
               </h1>
               <p className="text-white/60 text-sm">
                 {count ?? 0} products · shop direct from verified suppliers
@@ -274,7 +277,7 @@ export default async function StorePage({
             </div>
             <Link href="/marketplace"
               className="inline-flex items-center gap-2 bg-white/10 border border-white/20 text-white text-sm font-bold px-5 py-2.5 rounded-xl hover:bg-white/20 transition-colors self-start sm:self-auto">
-              <ShoppingBag className="w-4 h-4" />Wholesale Marketplace →
+              <ShoppingBag className="w-4 h-4" />{tt("Wholesale Marketplace →")}
             </Link>
           </div>
 
@@ -326,8 +329,8 @@ export default async function StorePage({
           ) : (
             <div className="text-center py-20 text-muted-foreground">
               <Store className="w-12 h-12 mx-auto mb-4 opacity-20" />
-              <p className="text-lg font-semibold">No shops found</p>
-              <p className="text-sm mt-1">Try a different category or area</p>
+              <p className="text-lg font-semibold">{tt("No shops found")}</p>
+              <p className="text-sm mt-1">{tt("Try a different category or area")}</p>
             </div>
           )
         ) : (
@@ -351,7 +354,7 @@ export default async function StorePage({
                       <ProductGrid>{items.slice(0, SUB_SECTION_LIMIT).map(renderStoreCard)}</ProductGrid>
                       {!isDirect && items.length > SUB_SECTION_LIMIT && (
                         <div className="mt-4 text-center">
-                          <Link href={href} className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-5 py-2.5 text-sm font-bold text-purple-700 hover:border-purple-700 transition-colors">View all {items.length} in {cat.name}</Link>
+                          <Link href={href} className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-5 py-2.5 text-sm font-bold text-purple-700 hover:border-purple-700 transition-colors">{tt("View all")} {items.length} in {cat.name}</Link>
                         </div>
                       )}
                     </section>
@@ -370,7 +373,7 @@ export default async function StorePage({
                       <ProductGrid>{fs.slice(0, SECTION_LIMIT).map(renderStoreCard)}</ProductGrid>
                       {fs.length > SECTION_LIMIT && (
                         <div className="mt-4 text-center">
-                          <Link href={href} className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-5 py-2.5 text-sm font-bold text-purple-700 hover:border-purple-700 transition-colors">View all {fs.length} in {cat.name}</Link>
+                          <Link href={href} className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-5 py-2.5 text-sm font-bold text-purple-700 hover:border-purple-700 transition-colors">{tt("View all")} {fs.length} in {cat.name}</Link>
                         </div>
                       )}
                     </section>
@@ -380,7 +383,7 @@ export default async function StorePage({
             ) : pageFamilies.length > 0 ? (
               <>
                 <p className="text-sm text-muted-foreground mb-4">
-                  {count} product{count !== 1 ? 's' : ''}
+                  {count} {tt("product")}{count !== 1 ? 's' : ''}
                   {searchParams.q && <> for &quot;<strong>{searchParams.q}</strong>&quot;</>}
                 </p>
                 <ProductGrid>{pageFamilies.map(renderStoreCard)}</ProductGrid>
@@ -389,10 +392,10 @@ export default async function StorePage({
             ) : (
               <div className="text-center py-20 text-muted-foreground">
                 <ShoppingBag className="w-12 h-12 mx-auto mb-4 opacity-20" />
-                <p className="text-lg font-semibold">No products found</p>
-                <p className="text-sm mt-1">Try adjusting your filters or search query</p>
+                <p className="text-lg font-semibold">{tt("No products found")}</p>
+                <p className="text-sm mt-1">{tt("Try adjusting your filters or search query")}</p>
                 {(searchParams.q || searchParams.category) && (
-                  <Link href="/store" className="mt-4 inline-block text-sm font-bold text-purple-600 hover:underline">Clear filters</Link>
+                  <Link href="/store" className="mt-4 inline-block text-sm font-bold text-purple-600 hover:underline">{tt("Clear filters")}</Link>
                 )}
               </div>
             )}

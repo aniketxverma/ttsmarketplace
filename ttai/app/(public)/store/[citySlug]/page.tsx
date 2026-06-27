@@ -1,4 +1,6 @@
 import { notFound } from 'next/navigation'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { ProductCard } from '@/components/marketplace/ProductCard'
@@ -17,6 +19,8 @@ export default async function CityStorePage({
   params: { citySlug: string }
   searchParams: { q?: string; page?: string }
 }) {
+  
+  const tt = await localizeUI(["All Cities", "Shopping in", "local products", "Switch city", "No products in", "yet", "Check back soon or browse the wholesale marketplace", "Browse wholesale →"], getLocale())
   const supabase = createClient()
   const page = parseInt(searchParams.page || '1')
 
@@ -60,14 +64,14 @@ export default async function CityStorePage({
       <div className="flex items-center justify-between mb-6">
         <div>
           <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
-            <Link href="/store" className="hover:text-foreground">All Cities</Link>
+            <Link href="/store" className="hover:text-foreground">{tt("All Cities")}</Link>
             <span>/</span>
           </div>
-          <h1 className="text-2xl font-bold">Shopping in {city.name}</h1>
-          <p className="text-muted-foreground text-sm mt-0.5">{count ?? 0} local products</p>
+          <h1 className="text-2xl font-bold">{tt("Shopping in")} {city.name}</h1>
+          <p className="text-muted-foreground text-sm mt-0.5">{count ?? 0} {tt("local products")}</p>
         </div>
         <Link href="/store" className="text-sm text-primary hover:underline">
-          Switch city
+          {tt("Switch city")}
         </Link>
       </div>
 
@@ -100,10 +104,10 @@ export default async function CityStorePage({
         </>
       ) : (
         <div className="text-center py-20 text-muted-foreground">
-          <p className="text-lg">No products in {city.name} yet</p>
-          <p className="text-sm mt-1">Check back soon or browse the wholesale marketplace</p>
+          <p className="text-lg">{tt("No products in")} {city.name} {tt("yet")}</p>
+          <p className="text-sm mt-1">{tt("Check back soon or browse the wholesale marketplace")}</p>
           <Link href="/marketplace" className="text-primary hover:underline text-sm mt-3 inline-block">
-            Browse wholesale →
+            {tt("Browse wholesale →")}
           </Link>
         </div>
       )}

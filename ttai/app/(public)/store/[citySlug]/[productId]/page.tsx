@@ -1,4 +1,6 @@
 import { notFound } from 'next/navigation'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 import Link from 'next/link'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/server'
@@ -8,6 +10,8 @@ export default async function RetailProductPage({
 }: {
   params: { citySlug: string; productId: string }
 }) {
+  
+  const tt = await localizeUI(["Store", "inc.", "Add to Cart (Coming Soon)"], getLocale())
   const supabase = createClient()
 
   const { data: city } = await supabase
@@ -43,7 +47,7 @@ export default async function RetailProductPage({
   return (
     <div className="container mx-auto px-4 py-8">
       <nav className="text-sm text-muted-foreground mb-6">
-        <Link href="/store" className="hover:text-foreground">Store</Link>
+        <Link href="/store" className="hover:text-foreground">{tt("Store")}</Link>
         <span className="mx-2">/</span>
         <Link href={`/store/${city.slug}`} className="hover:text-foreground">{city.name}</Link>
         <span className="mx-2">/</span>
@@ -73,7 +77,7 @@ export default async function RetailProductPage({
             <span className="text-3xl font-bold">
               {new Intl.NumberFormat('en-EU', { style: 'currency', currency: product.currency_code }).format(priceInclVat / 100)}
             </span>
-            <span className="text-sm text-muted-foreground">inc. {vatRate}% VAT</span>
+            <span className="text-sm text-muted-foreground">{tt("inc.")} {vatRate}% VAT</span>
           </div>
 
           {product.description && (
@@ -90,7 +94,7 @@ export default async function RetailProductPage({
             disabled
             className="w-full rounded-md bg-primary text-primary-foreground px-6 py-3 font-medium disabled:opacity-60"
           >
-            Add to Cart (Coming Soon)
+            {tt("Add to Cart (Coming Soon)")}
           </button>
         </div>
       </div>

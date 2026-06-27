@@ -1,4 +1,6 @@
 import { notFound, redirect } from 'next/navigation'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 import Link from 'next/link'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/server'
@@ -33,6 +35,8 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 
 export default async function PublicProfilePage({ params }: { params: { slug: string } }) {
   // Use admin client for all queries — bypasses RLS on public page
+  
+  const tt = await localizeUI(["Marketplace", "Join Free →", "Since", "View Brand Store", "Connect", "Website", "Official Brand Store", "Browse their wholesale catalogue →", "About", "No bio has been added yet.", "Profile is still being set up", "Check back soon for more details.", "Details", "Profile URL"], getLocale())
   const admin = createAdminClient()
   const { slug } = params
 
@@ -89,13 +93,13 @@ export default async function PublicProfilePage({ params }: { params: { slug: st
       <div className="bg-[#0B1F4D] sticky top-0 z-30">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 h-12 flex items-center justify-between">
           <Link href="/marketplace" className="flex items-center gap-1.5 text-white/60 hover:text-white text-sm font-medium transition-colors">
-            <ArrowLeft className="w-4 h-4" />Marketplace
+            <ArrowLeft className="w-4 h-4" />{tt("Marketplace")}
           </Link>
           <Link href="/" className="font-extrabold text-sm tracking-tight text-white">
             TTAI <span className="text-[#F5A623]">EMA</span>
           </Link>
           <Link href="/register" className="text-xs font-bold text-[#F5A623] hover:text-[#fbb93a] transition-colors">
-            Join Free →
+            {tt("Join Free →")}
           </Link>
         </div>
       </div>
@@ -183,7 +187,7 @@ export default async function PublicProfilePage({ params }: { params: { slug: st
                     </span>
                   )}
                   <span className="flex items-center gap-1 text-xs text-gray-400">
-                    <Calendar className="w-3.5 h-3.5 shrink-0" />Since {since}
+                    <Calendar className="w-3.5 h-3.5 shrink-0" />{tt("Since")} {since}
                   </span>
                 </div>
               </div>
@@ -193,18 +197,18 @@ export default async function PublicProfilePage({ params }: { params: { slug: st
                 {profile.role === 'supplier' && brandSlug ? (
                   <Link href={`/brand/${brandSlug}`}
                     className="inline-flex items-center gap-2 rounded-xl bg-[#0B1F4D] text-white px-5 py-2.5 text-sm font-extrabold hover:bg-[#162d6e] transition-colors shadow-sm">
-                    <ShoppingBag className="w-4 h-4" />View Brand Store
+                    <ShoppingBag className="w-4 h-4" />{tt("View Brand Store")}
                   </Link>
                 ) : (
                   <Link href="/register"
                     className="inline-flex items-center gap-2 rounded-xl bg-[#0B1F4D] text-white px-5 py-2.5 text-sm font-extrabold hover:bg-[#162d6e] transition-colors shadow-sm">
-                    <MessageSquare className="w-4 h-4" />Connect
+                    <MessageSquare className="w-4 h-4" />{tt("Connect")}
                   </Link>
                 )}
                 {profile.website_url && (
                   <a href={profile.website_url} target="_blank" rel="noopener noreferrer"
                     className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 text-gray-600 px-4 py-2.5 text-sm font-semibold hover:border-[#0B1F4D] hover:text-[#0B1F4D] transition-colors">
-                    <Globe className="w-4 h-4" />Website
+                    <Globe className="w-4 h-4" />{tt("Website")}
                   </a>
                 )}
               </div>
@@ -217,9 +221,9 @@ export default async function PublicProfilePage({ params }: { params: { slug: st
           <Link href={`/brand/${brandSlug}`}
             className="mt-4 flex items-center justify-between gap-4 bg-gradient-to-r from-[#0B1F4D] to-[#1a3580] rounded-2xl px-5 sm:px-7 py-5 shadow-md hover:shadow-lg transition-shadow group">
             <div>
-              <p className="text-white/50 text-[11px] font-extrabold uppercase tracking-widest mb-1">Official Brand Store</p>
+              <p className="text-white/50 text-[11px] font-extrabold uppercase tracking-widest mb-1">{tt("Official Brand Store")}</p>
               <p className="text-white font-extrabold text-lg leading-tight">{profile.company_name ?? profile.full_name}</p>
-              <p className="text-white/50 text-xs mt-0.5">Browse their wholesale catalogue →</p>
+              <p className="text-white/50 text-xs mt-0.5">{tt("Browse their wholesale catalogue →")}</p>
             </div>
             <div className="shrink-0 w-11 h-11 rounded-2xl bg-white/10 group-hover:bg-white/20 flex items-center justify-center transition-colors">
               <ShoppingBag className="w-5 h-5 text-[#F5A623]" />
@@ -237,12 +241,12 @@ export default async function PublicProfilePage({ params }: { params: { slug: st
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 sm:p-6">
               <h2 className="flex items-center gap-2 text-xs font-extrabold text-gray-500 uppercase tracking-widest mb-3">
                 <span className="w-1 h-4 rounded-full inline-block shrink-0" style={{ background: role.accent }} />
-                About
+                {tt("About")}
               </h2>
               {profile.bio ? (
                 <p className="text-gray-700 text-[15px] leading-relaxed whitespace-pre-line">{profile.bio}</p>
               ) : (
-                <p className="text-gray-400 text-sm italic">No bio has been added yet.</p>
+                <p className="text-gray-400 text-sm italic">{tt("No bio has been added yet.")}</p>
               )}
             </div>
 
@@ -270,8 +274,8 @@ export default async function PublicProfilePage({ params }: { params: { slug: st
                 <div className="w-14 h-14 rounded-2xl bg-gray-100 flex items-center justify-center mx-auto mb-3">
                   <Package className="w-7 h-7 text-gray-300" />
                 </div>
-                <p className="text-gray-500 font-semibold text-sm">Profile is still being set up</p>
-                <p className="text-gray-400 text-xs mt-1">Check back soon for more details.</p>
+                <p className="text-gray-500 font-semibold text-sm">{tt("Profile is still being set up")}</p>
+                <p className="text-gray-400 text-xs mt-1">{tt("Check back soon for more details.")}</p>
               </div>
             )}
           </div>
@@ -281,7 +285,7 @@ export default async function PublicProfilePage({ params }: { params: { slug: st
 
             {/* Details */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
-              <h2 className="text-xs font-extrabold text-gray-500 uppercase tracking-widest mb-4">Details</h2>
+              <h2 className="text-xs font-extrabold text-gray-500 uppercase tracking-widest mb-4">{tt("Details")}</h2>
               <div className="space-y-3.5">
                 {[
                   { Icon: CheckCircle2, label: 'Role',        value: role.label },
@@ -306,7 +310,7 @@ export default async function PublicProfilePage({ params }: { params: { slug: st
                       <Globe className="w-3.5 h-3.5 text-gray-400" />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-[10px] text-gray-400 font-extrabold uppercase tracking-wide">Website</p>
+                      <p className="text-[10px] text-gray-400 font-extrabold uppercase tracking-wide">{tt("Website")}</p>
                       <a href={profile.website_url} target="_blank" rel="noopener noreferrer"
                         className="text-sm font-semibold text-[#0B1F4D] hover:underline truncate block">
                         {profile.website_url.replace(/^https?:\/\//, '')}
@@ -343,7 +347,7 @@ export default async function PublicProfilePage({ params }: { params: { slug: st
             {/* Profile URL */}
             {profile.username && (
               <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
-                <p className="text-[10px] text-gray-400 uppercase tracking-widest font-extrabold mb-2">Profile URL</p>
+                <p className="text-[10px] text-gray-400 uppercase tracking-widest font-extrabold mb-2">{tt("Profile URL")}</p>
                 <div className="flex items-center gap-2 bg-gray-50 rounded-xl px-3 py-2">
                   <Globe className="w-3 h-3 text-gray-400 shrink-0" />
                   <span className="text-xs font-mono text-gray-500 truncate">

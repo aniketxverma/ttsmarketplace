@@ -1,4 +1,6 @@
 import { redirect } from 'next/navigation'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 import { createClient } from '@/lib/supabase/server'
 import { requireAuth } from '@/lib/auth/rbac'
 import { MasterCatalogClient } from './MasterCatalogClient'
@@ -6,6 +8,8 @@ import { UpgradeGate } from '@/components/supplier/UpgradeGate'
 import { tierRank } from '@/lib/business-chain'
 
 export default async function MasterCatalogPage() {
+  
+  const tt = await localizeUI(["Master catalog"], getLocale())
   const user = await requireAuth()
   const supabase = createClient()
   const { data: supplier } = await supabase.from('suppliers').select('id').eq('owner_id', user.id).single()
@@ -17,7 +21,7 @@ export default async function MasterCatalogPage() {
   return (
     <div className="max-w-5xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Master catalog</h1>
+        <h1 className="text-2xl font-bold">{tt("Master catalog")}</h1>
         <p className="text-muted-foreground text-sm mt-0.5">
           Search the global product database and import a product into your profile — the name, brand,
           images, description &amp; specs are copied. You only add price, stock, SKU, condition &amp; location.

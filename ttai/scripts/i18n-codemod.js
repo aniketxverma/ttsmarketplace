@@ -48,12 +48,19 @@ if (!/from '@\/lib\/i18n\/server'/.test(s)) {
   s = s.replace(/(\nimport [^\n]+\n)(?![\s\S]*\nimport )/, `$1import { localizeUI } from '@/lib/i18n/ui'\n`)
 }
 
-// Inject the tt setup right after the first `await requireRole(...)` (or createAdminClient).
+// Inject the tt setup after the first reliable anchor in the component body.
 const ttBlock = `\n  const tt = await localizeUI([${[...strings].map((x) => JSON.stringify(x)).join(', ')}], getLocale())`
 if (/await requireRole\([^)]*\)\s*\n/.test(s)) {
   s = s.replace(/(await requireRole\([^)]*\)\s*\n)/, `$1${ttBlock}\n`)
 } else if (/const \w+ = createAdminClient\(\)\s*\n/.test(s)) {
   s = s.replace(/(const \w+ = createAdminClient\(\)\s*\n)/, `$1${ttBlock}\n`)
+} else if (/const \w+ = await createClient\(\)\s*\n/.test(s)) {
+  s = s.replace(/(const \w+ = await createClient\(\)\s*\n)/, `$1${ttBlock}\n`)
+} else if (/const \w+ = createClient\(\)\s*\n/.test(s)) {
+  s = s.replace(/(const \w+ = createClient\(\)\s*\n)/, `$1${ttBlock}\n`)
+} else if (/export default (async )?function \w+\(\)\s*\{\s*\n/.test(s)) {
+  // Static page (no data fetch): force async + inject at the top of the body.
+  s = s.replace(/export default (async )?function (\w+)\(\)\s*\{\s*\n/, `export default async function $2() {${ttBlock}\n`)
 } else {
   console.log('WARN no anchor for tt in', FILE, '— skipping injection')
   process.exit(0)

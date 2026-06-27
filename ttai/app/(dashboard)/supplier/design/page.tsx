@@ -1,4 +1,6 @@
 import Link from 'next/link'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 import { createClient } from '@/lib/supabase/server'
 import { requireAuth } from '@/lib/auth/rbac'
 import { redirect } from 'next/navigation'
@@ -34,6 +36,8 @@ const GROUPS = [
 ]
 
 export default async function ShopDesignPage() {
+  
+  const tt = await localizeUI(["Shop Design", "Premium plan", "Free plan", "Premium customization", "Unlock a professional, branded storefront", "Upgrade your plan", "Included", "Locked", "Upgrade to unlock", "These features are part of the Premium plan.", "View plans →"], getLocale())
   const user = await requireAuth()
   const supabase = createClient()
   // brand_color column may not be migrated yet — fall back to id-only.
@@ -56,7 +60,7 @@ export default async function ShopDesignPage() {
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-2xl font-extrabold text-[#0B1F4D] flex items-center gap-2">
-            <Palette className="w-6 h-6 text-[#F5A623]" /> Shop Design
+            <Palette className="w-6 h-6 text-[#F5A623]" /> {tt("Shop Design")}
           </h1>
           <p className="text-sm text-gray-500 mt-1 max-w-2xl">
             Personalize your storefront and build a stronger brand inside the marketplace — custom banners,
@@ -64,7 +68,7 @@ export default async function ShopDesignPage() {
           </p>
         </div>
         <span className={`inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full ${paid ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'}`}>
-          {paid ? <><Crown className="w-3.5 h-3.5" /> Premium plan</> : <><Lock className="w-3.5 h-3.5" /> Free plan</>}
+          {paid ? <><Crown className="w-3.5 h-3.5" /> {tt("Premium plan")}</> : <><Lock className="w-3.5 h-3.5" /> {tt("Free plan")}</>}
         </span>
       </div>
 
@@ -74,12 +78,12 @@ export default async function ShopDesignPage() {
           <div className="absolute -top-12 -right-10 w-48 h-48 rounded-full bg-[#F5A623]/15 blur-3xl pointer-events-none" />
           <div className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-widest text-[#F5A623] mb-1">Premium customization</p>
-              <h2 className="text-xl font-extrabold">Unlock a professional, branded storefront</h2>
+              <p className="text-[11px] font-bold uppercase tracking-widest text-[#F5A623] mb-1">{tt("Premium customization")}</p>
+              <h2 className="text-xl font-extrabold">{tt("Unlock a professional, branded storefront")}</h2>
               <p className="text-blue-200/80 text-sm mt-1 max-w-xl">No design team? We help you build it. Upgrade to unlock banners, video ads, animated content, branding and premium visibility.</p>
             </div>
             <Link href="/pricing" className="flex-shrink-0 inline-flex items-center justify-center gap-2 rounded-xl bg-[#F5A623] hover:bg-[#fbb93a] text-[#0B1F4D] px-6 py-3 text-sm font-extrabold transition-colors">
-              <Sparkles className="w-4 h-4" /> Upgrade your plan
+              <Sparkles className="w-4 h-4" /> {tt("Upgrade your plan")}
             </Link>
           </div>
         </div>
@@ -98,7 +102,7 @@ export default async function ShopDesignPage() {
             <div className={`relative h-full rounded-2xl border bg-white p-5 transition-all ${paid ? 'border-gray-100 hover:shadow-md' : 'border-gray-100 hover:border-[#F5A623]/40 hover:shadow-md'}`}>
               {/* Lock / status badge */}
               <span className={`absolute top-4 right-4 inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full ${paid ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-400'}`}>
-                {paid ? <><Check className="w-3 h-3" /> Included</> : <><Lock className="w-3 h-3" /> Locked</>}
+                {paid ? <><Check className="w-3 h-3" /> {tt("Included")}</> : <><Lock className="w-3 h-3" /> {tt("Locked")}</>}
               </span>
 
               <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${g.color} flex items-center justify-center text-white shadow-sm mb-3 ${paid ? '' : 'opacity-90'}`}>
@@ -118,7 +122,7 @@ export default async function ShopDesignPage() {
 
               {!paid && (
                 <p className="mt-4 inline-flex items-center gap-1 text-xs font-bold text-[#0B1F4D] group-hover:gap-2 transition-all">
-                  Upgrade to unlock <ArrowRight className="w-3.5 h-3.5" />
+                  {tt("Upgrade to unlock")} <ArrowRight className="w-3.5 h-3.5" />
                 </p>
               )}
             </div>
@@ -132,7 +136,7 @@ export default async function ShopDesignPage() {
 
       {!paid && (
         <p className="text-center text-xs text-gray-400">
-          These features are part of the Premium plan. <Link href="/pricing" className="font-bold text-[#0B1F4D] hover:underline">View plans →</Link>
+          {tt("These features are part of the Premium plan.")} <Link href="/pricing" className="font-bold text-[#0B1F4D] hover:underline">{tt("View plans →")}</Link>
         </p>
       )}
     </div>

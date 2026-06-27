@@ -1,4 +1,6 @@
 import Link from 'next/link'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { requireAuth } from '@/lib/auth/rbac'
@@ -8,6 +10,8 @@ import { ChevronLeft } from 'lucide-react'
 export const dynamic = 'force-dynamic'
 
 export default async function OrganizeFamiliesPage() {
+  
+  const tt = await localizeUI(["Products", "Organize families", "Your account is suspended — product management is disabled.", "No products yet."], getLocale())
   const user = await requireAuth()
   const supabase = createClient()
   const { data: supplier } = await supabase
@@ -33,9 +37,9 @@ export default async function OrganizeFamiliesPage() {
     <div className="space-y-6 max-w-5xl">
       <div>
         <Link href="/supplier/products" className="inline-flex items-center gap-1 text-sm text-gray-400 hover:text-[#0B1F4D] transition-colors mb-2">
-          <ChevronLeft className="w-4 h-4" /> Products
+          <ChevronLeft className="w-4 h-4" /> {tt("Products")}
         </Link>
-        <h1 className="text-2xl font-extrabold text-[#0B1F4D]">Organize families</h1>
+        <h1 className="text-2xl font-extrabold text-[#0B1F4D]">{tt("Organize families")}</h1>
         <p className="text-gray-500 text-sm mt-0.5">
           Group products into families (e.g. iPhone · Samsung · Xiaomi). Products sharing a family show as one card in the marketplace — buyers open it to pick a variant.
         </p>
@@ -43,10 +47,10 @@ export default async function OrganizeFamiliesPage() {
 
       {supplier.status === 'SUSPENDED' ? (
         <div className="rounded-xl bg-yellow-50 border border-yellow-200 px-4 py-3 text-sm text-yellow-800 font-medium">
-          Your account is suspended — product management is disabled.
+          {tt("Your account is suspended — product management is disabled.")}
         </div>
       ) : items.length === 0 ? (
-        <div className="rounded-2xl border-2 border-dashed border-gray-200 p-12 text-center text-gray-500">No products yet.</div>
+        <div className="rounded-2xl border-2 border-dashed border-gray-200 p-12 text-center text-gray-500">{tt("No products yet.")}</div>
       ) : (
         <FamilyOrganizer items={items} />
       )}

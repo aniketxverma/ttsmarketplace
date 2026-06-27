@@ -1,8 +1,12 @@
 import { createClient } from '@/lib/supabase/server'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 import { requireRole } from '@/lib/auth/rbac'
 import { StatusBadge } from '@/components/dashboard/StatusBadge'
 
 export default async function BrokerSuppliersPage() {
+  
+  const tt = await localizeUI(["My Suppliers", "Suppliers assigned to you by the TTAI admin team", "Supplier", "Status", "Tier", "Assigned"], getLocale())
   await requireRole('broker')
   const supabase = createClient()
 
@@ -24,8 +28,8 @@ export default async function BrokerSuppliersPage() {
   return (
     <div className="space-y-6 max-w-4xl">
       <div>
-        <h1 className="text-2xl font-bold">My Suppliers</h1>
-        <p className="text-muted-foreground text-sm mt-0.5">Suppliers assigned to you by the TTAI admin team</p>
+        <h1 className="text-2xl font-bold">{tt("My Suppliers")}</h1>
+        <p className="text-muted-foreground text-sm mt-0.5">{tt("Suppliers assigned to you by the TTAI admin team")}</p>
       </div>
 
       {assignments?.length ? (
@@ -33,10 +37,10 @@ export default async function BrokerSuppliersPage() {
           <table className="w-full text-sm">
             <thead className="bg-muted/50">
               <tr>
-                <th className="text-left px-4 py-3 font-medium">Supplier</th>
-                <th className="text-left px-4 py-3 font-medium">Status</th>
-                <th className="text-left px-4 py-3 font-medium">Tier</th>
-                <th className="text-left px-4 py-3 font-medium">Assigned</th>
+                <th className="text-left px-4 py-3 font-medium">{tt("Supplier")}</th>
+                <th className="text-left px-4 py-3 font-medium">{tt("Status")}</th>
+                <th className="text-left px-4 py-3 font-medium">{tt("Tier")}</th>
+                <th className="text-left px-4 py-3 font-medium">{tt("Assigned")}</th>
               </tr>
             </thead>
             <tbody className="divide-y">

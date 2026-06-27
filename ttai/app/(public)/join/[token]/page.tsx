@@ -1,4 +1,6 @@
 import Link from 'next/link'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 import { Network, Check, Store, Package, ShieldCheck, LogIn, UserPlus } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
@@ -11,6 +13,8 @@ const LEVEL_LABEL: Record<string, string> = {
 }
 
 export default async function JoinNetworkPage({ params }: { params: { token: string } }) {
+  
+  const tt = await localizeUI(["Invitation not found", "This invite link is invalid or has been withdrawn.", "Go to TTAIEMA →", "This invitation has already been accepted.", "Go to your dashboard", "Sales network invitation", "has invited", "to join its official sales network", "Role:", "Create my free store", "I already have an account"], getLocale())
   const admin = createAdminClient()
 
   let invite: any = null
@@ -39,9 +43,9 @@ export default async function JoinNetworkPage({ params }: { params: { token: str
   if (!invite || invite.status === 'revoked') {
     return shell(
       <div className="text-center">
-        <h1 className="text-xl font-extrabold text-[#0B1F4D]">Invitation not found</h1>
-        <p className="text-sm text-gray-500 mt-2">This invite link is invalid or has been withdrawn.</p>
-        <Link href="/" className="mt-5 inline-block text-sm font-bold text-[#0B1F4D] hover:underline">Go to TTAIEMA →</Link>
+        <h1 className="text-xl font-extrabold text-[#0B1F4D]">{tt("Invitation not found")}</h1>
+        <p className="text-sm text-gray-500 mt-2">{tt("This invite link is invalid or has been withdrawn.")}</p>
+        <Link href="/" className="mt-5 inline-block text-sm font-bold text-[#0B1F4D] hover:underline">{tt("Go to TTAIEMA →")}</Link>
       </div>,
     )
   }
@@ -51,8 +55,8 @@ export default async function JoinNetworkPage({ params }: { params: { token: str
       <div className="text-center">
         <div className="w-14 h-14 rounded-2xl bg-green-100 flex items-center justify-center mx-auto mb-3"><Check className="w-7 h-7 text-green-600" /></div>
         <h1 className="text-xl font-extrabold text-[#0B1F4D]">You&apos;re already in the network</h1>
-        <p className="text-sm text-gray-500 mt-2">This invitation has already been accepted.</p>
-        <Link href="/supplier" className="mt-5 inline-block rounded-xl bg-[#0B1F4D] text-white px-6 py-2.5 text-sm font-bold">Go to your dashboard</Link>
+        <p className="text-sm text-gray-500 mt-2">{tt("This invitation has already been accepted.")}</p>
+        <Link href="/supplier" className="mt-5 inline-block rounded-xl bg-[#0B1F4D] text-white px-6 py-2.5 text-sm font-bold">{tt("Go to your dashboard")}</Link>
       </div>,
     )
   }
@@ -67,11 +71,11 @@ export default async function JoinNetworkPage({ params }: { params: { token: str
     <>
       <div className="text-center mb-5">
         <div className="w-16 h-16 rounded-2xl bg-[#0B1F4D] flex items-center justify-center mx-auto mb-3"><Network className="w-8 h-8 text-white" /></div>
-        <p className="text-[11px] font-bold uppercase tracking-widest text-[#F5A623]">Sales network invitation</p>
+        <p className="text-[11px] font-bold uppercase tracking-widest text-[#F5A623]">{tt("Sales network invitation")}</p>
         <h1 className="text-xl font-extrabold text-[#0B1F4D] mt-1 leading-tight">
-          {inviterName} has invited <span className="text-[#2563eb]">{invite.company_name}</span> to join its official sales network
+          {inviterName} {tt("has invited")} <span className="text-[#2563eb]">{invite.company_name}</span> {tt("to join its official sales network")}
         </h1>
-        <span className="inline-block mt-2 text-[11px] font-bold px-2.5 py-1 rounded-full bg-blue-50 text-blue-700">Role: {LEVEL_LABEL[invite.level] ?? 'Sales Point'}</span>
+        <span className="inline-block mt-2 text-[11px] font-bold px-2.5 py-1 rounded-full bg-blue-50 text-blue-700">{tt("Role:")} {LEVEL_LABEL[invite.level] ?? 'Sales Point'}</span>
       </div>
 
       <div className="rounded-2xl bg-gray-50 border border-gray-100 p-4 space-y-2 mb-5">
@@ -86,11 +90,11 @@ export default async function JoinNetworkPage({ params }: { params: { token: str
         <div className="space-y-2.5">
           <Link href={`/register?next=${encodeURIComponent('/join/' + params.token)}`}
             className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-[#F5A623] text-[#0B1F4D] py-3 text-sm font-extrabold hover:bg-[#fbb93a]">
-            <UserPlus className="w-4 h-4" /> Create my free store
+            <UserPlus className="w-4 h-4" /> {tt("Create my free store")}
           </Link>
           <Link href={`/login?next=${encodeURIComponent('/join/' + params.token)}`}
             className="w-full inline-flex items-center justify-center gap-2 rounded-xl border-2 border-[#0B1F4D] text-[#0B1F4D] py-2.5 text-sm font-extrabold hover:bg-[#0B1F4D] hover:text-white transition-colors">
-            <LogIn className="w-4 h-4" /> I already have an account
+            <LogIn className="w-4 h-4" /> {tt("I already have an account")}
           </Link>
           <p className="text-[11px] text-gray-400 text-center pt-1">Free to join · upgrade later for B2B wholesale &amp; more</p>
         </div>

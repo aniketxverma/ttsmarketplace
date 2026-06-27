@@ -1,4 +1,6 @@
 import Link from 'next/link'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 import Image from 'next/image'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
@@ -12,6 +14,8 @@ function fmt(cents: number, currency: string) {
 }
 
 export default async function SupplierProductsPage() {
+  
+  const tt = await localizeUI(["Products", "product", "total", "Organize families", "Master Catalog", "Import Excel", "Add Product", "Your account is suspended — product management is disabled", "No products yet", "Add Your First Product", "Product", "Category", "Price", "Stock", "Status", "Actions", "units", "Edit"], getLocale())
   const user = await requireAuth()
   const supabase = createClient()
 
@@ -44,8 +48,8 @@ export default async function SupplierProductsPage() {
     <div className="space-y-6 max-w-6xl">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-extrabold text-[#0B1F4D]">Products</h1>
-          <p className="text-gray-500 text-sm mt-0.5">{products?.length ?? 0} product{products?.length !== 1 ? 's' : ''} total</p>
+          <h1 className="text-2xl font-extrabold text-[#0B1F4D]">{tt("Products")}</h1>
+          <p className="text-gray-500 text-sm mt-0.5">{products?.length ?? 0} {tt("product")}{products?.length !== 1 ? 's' : ''} {tt("total")}</p>
         </div>
         {canManage ? (
           <div className="flex items-center gap-2">
@@ -54,14 +58,14 @@ export default async function SupplierProductsPage() {
               className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white text-[#0B1F4D] px-4 py-2.5 text-sm font-bold hover:border-[#0B1F4D] transition-colors"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5M19 11a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
-              Organize families
+              {tt("Organize families")}
             </Link>
             <Link
               href="/supplier/master-catalog"
               className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white text-[#0B1F4D] px-4 py-2.5 text-sm font-bold hover:border-[#0B1F4D] transition-colors"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z" /></svg>
-              Master Catalog
+              {tt("Master Catalog")}
             </Link>
             <Link
               href="/supplier/products/import"
@@ -70,7 +74,7 @@ export default async function SupplierProductsPage() {
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
-              Import Excel
+              {tt("Import Excel")}
             </Link>
             <Link
               href="/supplier/products/new"
@@ -79,12 +83,12 @@ export default async function SupplierProductsPage() {
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
               </svg>
-              Add Product
+              {tt("Add Product")}
             </Link>
           </div>
         ) : (
           <div className="rounded-xl bg-yellow-50 border border-yellow-200 px-4 py-2 text-xs text-yellow-800 font-medium">
-            Your account is suspended — product management is disabled
+            {tt("Your account is suspended — product management is disabled")}
           </div>
         )}
       </div>
@@ -99,7 +103,7 @@ export default async function SupplierProductsPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
             </svg>
           </div>
-          <h3 className="font-bold text-gray-900 mb-1">No products yet</h3>
+          <h3 className="font-bold text-gray-900 mb-1">{tt("No products yet")}</h3>
           <p className="text-sm text-gray-500 mb-4">
             {canManage
               ? 'Add your first product to start building your shop. It goes live once your account is verified.'
@@ -110,7 +114,7 @@ export default async function SupplierProductsPage() {
               href="/supplier/products/new"
               className="inline-flex items-center gap-2 rounded-xl bg-[#0B1F4D] text-white px-6 py-2.5 text-sm font-bold hover:bg-[#162d6e] transition-colors"
             >
-              Add Your First Product
+              {tt("Add Your First Product")}
             </Link>
           )}
         </div>
@@ -119,12 +123,12 @@ export default async function SupplierProductsPage() {
           <table className="w-full text-sm">
             <thead className="bg-gray-50 border-b border-gray-100">
               <tr>
-                <th className="text-left px-5 py-3.5 font-semibold text-gray-600 text-xs uppercase tracking-wide">Product</th>
-                <th className="text-left px-4 py-3.5 font-semibold text-gray-600 text-xs uppercase tracking-wide hidden sm:table-cell">Category</th>
-                <th className="text-left px-4 py-3.5 font-semibold text-gray-600 text-xs uppercase tracking-wide">Price</th>
-                <th className="text-left px-4 py-3.5 font-semibold text-gray-600 text-xs uppercase tracking-wide hidden md:table-cell">Stock</th>
-                <th className="text-left px-4 py-3.5 font-semibold text-gray-600 text-xs uppercase tracking-wide">Status</th>
-                <th className="px-4 py-3.5 text-right font-semibold text-gray-600 text-xs uppercase tracking-wide">Actions</th>
+                <th className="text-left px-5 py-3.5 font-semibold text-gray-600 text-xs uppercase tracking-wide">{tt("Product")}</th>
+                <th className="text-left px-4 py-3.5 font-semibold text-gray-600 text-xs uppercase tracking-wide hidden sm:table-cell">{tt("Category")}</th>
+                <th className="text-left px-4 py-3.5 font-semibold text-gray-600 text-xs uppercase tracking-wide">{tt("Price")}</th>
+                <th className="text-left px-4 py-3.5 font-semibold text-gray-600 text-xs uppercase tracking-wide hidden md:table-cell">{tt("Stock")}</th>
+                <th className="text-left px-4 py-3.5 font-semibold text-gray-600 text-xs uppercase tracking-wide">{tt("Status")}</th>
+                <th className="px-4 py-3.5 text-right font-semibold text-gray-600 text-xs uppercase tracking-wide">{tt("Actions")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
@@ -160,7 +164,7 @@ export default async function SupplierProductsPage() {
                     </td>
                     <td className="px-4 py-4 hidden md:table-cell">
                       <span className={`text-sm font-medium ${p.stock_qty === 0 ? 'text-red-500' : p.stock_qty < 10 ? 'text-orange-500' : 'text-gray-700'}`}>
-                        {p.stock_qty} units
+                        {p.stock_qty} {tt("units")}
                       </span>
                     </td>
                     <td className="px-4 py-4">
@@ -175,7 +179,7 @@ export default async function SupplierProductsPage() {
                           href={`/supplier/products/${p.id}/edit`}
                           className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-[#0B1F4D]/5 text-[#0B1F4D] hover:bg-[#0B1F4D]/10 transition-colors"
                         >
-                          Edit
+                          {tt("Edit")}
                         </Link>
                         <ProductActions productId={p.id} isPublished={p.is_published ?? false} />
                       </div>

@@ -1,4 +1,6 @@
 import { redirect } from 'next/navigation'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { requireAuth } from '@/lib/auth/rbac'
@@ -8,6 +10,8 @@ import { Building2, Users, MapPin, Mail } from 'lucide-react'
 export const dynamic = 'force-dynamic'
 
 export default async function BrokerNetworkPage() {
+  
+  const tt = await localizeUI(["pts", "My Network", "Your protected network of registered suppliers and buyers.", "Suppliers", "No supplier references yet.", "Buyers", "No buyer references yet."], getLocale())
   const user = await requireAuth()
   const supabase = createClient()
   const { data: broker } = await supabase.from('brokers').select('id, legal_name').eq('user_id', user.id).single()
@@ -27,7 +31,7 @@ export default async function BrokerNetworkPage() {
     <div className="rounded-xl border border-gray-200 bg-white p-3.5">
       <div className="flex items-center justify-between">
         <p className="font-bold text-gray-900 text-sm">{r.company_name}</p>
-        <span className="text-[10px] font-bold text-green-600">+{r.points} pts</span>
+        <span className="text-[10px] font-bold text-green-600">+{r.points} {tt("pts")}</span>
       </div>
       <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-gray-400 mt-1">
         {r.category && <span>{r.category}</span>}
@@ -40,21 +44,21 @@ export default async function BrokerNetworkPage() {
   return (
     <div className="space-y-6 max-w-4xl">
       <div>
-        <h1 className="text-2xl font-bold">My Network</h1>
-        <p className="text-muted-foreground text-sm mt-0.5">Your protected network of registered suppliers and buyers.</p>
+        <h1 className="text-2xl font-bold">{tt("My Network")}</h1>
+        <p className="text-muted-foreground text-sm mt-0.5">{tt("Your protected network of registered suppliers and buyers.")}</p>
       </div>
 
       <div className="grid lg:grid-cols-[1fr_400px] gap-6 items-start">
         <div className="space-y-6">
           <section>
-            <h2 className="font-extrabold text-[#0B1F4D] flex items-center gap-2 mb-3"><Building2 className="w-4 h-4" /> Suppliers <span className="text-gray-400 font-normal">({suppliers.length})</span></h2>
+            <h2 className="font-extrabold text-[#0B1F4D] flex items-center gap-2 mb-3"><Building2 className="w-4 h-4" /> {tt("Suppliers")} <span className="text-gray-400 font-normal">({suppliers.length})</span></h2>
             {suppliers.length ? <div className="grid sm:grid-cols-2 gap-3">{suppliers.map((r) => <Card key={r.id} r={r} />)}</div>
-              : <p className="text-sm text-gray-400">No supplier references yet.</p>}
+              : <p className="text-sm text-gray-400">{tt("No supplier references yet.")}</p>}
           </section>
           <section>
-            <h2 className="font-extrabold text-[#0B1F4D] flex items-center gap-2 mb-3"><Users className="w-4 h-4" /> Buyers <span className="text-gray-400 font-normal">({buyers.length})</span></h2>
+            <h2 className="font-extrabold text-[#0B1F4D] flex items-center gap-2 mb-3"><Users className="w-4 h-4" /> {tt("Buyers")} <span className="text-gray-400 font-normal">({buyers.length})</span></h2>
             {buyers.length ? <div className="grid sm:grid-cols-2 gap-3">{buyers.map((r) => <Card key={r.id} r={r} />)}</div>
-              : <p className="text-sm text-gray-400">No buyer references yet.</p>}
+              : <p className="text-sm text-gray-400">{tt("No buyer references yet.")}</p>}
           </section>
         </div>
         <div className="lg:sticky lg:top-20"><ReferForm /></div>

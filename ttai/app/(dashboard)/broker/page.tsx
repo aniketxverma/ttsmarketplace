@@ -1,4 +1,6 @@
 import Link from 'next/link'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
@@ -8,6 +10,8 @@ import { BrokerIdCard } from '@/components/broker/BrokerIdCard'
 import { Users, Building2, Sparkles, Handshake, FileText, TrendingUp, ArrowRight, AlertTriangle } from 'lucide-react'
 
 export default async function BrokerDashboardPage() {
+  
+  const tt = await localizeUI(["Broker Network Dashboard", "Next:", "more compan", "to reach", "Top level reached —", "connection points. 💎", "Register your first references to unlock deals.", "Before managing business opportunities you must register at least", "one Supplier reference", "and", "one Buyer reference", "Register a reference", "Complete your Stripe onboarding to receive commission payouts.", "Complete", "Register a Reference", "Add a supplier or buyer to your protected network and earn points.", "Submit a deal — optionally let TTAIEMA handle the invoicing.", "Broker Levels"], getLocale())
   const user = await requireAuth()
   const supabase = createClient()
 
@@ -63,7 +67,7 @@ export default async function BrokerDashboardPage() {
       <div className="flex items-end justify-between gap-3 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold">{broker.legal_name}</h1>
-          <p className="text-muted-foreground text-sm mt-0.5">Broker Network Dashboard</p>
+          <p className="text-muted-foreground text-sm mt-0.5">{tt("Broker Network Dashboard")}</p>
         </div>
         <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-extrabold ${lvl.current.color}`}>
           {lvl.current.emoji} {lvl.current.label}
@@ -76,15 +80,15 @@ export default async function BrokerDashboardPage() {
         <div className="rounded-2xl border bg-card p-5">
           <div className="flex items-center justify-between text-sm">
             <span className="font-bold text-gray-800">{lvl.current.emoji} {lvl.current.label}</span>
-            {lvl.next && <span className="text-gray-400">Next: {lvl.next.emoji} {lvl.next.label}</span>}
+            {lvl.next && <span className="text-gray-400">{tt("Next:")} {lvl.next.emoji} {lvl.next.label}</span>}
           </div>
           <div className="mt-2 h-2.5 rounded-full bg-gray-100 overflow-hidden">
             <div className="h-full rounded-full bg-gradient-to-r from-[#F5A623] to-[#0B1F4D] transition-all" style={{ width: `${lvl.progress}%` }} />
           </div>
           <p className="text-xs text-gray-500 mt-2">
             {lvl.next
-              ? <>{points} points · <strong>{companiesToNext(points)} more compan{companiesToNext(points) === 1 ? 'y' : 'ies'}</strong> to reach {lvl.next.label}.</>
-              : <>Top level reached — {points} connection points. 💎</>}
+              ? <>{points} points · <strong>{companiesToNext(points)} {tt("more compan")}{companiesToNext(points) === 1 ? 'y' : 'ies'}</strong> {tt("to reach")} {lvl.next.label}.</>
+              : <>{tt("Top level reached —")} {points} {tt("connection points. 💎")}</>}
           </p>
           <p className="text-[11px] text-gray-400 mt-1">{lvl.current.perks}</p>
         </div>
@@ -95,17 +99,17 @@ export default async function BrokerDashboardPage() {
         <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 flex items-start gap-3">
           <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
           <div className="text-sm text-amber-800">
-            <p className="font-bold">Register your first references to unlock deals.</p>
-            <p className="mt-0.5">Before managing business opportunities you must register at least <strong>one Supplier reference</strong> and <strong>one Buyer reference</strong>. {supRefs === 0 && 'Supplier reference missing. '}{buyRefs === 0 && 'Buyer reference missing.'}</p>
-            <Link href="/broker/network" className="inline-flex items-center gap-1 font-bold underline mt-1.5">Register a reference <ArrowRight className="w-3.5 h-3.5" /></Link>
+            <p className="font-bold">{tt("Register your first references to unlock deals.")}</p>
+            <p className="mt-0.5">{tt("Before managing business opportunities you must register at least")} <strong>{tt("one Supplier reference")}</strong> {tt("and")} <strong>{tt("one Buyer reference")}</strong>. {supRefs === 0 && 'Supplier reference missing. '}{buyRefs === 0 && 'Buyer reference missing.'}</p>
+            <Link href="/broker/network" className="inline-flex items-center gap-1 font-bold underline mt-1.5">{tt("Register a reference")} <ArrowRight className="w-3.5 h-3.5" /></Link>
           </div>
         </div>
       )}
 
       {!broker.stripe_onboarding_complete && (
         <div className="rounded-xl border border-yellow-200 bg-yellow-50 p-4 flex items-center justify-between gap-3">
-          <p className="text-sm text-yellow-800 font-medium">Complete your Stripe onboarding to receive commission payouts.</p>
-          <Link href="/broker/onboarding" className="rounded-md bg-yellow-700 text-white px-4 py-2 text-xs font-medium hover:bg-yellow-800 whitespace-nowrap">Complete</Link>
+          <p className="text-sm text-yellow-800 font-medium">{tt("Complete your Stripe onboarding to receive commission payouts.")}</p>
+          <Link href="/broker/onboarding" className="rounded-md bg-yellow-700 text-white px-4 py-2 text-xs font-medium hover:bg-yellow-800 whitespace-nowrap">{tt("Complete")}</Link>
         </div>
       )}
 
@@ -124,19 +128,19 @@ export default async function BrokerDashboardPage() {
       <div className="grid sm:grid-cols-2 gap-4">
         <Link href="/broker/network" className="rounded-2xl border bg-card p-5 hover:shadow-md transition-shadow">
           <Handshake className="w-6 h-6 text-[#0B1F4D] mb-2" />
-          <p className="font-extrabold text-gray-900">Register a Reference</p>
-          <p className="text-sm text-gray-500 mt-0.5">Add a supplier or buyer to your protected network and earn points.</p>
+          <p className="font-extrabold text-gray-900">{tt("Register a Reference")}</p>
+          <p className="text-sm text-gray-500 mt-0.5">{tt("Add a supplier or buyer to your protected network and earn points.")}</p>
         </Link>
         <Link href="/broker/deals" className="rounded-2xl border bg-card p-5 hover:shadow-md transition-shadow">
           <FileText className="w-6 h-6 text-[#0B1F4D] mb-2" />
           <p className="font-extrabold text-gray-900">Deals &amp; Invoicing</p>
-          <p className="text-sm text-gray-500 mt-0.5">Submit a deal — optionally let TTAIEMA handle the invoicing.</p>
+          <p className="text-sm text-gray-500 mt-0.5">{tt("Submit a deal — optionally let TTAIEMA handle the invoicing.")}</p>
         </Link>
       </div>
 
       {/* Levels ladder */}
       <div className="rounded-2xl border bg-card p-5">
-        <p className="font-bold text-sm text-gray-800 mb-3">Broker Levels</p>
+        <p className="font-bold text-sm text-gray-800 mb-3">{tt("Broker Levels")}</p>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
           {BROKER_LEVELS.map((l) => (
             <div key={l.key} className={`rounded-xl border p-3 ${l.key === lvl.current.key ? 'border-[#0B1F4D] bg-[#0B1F4D]/[0.03]' : 'border-gray-100'}`}>

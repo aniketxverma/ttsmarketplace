@@ -1,4 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 import { requireAuth } from '@/lib/auth/rbac'
 import Link from 'next/link'
 import { Radio, ArrowRight } from 'lucide-react'
@@ -7,6 +9,8 @@ import { ChannelsInbox, type InboxChannel } from './ChannelsInbox'
 export const revalidate = 0
 
 export default async function BuyerChannelsPage() {
+  
+  const tt = await localizeUI(["No canales yet", "Subscribe", "to follow their updates here — like a WhatsApp channel.", "Explore Marketplace"], getLocale())
   const user = await requireAuth()
   const supabase = createClient()
 
@@ -63,13 +67,13 @@ export default async function BuyerChannelsPage() {
           <div className="w-16 h-16 rounded-2xl bg-gray-100 flex items-center justify-center mx-auto mb-4">
             <Radio className="w-8 h-8 text-gray-300" />
           </div>
-          <h3 className="font-extrabold text-gray-700 mb-1">No canales yet</h3>
+          <h3 className="font-extrabold text-gray-700 mb-1">{tt("No canales yet")}</h3>
           <p className="text-sm text-gray-400 mb-6">
-            Visit a supplier&apos;s brand page and tap <strong>Subscribe</strong> to follow their updates here — like a WhatsApp channel.
+            Visit a supplier&apos;s brand page and tap <strong>{tt("Subscribe")}</strong> {tt("to follow their updates here — like a WhatsApp channel.")}
           </p>
           <Link href="/marketplace"
             className="inline-flex items-center gap-2 px-5 py-3 bg-[#0B1F4D] text-white rounded-xl text-sm font-bold hover:bg-[#162d6e] transition-colors shadow-sm">
-            Explore Marketplace <ArrowRight className="w-4 h-4" />
+            {tt("Explore Marketplace")} <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
       </div>

@@ -1,4 +1,6 @@
 import Link from 'next/link'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 import { SUPPLIER_STATES, SUPPLIER_STATUS_ORDER } from '@/lib/supplier-status'
 import { ShieldCheck, CheckCircle2 } from 'lucide-react'
 
@@ -7,7 +9,9 @@ export const metadata = {
   description: 'What each TTAIEMA supplier status means — Verified, Independent, TTAIEMA Protected, Under Review, Suspended and Premium Partner.',
 }
 
-export default function SupplierStatusPage() {
+export default async function SupplierStatusPage() {
+  
+  const tt = await localizeUI(["TTAIEMA Protected", "Each company website (e.g.", "ttai.es/rozil", "Browse verified suppliers →"], getLocale())
   return (
     <div className="min-h-screen bg-[#F4F6FB]">
       {/* Hero */}
@@ -20,7 +24,7 @@ export default function SupplierStatusPage() {
           <p className="text-blue-100/85 mt-3 max-w-2xl text-sm sm:text-base">
             Every company on TTAIEMA shows a clear status so buyers understand the level of verification and the role
             TTAIEMA plays in each transaction. TTAIEMA is the platform &amp; website creator — the supplier is independently
-            operated unless a transaction is marked <strong className="text-[#F5A623]">TTAIEMA Protected</strong>.
+            operated unless a transaction is marked <strong className="text-[#F5A623]">{tt("TTAIEMA Protected")}</strong>.
           </p>
         </div>
       </div>
@@ -53,12 +57,12 @@ export default function SupplierStatusPage() {
         <div className="rounded-2xl border border-gray-200 bg-gray-50/70 p-5 sm:p-6 mt-6">
           <p className="text-sm font-extrabold text-[#0B1F4D]">Hosted by TTAIEMA Marketplace · Website created by TTAIEMA</p>
           <p className="text-xs text-gray-500 mt-1.5 leading-relaxed">
-            Each company website (e.g. <code className="text-[#0B1F4D]">ttai.es/rozil</code>) is created and hosted by TTAIEMA.
+            {tt("Each company website (e.g.")} <code className="text-[#0B1F4D]">{tt("ttai.es/rozil")}</code>) is created and hosted by TTAIEMA.
             The company is independently operated by the supplier and is responsible for its own products, stock, delivery
-            and customer service — unless the transaction is marked <strong className="text-blue-600">TTAIEMA Protected</strong>,
+            and customer service — unless the transaction is marked <strong className="text-blue-600">{tt("TTAIEMA Protected")}</strong>,
             in which case TTAIEMA is officially involved in the process.
           </p>
-          <Link href="/suppliers" className="inline-flex items-center gap-1 text-xs font-bold text-[#0B1F4D] hover:underline mt-3">Browse verified suppliers →</Link>
+          <Link href="/suppliers" className="inline-flex items-center gap-1 text-xs font-bold text-[#0B1F4D] hover:underline mt-3">{tt("Browse verified suppliers →")}</Link>
         </div>
       </div>
     </div>

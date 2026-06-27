@@ -1,8 +1,12 @@
 import { LegalShell, Section, COMPANY } from '@/components/legal/LegalShell'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 
 export const metadata = { title: 'Terms of Service · TTAI EMA', description: 'The terms governing use of the TTAI and TTAIEMA platforms.' }
 
-export default function TermsPage() {
+export default async function TermsPage() {
+  
+  const tt = await localizeUI(["unless otherwise stated.", "We reserve the right to update or modify these terms at any time.", "Head Office:", "Email:", "Websites:", "By using this platform, users agree to these Terms of Service."], getLocale())
   return (
     <LegalShell title="Terms of Service" subtitle="The terms governing use of the TTAI and TTAIEMA platforms." updated="June 2026">
       <p>By accessing and using the TTAI and TTAIEMA platforms, users agree to the following terms.</p>
@@ -20,7 +24,7 @@ export default function TermsPage() {
       </Section>
 
       <Section title="Intellectual Property">
-        <p>All platform content, branding, graphics, designs and materials remain the property of {COMPANY.legal} unless otherwise stated.</p>
+        <p>All platform content, branding, graphics, designs and materials remain the property of {COMPANY.legal} {tt("unless otherwise stated.")}</p>
       </Section>
 
       <Section title="Limitation of Liability">
@@ -28,18 +32,18 @@ export default function TermsPage() {
       </Section>
 
       <Section title="Modifications">
-        <p>We reserve the right to update or modify these terms at any time.</p>
+        <p>{tt("We reserve the right to update or modify these terms at any time.")}</p>
       </Section>
 
       <Section title="Company Information">
         <p className="font-semibold text-[#0B1F4D]">{COMPANY.legal}</p>
         <p>CIF: {COMPANY.cif}</p>
-        <p>Head Office: {COMPANY.address}</p>
-        <p>Email: <a href={`mailto:${COMPANY.email}`} className="text-[#2563eb] hover:underline">{COMPANY.email}</a></p>
-        <p>Websites: {COMPANY.sites.map((s, i) => <span key={s}>{i > 0 && ' · '}<a href={`https://${s}`} className="text-[#2563eb] hover:underline">{s}</a></span>)}</p>
+        <p>{tt("Head Office:")} {COMPANY.address}</p>
+        <p>{tt("Email:")} <a href={`mailto:${COMPANY.email}`} className="text-[#2563eb] hover:underline">{COMPANY.email}</a></p>
+        <p>{tt("Websites:")} {COMPANY.sites.map((s, i) => <span key={s}>{i > 0 && ' · '}<a href={`https://${s}`} className="text-[#2563eb] hover:underline">{s}</a></span>)}</p>
       </Section>
 
-      <p className="pt-2 border-t border-gray-100 text-gray-500">By using this platform, users agree to these Terms of Service.</p>
+      <p className="pt-2 border-t border-gray-100 text-gray-500">{tt("By using this platform, users agree to these Terms of Service.")}</p>
     </LegalShell>
   )
 }

@@ -1,4 +1,6 @@
 import { redirect } from 'next/navigation'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 import { createClient } from '@/lib/supabase/server'
 import { requireAuth } from '@/lib/auth/rbac'
 import { SourcingClient } from './SourcingClient'
@@ -8,6 +10,8 @@ import { tierRank } from '@/lib/business-chain'
 type Sup = { id: string; name: string }
 
 export default async function SourcingPage() {
+  
+  const tt = await localizeUI(["Import products from partner suppliers and share your catalogue."], getLocale())
   const user = await requireAuth()
   const supabase = createClient()
 
@@ -21,7 +25,7 @@ export default async function SourcingPage() {
       <div className="max-w-5xl space-y-6">
         <div>
           <h1 className="text-2xl font-bold">Sourcing &amp; catalogue sharing</h1>
-          <p className="text-muted-foreground text-sm mt-0.5">Import products from partner suppliers and share your catalogue.</p>
+          <p className="text-muted-foreground text-sm mt-0.5">{tt("Import products from partner suppliers and share your catalogue.")}</p>
         </div>
         <UpgradeGate
           title="Sourcing & Catalogue Sharing"

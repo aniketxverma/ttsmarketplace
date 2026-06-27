@@ -1,4 +1,6 @@
 import { notFound } from 'next/navigation'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 import Image from 'next/image'
 import Link from 'next/link'
 import { getCountry, REGIONS } from '@/lib/regions-data'
@@ -23,6 +25,8 @@ export async function generateMetadata({ params }: { params: { region: string; c
 }
 
 export default async function CountryPage({ params }: { params: { region: string; country: string } }) {
+  
+  const tt = await localizeUI(["Home", "Browse All Products in", "Browse by Location", "Provinces in", "Pick a province to see its local suppliers, shops and products.", "In Stock", "Products in", "products from suppliers in", "View all", "Choose Your Channel", "Three Ways to Shop", "Available Now", "Suppliers Serving", "All suppliers", "Browse all products in marketplace", "More in", "All of"], getLocale())
   const result = getCountry(params.region, params.country)
   if (!result) notFound()
 
@@ -123,7 +127,7 @@ export default async function CountryPage({ params }: { params: { region: string
         <div className="absolute top-6 left-0 right-0 px-4 sm:px-8">
           <div className="container mx-auto">
             <nav className="flex items-center gap-2 text-xs text-white/70 font-medium flex-wrap">
-              <Link href="/" className="hover:text-white transition-colors">Home</Link>
+              <Link href="/" className="hover:text-white transition-colors">{tt("Home")}</Link>
               <span>/</span>
               <Link href={`/regions/${region.id}`} className="hover:text-white transition-colors">{region.name}</Link>
               <span>/</span>
@@ -154,7 +158,7 @@ export default async function CountryPage({ params }: { params: { region: string
           href={`/marketplace?region=${params.region}:${params.country}`}
           className="inline-flex items-center gap-2.5 rounded-xl border-2 border-[#0B1F4D] text-[#0B1F4D] px-8 py-3.5 text-sm font-bold hover:bg-[#0B1F4D] hover:text-white transition-all duration-200"
         >
-          Browse All Products in {country.name}
+          {tt("Browse All Products in")} {country.name}
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 8l4 4m0 0l-4 4m4-4H3" />
           </svg>
@@ -167,9 +171,9 @@ export default async function CountryPage({ params }: { params: { region: string
           <div className="container mx-auto px-4 sm:px-8">
             <div className="flex items-end justify-between gap-4 mb-5">
               <div>
-                <p className="text-[#F5A623] text-xs font-bold uppercase tracking-widest mb-1">Browse by Location</p>
-                <h2 className="text-xl sm:text-2xl font-extrabold text-[#0B1F4D]">Provinces in {country.name}</h2>
-                <p className="text-gray-400 text-sm mt-1">Pick a province to see its local suppliers, shops and products.</p>
+                <p className="text-[#F5A623] text-xs font-bold uppercase tracking-widest mb-1">{tt("Browse by Location")}</p>
+                <h2 className="text-xl sm:text-2xl font-extrabold text-[#0B1F4D]">{tt("Provinces in")} {country.name}</h2>
+                <p className="text-gray-400 text-sm mt-1">{tt("Pick a province to see its local suppliers, shops and products.")}</p>
               </div>
             </div>
             <div className="flex flex-wrap gap-2.5">
@@ -190,13 +194,13 @@ export default async function CountryPage({ params }: { params: { region: string
           <div className="container mx-auto px-4 sm:px-8">
             <div className="flex items-end justify-between gap-4 mb-6">
               <div>
-                <p className="text-[#F5A623] text-xs font-bold uppercase tracking-widest mb-1">In Stock</p>
-                <h2 className="text-xl sm:text-2xl font-extrabold text-[#0B1F4D]">Products in {country.name}</h2>
-                <p className="text-gray-400 text-sm mt-1">{countryProductCount} products from suppliers in {country.name}</p>
+                <p className="text-[#F5A623] text-xs font-bold uppercase tracking-widest mb-1">{tt("In Stock")}</p>
+                <h2 className="text-xl sm:text-2xl font-extrabold text-[#0B1F4D]">{tt("Products in")} {country.name}</h2>
+                <p className="text-gray-400 text-sm mt-1">{countryProductCount} {tt("products from suppliers in")} {country.name}</p>
               </div>
               {countryIso && (
                 <Link href={`/marketplace?country=${countryIso}`} className="hidden sm:inline-flex items-center gap-1.5 text-sm font-bold text-[#0B1F4D] hover:underline flex-shrink-0">
-                  View all <ArrowRight className="w-4 h-4" />
+                  {tt("View all")} <ArrowRight className="w-4 h-4" />
                 </Link>
               )}
             </div>
@@ -225,8 +229,8 @@ export default async function CountryPage({ params }: { params: { region: string
       <div className="border-t bg-gray-50 py-14">
         <div className="container mx-auto px-4 sm:px-8">
           <div className="text-center mb-8">
-            <p className="text-[#F5A623] text-xs font-bold uppercase tracking-widest mb-2">Choose Your Channel</p>
-            <h2 className="text-xl sm:text-2xl font-extrabold text-[#0B1F4D]">Three Ways to Shop {country.name}</h2>
+            <p className="text-[#F5A623] text-xs font-bold uppercase tracking-widest mb-2">{tt("Choose Your Channel")}</p>
+            <h2 className="text-xl sm:text-2xl font-extrabold text-[#0B1F4D]">{tt("Three Ways to Shop")} {country.name}</h2>
             <p className="text-gray-400 text-sm mt-1 max-w-lg mx-auto">
               Buy direct from a supplier’s retail or wholesale store, or let TTAI EMA handle everything.
             </p>
@@ -241,14 +245,14 @@ export default async function CountryPage({ params }: { params: { region: string
           <div className="container mx-auto px-4 sm:px-8">
             <div className="flex items-end justify-between gap-4 mb-8">
               <div>
-                <p className="text-[#F5A623] text-xs font-bold uppercase tracking-widest mb-1">Available Now</p>
+                <p className="text-[#F5A623] text-xs font-bold uppercase tracking-widest mb-1">{tt("Available Now")}</p>
                 <h2 className="text-xl sm:text-2xl font-extrabold text-[#0B1F4D]">
-                  Suppliers Serving {country.name}
+                  {tt("Suppliers Serving")} {country.name}
                 </h2>
                 <p className="text-gray-400 text-sm mt-1">Verified brands ready to ship — tap to view their store &amp; products</p>
               </div>
               <Link href="/suppliers" className="hidden sm:inline-flex items-center gap-1.5 text-sm font-bold text-[#0B1F4D] hover:underline flex-shrink-0">
-                All suppliers
+                {tt("All suppliers")}
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
                 </svg>
@@ -264,7 +268,7 @@ export default async function CountryPage({ params }: { params: { region: string
                 href="/marketplace"
                 className="inline-flex items-center gap-2 text-sm font-bold text-[#0B1F4D] hover:underline"
               >
-                Browse all products in marketplace
+                {tt("Browse all products in marketplace")}
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                 </svg>
@@ -277,7 +281,7 @@ export default async function CountryPage({ params }: { params: { region: string
       {/* ── Other countries in this region ───────────────────────────── */}
       <div className="border-t bg-gray-50 py-12">
         <div className="container mx-auto px-4 sm:px-8">
-          <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-6">More in {region.name}</h3>
+          <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-6">{tt("More in")} {region.name}</h3>
           <div className="flex flex-wrap gap-3">
             {region.countries.filter((c) => c.id !== country.id).map((c) => (
               <Link
@@ -293,7 +297,7 @@ export default async function CountryPage({ params }: { params: { region: string
               href={`/regions/${region.id}`}
               className="inline-flex items-center gap-2 rounded-xl border border-dashed border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-400 hover:border-[#0B1F4D] hover:text-[#0B1F4D] transition-colors"
             >
-              All of {region.name}
+              {tt("All of")} {region.name}
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
               </svg>

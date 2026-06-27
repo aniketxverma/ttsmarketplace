@@ -1,4 +1,6 @@
 import { notFound } from 'next/navigation'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 import Image from 'next/image'
 import Link from 'next/link'
 import { getRegion, REGIONS } from '@/lib/regions-data'
@@ -14,7 +16,9 @@ export async function generateMetadata({ params }: { params: { region: string } 
   return { title: `${region.name} — Shop by Region · TTAI EMA` }
 }
 
-export default function RegionPage({ params }: { params: { region: string } }) {
+export default async function RegionPage({ params }: { params: { region: string } }) {
+  
+  const tt = await localizeUI(["Home", "Regions", "Shop by Region", "Choose a Country", "Select a country to explore curated product collections", "Spain is open — explore for free!", "Other countries are gated.", "Create a free account", "to unlock all regions and suppliers.", "Explore Other Regions", "Soon"], getLocale())
   const region = getRegion(params.region)
   if (!region) notFound()
 
@@ -37,9 +41,9 @@ export default function RegionPage({ params }: { params: { region: string } }) {
         <div className="absolute top-6 left-0 right-0 px-4 sm:px-8">
           <div className="container mx-auto">
             <nav className="flex items-center gap-2 text-xs text-white/70 font-medium">
-              <Link href="/" className="hover:text-white transition-colors">Home</Link>
+              <Link href="/" className="hover:text-white transition-colors">{tt("Home")}</Link>
               <span>/</span>
-              <Link href="/#shop-by-region" className="hover:text-white transition-colors">Regions</Link>
+              <Link href="/#shop-by-region" className="hover:text-white transition-colors">{tt("Regions")}</Link>
               <span>/</span>
               <span className="text-white">{region.name}</span>
             </nav>
@@ -49,7 +53,7 @@ export default function RegionPage({ params }: { params: { region: string } }) {
         {/* Title */}
         <div className="absolute bottom-0 left-0 right-0 px-4 sm:px-8 pb-8">
           <div className="container mx-auto">
-            <p className="text-[#F5A623] text-xs font-bold uppercase tracking-widest mb-1">Shop by Region</p>
+            <p className="text-[#F5A623] text-xs font-bold uppercase tracking-widest mb-1">{tt("Shop by Region")}</p>
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white leading-tight">{region.name}</h1>
             <p className="text-white/70 text-sm mt-2 max-w-lg">{region.tagline}</p>
           </div>
@@ -60,10 +64,10 @@ export default function RegionPage({ params }: { params: { region: string } }) {
       <div className="container mx-auto px-4 sm:px-8 py-14">
         <div className="mb-10">
           <h2 className="text-xl sm:text-2xl font-extrabold text-[#0B1F4D]">
-            Choose a Country
+            {tt("Choose a Country")}
           </h2>
           <p className="text-gray-400 text-sm mt-1">
-            Select a country to explore curated product collections
+            {tt("Select a country to explore curated product collections")}
           </p>
         </div>
 
@@ -74,13 +78,13 @@ export default function RegionPage({ params }: { params: { region: string } }) {
               <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
             </svg>
             <div>
-              <p className="text-sm font-bold text-amber-800">Spain is open — explore for free!</p>
+              <p className="text-sm font-bold text-amber-800">{tt("Spain is open — explore for free!")}</p>
               <p className="text-xs text-amber-700 mt-0.5">
-                Other countries are gated.{' '}
+                {tt("Other countries are gated.")}{' '}
                 <Link href="/login" className="underline font-semibold hover:text-amber-900">
-                  Create a free account
+                  {tt("Create a free account")}
                 </Link>{' '}
-                to unlock all regions and suppliers.
+                {tt("to unlock all regions and suppliers.")}
               </p>
             </div>
           </div>
@@ -110,7 +114,7 @@ export default function RegionPage({ params }: { params: { region: string } }) {
       {/* ── Other regions — all locked except Europe ─────────────────── */}
       <div className="border-t bg-gray-50 py-12">
         <div className="container mx-auto px-4 sm:px-8">
-          <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-6">Explore Other Regions</h3>
+          <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-6">{tt("Explore Other Regions")}</h3>
           <div className="flex flex-wrap gap-3">
             {REGIONS.filter((r) => r.id !== region.id).map((r) => {
               const isLive = r.id === 'europe'
@@ -141,7 +145,7 @@ export default function RegionPage({ params }: { params: { region: string } }) {
                     <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
                   </svg>
                   {r.name}
-                  <span className="text-[10px] font-bold text-gray-400">Soon</span>
+                  <span className="text-[10px] font-bold text-gray-400">{tt("Soon")}</span>
                 </span>
               )
             })}

@@ -1,4 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 import { requireAuth } from '@/lib/auth/rbac'
 import { redirect } from 'next/navigation'
 import { ProfileEditForm } from '@/app/(dashboard)/account/ProfileEditForm'
@@ -8,6 +10,8 @@ import { OutletRoleChooser } from '@/components/supplier/OutletRoleChooser'
 import { tierRank } from '@/lib/business-chain'
 
 export default async function SupplierSettingsPage() {
+  
+  const tt = await localizeUI(["Edit Profile", "Update your public profile information"], getLocale())
   const user = await requireAuth()
   const supabase = createClient()
 
@@ -49,8 +53,8 @@ export default async function SupplierSettingsPage() {
   return (
     <div className="space-y-4">
       <div className="mb-2">
-        <h1 className="text-2xl font-extrabold text-[#0B1F4D]">Edit Profile</h1>
-        <p className="text-sm text-gray-400 mt-1">Update your public profile information</p>
+        <h1 className="text-2xl font-extrabold text-[#0B1F4D]">{tt("Edit Profile")}</h1>
+        <p className="text-sm text-gray-400 mt-1">{tt("Update your public profile information")}</p>
       </div>
 
       <ShopTypeChooser initial={(sup.marketplace_context as any) ?? 'wholesale'} paid={paid} />

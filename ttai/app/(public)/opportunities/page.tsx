@@ -1,4 +1,6 @@
 import Link from 'next/link'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { PostOpportunityForm } from '@/components/opportunities/PostOpportunityForm'
@@ -15,6 +17,8 @@ export const metadata = {
 type SP = { kind?: string; looking?: string; mine?: string }
 
 export default async function OpportunitiesPage({ searchParams }: { searchParams: SP }) {
+  
+  const tt = await localizeUI(["Business Opportunities", "Find partners across the trade chain.", "Any", "Showing opportunities relevant to", "like you.", "No opportunities yet"], getLocale())
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -50,8 +54,8 @@ export default async function OpportunitiesPage({ searchParams }: { searchParams
     <div className="min-h-screen bg-[#F4F6FB] overflow-x-hidden">
       <div className="bg-gradient-to-br from-[#0B1F4D] via-[#13306e] to-[#0a1733] text-white">
         <div className="max-w-6xl mx-auto px-4 sm:px-8 py-12">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 border border-white/15 px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-[#F5A623] mb-3"><Briefcase className="w-3.5 h-3.5" /> Business Opportunities</span>
-          <h1 className="text-3xl sm:text-4xl font-black">Find partners across the trade chain.</h1>
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 border border-white/15 px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-[#F5A623] mb-3"><Briefcase className="w-3.5 h-3.5" /> {tt("Business Opportunities")}</span>
+          <h1 className="text-3xl sm:text-4xl font-black">{tt("Find partners across the trade chain.")}</h1>
           <p className="text-blue-100/85 mt-2 max-w-2xl text-sm sm:text-base">Factories and suppliers post what they need — distributors, agents, importers or local clients. Every opportunity reaches the right level of the chain.</p>
         </div>
       </div>
@@ -63,7 +67,7 @@ export default async function OpportunitiesPage({ searchParams }: { searchParams
               {tab(null, 'All')}{tab('looking', 'Looking for')}{tab('promotion', 'Promotions')}
             </div>
             <div className="flex items-center gap-1.5 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
-              <Link href="/opportunities" className={`px-2.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap ${!searchParams.looking ? 'bg-[#0B1F4D] text-white' : 'bg-white border border-gray-200 text-gray-600'}`}>Any</Link>
+              <Link href="/opportunities" className={`px-2.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap ${!searchParams.looking ? 'bg-[#0B1F4D] text-white' : 'bg-white border border-gray-200 text-gray-600'}`}>{tt("Any")}</Link>
               {LOOKING_FOR.map((l) => (
                 <Link key={l.key} href={`/opportunities?looking=${l.key}`} className={`px-2.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap ${searchParams.looking === l.key ? 'bg-[#0B1F4D] text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}>{l.label}</Link>
               ))}
@@ -71,13 +75,13 @@ export default async function OpportunitiesPage({ searchParams }: { searchParams
           </div>
 
           {myRole && myRole !== 'admin' && (
-            <p className="text-[11px] text-gray-400 mb-3">Showing opportunities relevant to <strong className="text-gray-600 capitalize">{myRole}s</strong> like you.</p>
+            <p className="text-[11px] text-gray-400 mb-3">{tt("Showing opportunities relevant to")} <strong className="text-gray-600 capitalize">{myRole}s</strong> {tt("like you.")}</p>
           )}
 
           {visible.length === 0 ? (
             <div className="text-center py-16 bg-white rounded-2xl border border-gray-100">
               <Briefcase className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-              <p className="text-gray-700 font-bold text-lg">No opportunities yet</p>
+              <p className="text-gray-700 font-bold text-lg">{tt("No opportunities yet")}</p>
               <p className="text-gray-400 text-sm mt-1">Be the first — post what you&rsquo;re looking for on the right.</p>
             </div>
           ) : (

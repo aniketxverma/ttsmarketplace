@@ -1,8 +1,12 @@
 import Link from 'next/link'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 import { createClient } from '@/lib/supabase/server'
 import { requireAuth } from '@/lib/auth/rbac'
 
 export default async function BuyerMessagesPage() {
+  
+  const tt = await localizeUI(["Messages", "unread", "New Message", "New", "No conversations yet", "Browse Suppliers →"], getLocale())
   const user = await requireAuth()
   const supabase = createClient()
 
@@ -34,10 +38,10 @@ export default async function BuyerMessagesPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-5">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-[#0B1F4D]">Messages</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-[#0B1F4D]">{tt("Messages")}</h1>
           {totalUnread > 0 && (
             <p className="text-xs sm:text-sm text-gray-500 mt-0.5">
-              {totalUnread} unread
+              {totalUnread} {tt("unread")}
             </p>
           )}
         </div>
@@ -48,8 +52,8 @@ export default async function BuyerMessagesPage() {
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
-          <span className="hidden sm:inline">New Message</span>
-          <span className="sm:hidden">New</span>
+          <span className="hidden sm:inline">{tt("New Message")}</span>
+          <span className="sm:hidden">{tt("New")}</span>
         </Link>
       </div>
 
@@ -60,10 +64,10 @@ export default async function BuyerMessagesPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
             </svg>
           </div>
-          <p className="font-semibold text-gray-600">No conversations yet</p>
+          <p className="font-semibold text-gray-600">{tt("No conversations yet")}</p>
           <p className="text-sm text-gray-400 mt-1 px-4">Visit a supplier&apos;s profile to start chatting</p>
           <Link href="/suppliers" className="inline-block mt-4 text-sm font-bold text-[#0B1F4D] hover:underline">
-            Browse Suppliers →
+            {tt("Browse Suppliers →")}
           </Link>
         </div>
       ) : (

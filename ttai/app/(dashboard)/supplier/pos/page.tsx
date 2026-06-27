@@ -1,9 +1,13 @@
 import { createClient } from '@/lib/supabase/server'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 import { requireAuth } from '@/lib/auth/rbac'
 import { redirect } from 'next/navigation'
 import { PosManager } from './PosManager'
 
 export default async function SupplierPosPage() {
+  
+  const tt = await localizeUI(["My Locations", "Sales Network"], getLocale())
   const user = await requireAuth()
   const supabase = createClient()
 
@@ -28,10 +32,10 @@ export default async function SupplierPosPage() {
     <div className="max-w-4xl">
       <div className="mb-6 flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold">My Locations</h1>
+          <h1 className="text-2xl font-bold">{tt("My Locations")}</h1>
           <p className="text-muted-foreground text-sm mt-0.5">
             Your own physical locations — shops, warehouses and pickup points (shown on your profile map).
-            To invite partner companies into your network, use <span className="font-semibold">Sales Network</span>.
+            To invite partner companies into your network, use <span className="font-semibold">{tt("Sales Network")}</span>.
           </p>
         </div>
       </div>

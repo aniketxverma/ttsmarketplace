@@ -1,4 +1,6 @@
 import { redirect } from 'next/navigation'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { requireAuth } from '@/lib/auth/rbac'
@@ -7,6 +9,8 @@ import { ModuleActivator } from '@/components/supplier/ModuleActivator'
 export const dynamic = 'force-dynamic'
 
 export default async function SupplierModulesPage() {
+  
+  const tt = await localizeUI(["My Modules"], getLocale())
   const user = await requireAuth()
   const supabase = createClient()
   const { data: supplier } = await (supabase.from('suppliers') as any).select('id, trade_name, legal_name').eq('owner_id', user.id).maybeSingle()
@@ -22,7 +26,7 @@ export default async function SupplierModulesPage() {
   return (
     <div className="space-y-6 max-w-3xl">
       <div>
-        <h1 className="text-2xl font-bold">My Modules</h1>
+        <h1 className="text-2xl font-bold">{tt("My Modules")}</h1>
         <p className="text-muted-foreground text-sm mt-0.5">Activate TTAIEMA modules to expand your business — one company profile, many channels.</p>
       </div>
       <ModuleActivator initial={modules} companyName={companyName} email={user.email ?? ''} />

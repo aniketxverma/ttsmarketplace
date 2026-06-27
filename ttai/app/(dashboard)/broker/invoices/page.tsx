@@ -1,8 +1,12 @@
 import { requireRole } from '@/lib/auth/rbac'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 import { createClient } from '@/lib/supabase/server'
 import { formatCents } from '@/lib/utils'
 
 export default async function BrokerInvoicesPage() {
+  
+  const tt = await localizeUI(["Invoices", "Invoice #", "Status", "Amount", "Date", "No invoices yet"], getLocale())
   await requireRole('broker')
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -23,17 +27,17 @@ export default async function BrokerInvoicesPage() {
 
   return (
     <div className="space-y-6 max-w-4xl">
-      <h1 className="text-2xl font-bold">Invoices</h1>
+      <h1 className="text-2xl font-bold">{tt("Invoices")}</h1>
 
       {invoices?.length ? (
         <div className="rounded-xl border overflow-hidden">
           <table className="w-full text-sm">
             <thead className="bg-muted/50">
               <tr>
-                <th className="text-left px-4 py-3 font-medium">Invoice #</th>
-                <th className="text-left px-4 py-3 font-medium">Status</th>
-                <th className="text-left px-4 py-3 font-medium">Amount</th>
-                <th className="text-left px-4 py-3 font-medium">Date</th>
+                <th className="text-left px-4 py-3 font-medium">{tt("Invoice #")}</th>
+                <th className="text-left px-4 py-3 font-medium">{tt("Status")}</th>
+                <th className="text-left px-4 py-3 font-medium">{tt("Amount")}</th>
+                <th className="text-left px-4 py-3 font-medium">{tt("Date")}</th>
               </tr>
             </thead>
             <tbody className="divide-y">
@@ -50,7 +54,7 @@ export default async function BrokerInvoicesPage() {
         </div>
       ) : (
         <div className="rounded-xl border bg-card p-8 text-center">
-          <p className="text-sm text-muted-foreground">No invoices yet</p>
+          <p className="text-sm text-muted-foreground">{tt("No invoices yet")}</p>
         </div>
       )}
     </div>

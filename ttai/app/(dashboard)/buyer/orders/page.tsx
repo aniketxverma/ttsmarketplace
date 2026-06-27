@@ -1,10 +1,14 @@
 import { createClient } from '@/lib/supabase/server'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 import { requireAuth } from '@/lib/auth/rbac'
 import { formatCents } from '@/lib/utils'
 import { StatusBadge } from '@/components/dashboard/StatusBadge'
 import Link from 'next/link'
 
 export default async function BuyerOrdersPage() {
+  
+  const tt = await localizeUI(["My Orders", "Order ID", "Supplier", "Amount", "Status", "Date", "View", "No orders yet.", "Browse marketplace →"], getLocale())
   const user = await requireAuth()
   const supabase = createClient()
 
@@ -16,18 +20,18 @@ export default async function BuyerOrdersPage() {
 
   return (
     <div className="space-y-6 max-w-4xl">
-      <h1 className="text-2xl font-bold">My Orders</h1>
+      <h1 className="text-2xl font-bold">{tt("My Orders")}</h1>
 
       {orders && orders.length > 0 ? (
         <div className="rounded-xl border overflow-hidden">
           <table className="w-full text-sm">
             <thead className="bg-muted/50">
               <tr>
-                <th className="text-left px-4 py-3 font-medium">Order ID</th>
-                <th className="text-left px-4 py-3 font-medium">Supplier</th>
-                <th className="text-left px-4 py-3 font-medium">Amount</th>
-                <th className="text-left px-4 py-3 font-medium">Status</th>
-                <th className="text-left px-4 py-3 font-medium">Date</th>
+                <th className="text-left px-4 py-3 font-medium">{tt("Order ID")}</th>
+                <th className="text-left px-4 py-3 font-medium">{tt("Supplier")}</th>
+                <th className="text-left px-4 py-3 font-medium">{tt("Amount")}</th>
+                <th className="text-left px-4 py-3 font-medium">{tt("Status")}</th>
+                <th className="text-left px-4 py-3 font-medium">{tt("Date")}</th>
                 <th className="px-4 py-3" />
               </tr>
             </thead>
@@ -42,7 +46,7 @@ export default async function BuyerOrdersPage() {
                     <td className="px-4 py-3"><StatusBadge status={o.status} /></td>
                     <td className="px-4 py-3 text-muted-foreground">{new Date(o.created_at).toLocaleDateString()}</td>
                     <td className="px-4 py-3 text-right">
-                      <Link href={`/buyer/orders/${o.id}`} className="text-xs text-primary hover:underline">View</Link>
+                      <Link href={`/buyer/orders/${o.id}`} className="text-xs text-primary hover:underline">{tt("View")}</Link>
                     </td>
                   </tr>
                 )
@@ -52,9 +56,9 @@ export default async function BuyerOrdersPage() {
         </div>
       ) : (
         <div className="rounded-xl border bg-card p-12 text-center">
-          <p className="text-muted-foreground">No orders yet.</p>
+          <p className="text-muted-foreground">{tt("No orders yet.")}</p>
           <Link href="/marketplace" className="mt-3 inline-block text-sm text-primary hover:underline">
-            Browse marketplace →
+            {tt("Browse marketplace →")}
           </Link>
         </div>
       )}

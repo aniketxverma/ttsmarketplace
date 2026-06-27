@@ -1,4 +1,6 @@
 import Link from 'next/link'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
@@ -12,6 +14,8 @@ export const dynamic = 'force-dynamic'
 const money = (c?: number | null, cur = 'EUR') => c == null ? '—' : new Intl.NumberFormat('en-EU', { style: 'currency', currency: cur }).format(c / 100)
 
 export default async function SupplierOutletPage() {
+  
+  const tt = await localizeUI(["My Outlet Offers", "Clearance, returns & liquidation lots you list in the", "Outlet Zone", "List a lot", "Your outlet lots", "No outlet lots yet", "Add a product and tick", "to set condition, selling unit and source.", "Draft"], getLocale())
   const user = await requireAuth()
   const supabase = createClient()
   const { data: supplier } = await (supabase.from('suppliers') as any)
@@ -38,11 +42,11 @@ export default async function SupplierOutletPage() {
     <div className="space-y-6 max-w-4xl">
       <div className="flex items-end justify-between gap-3 flex-wrap">
         <div>
-          <h1 className="text-2xl font-bold">My Outlet Offers</h1>
-          <p className="text-muted-foreground text-sm mt-0.5">Clearance, returns & liquidation lots you list in the <Link href="/outlet" className="text-[#0B1F4D] font-semibold underline">Outlet Zone</Link>.</p>
+          <h1 className="text-2xl font-bold">{tt("My Outlet Offers")}</h1>
+          <p className="text-muted-foreground text-sm mt-0.5">{tt("Clearance, returns & liquidation lots you list in the")} <Link href="/outlet" className="text-[#0B1F4D] font-semibold underline">{tt("Outlet Zone")}</Link>.</p>
         </div>
         <Link href="/supplier/products/new" className="inline-flex items-center gap-2 rounded-xl bg-[#0B1F4D] text-white px-4 py-2.5 text-sm font-bold hover:bg-[#162d6e] transition-colors">
-          <Plus className="w-4 h-4" /> List a lot
+          <Plus className="w-4 h-4" /> {tt("List a lot")}
         </Link>
       </div>
 
@@ -58,13 +62,13 @@ export default async function SupplierOutletPage() {
 
       {/* Lots */}
       <div className="rounded-2xl border bg-card overflow-hidden">
-        <div className="px-5 py-3.5 border-b font-bold text-sm text-gray-800">Your outlet lots</div>
+        <div className="px-5 py-3.5 border-b font-bold text-sm text-gray-800">{tt("Your outlet lots")}</div>
         {lots.length === 0 ? (
           <div className="px-6 py-12 text-center">
             <Package className="w-10 h-10 text-gray-300 mx-auto mb-2" />
-            <p className="text-gray-600 font-semibold">No outlet lots yet</p>
-            <p className="text-gray-400 text-sm mt-1">Add a product and tick <strong>“List in the Outlet Zone”</strong> to set condition, selling unit and source.</p>
-            <Link href="/supplier/products/new" className="inline-flex items-center gap-2 rounded-xl bg-[#0B1F4D] text-white px-5 py-2.5 text-sm font-bold mt-4 hover:bg-[#162d6e]"><Plus className="w-4 h-4" /> List a lot</Link>
+            <p className="text-gray-600 font-semibold">{tt("No outlet lots yet")}</p>
+            <p className="text-gray-400 text-sm mt-1">{tt("Add a product and tick")} <strong>“List in the Outlet Zone”</strong> {tt("to set condition, selling unit and source.")}</p>
+            <Link href="/supplier/products/new" className="inline-flex items-center gap-2 rounded-xl bg-[#0B1F4D] text-white px-5 py-2.5 text-sm font-bold mt-4 hover:bg-[#162d6e]"><Plus className="w-4 h-4" /> {tt("List a lot")}</Link>
           </div>
         ) : (
           <div className="divide-y">
@@ -83,7 +87,7 @@ export default async function SupplierOutletPage() {
                       {cond && <span className={`rounded-full text-[10px] font-bold px-1.5 py-0.5 ${cond.color}`}>{cond.short}</span>}
                       {unit && <span className="rounded-full bg-gray-100 text-gray-600 text-[10px] font-bold px-1.5 py-0.5">{unit.label}</span>}
                       {l.outlet_source && <span className="text-[11px] text-orange-600 font-semibold">{l.outlet_source}</span>}
-                      {!l.is_published && <span className="text-[10px] font-bold text-amber-600">Draft</span>}
+                      {!l.is_published && <span className="text-[10px] font-bold text-amber-600">{tt("Draft")}</span>}
                     </div>
                   </div>
                   <span className="text-sm font-extrabold text-[#0B1F4D]">{l.price_cents > 0 ? money(l.price_cents, l.currency_code) : 'Ask'}</span>

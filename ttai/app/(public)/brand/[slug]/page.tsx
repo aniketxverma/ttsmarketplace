@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation'
+import { localizeUI } from '@/lib/i18n/ui'
 import Image from 'next/image'
 import {
   Crown, ShieldCheck, Award, Store, Lock, Heart, Share2, MapPin, Calendar,
@@ -64,6 +65,8 @@ const TIER_CONFIG: Record<string, {
 
 
 export default async function BrandPage({ params }: { params: { slug: string } }) {
+  
+  const tt = await localizeUI(["Home", "Suppliers", "Add to Favorites", "Share", "Verification Pending", "Since", "Products", "Follow Shop", "Contact Supplier", "products", "WhatsApp", "Call Now"], getLocale())
   const supabase = createClient()
 
   const { data: supplier } = await supplierQuery(supabase, params.slug, `
@@ -313,15 +316,15 @@ export default async function BrandPage({ params }: { params: { slug: string } }
       <div className="bg-white border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-8 py-3 flex items-center justify-between gap-3">
           <nav className="flex items-center gap-1.5 text-sm text-gray-400 min-w-0">
-            <Link href="/" className="hover:text-[#0B1F4D] transition-colors">Home</Link>
+            <Link href="/" className="hover:text-[#0B1F4D] transition-colors">{tt("Home")}</Link>
             <span>/</span>
-            <Link href="/suppliers" className="hover:text-[#0B1F4D] transition-colors">Suppliers</Link>
+            <Link href="/suppliers" className="hover:text-[#0B1F4D] transition-colors">{tt("Suppliers")}</Link>
             <span>/</span>
             <span className="text-gray-700 font-semibold truncate">{supplier.trade_name}</span>
           </nav>
           <div className="hidden sm:flex items-center gap-4 flex-shrink-0 text-sm text-gray-500">
-            <span className="flex items-center gap-1.5"><Heart className="w-4 h-4" /> Add to Favorites</span>
-            <span className="flex items-center gap-1.5"><Share2 className="w-4 h-4" /> Share</span>
+            <span className="flex items-center gap-1.5"><Heart className="w-4 h-4" /> {tt("Add to Favorites")}</span>
+            <span className="flex items-center gap-1.5"><Share2 className="w-4 h-4" /> {tt("Share")}</span>
           </div>
         </div>
       </div>
@@ -342,7 +345,7 @@ export default async function BrandPage({ params }: { params: { slug: string } }
                   <h1 className="text-xl sm:text-[26px] font-extrabold text-[#0B1F4D] leading-tight">{supplier.trade_name ?? supplier.legal_name}</h1>
                   {!showVerified ? (
                     <span className="inline-flex items-center gap-1 bg-amber-50 text-amber-700 text-xs font-bold px-2.5 py-1 rounded-full">
-                      <Lock className="w-3.5 h-3.5" /> Verification Pending
+                      <Lock className="w-3.5 h-3.5" /> {tt("Verification Pending")}
                     </span>
                   ) : (
                     <SupplierStatusBadge supplier={statusSupplier} />
@@ -355,8 +358,8 @@ export default async function BrandPage({ params }: { params: { slug: string } }
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mt-2 text-[13px] text-gray-500">
                   {country && <span className="flex items-center gap-1.5">{isoFlag((country as any).iso_code) || '🌍'} {(country as any).name}</span>}
                   {city && <span className="flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5 text-gray-400" /> {(city as any).name}</span>}
-                  {supplier.founded_year && <span className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5 text-gray-400" /> Since {supplier.founded_year}</span>}
-                  <span className="flex items-center gap-1.5"><Package className="w-3.5 h-3.5 text-gray-400" /> {products.length} Products</span>
+                  {supplier.founded_year && <span className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5 text-gray-400" /> {tt("Since")} {supplier.founded_year}</span>}
+                  <span className="flex items-center gap-1.5"><Package className="w-3.5 h-3.5 text-gray-400" /> {products.length} {tt("Products")}</span>
                   {supplier.countries_served && <span className="flex items-center gap-1.5"><Globe2 className="w-3.5 h-3.5 text-gray-400" /> {supplier.countries_served}+ Countries</span>}
                 </div>
                 {(supplier.tagline || supplier.description) && (
@@ -376,22 +379,22 @@ export default async function BrandPage({ params }: { params: { slug: string } }
                 <Link href={isAuthenticated ? '/marketplace?supplier=' + supplier.id : '/register'}
                   style={{ backgroundColor: brandAccent }}
                   className="flex items-center justify-center gap-2 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-sm hover:opacity-90 transition-opacity">
-                  <UserPlus className="w-4 h-4" /> Follow Shop
+                  <UserPlus className="w-4 h-4" /> {tt("Follow Shop")}
                 </Link>
                 {contactUnlocked && waHref ? (
                   <a href={waHref} target="_blank" rel="noopener noreferrer"
                     className="flex items-center justify-center gap-2 border border-gray-200 hover:bg-gray-50 text-[#0B1F4D] px-5 py-2.5 rounded-xl text-sm font-bold transition-colors">
-                    <MessageCircle className="w-4 h-4" /> Contact Supplier
+                    <MessageCircle className="w-4 h-4" /> {tt("Contact Supplier")}
                   </a>
                 ) : contactUnlocked && supplier.business_email ? (
                   <a href={`mailto:${supplier.business_email}`}
                     className="flex items-center justify-center gap-2 border border-gray-200 hover:bg-gray-50 text-[#0B1F4D] px-5 py-2.5 rounded-xl text-sm font-bold transition-colors">
-                    <Mail className="w-4 h-4" /> Contact Supplier
+                    <Mail className="w-4 h-4" /> {tt("Contact Supplier")}
                   </a>
                 ) : (
                   <Link href={isAuthenticated ? '/pricing' : '/register'}
                     className="flex items-center justify-center gap-2 border border-gray-200 hover:bg-gray-50 text-[#0B1F4D] px-5 py-2.5 rounded-xl text-sm font-bold transition-colors">
-                    <Lock className="w-4 h-4" /> Contact Supplier
+                    <Lock className="w-4 h-4" /> {tt("Contact Supplier")}
                   </Link>
                 )}
               </div>
@@ -399,7 +402,7 @@ export default async function BrandPage({ params }: { params: { slug: string } }
           </div>
         </div>
         </div>
-        <p className="text-sm text-gray-400 mt-2.5 px-1">{products.length} products</p>
+        <p className="text-sm text-gray-400 mt-2.5 px-1">{products.length} {tt("products")}</p>
       </div>
 
       {/* ══ MAIN CONTENT ═════════════════════════════════════════════════════ */}
@@ -461,7 +464,7 @@ export default async function BrandPage({ params }: { params: { slug: string } }
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
               </svg>
-              WhatsApp
+              {tt("WhatsApp")}
             </a>
           )}
           {supplier.phone && (
@@ -470,7 +473,7 @@ export default async function BrandPage({ params }: { params: { slug: string } }
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
               </svg>
-              Call Now
+              {tt("Call Now")}
             </a>
           )}
         </div>

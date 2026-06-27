@@ -1,4 +1,6 @@
 import { notFound } from 'next/navigation'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 import { createClient } from '@/lib/supabase/server'
 import { ProductCard } from '@/components/marketplace/ProductCard'
 import { ProductGrid } from '@/components/marketplace/ProductGrid'
@@ -8,6 +10,8 @@ export default async function BrokerProfilePage({
 }: {
   params: { brokerId: string }
 }) {
+  
+  const tt = await localizeUI(["Verified Broker", "Featured Products", "No active promotions."], getLocale())
   const supabase = createClient()
 
   const { data: broker } = await supabase
@@ -37,10 +41,10 @@ export default async function BrokerProfilePage({
     <div className="container mx-auto px-4 py-8">
       <div className="rounded-xl border p-6 mb-8">
         <h1 className="text-2xl font-bold">{broker.legal_name}</h1>
-        <p className="text-sm text-muted-foreground mt-1">Verified Broker</p>
+        <p className="text-sm text-muted-foreground mt-1">{tt("Verified Broker")}</p>
       </div>
 
-      <h2 className="text-xl font-semibold mb-4">Featured Products</h2>
+      <h2 className="text-xl font-semibold mb-4">{tt("Featured Products")}</h2>
 
       {promotions && promotions.length > 0 ? (
         <div className="space-y-6">
@@ -63,7 +67,7 @@ export default async function BrokerProfilePage({
           })}
         </div>
       ) : (
-        <p className="text-muted-foreground text-sm">No active promotions.</p>
+        <p className="text-muted-foreground text-sm">{tt("No active promotions.")}</p>
       )}
     </div>
   )

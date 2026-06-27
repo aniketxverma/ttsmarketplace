@@ -1,4 +1,6 @@
 import Link from 'next/link'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { requireAuth } from '@/lib/auth/rbac'
@@ -7,6 +9,8 @@ import { EmptyState } from '@/components/dashboard/EmptyState'
 import { formatCents } from '@/lib/utils'
 
 export default async function SupplierOrdersPage() {
+  
+  const tt = await localizeUI(["Orders", "total orders", "Order ID", "Date", "Buyer", "Total", "Status", "View"], getLocale())
   const user = await requireAuth()
   const supabase = createClient()
 
@@ -27,8 +31,8 @@ export default async function SupplierOrdersPage() {
   return (
     <div className="space-y-6 max-w-5xl">
       <div>
-        <h1 className="text-2xl font-bold">Orders</h1>
-        <p className="text-muted-foreground text-sm mt-0.5">{orders?.length ?? 0} total orders</p>
+        <h1 className="text-2xl font-bold">{tt("Orders")}</h1>
+        <p className="text-muted-foreground text-sm mt-0.5">{orders?.length ?? 0} {tt("total orders")}</p>
       </div>
 
       {!orders?.length ? (
@@ -38,11 +42,11 @@ export default async function SupplierOrdersPage() {
           <table className="w-full text-sm">
             <thead className="bg-muted/50">
               <tr>
-                <th className="text-left px-4 py-3 font-medium">Order ID</th>
-                <th className="text-left px-4 py-3 font-medium">Date</th>
-                <th className="text-left px-4 py-3 font-medium">Buyer</th>
-                <th className="text-left px-4 py-3 font-medium">Total</th>
-                <th className="text-left px-4 py-3 font-medium">Status</th>
+                <th className="text-left px-4 py-3 font-medium">{tt("Order ID")}</th>
+                <th className="text-left px-4 py-3 font-medium">{tt("Date")}</th>
+                <th className="text-left px-4 py-3 font-medium">{tt("Buyer")}</th>
+                <th className="text-left px-4 py-3 font-medium">{tt("Total")}</th>
+                <th className="text-left px-4 py-3 font-medium">{tt("Status")}</th>
                 <th className="px-4 py-3" />
               </tr>
             </thead>
@@ -57,7 +61,7 @@ export default async function SupplierOrdersPage() {
                     <td className="px-4 py-3 font-medium">{formatCents(o.total_cents, o.currency_code)}</td>
                     <td className="px-4 py-3"><StatusBadge status={o.status} /></td>
                     <td className="px-4 py-3 text-right">
-                      <Link href={`/supplier/orders/${o.id}`} className="text-xs text-primary hover:underline">View</Link>
+                      <Link href={`/supplier/orders/${o.id}`} className="text-xs text-primary hover:underline">{tt("View")}</Link>
                     </td>
                   </tr>
                 )

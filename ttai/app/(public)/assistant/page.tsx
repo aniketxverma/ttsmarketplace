@@ -1,4 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 import Link from 'next/link'
 import Image from 'next/image'
 import {
@@ -23,6 +25,8 @@ function ago(d: string) {
 }
 
 export default async function AssistantPage() {
+  
+  const tt = await localizeUI(["AI Business Assistant", "Welcome back", "I analysed the platform and found", "new opportunit", "Assistant online", "TTAI AI Assistant", "Online", "Ask me anything about products, suppliers or logistics", "Tap the", "assistant bubble", "at the bottom-right to chat 💬", "Smart Business Matching", "Let AI find the best suppliers and deals for your business.", "Quick Actions"], getLocale())
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   let name: string | null = null
@@ -126,12 +130,12 @@ export default async function AssistantPage() {
             <div className="absolute -top-16 -right-10 w-72 h-72 rounded-full bg-[#F5A623]/15 blur-3xl pointer-events-none" />
             <div className="relative flex items-start gap-5">
               <div className="flex-1 min-w-0">
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 border border-white/15 px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-[#F5A623] mb-3"><Sparkles className="w-3.5 h-3.5" /> AI Business Assistant</span>
-                <h1 className="text-2xl sm:text-4xl font-black leading-tight">Welcome back{firstName ? `, ${firstName}` : ''}! 👋</h1>
-                <p className="text-blue-100/80 mt-2 max-w-xl">I analysed the platform and found <strong className="text-[#F5A623]">{opportunities} new opportunit{opportunities === 1 ? 'y' : 'ies'}</strong> for your business today — offers, suppliers and channel activity worth your attention.</p>
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 border border-white/15 px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-[#F5A623] mb-3"><Sparkles className="w-3.5 h-3.5" /> {tt("AI Business Assistant")}</span>
+                <h1 className="text-2xl sm:text-4xl font-black leading-tight">{tt("Welcome back")}{firstName ? `, ${firstName}` : ''}! 👋</h1>
+                <p className="text-blue-100/80 mt-2 max-w-xl">{tt("I analysed the platform and found")} <strong className="text-[#F5A623]">{opportunities} {tt("new opportunit")}{opportunities === 1 ? 'y' : 'ies'}</strong> for your business today — offers, suppliers and channel activity worth your attention.</p>
                 <div className="flex flex-wrap gap-3 mt-5">
                   <ExploreButton />
-                  <span className="inline-flex items-center gap-2 rounded-xl bg-white/10 border border-white/15 px-5 py-2.5 text-sm font-bold"><span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" /> Assistant online</span>
+                  <span className="inline-flex items-center gap-2 rounded-xl bg-white/10 border border-white/15 px-5 py-2.5 text-sm font-bold"><span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" /> {tt("Assistant online")}</span>
                 </div>
               </div>
               {/* Interactive assistant avatar — click to open the chat */}
@@ -213,7 +217,7 @@ export default async function AssistantPage() {
               <span className="w-8 h-8 rounded-lg bg-white/15 flex items-center justify-center overflow-hidden">
                 {avatarUrl ? <Image src={avatarUrl} alt="" width={32} height={32} className="w-full h-full object-contain" /> : <Bot className="w-4 h-4 text-[#F5A623]" />}
               </span>
-              <div><p className="text-sm font-extrabold leading-none">TTAI AI Assistant</p><p className="text-[10px] text-green-300 flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-green-400" />Online</p></div>
+              <div><p className="text-sm font-extrabold leading-none">{tt("TTAI AI Assistant")}</p><p className="text-[10px] text-green-300 flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-green-400" />{tt("Online")}</p></div>
             </div>
             <div className="p-3 space-y-2.5">
               <p className="text-xs text-gray-500 px-1">Here&apos;s what I found for you today:</p>
@@ -227,21 +231,21 @@ export default async function AssistantPage() {
                 </Link>
               ))}
               <div className="rounded-xl bg-gray-50 border border-gray-100 p-3 text-center">
-                <p className="text-xs text-gray-500 mb-1">Ask me anything about products, suppliers or logistics</p>
-                <p className="text-[11px] text-gray-400">Tap the <strong className="text-[#0B1F4D]">assistant bubble</strong> at the bottom-right to chat 💬</p>
+                <p className="text-xs text-gray-500 mb-1">{tt("Ask me anything about products, suppliers or logistics")}</p>
+                <p className="text-[11px] text-gray-400">{tt("Tap the")} <strong className="text-[#0B1F4D]">{tt("assistant bubble")}</strong> {tt("at the bottom-right to chat 💬")}</p>
               </div>
             </div>
           </div>
 
           <div className="rounded-2xl bg-gradient-to-br from-[#5b3fd6] to-[#7c3aed] text-white p-5">
             <Zap className="w-7 h-7 text-white/80 mb-2" />
-            <p className="font-extrabold">Smart Business Matching</p>
-            <p className="text-white/75 text-xs mt-1">Let AI find the best suppliers and deals for your business.</p>
+            <p className="font-extrabold">{tt("Smart Business Matching")}</p>
+            <p className="text-white/75 text-xs mt-1">{tt("Let AI find the best suppliers and deals for your business.")}</p>
             <MatchButton />
           </div>
 
           <div className="rounded-2xl bg-white border border-gray-200 shadow-sm p-4">
-            <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-2">Quick Actions</p>
+            <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-2">{tt("Quick Actions")}</p>
             <div className="space-y-1">
               {QUICK.map((q) => (
                 <ActionTile key={q.title} variant="quick"

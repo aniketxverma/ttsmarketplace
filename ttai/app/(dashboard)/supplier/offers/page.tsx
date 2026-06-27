@@ -1,4 +1,6 @@
 import { redirect } from 'next/navigation'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { requireAuth } from '@/lib/auth/rbac'
@@ -7,6 +9,8 @@ import { OffersManager } from './OffersManager'
 export const dynamic = 'force-dynamic'
 
 export default async function SendOffersPage() {
+  
+  const tt = await localizeUI(["Send Offers"], getLocale())
   const user = await requireAuth()
   const supabase = createClient()
 
@@ -45,7 +49,7 @@ export default async function SendOffersPage() {
   return (
     <div className="max-w-5xl">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold">Send Offers</h1>
+        <h1 className="text-2xl font-bold">{tt("Send Offers")}</h1>
         <p className="text-muted-foreground text-sm mt-0.5">
           Broadcast a promotion to your clients &amp; sales network by WhatsApp or email — pick products,
           add a discount, choose who receives it.

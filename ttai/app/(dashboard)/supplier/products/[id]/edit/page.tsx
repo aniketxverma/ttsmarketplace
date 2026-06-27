@@ -1,4 +1,6 @@
 import { notFound, redirect } from 'next/navigation'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 import { createClient } from '@/lib/supabase/server'
 import { requireAuth } from '@/lib/auth/rbac'
 import { ProductForm } from '@/components/supplier/ProductForm'
@@ -8,6 +10,8 @@ import { PromoteToggle } from '@/components/supplier/PromoteToggle'
 import { getPricingConfig } from '@/lib/pricing-config'
 
 export default async function EditProductPage({ params }: { params: { id: string } }) {
+  
+  const tt = await localizeUI(["Edit Product", "Product Images"], getLocale())
   const user = await requireAuth()
   const supabase = createClient()
 
@@ -48,7 +52,7 @@ export default async function EditProductPage({ params }: { params: { id: string
   return (
     <div className="max-w-2xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Edit Product</h1>
+        <h1 className="text-2xl font-bold">{tt("Edit Product")}</h1>
         <p className="text-muted-foreground text-sm mt-0.5">{product.name}</p>
       </div>
 
@@ -60,7 +64,7 @@ export default async function EditProductPage({ params }: { params: { id: string
 
       {/* Images */}
       <div className="rounded-xl border bg-card p-6 space-y-3">
-        <h2 className="font-bold text-[#0B1F4D] text-sm pb-2 border-b">Product Images</h2>
+        <h2 className="font-bold text-[#0B1F4D] text-sm pb-2 border-b">{tt("Product Images")}</h2>
         <ProductImageManager
           productId={product.id}
           supplierId={supplier.id}

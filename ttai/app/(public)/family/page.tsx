@@ -1,4 +1,6 @@
 import Link from 'next/link'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { ProductCard } from '@/components/marketplace/ProductCard'
@@ -18,6 +20,8 @@ export default async function FamilyPage({
 }: {
   searchParams: { s?: string; line?: string; c?: string; retail?: string; shop?: string }
 }) {
+  
+  const tt = await localizeUI(["option", "in this range — pick the one you need."], getLocale())
   const supplierId = searchParams.s
   if (!supplierId || (!searchParams.line && !searchParams.c)) notFound()
 
@@ -77,7 +81,7 @@ export default async function FamilyPage({
         <p className="text-[#F5A623] text-xs font-bold uppercase tracking-widest mb-1">{supplierName}</p>
         <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0B1F4D]">{title}</h1>
         <p className="text-gray-500 text-sm mt-1">
-          {products.length} option{products.length !== 1 ? 's' : ''} in this range — pick the one you need.
+          {products.length} {tt("option")}{products.length !== 1 ? 's' : ''} {tt("in this range — pick the one you need.")}
         </p>
       </div>
 

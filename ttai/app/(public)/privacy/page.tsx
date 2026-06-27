@@ -1,8 +1,12 @@
 import { LegalShell, Section, COMPANY } from '@/components/legal/LegalShell'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 
 export const metadata = { title: 'Privacy Policy · TTAI EMA', description: 'How TTAI EMA collects, uses and protects your personal data.' }
 
-export default function PrivacyPage() {
+export default async function PrivacyPage() {
+  
+  const tt = await localizeUI(["To create and manage your account.", "To connect suppliers and buyers and facilitate business matchmaking.", "To send service communications, offers and platform updates you opt into.", "To comply with legal and tax obligations.", "Email:"], getLocale())
   return (
     <LegalShell title="Privacy Policy" subtitle="How we collect, use and protect your personal data." updated="June 2026">
       <p>{COMPANY.legal} (&ldquo;TTAI&rdquo;, &ldquo;we&rdquo;, &ldquo;us&rdquo;) operates the TTAI and TTAIEMA platforms. This policy explains what personal data we process and your rights under the EU General Data Protection Regulation (GDPR).</p>
@@ -13,11 +17,11 @@ export default function PrivacyPage() {
 
       <Section title="How We Use Your Data">
         <ul className="list-disc pl-5 space-y-1">
-          <li>To create and manage your account.</li>
+          <li>{tt("To create and manage your account.")}</li>
           <li>To process orders, payments and dropshipping between buyers, suppliers and sales points.</li>
-          <li>To connect suppliers and buyers and facilitate business matchmaking.</li>
-          <li>To send service communications, offers and platform updates you opt into.</li>
-          <li>To comply with legal and tax obligations.</li>
+          <li>{tt("To connect suppliers and buyers and facilitate business matchmaking.")}</li>
+          <li>{tt("To send service communications, offers and platform updates you opt into.")}</li>
+          <li>{tt("To comply with legal and tax obligations.")}</li>
         </ul>
       </Section>
 
@@ -41,7 +45,7 @@ export default function PrivacyPage() {
         <p className="font-semibold text-[#0B1F4D]">{COMPANY.legal}</p>
         <p>CIF: {COMPANY.cif}</p>
         <p>{COMPANY.address}</p>
-        <p>Email: <a href={`mailto:${COMPANY.email}`} className="text-[#2563eb] hover:underline">{COMPANY.email}</a></p>
+        <p>{tt("Email:")} <a href={`mailto:${COMPANY.email}`} className="text-[#2563eb] hover:underline">{COMPANY.email}</a></p>
       </Section>
     </LegalShell>
   )

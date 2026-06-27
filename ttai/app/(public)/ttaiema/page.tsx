@@ -1,4 +1,6 @@
 import Link from 'next/link'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 import { createClient } from '@/lib/supabase/server'
 import {
   Truck, Boxes, ShoppingCart, Globe2, Warehouse, ArrowRight, Check, Package, Building2, MessageCircle,
@@ -21,6 +23,8 @@ const STEPS = [
 ]
 
 export default async function TtaiemaProfilePage() {
+  
+  const tt = await localizeUI(["online to end users", "wholesale to businesses", "Explore the Trade Hub", "Talk to logistics", "What we do", "Four ways to grow with TTAIEMA.", "Our brands", "We sell these ourselves — and you can too.", "How dropshipping works with us", "Start selling our products today", "Open the Trade Hub", "Shop Online"], getLocale())
   const supabase = createClient()
   const { data: brands } = await (supabase.from('suppliers') as any)
     .select('trade_name, brand_slug, logo_url')
@@ -39,15 +43,15 @@ export default async function TtaiemaProfilePage() {
           <h1 className="text-3xl sm:text-5xl font-black tracking-tight">Your dropshipping &amp; trade partner</h1>
           <p className="text-blue-100/80 mt-4 max-w-2xl mx-auto text-lg">
             TTAIEMA owns and supplies its own brands — and ships them for you. Sell our products
-            <span className="font-semibold text-white"> online to end users</span> or
-            <span className="font-semibold text-white"> wholesale to businesses</span>; we handle stock, fulfilment and logistics.
+            <span className="font-semibold text-white"> {tt("online to end users")}</span> or
+            <span className="font-semibold text-white"> {tt("wholesale to businesses")}</span>; we handle stock, fulfilment and logistics.
           </p>
           <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
             <Link href="/b2b" className="inline-flex items-center gap-2 rounded-xl bg-[#F5A623] text-[#0B1F4D] px-6 py-3 text-sm font-extrabold hover:bg-[#fbb93a] transition-colors">
-              Explore the Trade Hub <ArrowRight className="w-4 h-4" />
+              {tt("Explore the Trade Hub")} <ArrowRight className="w-4 h-4" />
             </Link>
             <Link href="/logistics" className="inline-flex items-center gap-2 rounded-xl border border-white/30 px-6 py-3 text-sm font-bold hover:bg-white/10 transition-colors">
-              <MessageCircle className="w-4 h-4" /> Talk to logistics
+              <MessageCircle className="w-4 h-4" /> {tt("Talk to logistics")}
             </Link>
           </div>
         </div>
@@ -56,8 +60,8 @@ export default async function TtaiemaProfilePage() {
       {/* Plans */}
       <section className="container mx-auto max-w-6xl px-4 py-14">
         <div className="text-center mb-10">
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-[#0B1F4D]">What we do</h2>
-          <p className="text-gray-400 mt-2">Four ways to grow with TTAIEMA.</p>
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-[#0B1F4D]">{tt("What we do")}</h2>
+          <p className="text-gray-400 mt-2">{tt("Four ways to grow with TTAIEMA.")}</p>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {PLANS.map((p) => (
@@ -78,8 +82,8 @@ export default async function TtaiemaProfilePage() {
         <section className="bg-gray-50 py-14">
           <div className="container mx-auto max-w-6xl px-4">
             <div className="text-center mb-8">
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-[#0B1F4D]">Our brands</h2>
-              <p className="text-gray-400 mt-2">We sell these ourselves — and you can too.</p>
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-[#0B1F4D]">{tt("Our brands")}</h2>
+              <p className="text-gray-400 mt-2">{tt("We sell these ourselves — and you can too.")}</p>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
               {brands.map((b: any) => {
@@ -102,7 +106,7 @@ export default async function TtaiemaProfilePage() {
       {/* How it works */}
       <section className="container mx-auto max-w-5xl px-4 py-14">
         <div className="text-center mb-10">
-          <h2 className="text-2xl sm:text-3xl font-extrabold text-[#0B1F4D]">How dropshipping works with us</h2>
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-[#0B1F4D]">{tt("How dropshipping works with us")}</h2>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {STEPS.map((s) => (
@@ -119,14 +123,14 @@ export default async function TtaiemaProfilePage() {
       <section className="container mx-auto max-w-5xl px-4 pb-16">
         <div className="rounded-3xl bg-gradient-to-br from-[#0B1F4D] to-[#162d6e] text-white p-10 text-center">
           <Globe2 className="w-10 h-10 mx-auto text-[#F5A623] mb-3" />
-          <h2 className="text-2xl sm:text-3xl font-black">Start selling our products today</h2>
+          <h2 className="text-2xl sm:text-3xl font-black">{tt("Start selling our products today")}</h2>
           <p className="text-blue-100/80 mt-2 max-w-xl mx-auto">Pick a channel — Online for end users or B2B for businesses — and we&apos;ll handle the rest.</p>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
             <Link href="/b2b" className="inline-flex items-center gap-2 rounded-xl bg-[#F5A623] text-[#0B1F4D] px-6 py-3 text-sm font-extrabold hover:bg-[#fbb93a] transition-colors">
-              <Package className="w-4 h-4" /> Open the Trade Hub
+              <Package className="w-4 h-4" /> {tt("Open the Trade Hub")}
             </Link>
             <Link href="/store" className="inline-flex items-center gap-2 rounded-xl border border-white/30 px-6 py-3 text-sm font-bold hover:bg-white/10 transition-colors">
-              <ShoppingCart className="w-4 h-4" /> Shop Online
+              <ShoppingCart className="w-4 h-4" /> {tt("Shop Online")}
             </Link>
           </div>
         </div>

@@ -1,9 +1,13 @@
 import { createClient } from '@/lib/supabase/server'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 import { requireAuth } from '@/lib/auth/rbac'
 import { redirect } from 'next/navigation'
 import { BrandProfileEditor } from './BrandProfileEditor'
 
 export default async function SupplierBrandPage() {
+  
+  const tt = await localizeUI(["Brand Profile", "Manage your public brand page — shown to buyers at", "set a slug below to publish"], getLocale())
   const user = await requireAuth()
   const supabase = createClient()
 
@@ -45,15 +49,15 @@ export default async function SupplierBrandPage() {
   return (
     <div className="max-w-4xl">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold">Brand Profile</h1>
+        <h1 className="text-2xl font-bold">{tt("Brand Profile")}</h1>
         <p className="text-muted-foreground text-sm mt-0.5">
-          Manage your public brand page — shown to buyers at{' '}
+          {tt("Manage your public brand page — shown to buyers at")}{' '}
           {supplier.brand_slug ? (
             <a href={`/brand/${supplier.brand_slug}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline font-mono">
               /brand/{supplier.brand_slug}
             </a>
           ) : (
-            <span className="text-gray-400">set a slug below to publish</span>
+            <span className="text-gray-400">{tt("set a slug below to publish")}</span>
           )}
         </p>
       </div>

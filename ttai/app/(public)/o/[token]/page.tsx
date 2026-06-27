@@ -1,4 +1,6 @@
 import { notFound } from 'next/navigation'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Tag, ShieldCheck, MessageCircle, Mail, ArrowRight } from 'lucide-react'
@@ -17,6 +19,8 @@ export async function generateMetadata({ params }: { params: { token: string } }
 }
 
 export default async function OfferPage({ params }: { params: { token: string } }) {
+  
+  const tt = await localizeUI(["Special offer", "This offer has no products listed.", "Interested? Contact", "Place an order or ask for a custom quote.", "WhatsApp", "Email", "Visit store"], getLocale())
   const admin = createAdminClient()
   const { data: offer } = await (admin.from('supplier_offers') as any)
     .select('id, title, message, discount_pct, product_ids, supplier_id').eq('token', params.token).maybeSingle()
@@ -44,7 +48,7 @@ export default async function OfferPage({ params }: { params: { token: string } 
       {/* Hero */}
       <div className="bg-gradient-to-br from-[#0B1F4D] to-[#1e3a8a] text-white">
         <div className="max-w-4xl mx-auto px-4 py-10 text-center">
-          <div className="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-amber-300 mb-2"><Tag className="w-3.5 h-3.5" /> Special offer</div>
+          <div className="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-amber-300 mb-2"><Tag className="w-3.5 h-3.5" /> {tt("Special offer")}</div>
           <h1 className="text-2xl sm:text-3xl font-extrabold leading-tight">{offer.title}</h1>
           {offer.message && <p className="text-blue-100 text-sm mt-2 max-w-xl mx-auto">{offer.message}</p>}
           <div className="flex items-center justify-center gap-2 mt-4 text-sm">
@@ -77,17 +81,17 @@ export default async function OfferPage({ params }: { params: { token: string } 
             })}
           </div>
         ) : (
-          <p className="text-center text-gray-400 py-8">This offer has no products listed.</p>
+          <p className="text-center text-gray-400 py-8">{tt("This offer has no products listed.")}</p>
         )}
 
         {/* Contact CTA */}
         <div className="mt-8 rounded-2xl bg-white border border-gray-100 p-6 text-center">
-          <h3 className="font-extrabold text-[#0B1F4D]">Interested? Contact {supplierName}</h3>
-          <p className="text-sm text-gray-400 mt-1 mb-4">Place an order or ask for a custom quote.</p>
+          <h3 className="font-extrabold text-[#0B1F4D]">{tt("Interested? Contact")} {supplierName}</h3>
+          <p className="text-sm text-gray-400 mt-1 mb-4">{tt("Place an order or ask for a custom quote.")}</p>
           <div className="flex flex-wrap items-center justify-center gap-3">
-            {wa && <a href={wa} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-xl bg-green-500 text-white px-5 py-2.5 text-sm font-bold hover:bg-green-400"><MessageCircle className="w-4 h-4" /> WhatsApp</a>}
-            {supplier?.business_email && <a href={`mailto:${supplier.business_email}?subject=${encodeURIComponent('Offer: ' + offer.title)}`} className="inline-flex items-center gap-2 rounded-xl border-2 border-[#0B1F4D] text-[#0B1F4D] px-5 py-2.5 text-sm font-bold hover:bg-[#0B1F4D] hover:text-white transition-colors"><Mail className="w-4 h-4" /> Email</a>}
-            <Link href={`/brand/${supplier?.brand_slug ?? supplier?.id}`} className="inline-flex items-center gap-1.5 text-sm font-bold text-[#2563eb] hover:underline">Visit store <ArrowRight className="w-4 h-4" /></Link>
+            {wa && <a href={wa} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-xl bg-green-500 text-white px-5 py-2.5 text-sm font-bold hover:bg-green-400"><MessageCircle className="w-4 h-4" /> {tt("WhatsApp")}</a>}
+            {supplier?.business_email && <a href={`mailto:${supplier.business_email}?subject=${encodeURIComponent('Offer: ' + offer.title)}`} className="inline-flex items-center gap-2 rounded-xl border-2 border-[#0B1F4D] text-[#0B1F4D] px-5 py-2.5 text-sm font-bold hover:bg-[#0B1F4D] hover:text-white transition-colors"><Mail className="w-4 h-4" /> {tt("Email")}</a>}
+            <Link href={`/brand/${supplier?.brand_slug ?? supplier?.id}`} className="inline-flex items-center gap-1.5 text-sm font-bold text-[#2563eb] hover:underline">{tt("Visit store")} <ArrowRight className="w-4 h-4" /></Link>
           </div>
         </div>
       </div>

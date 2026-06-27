@@ -1,10 +1,14 @@
 import { redirect } from 'next/navigation'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 import { createClient } from '@/lib/supabase/server'
 import { requireAuth } from '@/lib/auth/rbac'
 import { ProductForm } from '@/components/supplier/ProductForm'
 import { getPricingConfig } from '@/lib/pricing-config'
 
 export default async function NewProductPage() {
+  
+  const tt = await localizeUI(["Add Product", "Products start as drafts — publish when ready"], getLocale())
   const user = await requireAuth()
   const supabase = createClient()
 
@@ -27,8 +31,8 @@ export default async function NewProductPage() {
   return (
     <div className="max-w-2xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Add Product</h1>
-        <p className="text-muted-foreground text-sm mt-0.5">Products start as drafts — publish when ready</p>
+        <h1 className="text-2xl font-bold">{tt("Add Product")}</h1>
+        <p className="text-muted-foreground text-sm mt-0.5">{tt("Products start as drafts — publish when ready")}</p>
       </div>
       <div className="rounded-xl border bg-card p-6">
         <ProductForm supplierId={supplier.id} mode="create" sellerTier={sellerTier} homeChannel={homeChannel}

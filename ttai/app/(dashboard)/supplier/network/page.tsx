@@ -1,4 +1,6 @@
 import { redirect } from 'next/navigation'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { requireAuth } from '@/lib/auth/rbac'
@@ -7,6 +9,8 @@ import { NetworkManager } from './NetworkManager'
 export const dynamic = 'force-dynamic'
 
 export default async function SalesNetworkPage() {
+  
+  const tt = await localizeUI(["My Sales Network"], getLocale())
   const user = await requireAuth()
   const supabase = createClient()
 
@@ -34,7 +38,7 @@ export default async function SalesNetworkPage() {
   return (
     <div className="max-w-5xl">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold">My Sales Network</h1>
+        <h1 className="text-2xl font-bold">{tt("My Sales Network")}</h1>
         <p className="text-muted-foreground text-sm mt-0.5">
           Invite shops, distributors and partners to join your official sales network — they get an online
           store and can import your catalogue automatically.

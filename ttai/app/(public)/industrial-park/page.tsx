@@ -1,4 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 import { StoreLocationPicker } from '@/components/store/StoreLocationPicker'
 import { IndustrialPark, type Company } from '@/components/industrial/IndustrialPark'
 import { parksForCity } from '@/lib/industrial-parks'
@@ -21,6 +23,8 @@ const WAREHOUSE_IMG = [
 ]
 
 export default async function IndustrialParkPage({ searchParams }: { searchParams: { country?: string; city?: string; park?: string } }) {
+  
+  const tt = await localizeUI(["Welcome to", "TTAI Industrial Park", "Select a country and city to enter its industrial parks.", "e.g. Spain → Madrid → Polígono Cobo Calleja", "Industrial Parks in", "Companies", "View All Industrial Parks →", "How It Works", "A Real Industrial Experience Online"], getLocale())
   const supabase = createClient()
 
   const countries = await safe<any[]>((supabase.from('countries') as any).select('id, name, iso_code').eq('is_active', true).order('name'), [])
@@ -139,8 +143,8 @@ export default async function IndustrialParkPage({ searchParams }: { searchParam
             cities={cities.map((c: any) => ({ id: c.id, name: c.name }))}
             country={activeIso} city={activeCity?.id ?? ''} />
           <div className="text-right">
-            <p className="text-xs text-gray-400">Welcome to</p>
-            <h1 className="text-2xl font-black text-[#0B1F4D] flex items-center gap-2 justify-end"><Factory className="w-6 h-6 text-[#F5A623]" />TTAI Industrial Park</h1>
+            <p className="text-xs text-gray-400">{tt("Welcome to")}</p>
+            <h1 className="text-2xl font-black text-[#0B1F4D] flex items-center gap-2 justify-end"><Factory className="w-6 h-6 text-[#F5A623]" />{tt("TTAI Industrial Park")}</h1>
             <p className="text-xs text-gray-400">Find verified manufacturers, suppliers &amp; wholesalers in real industrial zones.</p>
           </div>
         </div>
@@ -148,14 +152,14 @@ export default async function IndustrialParkPage({ searchParams }: { searchParam
         {!activePark ? (
           <div className="rounded-2xl bg-white border border-gray-200 shadow-sm p-12 text-center text-gray-500">
             <Factory className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-            <p className="font-bold text-gray-700">Select a country and city to enter its industrial parks.</p>
-            <p className="text-sm text-gray-400 mt-1">e.g. Spain → Madrid → Polígono Cobo Calleja</p>
+            <p className="font-bold text-gray-700">{tt("Select a country and city to enter its industrial parks.")}</p>
+            <p className="text-sm text-gray-400 mt-1">{tt("e.g. Spain → Madrid → Polígono Cobo Calleja")}</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-5">
             {/* Parks sidebar */}
             <aside className="space-y-3">
-              <h2 className="font-extrabold text-gray-900 text-sm">Industrial Parks in {activeCity?.name ?? activeCountry?.name ?? 'your area'}</h2>
+              <h2 className="font-extrabold text-gray-900 text-sm">{tt("Industrial Parks in")} {activeCity?.name ?? activeCountry?.name ?? 'your area'}</h2>
               {parks.map((p) => {
                 const on = p.slug === activePark.slug
                 return (
@@ -163,11 +167,11 @@ export default async function IndustrialParkPage({ searchParams }: { searchParam
                     className={`block rounded-2xl border p-3 transition-all ${on ? 'border-[#1f7a3a] ring-1 ring-[#1f7a3a] bg-white shadow-sm' : 'border-gray-200 bg-white hover:shadow-sm'}`}>
                     <p className="font-extrabold text-gray-900 text-sm">{p.name}</p>
                     <p className="flex items-center gap-1 text-xs text-gray-400 mt-0.5"><MapPin className="w-3 h-3" />{p.area}</p>
-                    <p className="text-[11px] font-bold text-[#1f7a3a] mt-1">{p.count || companies.length} Companies</p>
+                    <p className="text-[11px] font-bold text-[#1f7a3a] mt-1">{p.count || companies.length} {tt("Companies")}</p>
                   </Link>
                 )
               })}
-              <Link href="/industrial-park" className="block text-center rounded-xl border border-[#0B1F4D]/30 text-[#0B1F4D] text-xs font-bold py-2.5 hover:bg-[#0B1F4D]/5 transition-colors">View All Industrial Parks →</Link>
+              <Link href="/industrial-park" className="block text-center rounded-xl border border-[#0B1F4D]/30 text-[#0B1F4D] text-xs font-bold py-2.5 hover:bg-[#0B1F4D]/5 transition-colors">{tt("View All Industrial Parks →")}</Link>
             </aside>
 
             {/* Park experience */}
@@ -181,7 +185,7 @@ export default async function IndustrialParkPage({ searchParams }: { searchParam
         <div className="rounded-2xl bg-white border border-gray-200 shadow-sm p-5">
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-5 items-center">
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-4">How It Works</p>
+              <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-4">{tt("How It Works")}</p>
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
                 {STEPS.map((s) => (
                   <div key={s.n} className="text-center sm:text-left">
@@ -194,7 +198,7 @@ export default async function IndustrialParkPage({ searchParams }: { searchParam
             <div className="rounded-xl bg-[#0B1F4D]/5 border border-[#0B1F4D]/10 p-4 flex items-start gap-3">
               <Factory className="w-8 h-8 text-[#1f7a3a] flex-shrink-0" />
               <div>
-                <p className="font-extrabold text-[#0B1F4D] text-sm">A Real Industrial Experience Online</p>
+                <p className="font-extrabold text-[#0B1F4D] text-sm">{tt("A Real Industrial Experience Online")}</p>
                 <p className="text-xs text-gray-500 mt-0.5">Walk through real industrial parks, discover verified companies and grow your business with trusted suppliers.</p>
               </div>
             </div>

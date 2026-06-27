@@ -1,8 +1,12 @@
 import { requireRole } from '@/lib/auth/rbac'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 import { createClient } from '@/lib/supabase/server'
 import { formatCents } from '@/lib/utils'
 
 export default async function BrokerPayoutsPage() {
+  
+  const tt = await localizeUI(["Payouts", "Total Paid Out", "Pending", "Transfer ID", "Amount", "Status", "Date", "No payouts yet"], getLocale())
   await requireRole('broker')
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -26,15 +30,15 @@ export default async function BrokerPayoutsPage() {
 
   return (
     <div className="space-y-6 max-w-4xl">
-      <h1 className="text-2xl font-bold">Payouts</h1>
+      <h1 className="text-2xl font-bold">{tt("Payouts")}</h1>
 
       <div className="grid grid-cols-2 gap-4">
         <div className="rounded-xl border bg-card p-4">
-          <p className="text-xs text-muted-foreground">Total Paid Out</p>
+          <p className="text-xs text-muted-foreground">{tt("Total Paid Out")}</p>
           <p className="text-xl font-bold text-green-600 mt-1">{formatCents(totalPaid, 'EUR')}</p>
         </div>
         <div className="rounded-xl border bg-card p-4">
-          <p className="text-xs text-muted-foreground">Pending</p>
+          <p className="text-xs text-muted-foreground">{tt("Pending")}</p>
           <p className="text-xl font-bold text-yellow-600 mt-1">{formatCents(totalPending, 'EUR')}</p>
         </div>
       </div>
@@ -44,10 +48,10 @@ export default async function BrokerPayoutsPage() {
           <table className="w-full text-sm">
             <thead className="bg-muted/50">
               <tr>
-                <th className="text-left px-4 py-3 font-medium">Transfer ID</th>
-                <th className="text-left px-4 py-3 font-medium">Amount</th>
-                <th className="text-left px-4 py-3 font-medium">Status</th>
-                <th className="text-left px-4 py-3 font-medium">Date</th>
+                <th className="text-left px-4 py-3 font-medium">{tt("Transfer ID")}</th>
+                <th className="text-left px-4 py-3 font-medium">{tt("Amount")}</th>
+                <th className="text-left px-4 py-3 font-medium">{tt("Status")}</th>
+                <th className="text-left px-4 py-3 font-medium">{tt("Date")}</th>
               </tr>
             </thead>
             <tbody className="divide-y">
@@ -64,7 +68,7 @@ export default async function BrokerPayoutsPage() {
         </div>
       ) : (
         <div className="rounded-xl border bg-card p-8 text-center">
-          <p className="text-sm text-muted-foreground">No payouts yet</p>
+          <p className="text-sm text-muted-foreground">{tt("No payouts yet")}</p>
         </div>
       )}
     </div>

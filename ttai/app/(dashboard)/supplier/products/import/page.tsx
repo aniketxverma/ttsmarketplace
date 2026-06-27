@@ -1,9 +1,13 @@
 import { createClient } from '@/lib/supabase/server'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 import { requireAuth } from '@/lib/auth/rbac'
 import { redirect } from 'next/navigation'
 import { ImportWizard } from './ImportWizard'
 
 export default async function ImportProductsPage() {
+  
+  const tt = await localizeUI(["Import products from Excel", "drafts", "for you to review and publish.", "Download template", "Recommended columns:"], getLocale())
   const user = await requireAuth()
   const supabase = createClient()
 
@@ -17,10 +21,10 @@ export default async function ImportProductsPage() {
     <div className="max-w-5xl space-y-6">
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-2xl font-bold">Import products from Excel</h1>
+          <h1 className="text-2xl font-bold">{tt("Import products from Excel")}</h1>
           <p className="text-muted-foreground text-sm mt-0.5 max-w-2xl">
             Upload a supplier price list (.xlsx). We auto-detect the columns and pull in the embedded
-            product photos. Everything imports as <strong>drafts</strong> for you to review and publish.
+            product photos. Everything imports as <strong>{tt("drafts")}</strong> {tt("for you to review and publish.")}
           </p>
         </div>
         <a href="/templates/product-import-template.xlsx" download
@@ -28,12 +32,12 @@ export default async function ImportProductsPage() {
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3M4 6a2 2 0 012-2h8l6 6v8a2 2 0 01-2 2H6a2 2 0 01-2-2V6z" />
           </svg>
-          Download template
+          {tt("Download template")}
         </a>
       </div>
 
       <div className="rounded-xl border border-blue-100 bg-blue-50/60 px-4 py-3 text-xs text-blue-800">
-        <span className="font-bold">Recommended columns:</span> Product Name* · Product Photo · Package Photo · Color ·
+        <span className="font-bold">{tt("Recommended columns:")}</span> Product Name* · Product Photo · Package Photo · Color ·
         Barcode (EAN) · MOQ (PC) · EXW Price (USD) · EXW Price (RMB) · QTY/CTN · Carton Size (cm) · Weight/PC (g) · Product Description.
         Headers can vary — we match them automatically. <span className="font-semibold">Paste each product&apos;s photo into its Photo cell.</span>
       </div>

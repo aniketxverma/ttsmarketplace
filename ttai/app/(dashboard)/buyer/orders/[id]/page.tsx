@@ -1,4 +1,6 @@
 import { notFound } from 'next/navigation'
+import { getLocale } from '@/lib/i18n/server'
+import { localizeUI } from '@/lib/i18n/ui'
 import { createClient } from '@/lib/supabase/server'
 import { requireAuth } from '@/lib/auth/rbac'
 import { formatCents } from '@/lib/utils'
@@ -6,6 +8,8 @@ import { StatusBadge } from '@/components/dashboard/StatusBadge'
 import { MessageButton } from '@/components/messages/MessageButton'
 
 export default async function BuyerOrderDetailPage({ params }: { params: { id: string } }) {
+  
+  const tt = await localizeUI(["Order Details", "Message Supplier", "Items", "Subtotal", "Total"], getLocale())
   await requireAuth()
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -25,7 +29,7 @@ export default async function BuyerOrderDetailPage({ params }: { params: { id: s
     <div className="max-w-2xl space-y-6">
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-2xl font-bold">Order Details</h1>
+          <h1 className="text-2xl font-bold">{tt("Order Details")}</h1>
           <p className="text-muted-foreground text-sm font-mono">{order.id}</p>
         </div>
         <div className="flex items-center gap-3">
@@ -37,7 +41,7 @@ export default async function BuyerOrderDetailPage({ params }: { params: { id: s
               redirectBase="/buyer/messages"
               className="flex items-center gap-2 rounded-xl border border-gray-200 text-gray-600 px-4 py-2 text-sm font-semibold hover:border-[#0B1F4D] hover:text-[#0B1F4D] transition-all"
             >
-              Message Supplier
+              {tt("Message Supplier")}
             </MessageButton>
           )}
           <StatusBadge status={order.status} />
@@ -59,7 +63,7 @@ export default async function BuyerOrderDetailPage({ params }: { params: { id: s
       </div>
 
       <div className="rounded-xl border bg-card p-5">
-        <h2 className="font-semibold mb-3">Items</h2>
+        <h2 className="font-semibold mb-3">{tt("Items")}</h2>
         <div className="space-y-2">
           {(order.order_items as any[])?.map((item: any) => {
             const product = item.products as { name: string; sku: string } | null
@@ -76,7 +80,7 @@ export default async function BuyerOrderDetailPage({ params }: { params: { id: s
         </div>
         <div className="pt-3 mt-3 border-t space-y-1 text-sm">
           <div className="flex justify-between">
-            <span className="text-muted-foreground">Subtotal</span>
+            <span className="text-muted-foreground">{tt("Subtotal")}</span>
             <span>{formatCents(order.total_cents - order.vat_cents, order.currency_code)}</span>
           </div>
           <div className="flex justify-between">
@@ -84,7 +88,7 @@ export default async function BuyerOrderDetailPage({ params }: { params: { id: s
             <span>{formatCents(order.vat_cents, order.currency_code)}</span>
           </div>
           <div className="flex justify-between font-semibold pt-1 border-t">
-            <span>Total</span>
+            <span>{tt("Total")}</span>
             <span>{formatCents(order.total_cents, order.currency_code)}</span>
           </div>
         </div>
