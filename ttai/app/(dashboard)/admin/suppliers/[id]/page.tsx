@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import { StatusBadge } from '@/components/dashboard/StatusBadge'
 import { StateTransitionModal } from '@/components/admin/StateTransitionModal'
+import { useT } from '@/lib/i18n/client'
 
 const ALLOWED_TRANSITIONS: Record<string, string[]> = {
   PENDING:      ['UNDER_REVIEW'],
@@ -20,6 +21,7 @@ const BUTTON_LABELS: Record<string, string> = {
 }
 
 export default function AdminSupplierDetailPage() {
+  const t = useT()
   const { id } = useParams<{ id: string }>()
   const [supplier, setSupplier] = useState<Record<string, unknown> | null>(null)
   const [docs, setDocs] = useState<{ id: string; doc_type: string; file_url: string; uploaded_at: string }[]>([])
@@ -38,8 +40,8 @@ export default function AdminSupplierDetailPage() {
       })
   }, [id])
 
-  if (loading) return <div className="text-muted-foreground text-sm">Loading...</div>
-  if (!supplier) return <div className="text-muted-foreground text-sm">Supplier not found</div>
+  if (loading) return <div className="text-muted-foreground text-sm">{t("Loading")}</div>
+  if (!supplier) return <div className="text-muted-foreground text-sm">{t("Supplier not found")}</div>
 
   const status = supplier.status as string
   const allowed = ALLOWED_TRANSITIONS[status] ?? []
@@ -63,7 +65,7 @@ export default function AdminSupplierDetailPage() {
             target="_blank"
             rel="noopener noreferrer"
             className="rounded-md px-3 py-1.5 text-xs font-bold border border-[#0B1F4D] text-[#0B1F4D] hover:bg-[#0B1F4D] hover:text-white transition-colors">
-            View Shop ↗
+            {t("View Shop ↗")}
           </a>
           {/* Trade Hub house seller (TTAI EMA) toggle */}
           <button
@@ -74,12 +76,12 @@ export default function AdminSupplierDetailPage() {
                 body: JSON.stringify({ isHouse: next }),
               })
               if (res.ok) setSupplier((prev) => prev ? { ...prev, is_house: next } : prev)
-              else alert('Could not update')
+              else alert(t('Could not update'))
             }}
             className={`rounded-md px-3 py-1.5 text-xs font-bold border transition-colors ${
               supplier.is_house ? 'border-[#F5A623] bg-amber-50 text-amber-800' : 'border-gray-300 text-gray-600 hover:bg-gray-50'
             }`}>
-            {supplier.is_house ? '★ TTAI EMA House Seller (Trade Hub)' : 'Set as House Seller'}
+            {supplier.is_house ? t('★ TTAI EMA House Seller (Trade Hub)') : t('Set as House Seller')}
           </button>
           {/* TTAIEMA Protected Service toggle (🔵 status badge) */}
           <button
@@ -90,12 +92,12 @@ export default function AdminSupplierDetailPage() {
                 body: JSON.stringify({ protected: next }),
               })
               if (res.ok) setSupplier((prev) => prev ? { ...prev, ttaiema_protected: next } : prev)
-              else alert('Could not update')
+              else alert(t('Could not update'))
             }}
             className={`rounded-md px-3 py-1.5 text-xs font-bold border transition-colors ${
               supplier.ttaiema_protected ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-300 text-gray-600 hover:bg-gray-50'
             }`}>
-            {supplier.ttaiema_protected ? '🔵 TTAIEMA Protected' : 'Set TTAIEMA Protected'}
+            {supplier.ttaiema_protected ? t('🔵 TTAIEMA Protected') : t('Set TTAIEMA Protected')}
           </button>
           {/* Premium Partner toggle (🟣) */}
           <button
@@ -106,12 +108,12 @@ export default function AdminSupplierDetailPage() {
                 body: JSON.stringify({ premium: next }),
               })
               if (res.ok) setSupplier((prev) => prev ? { ...prev, premium_partner: next } : prev)
-              else alert('Could not update')
+              else alert(t('Could not update'))
             }}
             className={`rounded-md px-3 py-1.5 text-xs font-bold border transition-colors ${
               supplier.premium_partner ? 'border-purple-500 bg-purple-50 text-purple-700' : 'border-gray-300 text-gray-600 hover:bg-gray-50'
             }`}>
-            {supplier.premium_partner ? '🟣 Premium Partner' : 'Set Premium Partner'}
+            {supplier.premium_partner ? t('🟣 Premium Partner') : t('Set Premium Partner')}
           </button>
           {/* TTAIEMA catalogue service (paid) */}
           <button
@@ -122,12 +124,12 @@ export default function AdminSupplierDetailPage() {
                 body: JSON.stringify({ active: next }),
               })
               if (res.ok) setSupplier((prev) => prev ? { ...prev, catalogue_service: next } : prev)
-              else alert('Could not update')
+              else alert(t('Could not update'))
             }}
             className={`rounded-md px-3 py-1.5 text-xs font-bold border transition-colors ${
               supplier.catalogue_service ? 'border-green-500 bg-green-50 text-green-700' : 'border-gray-300 text-gray-600 hover:bg-gray-50'
             }`}>
-            {supplier.catalogue_service ? '📊 TTAIEMA Catalogue' : 'Set Catalogue Service'}
+            {supplier.catalogue_service ? t('📊 TTAIEMA Catalogue') : t('Set Catalogue Service')}
           </button>
           {/* TTAIEMA-managed B2B deals (purchase requests routed to Control Center) */}
           <button
@@ -138,12 +140,12 @@ export default function AdminSupplierDetailPage() {
                 body: JSON.stringify({ active: next }),
               })
               if (res.ok) setSupplier((prev) => prev ? { ...prev, managed_deals: next } : prev)
-              else alert('Could not update')
+              else alert(t('Could not update'))
             }}
             className={`rounded-md px-3 py-1.5 text-xs font-bold border transition-colors ${
               supplier.managed_deals ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-gray-300 text-gray-600 hover:bg-gray-50'
             }`}>
-            {supplier.managed_deals ? '🤝 TTAIEMA-managed deals' : 'Set Managed Deals'}
+            {supplier.managed_deals ? t('🤝 TTAIEMA-managed deals') : t('Set Managed Deals')}
           </button>
           <StatusBadge status={status} />
           <div className="flex gap-2">
@@ -156,7 +158,7 @@ export default function AdminSupplierDetailPage() {
                   target === 'SUSPENDED' ? 'border-red-500 text-red-700 hover:bg-red-50' : ''
                 }`}
               >
-                {BUTTON_LABELS[target] ?? target}
+                {t(BUTTON_LABELS[target] ?? target)}
               </button>
             ))}
           </div>
@@ -166,14 +168,14 @@ export default function AdminSupplierDetailPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-1 space-y-4">
           <div className="rounded-xl border bg-card p-4 space-y-3 text-sm">
-            <h2 className="font-semibold">Company Info</h2>
+            <h2 className="font-semibold">{t("Company Info")}</h2>
             {[
               ['Tax ID', supplier.tax_id as string],
               ['VAT Number', supplier.vat_number as string ?? '—'],
               ['Marketplace', supplier.marketplace_context as string],
             ].map(([label, value]) => (
               <div key={label}>
-                <p className="text-xs text-muted-foreground">{label}</p>
+                <p className="text-xs text-muted-foreground">{t(label as string)}</p>
                 <p className="font-medium">{value}</p>
               </div>
             ))}
@@ -181,21 +183,21 @@ export default function AdminSupplierDetailPage() {
         </div>
 
         <div className="lg:col-span-1 space-y-3">
-          <h2 className="font-semibold text-sm">Documents ({docs.length})</h2>
+          <h2 className="font-semibold text-sm">{t("Documents")} ({docs.length})</h2>
           {docs.map((doc) => (
             <div key={doc.id} className="flex items-center justify-between rounded-lg border p-3">
               <div>
                 <p className="text-sm font-medium capitalize">{doc.doc_type.replace(/_/g, ' ')}</p>
                 <p className="text-xs text-muted-foreground">{new Date(doc.uploaded_at).toLocaleDateString()}</p>
               </div>
-              <a href={doc.file_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline">View</a>
+              <a href={doc.file_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline">{t("View")}</a>
             </div>
           ))}
-          {!docs.length && <p className="text-sm text-muted-foreground">No documents uploaded</p>}
+          {!docs.length && <p className="text-sm text-muted-foreground">{t("No documents uploaded")}</p>}
         </div>
 
         <div className="lg:col-span-1 space-y-3">
-          <h2 className="font-semibold text-sm">Audit Trail</h2>
+          <h2 className="font-semibold text-sm">{t("Audit Trail")}</h2>
           {audits.map((a) => (
             <div key={a.id} className="text-xs border-l-2 border-muted pl-3 py-1">
               <div className="flex items-center gap-1">
@@ -206,13 +208,13 @@ export default function AdminSupplierDetailPage() {
               <p className="text-muted-foreground/70 mt-0.5">{new Date(a.created_at).toLocaleString()}</p>
             </div>
           ))}
-          {!audits.length && <p className="text-sm text-muted-foreground">No history</p>}
+          {!audits.length && <p className="text-sm text-muted-foreground">{t("No history")}</p>}
         </div>
       </div>
 
       {(supplier.description as string) && (
         <div className="rounded-xl border bg-card p-4">
-          <h2 className="font-semibold text-sm mb-2">Description</h2>
+          <h2 className="font-semibold text-sm mb-2">{t("Description")}</h2>
           <p className="text-sm text-muted-foreground">{supplier.description as string}</p>
         </div>
       )}
