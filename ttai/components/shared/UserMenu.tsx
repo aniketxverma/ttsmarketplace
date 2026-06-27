@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { useT } from '@/lib/i18n/client'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import {
@@ -28,6 +29,7 @@ const ROLE_LINKS: Record<UserRole, { label: string; href: string }[]> = {
 }
 
 export function UserMenu({ fullName, email, role }: UserMenuProps) {
+  const t = useT()
   const router = useRouter()
 
   async function handleSignOut() {
@@ -62,7 +64,7 @@ export function UserMenu({ fullName, email, role }: UserMenuProps) {
         ))}
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleSignOut} className="text-destructive focus:text-destructive">
-          Sign out
+          {t("Sign out")}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

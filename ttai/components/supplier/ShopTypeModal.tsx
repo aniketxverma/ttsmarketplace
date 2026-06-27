@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useT } from '@/lib/i18n/client'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Building2, ShoppingBag, Check, Loader2, X, Lock } from 'lucide-react'
@@ -11,6 +12,7 @@ import { Building2, ShoppingBag, Check, Loader2, X, Lock } from 'lucide-react'
  * the other / both requires a paid plan.
  */
 export function ShopTypeModal() {
+  const t = useT()
   const router = useRouter()
   const [open, setOpen] = useState(true)
   const [saving, setSaving] = useState<string | null>(null)
@@ -46,7 +48,7 @@ export function ShopTypeModal() {
       </div>
       <p className="font-extrabold text-[#0B1F4D]">{title}</p>
       <p className="text-xs text-gray-500 mt-0.5">{sub}</p>
-      <span className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-green-600"><Check className="w-3.5 h-3.5" /> Free</span>
+      <span className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-green-600"><Check className="w-3.5 h-3.5" /> {t("Free")}</span>
     </button>
   )
 
@@ -55,9 +57,9 @@ export function ShopTypeModal() {
       <div className="relative w-full max-w-lg rounded-3xl bg-white shadow-2xl p-6 sm:p-7">
         <button onClick={dismiss} className="absolute top-4 right-4 text-gray-300 hover:text-gray-600"><X className="w-5 h-5" /></button>
 
-        <p className="text-[11px] font-bold uppercase tracking-widest text-[#F5A623]">Welcome to your shop</p>
-        <h2 className="text-xl font-extrabold text-[#0B1F4D] mt-1">How do you sell?</h2>
-        <p className="text-sm text-gray-500 mt-1">Choose your shop type. <strong>One channel is included free</strong> — selling on the other (or both) needs a paid plan.</p>
+        <p className="text-[11px] font-bold uppercase tracking-widest text-[#F5A623]">{t("Welcome to your shop")}</p>
+        <h2 className="text-xl font-extrabold text-[#0B1F4D] mt-1">{t("How do you sell?")}</h2>
+        <p className="text-sm text-gray-500 mt-1">{t("Choose your shop type.")} <strong>{t("One channel is included free")}</strong> — selling on the other (or both) needs a paid plan.</p>
 
         <div className="flex flex-col sm:flex-row gap-3 mt-5">
           <Card v="wholesale" Icon={Building2} title="B2B / Wholesale" sub="Sell by box, pallet or truck to businesses." />
@@ -66,11 +68,11 @@ export function ShopTypeModal() {
 
         <div className="mt-4 flex items-center justify-between gap-3 flex-wrap">
           <Link href="/pricing" className="inline-flex items-center gap-1.5 text-xs font-bold text-[#F5A623] hover:underline">
-            <Lock className="w-3.5 h-3.5" /> Want to sell on both? Upgrade
+            <Lock className="w-3.5 h-3.5" /> {t("Want to sell on both? Upgrade")}
           </Link>
           <button onClick={dismiss} className="text-xs font-semibold text-gray-400 hover:text-gray-600">I&rsquo;ll decide later</button>
         </div>
-        <p className="text-[11px] text-gray-400 mt-3">You can change this anytime in Settings.</p>
+        <p className="text-[11px] text-gray-400 mt-3">{t("You can change this anytime in Settings.")}</p>
       </div>
     </div>
   )

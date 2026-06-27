@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
+import { useT } from '@/lib/i18n/client'
 import Image from 'next/image'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
@@ -121,6 +122,7 @@ function TypingDots() {
 
 /* ── Main widget ───────────────────────────────────────────────────────────── */
 export function ChatWidget() {
+  const t = useT()
   const [isOpen, setIsOpen] = useState(false)
   const [user, setUser] = useState<UserInfo | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
@@ -253,7 +255,7 @@ export function ChatWidget() {
               <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-green-400 border-2 border-[#0B1F4D]" />
             </div>
             <div>
-              <p className="text-white font-extrabold text-sm leading-none tracking-tight">TTAI Assistant</p>
+              <p className="text-white font-extrabold text-sm leading-none tracking-tight">{t("TTAI Assistant")}</p>
               <div className="flex items-center gap-1.5 mt-0.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-green-400" />
                 <p className="text-white/60 text-[10px]">Online · Global trade guide</p>
@@ -335,7 +337,7 @@ export function ChatWidget() {
         {/* Category chips — only when no conversation yet */}
         {showCategoryChips && (
           <div className="px-4 pt-3 pb-1 flex-shrink-0 bg-white border-t border-gray-100">
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Browse by category</p>
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">{t("Browse by category")}</p>
             <div className="grid grid-cols-3 gap-1.5">
               {CATEGORIES.map((c) => (
                 <button

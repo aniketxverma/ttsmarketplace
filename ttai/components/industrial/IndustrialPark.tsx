@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useT } from '@/lib/i18n/client'
 import Link from 'next/link'
 import {
   Star, X, MapPin, Info, Search, ChevronDown, ShieldCheck,
@@ -184,6 +185,7 @@ function CompanyDrawer({ c, onClose }: { c: Company; onClose: () => void }) {
 export function IndustrialPark({ parkName, parkArea, companyCount, companies }: {
   parkName: string; parkArea: string; companyCount: number; companies: Company[]
 }) {
+  const t = useT()
   const [open, setOpen] = useState<Company | null>(null)
   const [q, setQ] = useState('')
   const [cat, setCat] = useState('')
@@ -198,11 +200,11 @@ export function IndustrialPark({ parkName, parkArea, companyCount, companies }: 
         <div>
           <h2 className="text-xl font-extrabold text-gray-900 flex items-center gap-2">
             {parkName}
-            <span className="rounded-full bg-green-100 text-green-700 text-xs font-bold px-2.5 py-0.5">{companyCount} Companies</span>
+            <span className="rounded-full bg-green-100 text-green-700 text-xs font-bold px-2.5 py-0.5">{companyCount} {t("Companies")}</span>
           </h2>
           <p className="flex items-center gap-1 text-sm text-gray-500 mt-0.5"><MapPin className="w-3.5 h-3.5 text-[#F5A623]" />{parkArea}</p>
         </div>
-        <button className="inline-flex items-center gap-2 rounded-xl border border-gray-200 px-4 py-2 text-sm font-bold text-gray-700 hover:border-[#0B1F4D] transition-colors"><Info className="w-4 h-4" />View Park Information</button>
+        <button className="inline-flex items-center gap-2 rounded-xl border border-gray-200 px-4 py-2 text-sm font-bold text-gray-700 hover:border-[#0B1F4D] transition-colors"><Info className="w-4 h-4" />{t("View Park Information")}</button>
       </div>
 
       {/* Aerial park with company pins */}
@@ -232,16 +234,16 @@ export function IndustrialPark({ parkName, parkArea, companyCount, companies }: 
         <div className="flex flex-wrap items-center gap-2 p-3 bg-white border-t border-gray-100">
           <div className="relative flex-1 min-w-[180px]">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search companies in this park…" className="w-full pl-9 pr-3 py-2 rounded-lg bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:border-[#0B1F4D]/50" />
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("Search companies in this park…")} className="w-full pl-9 pr-3 py-2 rounded-lg bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:border-[#0B1F4D]/50" />
           </div>
           <div className="relative">
             <select value={cat} onChange={(e) => setCat(e.target.value)} className="appearance-none rounded-lg border border-gray-200 pl-3 pr-8 py-2 text-sm font-semibold text-gray-600 bg-white focus:outline-none focus:border-[#0B1F4D]/50">
-              <option value="">All Categories</option>
+              <option value="">{t("All Categories")}</option>
               {allCategories.map((x) => <option key={x} value={x}>{x}</option>)}
             </select>
             <ChevronDown className="w-4 h-4 absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
           </div>
-          {(q || cat) && <button onClick={() => { setQ(''); setCat('') }} className="text-xs font-bold text-[#0B1F4D] hover:underline">Clear</button>}
+          {(q || cat) && <button onClick={() => { setQ(''); setCat('') }} className="text-xs font-bold text-[#0B1F4D] hover:underline">{t("Clear")}</button>}
         </div>
       </div>
 
@@ -254,7 +256,7 @@ export function IndustrialPark({ parkName, parkArea, companyCount, companies }: 
             {filtered.map((c) => <WarehouseCard key={c.id} c={c} onOpen={setOpen} />)}
           </div>
           <div className="text-center">
-            <Link href="/marketplace" className="inline-flex items-center gap-2 rounded-xl bg-[#0B1F4D] hover:bg-[#162d6e] text-white text-sm font-bold px-6 py-2.5 transition-colors">View All Companies in this Park</Link>
+            <Link href="/marketplace" className="inline-flex items-center gap-2 rounded-xl bg-[#0B1F4D] hover:bg-[#162d6e] text-white text-sm font-bold px-6 py-2.5 transition-colors">{t("View All Companies in this Park")}</Link>
           </div>
         </>
       )}

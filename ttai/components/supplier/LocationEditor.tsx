@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useT } from '@/lib/i18n/client'
 import { createClient } from '@/lib/supabase/client'
 import { MapPin, Loader2, Check, Factory } from 'lucide-react'
 import { parksForCity } from '@/lib/industrial-parks'
@@ -22,6 +23,7 @@ interface Initial {
  * the suppliers row directly via RLS).
  */
 export function LocationEditor({ countryId, countryName, initial }: { countryId: string | null; countryName: string; initial: Initial }) {
+  const t = useT()
   const supabase = createClient()
   const [province, setProvince] = useState(initial.province_id ?? '')
   const [city, setCity] = useState(initial.city_id ?? '')
@@ -100,34 +102,34 @@ export function LocationEditor({ countryId, countryName, initial }: { countryId:
   return (
     <div className="rounded-xl border bg-card p-5 space-y-4 max-w-2xl">
       <div>
-        <h2 className="font-semibold flex items-center gap-2"><MapPin className="w-4 h-4" /> Local Delivery Area</h2>
-        <p className="text-sm text-muted-foreground mt-0.5">Set where you sell. Your products appear in the Retail Shop for buyers in this area.</p>
+        <h2 className="font-semibold flex items-center gap-2"><MapPin className="w-4 h-4" /> {t("Local Delivery Area")}</h2>
+        <p className="text-sm text-muted-foreground mt-0.5">{t("Set where you sell. Your products appear in the Retail Shop for buyers in this area.")}</p>
       </div>
 
       <div className="grid sm:grid-cols-2 gap-4">
         <div className="space-y-1">
-          <label className="text-sm font-medium">Country</label>
+          <label className="text-sm font-medium">{t("Country")}</label>
           <input value={countryName} disabled className="w-full rounded-md border border-input bg-gray-50 px-3 py-2 text-sm text-gray-500" />
         </div>
         {/* Province — pick or add a new one (auto-created on save) */}
         <div className="space-y-1">
-          <label className="text-sm font-medium">Province</label>
+          <label className="text-sm font-medium">{t("Province")}</label>
           <select value={province}
             onChange={(e) => { const v = e.target.value; setProvince(v); setCity(''); setTown(''); setHood(''); if (v !== '__new__') setNewProvince('') }}
             className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring">
-            <option value="">Select…</option>
+            <option value="">{t("Select…")}</option>
             {provinces.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
             <option value="__new__">➕ Add new province…</option>
           </select>
           {province === '__new__' && (
-            <input value={newProvince} onChange={(e) => setNewProvince(e.target.value)} placeholder="New province name — e.g. Granada"
+            <input value={newProvince} onChange={(e) => setNewProvince(e.target.value)} placeholder={t("New province name — e.g. Granada")}
               className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
           )}
         </div>
 
         {/* City / District — pick or add a new one */}
         <div className="space-y-1">
-          <label className="text-sm font-medium">City / District</label>
+          <label className="text-sm font-medium">{t("City / District")}</label>
           <select value={city} disabled={!province}
             onChange={(e) => { const v = e.target.value; setCity(v); setTown(''); setHood(''); if (v !== '__new__') setNewCity('') }}
             className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring disabled:bg-gray-50 disabled:text-gray-300">
@@ -136,33 +138,33 @@ export function LocationEditor({ countryId, countryName, initial }: { countryId:
             {province && <option value="__new__">➕ Add new city / district…</option>}
           </select>
           {city === '__new__' && (
-            <input value={newCity} onChange={(e) => setNewCity(e.target.value)} placeholder="New city / district — e.g. Albaicín"
+            <input value={newCity} onChange={(e) => setNewCity(e.target.value)} placeholder={t("New city / district — e.g. Albaicín")}
               className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
           )}
         </div>
 
         {/* Industrial Park — which zone the company sits in (TTAI Industrial Park) */}
         <div className="space-y-1 sm:col-span-2">
-          <label className="text-sm font-medium flex items-center gap-1.5"><Factory className="w-3.5 h-3.5 text-[#0B1F4D]" /> Industrial Park / Zone</label>
+          <label className="text-sm font-medium flex items-center gap-1.5"><Factory className="w-3.5 h-3.5 text-[#0B1F4D]" /> {t("Industrial Park / Zone")}</label>
           <select value={park} disabled={!city || city === '__new__'} onChange={(e) => setPark(e.target.value)}
             className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring disabled:bg-gray-50 disabled:text-gray-300">
             <option value="">{city && city !== '__new__' ? 'Not in an industrial park' : 'Select a city first'}</option>
             {parkOptions.map((p) => <option key={p.slug} value={p.slug}>{p.name}</option>)}
           </select>
-          <p className="text-[11px] text-muted-foreground">Places your company inside this zone on the TTAI Industrial Park map.</p>
+          <p className="text-[11px] text-muted-foreground">{t("Places your company inside this zone on the TTAI Industrial Park map.")}</p>
         </div>
         <Select label="Town" value={town} options={towns} disabled={!city} onChange={(v) => { setTown(v); setHood('') }} />
         <Select label="Neighborhood" value={hood} options={hoods} disabled={!town} onChange={setHood} />
         <div className="space-y-1">
-          <label className="text-sm font-medium">Delivery radius (km) <span className="text-muted-foreground font-normal">optional</span></label>
-          <input type="number" min={0} value={radius} onChange={(e) => setRadius(e.target.value)} placeholder="e.g. 15"
+          <label className="text-sm font-medium">{t("Delivery radius (km)")} <span className="text-muted-foreground font-normal">{t("optional")}</span></label>
+          <input type="number" min={0} value={radius} onChange={(e) => setRadius(e.target.value)} placeholder={t("e.g. 15")}
             className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
         </div>
       </div>
 
       <button onClick={save} disabled={saving}
         className="inline-flex items-center gap-2 rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm font-medium hover:bg-primary/90 disabled:opacity-50">
-        {saving ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving…</> : saved ? <><Check className="w-4 h-4" /> Saved</> : 'Save location'}
+        {saving ? <><Loader2 className="w-4 h-4 animate-spin" /> {t("Saving…")}</> : saved ? <><Check className="w-4 h-4" /> {t("Saved")}</> : 'Save location'}
       </button>
     </div>
   )

@@ -1,12 +1,14 @@
 'use client'
 
 import { useState } from 'react'
+import { useT } from '@/lib/i18n/client'
 import { useRouter } from 'next/navigation'
 import { Send, CheckCircle2, Lock } from 'lucide-react'
 
 /** Submit a broker deal — optional TTAIEMA invoicing. Locked until the broker has
  *  at least one supplier + one buyer reference (mandatory rule). */
 export function DealForm({ canPost }: { canPost: boolean }) {
+  const t = useT()
   const router = useRouter()
   const [sending, setSending] = useState(false)
   const [done, setDone] = useState(false)
@@ -35,9 +37,9 @@ export function DealForm({ canPost }: { canPost: boolean }) {
     return (
       <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 text-center">
         <Lock className="w-8 h-8 text-amber-600 mx-auto" />
-        <p className="font-bold text-amber-900 mt-2">Deals are locked</p>
-        <p className="text-sm text-amber-800 mt-1">Register at least one <strong>Supplier</strong> and one <strong>Buyer</strong> reference first.</p>
-        <a href="/broker/network" className="inline-flex items-center gap-1.5 rounded-xl bg-[#0B1F4D] text-white px-5 py-2.5 text-sm font-bold mt-3 hover:bg-[#162d6e]">Go to My Network</a>
+        <p className="font-bold text-amber-900 mt-2">{t("Deals are locked")}</p>
+        <p className="text-sm text-amber-800 mt-1">{t("Register at least one")} <strong>{t("Supplier")}</strong> {t("and one")} <strong>{t("Buyer")}</strong> {t("reference first.")}</p>
+        <a href="/broker/network" className="inline-flex items-center gap-1.5 rounded-xl bg-[#0B1F4D] text-white px-5 py-2.5 text-sm font-bold mt-3 hover:bg-[#162d6e]">{t("Go to My Network")}</a>
       </div>
     )
   }
@@ -46,9 +48,9 @@ export function DealForm({ canPost }: { canPost: boolean }) {
     return (
       <div className="rounded-2xl border border-green-100 bg-white p-6 text-center">
         <CheckCircle2 className="w-10 h-10 text-green-500 mx-auto" />
-        <p className="mt-2 font-extrabold text-[#0B1F4D]">Deal submitted</p>
-        <p className="text-sm text-gray-500 mt-1">It’s in your commission history. If you asked for invoicing, our team will follow up.</p>
-        <button onClick={() => setDone(false)} className="mt-3 text-sm font-bold text-[#0B1F4D] underline">Submit another</button>
+        <p className="mt-2 font-extrabold text-[#0B1F4D]">{t("Deal submitted")}</p>
+        <p className="text-sm text-gray-500 mt-1">{t("It’s in your commission history. If you asked for invoicing, our team will follow up.")}</p>
+        <button onClick={() => setDone(false)} className="mt-3 text-sm font-bold text-[#0B1F4D] underline">{t("Submit another")}</button>
       </div>
     )
   }
@@ -58,24 +60,24 @@ export function DealForm({ canPost }: { canPost: boolean }) {
 
   return (
     <form onSubmit={onSubmit} className="rounded-2xl border border-gray-200 bg-white p-6">
-      <h3 className="text-lg font-extrabold text-[#0B1F4D]">Submit a deal</h3>
-      <p className="text-sm text-gray-500 mt-0.5">For commission tracking — tick the box to have TTAIEMA invoice on your behalf.</p>
+      <h3 className="text-lg font-extrabold text-[#0B1F4D]">{t("Submit a deal")}</h3>
+      <p className="text-sm text-gray-500 mt-0.5">{t("For commission tracking — tick the box to have TTAIEMA invoice on your behalf.")}</p>
 
       <div className="grid sm:grid-cols-2 gap-3 mt-4">
-        <label className="block"><span className={lbl}>Supplier reference *</span><input name="supplierRef" required className={input} placeholder="Supplier name or Broker ref" /></label>
-        <label className="block"><span className={lbl}>Buyer reference *</span><input name="buyerRef" required className={input} placeholder="Buyer / client name" /></label>
-        <label className="block sm:col-span-2"><span className={lbl}>Product *</span><input name="product" required className={input} placeholder="e.g. 2 pallets mixed electronics returns" /></label>
-        <label className="block"><span className={lbl}>Quantity</span><input name="quantity" className={input} placeholder="e.g. 2 pallets" /></label>
-        <label className="block"><span className={lbl}>Price</span>
+        <label className="block"><span className={lbl}>{t("Supplier reference *")}</span><input name="supplierRef" required className={input} placeholder={t("Supplier name or Broker ref")} /></label>
+        <label className="block"><span className={lbl}>{t("Buyer reference *")}</span><input name="buyerRef" required className={input} placeholder={t("Buyer / client name")} /></label>
+        <label className="block sm:col-span-2"><span className={lbl}>{t("Product *")}</span><input name="product" required className={input} placeholder={t("e.g. 2 pallets mixed electronics returns")} /></label>
+        <label className="block"><span className={lbl}>{t("Quantity")}</span><input name="quantity" className={input} placeholder={t("e.g. 2 pallets")} /></label>
+        <label className="block"><span className={lbl}>{t("Price")}</span>
           <div className="flex gap-2">
             <select name="currencyCode" className="rounded-xl border border-gray-200 px-2 text-sm bg-white">{['EUR', 'USD', 'GBP'].map((c) => <option key={c}>{c}</option>)}</select>
             <input name="price" type="number" step="0.01" min="0" className={input} placeholder="0.00" />
           </div></label>
-        <label className="block"><span className={lbl}>Agreed commission %</span><input name="commissionPct" type="number" step="0.1" min="0" max="100" className={input} placeholder="e.g. 5" /></label>
-        <label className="block sm:col-span-2"><span className={lbl}>Notes</span><textarea name="notes" rows={2} className={input} /></label>
+        <label className="block"><span className={lbl}>{t("Agreed commission %")}</span><input name="commissionPct" type="number" step="0.1" min="0" max="100" className={input} placeholder={t("e.g. 5")} /></label>
+        <label className="block sm:col-span-2"><span className={lbl}>{t("Notes")}</span><textarea name="notes" rows={2} className={input} /></label>
         <label className="sm:col-span-2 flex items-start gap-2.5 rounded-xl border border-gray-200 bg-gray-50 p-3 cursor-pointer">
           <input name="needsInvoicing" type="checkbox" className="mt-0.5 w-4 h-4 accent-[#0B1F4D]" />
-          <span className="text-xs text-gray-600"><span className="font-bold text-[#0B1F4D]">Use TTAIEMA invoicing service</span><br />I don’t want to invoice directly — TTAIEMA issues the invoice and handles the commission per platform rules.</span>
+          <span className="text-xs text-gray-600"><span className="font-bold text-[#0B1F4D]">{t("Use TTAIEMA invoicing service")}</span><br />I don’t want to invoice directly — TTAIEMA issues the invoice and handles the commission per platform rules.</span>
         </label>
       </div>
 

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef } from 'react'
+import { useT } from '@/lib/i18n/client'
 import Image from 'next/image'
 import { Upload, Loader2, X } from 'lucide-react'
 
@@ -17,6 +18,7 @@ export function ImageUpload({
   aspect?: 'square' | 'wide'
   label?: string
 }) {
+  const t = useT()
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
@@ -65,7 +67,7 @@ export function ImageUpload({
         {value && (
           <button type="button" onClick={() => fileRef.current?.click()} disabled={uploading}
             className="absolute inset-0 bg-black/45 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs font-bold gap-1.5">
-            {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Upload className="w-4 h-4" /> Replace</>}
+            {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Upload className="w-4 h-4" /> {t("Replace")}</>}
           </button>
         )}
       </div>

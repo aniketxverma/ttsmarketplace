@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { useT } from '@/lib/i18n/client'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 
@@ -31,6 +32,7 @@ export function ChatThread({
   backLabel = 'Messages',
   orderHref,
 }: Props) {
+  const t = useT()
   const [messages, setMessages] = useState<Message[]>(initialMessages)
   const [input, setInput] = useState('')
   const [sending, setSending] = useState(false)
@@ -158,7 +160,7 @@ export function ChatThread({
             href={orderHref}
             className="flex-shrink-0 text-xs font-semibold text-[#0B1F4D] border border-[#0B1F4D]/20 rounded-lg px-3 py-1.5 hover:bg-[#0B1F4D]/5 transition-colors"
           >
-            Order
+            {t("Order")}
           </Link>
         )}
       </div>
@@ -175,8 +177,8 @@ export function ChatThread({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
               </svg>
             </div>
-            <p className="font-semibold text-gray-600 text-sm">Start the conversation</p>
-            <p className="text-xs text-gray-400 mt-1">Send your first message to {otherPartyName}</p>
+            <p className="font-semibold text-gray-600 text-sm">{t("Start the conversation")}</p>
+            <p className="text-xs text-gray-400 mt-1">{t("Send your first message to")} {otherPartyName}</p>
           </div>
         )}
 

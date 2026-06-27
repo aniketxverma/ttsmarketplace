@@ -1,6 +1,7 @@
 'use client'
 
 import { useCart } from '@/lib/cart/CartContext'
+import { useT } from '@/lib/i18n/client'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useEffect } from 'react'
@@ -10,6 +11,7 @@ function fmt(cents: number, currency: string) {
 }
 
 export function CartDrawer() {
+  const t = useT()
   const { items, isOpen, closeCart, removeItem, setQty, totalCents, clearCart } = useCart()
 
   // Lock body scroll when drawer open
@@ -35,7 +37,7 @@ export function CartDrawer() {
             <svg className="w-5 h-5 text-[#0B1F4D]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
             </svg>
-            <h2 className="font-bold text-[#0B1F4D] text-lg">Your Cart</h2>
+            <h2 className="font-bold text-[#0B1F4D] text-lg">{t("Your Cart")}</h2>
             {items.length > 0 && (
               <span className="bg-[#0B1F4D] text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
                 {items.length}
@@ -59,14 +61,14 @@ export function CartDrawer() {
                 </svg>
               </div>
               <div>
-                <p className="font-semibold text-gray-700">Your cart is empty</p>
-                <p className="text-sm text-gray-400 mt-1">Browse products and add items to get started</p>
+                <p className="font-semibold text-gray-700">{t("Your cart is empty")}</p>
+                <p className="text-sm text-gray-400 mt-1">{t("Browse products and add items to get started")}</p>
               </div>
               <button
                 onClick={closeCart}
                 className="mt-2 rounded-lg bg-[#0B1F4D] text-white px-6 py-2.5 text-sm font-semibold hover:bg-[#162d6e] transition-colors"
               >
-                Browse Marketplace
+                {t("Browse Marketplace")}
               </button>
             </div>
           ) : (
@@ -143,27 +145,27 @@ export function CartDrawer() {
         {items.length > 0 && (
           <div className="border-t bg-gray-50 p-5 space-y-4">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-500">Subtotal ({items.reduce((s, i) => s + i.quantity, 0)} items)</span>
+              <span className="text-sm text-gray-500">{t("Subtotal (")}{items.reduce((s, i) => s + i.quantity, 0)} {t("items)")}</span>
               <span className="font-bold text-[#0B1F4D] text-lg">
                 {fmt(totalCents, items[0]?.currency_code ?? 'EUR')}
               </span>
             </div>
-            <p className="text-xs text-gray-400">Shipping and VAT calculated at checkout</p>
+            <p className="text-xs text-gray-400">{t("Shipping and VAT calculated at checkout")}</p>
 
             <Link
               href="/checkout"
               onClick={closeCart}
               className="block w-full rounded-xl bg-[#0B1F4D] text-white text-center py-3.5 text-sm font-bold hover:bg-[#162d6e] transition-colors hover:shadow-lg"
             >
-              Proceed to Checkout →
+              {t("Proceed to Checkout →")}
             </Link>
 
             <div className="flex justify-between text-xs">
               <button onClick={closeCart} className="text-gray-400 hover:text-gray-600 transition-colors">
-                Continue Shopping
+                {t("Continue Shopping")}
               </button>
               <button onClick={() => { clearCart(); }} className="text-red-400 hover:text-red-600 transition-colors">
-                Clear Cart
+                {t("Clear Cart")}
               </button>
             </div>
           </div>

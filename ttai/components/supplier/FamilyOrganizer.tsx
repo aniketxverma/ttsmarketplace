@@ -1,12 +1,14 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import { useT } from '@/lib/i18n/client'
 import { useRouter } from 'next/navigation'
 import { Check, Loader2, Layers, X, Tag } from 'lucide-react'
 
 type Item = { id: string; name: string; brand: string | null; line: string | null; category: string | null; thumb: string | null }
 
 export function FamilyOrganizer({ items: initial }: { items: Item[] }) {
+  const t = useT()
   const router = useRouter()
   const [items, setItems] = useState<Item[]>(initial)
   const [sel, setSel] = useState<Set<string>>(new Set())
@@ -55,28 +57,28 @@ export function FamilyOrganizer({ items: initial }: { items: Item[] }) {
       <div className="sticky top-16 z-10 rounded-2xl border border-gray-200 bg-white shadow-sm p-4 space-y-3">
         <div className="flex flex-wrap items-end gap-3">
           <div className="flex-1 min-w-[220px]">
-            <label className="block text-xs font-bold text-gray-500 mb-1">Family / product line</label>
+            <label className="block text-xs font-bold text-gray-500 mb-1">{t("Family / product line")}</label>
             <input list="line-options" value={line} onChange={(e) => setLine(e.target.value)}
-              placeholder="e.g. iPhone, Samsung, Xiaomi"
+              placeholder={t("e.g. iPhone, Samsung, Xiaomi")}
               className="w-full rounded-xl border border-gray-200 px-3.5 py-2.5 text-sm outline-none focus:border-[#0B1F4D]" />
             <datalist id="line-options">{existingLines.map((l) => <option key={l} value={l} />)}</datalist>
           </div>
           <button onClick={() => apply(line.trim() || null)} disabled={!line.trim() || sel.size === 0 || !!busy}
             className="inline-flex items-center gap-2 rounded-xl bg-[#0B1F4D] text-white px-5 py-2.5 text-sm font-bold hover:bg-[#162d6e] transition-colors disabled:opacity-50">
             {busy === 'apply' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Layers className="w-4 h-4" />}
-            Assign to {sel.size || ''} selected
+            {t("Assign to")} {sel.size || ''} {t("selected")}
           </button>
           <button onClick={() => apply(null)} disabled={sel.size === 0 || !!busy}
             className="inline-flex items-center gap-2 rounded-xl border border-gray-200 text-gray-600 px-4 py-2.5 text-sm font-bold hover:border-gray-300 transition-colors disabled:opacity-50">
             {busy === 'clear' ? <Loader2 className="w-4 h-4 animate-spin" /> : <X className="w-4 h-4" />}
-            Remove from family
+            {t("Remove from family")}
           </button>
         </div>
 
         {/* Quick-select by brand */}
         {brands.length > 0 && (
           <div className="flex flex-wrap items-center gap-1.5 pt-1">
-            <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wide mr-1">Quick select:</span>
+            <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wide mr-1">{t("Quick select:")}</span>
             {brands.map((b) => {
               const ids = items.filter((i) => i.brand === b).map((i) => i.id)
               const allOn = ids.length > 0 && ids.every((id) => sel.has(id))
@@ -88,7 +90,7 @@ export function FamilyOrganizer({ items: initial }: { items: Item[] }) {
               )
             })}
             {sel.size > 0 && (
-              <button onClick={() => setSel(new Set())} className="text-[11px] font-bold text-red-600 hover:underline ml-1">Clear ({sel.size})</button>
+              <button onClick={() => setSel(new Set())} className="text-[11px] font-bold text-red-600 hover:underline ml-1">{t("Clear (")}{sel.size})</button>
             )}
           </div>
         )}

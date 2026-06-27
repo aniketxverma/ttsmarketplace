@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useT } from '@/lib/i18n/client'
 import { X, Send, MessageCircle, Reply } from 'lucide-react'
 import { useAuthGate } from '@/components/shared/AuthGate'
 
@@ -9,6 +10,7 @@ type Opp = { title: string; company_name?: string | null; contact_email?: string
 /** Interactive "Respond" to a business opportunity — opens a quick message modal
  *  (sign-in required) that composes an email or WhatsApp to the poster. */
 export function OpportunityRespond({ o }: { o: Opp }) {
+  const t = useT()
   const [open, setOpen] = useState(false)
   const { gate, modal } = useAuthGate({ title: 'Sign in to respond', subtitle: 'Create a free account to contact companies about their opportunities.' })
   const wa = o.contact_whatsapp ? o.contact_whatsapp.replace(/\D/g, '') : null
@@ -17,7 +19,7 @@ export function OpportunityRespond({ o }: { o: Opp }) {
     <>
       <button onClick={() => gate(() => setOpen(true))}
         className="inline-flex items-center gap-1.5 rounded-lg bg-[#0B1F4D] text-white px-3.5 py-1.5 text-xs font-bold hover:bg-[#162d6e] transition-colors">
-        <Reply className="w-3.5 h-3.5" /> Respond
+        <Reply className="w-3.5 h-3.5" /> {t("Respond")}
       </button>
       {modal}
       {open && <RespondModal o={o} wa={wa} onClose={() => setOpen(false)} />}

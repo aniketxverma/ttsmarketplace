@@ -1,9 +1,11 @@
 'use client'
 
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
+import { useT } from '@/lib/i18n/client'
 import { useCallback } from 'react'
 
 export function SearchBar({ defaultValue }: { defaultValue?: string }) {
+  const t = useT()
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -26,11 +28,11 @@ export function SearchBar({ defaultValue }: { defaultValue?: string }) {
         name="q"
         type="search"
         defaultValue={defaultValue}
-        placeholder="Search products..."
+        placeholder={t("Search products...")}
         className="flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
       />
       <button type="submit" className="rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm font-medium hover:bg-primary/90">
-        Search
+        {t("Search")}
       </button>
     </form>
   )

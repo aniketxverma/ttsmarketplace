@@ -1,11 +1,13 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useT } from '@/lib/i18n/client'
 import Link from 'next/link'
 import { Rocket } from 'lucide-react'
 
 /** Live countdown to Opening Day, shown on the homepage during pre-opening. */
 export function LaunchCountdown({ target }: { target: string }) {
+  const t = useT()
   const [now, setNow] = useState<number | null>(null)
 
   useEffect(() => {
@@ -36,9 +38,9 @@ export function LaunchCountdown({ target }: { target: string }) {
 
       <div className="relative max-w-4xl mx-auto text-center">
         <div className="inline-flex items-center gap-2 rounded-full bg-[#F5A623]/15 border border-[#F5A623]/30 text-[#F5A623] px-4 py-1.5 text-xs font-bold uppercase tracking-widest mb-4">
-          <span className="w-2 h-2 rounded-full bg-[#F5A623] animate-pulse" /> Opening Soon
+          <span className="w-2 h-2 rounded-full bg-[#F5A623] animate-pulse" /> {t("Opening Soon")}
         </div>
-        <h2 className="text-2xl sm:text-3xl font-extrabold text-white">The marketplace opens in</h2>
+        <h2 className="text-2xl sm:text-3xl font-extrabold text-white">{t("The marketplace opens in")}</h2>
 
         <div className="mt-7 flex items-stretch justify-center gap-2.5 sm:gap-4">
           {units.map((u, i) => (
@@ -59,7 +61,7 @@ export function LaunchCountdown({ target }: { target: string }) {
         </p>
         <Link href="/register"
           className="inline-flex items-center gap-2 rounded-xl bg-[#F5A623] hover:bg-[#fbb93a] text-[#0B1F4D] px-7 py-3 text-sm font-extrabold transition-colors mt-5">
-          <Rocket className="w-4 h-4" /> Reserve your shop
+          <Rocket className="w-4 h-4" /> {t("Reserve your shop")}
         </Link>
       </div>
     </section>

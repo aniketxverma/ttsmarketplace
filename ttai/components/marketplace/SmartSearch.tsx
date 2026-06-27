@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { useT } from '@/lib/i18n/client'
 import { useRouter } from 'next/navigation'
 import { Search, Loader2, Sparkles, Tag, Package, Store, LayoutGrid } from 'lucide-react'
 
@@ -13,6 +14,7 @@ type Sug = {
 const EMPTY: Sug = { categories: [], brands: [], products: [], suppliers: [] }
 
 export function SmartSearch({ defaultValue = '' }: { defaultValue?: string }) {
+  const t = useT()
   const router = useRouter()
   const [q, setQ] = useState(defaultValue)
   const [open, setOpen] = useState(false)
@@ -51,27 +53,27 @@ export function SmartSearch({ defaultValue = '' }: { defaultValue?: string }) {
           <Search className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             value={q} onChange={(e) => setQ(e.target.value)} onFocus={() => q.trim() && setOpen(true)}
-            placeholder="Search products, brands, categories or suppliers…"
+            placeholder={t("Search products, brands, categories or suppliers…")}
             className="w-full pl-12 pr-28 py-3.5 rounded-2xl border border-gray-200 bg-white text-sm focus:outline-none focus:border-[#0B1F4D] focus:ring-2 focus:ring-[#0B1F4D]/15 shadow-sm"
           />
           <span className="absolute right-24 top-1/2 -translate-y-1/2 hidden sm:inline-flex items-center gap-1 text-[10px] font-bold text-[#7c3aed] bg-[#7c3aed]/10 px-2 py-0.5 rounded-full"><Sparkles className="w-3 h-3" /> AI</span>
-          <button type="submit" className="absolute right-2 top-1/2 -translate-y-1/2 rounded-xl bg-[#0B1F4D] text-white px-4 py-2 text-sm font-bold hover:bg-[#162d6e] transition-colors">Search</button>
+          <button type="submit" className="absolute right-2 top-1/2 -translate-y-1/2 rounded-xl bg-[#0B1F4D] text-white px-4 py-2 text-sm font-bold hover:bg-[#162d6e] transition-colors">{t("Search")}</button>
         </div>
       </form>
 
       {open && q.trim() && (
         <div className="absolute z-50 mt-2 w-full rounded-2xl border border-gray-100 bg-white shadow-2xl overflow-hidden max-h-[70vh] overflow-y-auto">
           {loading && !has ? (
-            <div className="p-6 text-center text-sm text-gray-400"><Loader2 className="w-5 h-5 animate-spin mx-auto mb-2" />Searching…</div>
+            <div className="p-6 text-center text-sm text-gray-400"><Loader2 className="w-5 h-5 animate-spin mx-auto mb-2" />{t("Searching…")}</div>
           ) : !has ? (
-            <div className="p-6 text-center text-sm text-gray-400">No matches. Press Enter to search anyway.</div>
+            <div className="p-6 text-center text-sm text-gray-400">{t("No matches. Press Enter to search anyway.")}</div>
           ) : (
             <div className="py-2">
               {sug.categories.length > 0 && (
                 <Group icon={<LayoutGrid className="w-3.5 h-3.5" />} label="Categories">
                   {sug.categories.map((c) => (
                     <button key={c.slug} onClick={() => go(`/marketplace?category=${c.slug}`)} className="w-full flex items-center gap-2.5 px-4 py-2 hover:bg-gray-50 text-left">
-                      <LayoutGrid className="w-4 h-4 text-gray-400" /><span className="text-sm font-semibold text-gray-700">{c.name}</span>{c.isSub && <span className="text-[10px] text-gray-400">subcategory</span>}
+                      <LayoutGrid className="w-4 h-4 text-gray-400" /><span className="text-sm font-semibold text-gray-700">{c.name}</span>{c.isSub && <span className="text-[10px] text-gray-400">{t("subcategory")}</span>}
                     </button>
                   ))}
                 </Group>
@@ -95,7 +97,7 @@ export function SmartSearch({ defaultValue = '' }: { defaultValue?: string }) {
                         {p.img ? (/* eslint-disable-next-line @next/next/no-img-element */<img src={p.img} alt="" className="w-full h-full object-contain p-1" />) : <Package className="w-4 h-4 text-gray-300" />}
                       </div>
                       <span className="flex-1 min-w-0"><span className="block text-sm font-medium text-gray-700 truncate">{p.name}</span>{p.brand && <span className="block text-[11px] text-gray-400">{p.brand}</span>}</span>
-                      <span className="text-sm font-extrabold text-[#0B1F4D] flex-shrink-0">{p.price > 0 ? money(p.price, p.currency) : <span className="text-violet-700 text-xs">On request</span>}</span>
+                      <span className="text-sm font-extrabold text-[#0B1F4D] flex-shrink-0">{p.price > 0 ? money(p.price, p.currency) : <span className="text-violet-700 text-xs">{t("On request")}</span>}</span>
                     </button>
                   ))}
                 </Group>

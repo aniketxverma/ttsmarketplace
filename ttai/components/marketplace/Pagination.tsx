@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { useT } from '@/lib/i18n/client'
 import { usePathname, useSearchParams } from 'next/navigation'
 import { cn } from '@/lib/utils'
 
@@ -10,6 +11,7 @@ interface PaginationProps {
 }
 
 export function Pagination({ page, totalPages }: PaginationProps) {
+  const t = useT()
   const pathname = usePathname()
   const searchParams = useSearchParams()
 
@@ -25,7 +27,7 @@ export function Pagination({ page, totalPages }: PaginationProps) {
     <div className="flex items-center justify-center gap-2 mt-8">
       {page > 1 && (
         <Link href={buildHref(page - 1)} className="rounded-md border px-3 py-1.5 text-sm hover:bg-accent">
-          Previous
+          {t("Previous")}
         </Link>
       )}
       {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
@@ -45,7 +47,7 @@ export function Pagination({ page, totalPages }: PaginationProps) {
       })}
       {page < totalPages && (
         <Link href={buildHref(page + 1)} className="rounded-md border px-3 py-1.5 text-sm hover:bg-accent">
-          Next
+          {t("Next")}
         </Link>
       )}
     </div>

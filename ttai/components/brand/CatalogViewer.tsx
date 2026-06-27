@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import { useT } from '@/lib/i18n/client'
 import { X, Search, Download, Loader2, Table2, ChevronLeft, ChevronRight } from 'lucide-react'
 
 const PAGE_SIZE = 25
@@ -9,6 +10,7 @@ const CAT_RE = /^(category|categoría|categoria|familia|family|cat|tipo|type|sec
 // In-browser Excel/CSV catalogue viewer: sheet tabs, auto category tabs, search,
 // pagination and category/filtered downloads. Parses client-side with SheetJS.
 export function CatalogViewer({ fileUrl, fileName, onClose }: { fileUrl: string; fileName: string; onClose: () => void }) {
+  const t = useT()
   const [wb, setWb] = useState<any>(null)
   const [xlsx, setXlsx] = useState<any>(null)
   const [error, setError] = useState<string | null>(null)
@@ -75,7 +77,7 @@ export function CatalogViewer({ fileUrl, fileName, onClose }: { fileUrl: string;
             <Table2 className="w-5 h-5 text-[#F5A623] flex-shrink-0" />
             <div className="min-w-0">
               <p className="font-extrabold text-sm truncate">{fileName}</p>
-              <p className="text-[11px] text-white/60">{rows.length} products{categories.length ? ` · ${categories.length} categories` : ''}</p>
+              <p className="text-[11px] text-white/60">{rows.length} {t("products")}{categories.length ? ` · ${categories.length} categories` : ''}</p>
             </div>
           </div>
           <button onClick={onClose} className="w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center flex-shrink-0"><X className="w-4 h-4" /></button>
@@ -85,9 +87,9 @@ export function CatalogViewer({ fileUrl, fileName, onClose }: { fileUrl: string;
         <div className="flex flex-wrap items-center gap-2 px-4 py-2.5 border-b border-gray-100 flex-shrink-0">
           <div className="relative flex-1 min-w-[180px]">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name, SKU, brand…" className="w-full pl-9 pr-3 py-2 rounded-lg bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:border-[#0B1F4D]/50" />
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("Search name, SKU, brand…")} className="w-full pl-9 pr-3 py-2 rounded-lg bg-gray-50 border border-gray-200 text-sm focus:outline-none focus:border-[#0B1F4D]/50" />
           </div>
-          <a href={fileUrl} download className="inline-flex items-center gap-1.5 rounded-lg bg-[#0B1F4D] text-white px-3 py-2 text-xs font-bold hover:bg-[#162d6e]"><Download className="w-4 h-4" /> Full Excel</a>
+          <a href={fileUrl} download className="inline-flex items-center gap-1.5 rounded-lg bg-[#0B1F4D] text-white px-3 py-2 text-xs font-bold hover:bg-[#162d6e]"><Download className="w-4 h-4" /> {t("Full Excel")}</a>
           <button onClick={() => downloadFiltered(cat || 'filtered')} className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-2 text-xs font-bold text-gray-700 hover:border-[#0B1F4D]"><Download className="w-4 h-4" /> {cat ? 'Category' : 'Filtered'}</button>
         </div>
 
@@ -103,7 +105,7 @@ export function CatalogViewer({ fileUrl, fileName, onClose }: { fileUrl: string;
         {/* Category tabs */}
         {categories.length > 0 && (
           <div className="flex gap-1.5 px-4 py-2 overflow-x-auto flex-shrink-0 border-b border-gray-100" style={{ scrollbarWidth: 'none' }}>
-            <button onClick={() => setCat('')} className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap ${!cat ? 'bg-[#0B1F4D] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>All ({rows.length})</button>
+            <button onClick={() => setCat('')} className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap ${!cat ? 'bg-[#0B1F4D] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>{t("All (")}{rows.length})</button>
             {categories.map((c) => (
               <button key={c} onClick={() => setCat(c)} className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap ${cat === c ? 'bg-[#F5A623] text-[#0B1F4D]' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>{c}</button>
             ))}
@@ -115,7 +117,7 @@ export function CatalogViewer({ fileUrl, fileName, onClose }: { fileUrl: string;
           {error ? (
             <div className="p-10 text-center text-gray-400">{error}</div>
           ) : !wb ? (
-            <div className="p-10 text-center text-gray-400"><Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />Loading catalogue…</div>
+            <div className="p-10 text-center text-gray-400"><Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />{t("Loading catalogue…")}</div>
           ) : (
             <table className="w-full text-sm border-collapse">
               <thead className="sticky top-0 bg-gray-50 z-10">
@@ -127,7 +129,7 @@ export function CatalogViewer({ fileUrl, fileName, onClose }: { fileUrl: string;
                     {headers.map((_, ci) => <td key={ci} className="px-3 py-2 text-gray-700 whitespace-nowrap max-w-[280px] truncate">{String(r[ci] ?? '')}</td>)}
                   </tr>
                 ))}
-                {view.length === 0 && <tr><td colSpan={headers.length || 1} className="px-3 py-10 text-center text-gray-400">No rows match.</td></tr>}
+                {view.length === 0 && <tr><td colSpan={headers.length || 1} className="px-3 py-10 text-center text-gray-400">{t("No rows match.")}</td></tr>}
               </tbody>
             </table>
           )}
@@ -135,10 +137,10 @@ export function CatalogViewer({ fileUrl, fileName, onClose }: { fileUrl: string;
 
         {/* Pagination */}
         <div className="flex items-center justify-between px-4 py-2.5 border-t border-gray-100 flex-shrink-0 text-xs text-gray-500">
-          <span>{filtered.length} results{cat ? ` in ${cat}` : ''}</span>
+          <span>{filtered.length} {t("results")}{cat ? ` in ${cat}` : ''}</span>
           <div className="flex items-center gap-2">
             <button onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={page === 0} className="w-7 h-7 rounded-lg border border-gray-200 flex items-center justify-center disabled:opacity-40 hover:border-[#0B1F4D]"><ChevronLeft className="w-4 h-4" /></button>
-            <span className="font-bold">Page {page + 1} / {pages}</span>
+            <span className="font-bold">{t("Page")} {page + 1} / {pages}</span>
             <button onClick={() => setPage((p) => Math.min(pages - 1, p + 1))} disabled={page >= pages - 1} className="w-7 h-7 rounded-lg border border-gray-200 flex items-center justify-center disabled:opacity-40 hover:border-[#0B1F4D]"><ChevronRight className="w-4 h-4" /></button>
           </div>
         </div>

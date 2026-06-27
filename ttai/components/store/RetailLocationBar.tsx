@@ -1,6 +1,7 @@
 'use client'
 
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
+import { useT } from '@/lib/i18n/client'
 import { MapPin, X } from 'lucide-react'
 import { MARKET_REGIONS } from '@/lib/market-regions'
 
@@ -11,6 +12,7 @@ export function RetailLocationBar({
   activeMarket: string
   activeCountry: string
 }) {
+  const t = useT()
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -48,20 +50,20 @@ export function RetailLocationBar({
     <div className="rounded-2xl border border-purple-100 bg-purple-50/40 p-4 mb-6">
       <div className="flex items-center justify-between gap-2 mb-3">
         <div className="flex items-center gap-2 text-sm font-bold text-purple-800">
-          <MapPin className="w-4 h-4" /> Shop locally
+          <MapPin className="w-4 h-4" /> {t("Shop locally")}
         </div>
         {hasFilter && (
           <button onClick={() => go({ market: null, country: null })}
             className="inline-flex items-center gap-1 text-xs font-semibold text-purple-600 hover:text-purple-800">
-            <X className="w-3.5 h-3.5" /> Clear
+            <X className="w-3.5 h-3.5" /> {t("Clear")}
           </button>
         )}
       </div>
       <div className="flex flex-wrap items-end gap-3">
-        <Select label="Region" value={activeMarket} placeholder="All regions"
+        <Select label="Region" value={activeMarket} placeholder={t("All regions")}
           options={enabledRegions.map((r) => ({ id: r.id, name: r.name }))}
           onChange={(v) => go({ market: v || null, country: null })} />
-        <Select label="Country" value={activeCountry} placeholder="All countries"
+        <Select label="Country" value={activeCountry} placeholder={t("All countries")}
           options={countries.map((c) => ({ id: c.iso, name: `${c.flag} ${c.name}` }))}
           onChange={(v) => go({ country: v || null })} disabled={!region} />
       </div>

@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { useT } from '@/lib/i18n/client'
 import { useSearchParams, usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import type { Category } from '@/types/domain'
@@ -10,6 +11,7 @@ interface CategoryNavProps {
 }
 
 export function CategoryNav({ categories }: CategoryNavProps) {
+  const t = useT()
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const active = searchParams.get('category')
@@ -23,7 +25,7 @@ export function CategoryNav({ categories }: CategoryNavProps) {
 
   return (
     <div className="space-y-1">
-      <h3 className="text-sm font-semibold px-2 pb-2 text-muted-foreground uppercase tracking-wide">Categories</h3>
+      <h3 className="text-sm font-semibold px-2 pb-2 text-muted-foreground uppercase tracking-wide">{t("Categories")}</h3>
       <Link
         href={pathname}
         className={cn(
@@ -31,7 +33,7 @@ export function CategoryNav({ categories }: CategoryNavProps) {
           !active && 'bg-accent font-medium'
         )}
       >
-        All Products
+        {t("All Products")}
       </Link>
       {categories.map((cat) => {
         const hasChildren = (cat.children?.length ?? 0) > 0

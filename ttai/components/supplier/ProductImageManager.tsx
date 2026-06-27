@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef } from 'react'
+import { useT } from '@/lib/i18n/client'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 
@@ -18,6 +19,7 @@ interface Props {
 }
 
 export function ProductImageManager({ productId, supplierId, initialImages = [] }: Props) {
+  const t = useT()
   const [images, setImages] = useState<ProductImage[]>(
     [...initialImages].sort((a, b) => a.sort_order - b.sort_order)
   )
@@ -138,7 +140,7 @@ export function ProductImageManager({ productId, supplierId, initialImages = [] 
               {/* Primary badge */}
               {i === 0 && (
                 <span className="absolute top-2 left-2 bg-[#F5A623] text-[#0B1F4D] text-[10px] font-black px-2 py-0.5 rounded-full z-10">
-                  Primary
+                  {t("Primary")}
                 </span>
               )}
 
@@ -174,16 +176,16 @@ export function ProductImageManager({ productId, supplierId, initialImages = [] 
                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                   </svg>
-                  Delete
+                  {t("Delete")}
                 </button>
               </div>
 
               {/* Shop tag — which gallery this photo appears in */}
               <select value={img.image_role ?? ''} onChange={(e) => handleRole(img, e.target.value)}
                 className="absolute bottom-1.5 left-1.5 right-1.5 z-20 text-[10px] font-bold rounded-md border border-white/30 bg-black/60 text-white px-1.5 py-1 cursor-pointer backdrop-blur-sm">
-                <option value="">Both shops</option>
-                <option value="retail">Online shop only</option>
-                <option value="b2b">B2B / bulk only</option>
+                <option value="">{t("Both shops")}</option>
+                <option value="retail">{t("Online shop only")}</option>
+                <option value="b2b">{t("B2B / bulk only")}</option>
               </select>
             </div>
           ))}
@@ -198,7 +200,7 @@ export function ProductImageManager({ productId, supplierId, initialImages = [] 
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
-            <span className="text-xs font-semibold">Add more</span>
+            <span className="text-xs font-semibold">{t("Add more")}</span>
           </button>
         </div>
       )}
@@ -217,7 +219,7 @@ export function ProductImageManager({ productId, supplierId, initialImages = [] 
             </svg>
           </div>
           <div className="text-center">
-            <p className="font-bold text-sm">Click to upload product images</p>
+            <p className="font-bold text-sm">{t("Click to upload product images")}</p>
             <p className="text-xs mt-1">JPG, PNG, WebP — up to 5 MB each · Multiple files allowed</p>
           </div>
         </button>
@@ -231,7 +233,7 @@ export function ProductImageManager({ productId, supplierId, initialImages = [] 
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
           </svg>
           <p className="text-sm text-blue-800 font-medium">
-            Uploading {uploadProgress.filter(p => p === 'done').length} / {uploadProgress.length} images...
+            {t("Uploading")} {uploadProgress.filter(p => p === 'done').length} / {uploadProgress.length} {t("images...")}
           </p>
         </div>
       )}
@@ -247,7 +249,7 @@ export function ProductImageManager({ productId, supplierId, initialImages = [] 
       )}
 
       <p className="text-xs text-gray-400">
-        First image is the primary listing photo. Hover any image to reorder or delete.
+        {t("First image is the primary listing photo. Hover any image to reorder or delete.")}
       </p>
 
       <input

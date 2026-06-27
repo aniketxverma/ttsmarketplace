@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useT } from '@/lib/i18n/client'
 import { useRouter } from 'next/navigation'
 import { Send, CheckCircle2, Megaphone, Search } from 'lucide-react'
 import { POSTER_ROLES, AUDIENCES, LOOKING_FOR, DEFAULT_AUDIENCE, type ChainRole } from '@/lib/opportunities'
@@ -8,6 +9,7 @@ import { POSTER_ROLES, AUDIENCES, LOOKING_FOR, DEFAULT_AUDIENCE, type ChainRole 
 /** Publish a business opportunity. Audience auto-fills from the chain rule for the
  *  selected poster role, and can be adjusted. */
 export function PostOpportunityForm({ loggedIn }: { loggedIn: boolean }) {
+  const t = useT()
   const router = useRouter()
   const [kind, setKind] = useState<'looking' | 'promotion'>('looking')
   const [posterRole, setPosterRole] = useState<'factory' | 'supplier' | 'distributor' | 'retail'>('supplier')
@@ -48,9 +50,9 @@ export function PostOpportunityForm({ loggedIn }: { loggedIn: boolean }) {
   if (!loggedIn) {
     return (
       <div className="rounded-2xl border border-gray-200 bg-white p-6 text-center">
-        <p className="font-bold text-[#0B1F4D]">Post a business opportunity</p>
+        <p className="font-bold text-[#0B1F4D]">{t("Post a business opportunity")}</p>
         <p className="text-sm text-gray-500 mt-1">Log in to publish what you&rsquo;re looking for, or a promotion.</p>
-        <a href="/login" className="inline-flex items-center gap-2 rounded-xl bg-[#0B1F4D] text-white px-6 py-3 text-sm font-bold mt-4 hover:bg-[#162d6e]">Log in</a>
+        <a href="/login" className="inline-flex items-center gap-2 rounded-xl bg-[#0B1F4D] text-white px-6 py-3 text-sm font-bold mt-4 hover:bg-[#162d6e]">{t("Log in")}</a>
       </div>
     )
   }
@@ -58,9 +60,9 @@ export function PostOpportunityForm({ loggedIn }: { loggedIn: boolean }) {
     return (
       <div className="rounded-2xl border border-green-100 bg-white p-8 text-center">
         <CheckCircle2 className="w-12 h-12 text-green-500 mx-auto" />
-        <p className="mt-3 text-lg font-extrabold text-[#0B1F4D]">Opportunity published</p>
+        <p className="mt-3 text-lg font-extrabold text-[#0B1F4D]">{t("Opportunity published")}</p>
         <p className="text-sm text-gray-500 mt-1">It&rsquo;s now visible to {audience.join(', ') || 'the chain'}.</p>
-        <button onClick={() => setDone(false)} className="mt-4 text-sm font-bold text-[#0B1F4D] underline">Post another</button>
+        <button onClick={() => setDone(false)} className="mt-4 text-sm font-bold text-[#0B1F4D] underline">{t("Post another")}</button>
       </div>
     )
   }
@@ -70,8 +72,8 @@ export function PostOpportunityForm({ loggedIn }: { loggedIn: boolean }) {
 
   return (
     <form onSubmit={onSubmit} className="rounded-2xl border border-gray-200 bg-white p-6">
-      <h3 className="text-lg font-extrabold text-[#0B1F4D]">Post an opportunity</h3>
-      <p className="text-sm text-gray-500 mt-0.5">Tell the network what you need — it reaches the right level of the chain.</p>
+      <h3 className="text-lg font-extrabold text-[#0B1F4D]">{t("Post an opportunity")}</h3>
+      <p className="text-sm text-gray-500 mt-0.5">{t("Tell the network what you need — it reaches the right level of the chain.")}</p>
 
       {/* Kind */}
       <div className="grid grid-cols-2 gap-2.5 mt-4">
@@ -86,7 +88,7 @@ export function PostOpportunityForm({ loggedIn }: { loggedIn: boolean }) {
 
       {/* Poster role */}
       <div className="mt-4">
-        <span className={lbl}>I am a</span>
+        <span className={lbl}>{t("I am a")}</span>
         <div className="flex flex-wrap gap-2 mt-1.5">
           {POSTER_ROLES.map((r) => (
             <button key={r.key} type="button" onClick={() => pickRole(r.key)}
@@ -97,8 +99,8 @@ export function PostOpportunityForm({ loggedIn }: { loggedIn: boolean }) {
 
       {/* Audience (chain visibility) */}
       <div className="mt-4 rounded-xl bg-gray-50 border border-gray-100 p-3">
-        <span className={lbl}>Who should see this?</span>
-        <p className="text-[11px] text-gray-400 mb-2">Auto-set from the chain rule for a {posterRole} — adjust if needed.</p>
+        <span className={lbl}>{t("Who should see this?")}</span>
+        <p className="text-[11px] text-gray-400 mb-2">{t("Auto-set from the chain rule for a")} {posterRole} — adjust if needed.</p>
         <div className="flex flex-wrap gap-2">
           {AUDIENCES.map((a) => (
             <button key={a.key} type="button" onClick={() => toggleAud(a.key)}
@@ -108,18 +110,18 @@ export function PostOpportunityForm({ loggedIn }: { loggedIn: boolean }) {
       </div>
 
       <div className="grid sm:grid-cols-2 gap-3 mt-4">
-        <label className="block sm:col-span-2"><span className={lbl}>Title *</span>
+        <label className="block sm:col-span-2"><span className={lbl}>{t("Title *")}</span>
           <input name="title" required className={input} placeholder={kind === 'looking' ? 'e.g. Looking for distributors in Spain, Portugal & Africa' : 'e.g. Promo: 20% off olive oil — full pallets'} /></label>
-        <label className="block"><span className={lbl}>Company</span><input name="companyName" className={input} /></label>
+        <label className="block"><span className={lbl}>{t("Company")}</span><input name="companyName" className={input} /></label>
         {kind === 'looking' && (
-          <label className="block"><span className={lbl}>Looking for</span>
+          <label className="block"><span className={lbl}>{t("Looking for")}</span>
             <select name="lookingFor" className={input}><option value="">—</option>{LOOKING_FOR.map((l) => <option key={l.key} value={l.key}>{l.label}</option>)}</select></label>
         )}
-        <label className="block"><span className={lbl}>Category / sector</span><input name="category" className={input} placeholder="e.g. Food & Beverage" /></label>
-        <label className="block"><span className={lbl}>Target countries</span><input name="countryTarget" className={input} placeholder="e.g. Spain, Portugal, Africa" /></label>
-        <label className="block sm:col-span-2"><span className={lbl}>Product / details</span><textarea name="description" rows={3} className={input} /></label>
-        <label className="block"><span className={lbl}>Contact email</span><input name="contactEmail" type="email" className={input} placeholder="(defaults to your account)" /></label>
-        <label className="block"><span className={lbl}>WhatsApp</span><input name="contactWhatsapp" className={input} placeholder="+34…" /></label>
+        <label className="block"><span className={lbl}>{t("Category / sector")}</span><input name="category" className={input} placeholder={t("e.g. Food & Beverage")} /></label>
+        <label className="block"><span className={lbl}>{t("Target countries")}</span><input name="countryTarget" className={input} placeholder={t("e.g. Spain, Portugal, Africa")} /></label>
+        <label className="block sm:col-span-2"><span className={lbl}>{t("Product / details")}</span><textarea name="description" rows={3} className={input} /></label>
+        <label className="block"><span className={lbl}>{t("Contact email")}</span><input name="contactEmail" type="email" className={input} placeholder="(defaults to your account)" /></label>
+        <label className="block"><span className={lbl}>{t("WhatsApp")}</span><input name="contactWhatsapp" className={input} placeholder="+34…" /></label>
       </div>
 
       {error && <p className="text-sm text-red-600 mt-3">{error}</p>}

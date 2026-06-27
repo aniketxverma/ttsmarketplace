@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useT } from '@/lib/i18n/client'
 import { Share2, Check, MessageCircle, Copy } from 'lucide-react'
 
 /**
@@ -9,6 +10,7 @@ import { Share2, Check, MessageCircle, Copy } from 'lucide-react'
  * to the OG/Twitter tags. On desktop it offers WhatsApp + copy-link.
  */
 export function ShareButton({ title, label = 'Share' }: { title: string; label?: string }) {
+  const t = useT()
   const [open, setOpen] = useState(false)
   const [copied, setCopied] = useState(false)
 
@@ -41,7 +43,7 @@ export function ShareButton({ title, label = 'Share' }: { title: string; label?:
           <div className="absolute right-0 z-50 mt-2 w-44 rounded-xl border border-gray-100 bg-white shadow-xl p-1.5">
             <a href={whatsapp} target="_blank" rel="noopener noreferrer" onClick={() => setOpen(false)}
               className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors">
-              <MessageCircle className="w-4 h-4 text-green-600" /> WhatsApp
+              <MessageCircle className="w-4 h-4 text-green-600" /> {t("WhatsApp")}
             </a>
             <button type="button" onClick={() => { copy(); setOpen(false) }}
               className="w-full flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors">

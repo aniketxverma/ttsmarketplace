@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useT } from '@/lib/i18n/client'
 import { Store, Truck, Briefcase, Send, CheckCircle2 } from 'lucide-react'
 import { DEPARTMENTS, type Department } from '@/lib/control-center'
 
@@ -19,6 +20,7 @@ export function ControlCenterForm({ defaultDepartment = 'marketplace' as Departm
   defaultDepartment?: Department
   sourceForm?: string
 }) {
+  const t = useT()
   const [department, setDepartment] = useState<Department>(defaultDepartment)
   const [sending, setSending] = useState(false)
   const [done, setDone] = useState<null | { ticketNo: number | null; assignedTo: string }>(null)
@@ -59,9 +61,9 @@ export function ControlCenterForm({ defaultDepartment = 'marketplace' as Departm
     return (
       <div className="bg-white rounded-2xl border border-green-100 shadow-sm p-8 text-center">
         <CheckCircle2 className="w-12 h-12 text-green-500 mx-auto" />
-        <h3 className="mt-3 text-xl font-extrabold text-[#0B1F4D]">Request received{done.ticketNo ? ` — ticket #${done.ticketNo}` : ''}</h3>
+        <h3 className="mt-3 text-xl font-extrabold text-[#0B1F4D]">{t("Request received")}{done.ticketNo ? ` — ticket #${done.ticketNo}` : ''}</h3>
         <p className="text-gray-600 text-sm mt-2 max-w-md mx-auto">
-          Thank you! Your request has been routed to <strong>{done.assignedTo}</strong> in our{' '}
+          {t("Thank you! Your request has been routed to")} <strong>{done.assignedTo}</strong> {t("in our")}{' '}
           {DEPARTMENTS.find((d) => d.key === department)?.label}. We&rsquo;ll reply to your email shortly.
         </p>
       </div>
@@ -70,7 +72,7 @@ export function ControlCenterForm({ defaultDepartment = 'marketplace' as Departm
 
   return (
     <form onSubmit={onSubmit} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8">
-      <h3 className="text-xl font-extrabold text-[#0B1F4D]">Send us a request</h3>
+      <h3 className="text-xl font-extrabold text-[#0B1F4D]">{t("Send us a request")}</h3>
       <p className="text-sm text-gray-500 mt-1">Choose the department and we&rsquo;ll route you to the right manager.</p>
 
       {/* Department selector */}
@@ -104,10 +106,10 @@ export function ControlCenterForm({ defaultDepartment = 'marketplace' as Departm
       </div>
 
       <label className="block mt-3">
-        <span className="text-xs font-bold text-gray-600">Message</span>
+        <span className="text-xs font-bold text-gray-600">{t("Message")}</span>
         <textarea name="message" rows={4} required
           className="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:border-[#0B1F4D] focus:ring-1 focus:ring-[#0B1F4D] outline-none"
-          placeholder="Tell us what you need…" />
+          placeholder={t("Tell us what you need…")} />
       </label>
 
       <Field name="attachmentUrl" label="Attachment link (optional — Drive / Dropbox / WeTransfer)" />

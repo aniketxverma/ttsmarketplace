@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useT } from '@/lib/i18n/client'
 import { Check, Loader2, CreditCard } from 'lucide-react'
 
 const TPLS = [
@@ -11,6 +12,7 @@ const TPLS = [
 ]
 
 export function CardTemplateEditor({ initial }: { initial: string | null }) {
+  const t = useT()
   const [sel, setSel] = useState(initial && TPLS.some((t) => t.id === initial) ? initial : 'navy')
   const [busy, setBusy] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -27,12 +29,12 @@ export function CardTemplateEditor({ initial }: { initial: string | null }) {
   return (
     <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
       <div className="flex items-center justify-between mb-1">
-        <h3 className="font-extrabold text-[#0B1F4D] flex items-center gap-2"><CreditCard className="w-5 h-5 text-[#F5A623]" /> Business Card Style</h3>
+        <h3 className="font-extrabold text-[#0B1F4D] flex items-center gap-2"><CreditCard className="w-5 h-5 text-[#F5A623]" /> {t("Business Card Style")}</h3>
         {busy ? <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
-              : saved && <span className="text-xs font-bold text-green-600 flex items-center gap-1"><Check className="w-3.5 h-3.5" />Saved</span>}
+              : saved && <span className="text-xs font-bold text-green-600 flex items-center gap-1"><Check className="w-3.5 h-3.5" />{t("Saved")}</span>}
       </div>
       <p className="text-sm text-gray-500 mb-4">
-        Pick the default style for your <strong>digital business card</strong> on your public profile. Details fill in
+        {t("Pick the default style for your")} <strong>{t("digital business card")}</strong> on your public profile. Details fill in
         automatically from your profile — visitors can flip it, share it and save your contact.
       </p>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">

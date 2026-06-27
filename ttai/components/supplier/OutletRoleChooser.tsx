@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useT } from '@/lib/i18n/client'
 import { Check, Loader2, Building2, Store, Boxes, Handshake, ShoppingCart, X } from 'lucide-react'
 import { OUTLET_ROLES, type RoleKey } from '@/lib/outlet'
 
@@ -14,6 +15,7 @@ const ICON: Record<RoleKey, any> = {
  * /api/supplier/brand. Used as the "Supplier Type" filter in /outlet.
  */
 export function OutletRoleChooser({ initial }: { initial: string | null }) {
+  const t = useT()
   const [value, setValue] = useState<string | null>(initial)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -32,9 +34,9 @@ export function OutletRoleChooser({ initial }: { initial: string | null }) {
   return (
     <div className="rounded-xl border bg-card p-5 space-y-4 max-w-2xl">
       <div>
-        <h2 className="font-semibold">Outlet Zone role</h2>
+        <h2 className="font-semibold">{t("Outlet Zone role")}</h2>
         <p className="text-sm text-muted-foreground mt-0.5">
-          How you trade in the <a href="/outlet" target="_blank" className="text-[#0B1F4D] font-semibold underline">Outlet Zone</a>. Buyers filter sellers by this. Optional — set it if you list clearance, returns or liquidation stock.
+          {t("How you trade in the")} <a href="/outlet" target="_blank" className="text-[#0B1F4D] font-semibold underline">{t("Outlet Zone")}</a>. Buyers filter sellers by this. Optional — set it if you list clearance, returns or liquidation stock.
         </p>
       </div>
 
@@ -58,11 +60,11 @@ export function OutletRoleChooser({ initial }: { initial: string | null }) {
 
       <div className="flex items-center justify-between h-5 text-sm">
         <span>
-          {saving ? <span className="text-gray-400 flex items-center gap-1.5"><Loader2 className="w-4 h-4 animate-spin" /> Saving…</span>
-            : saved ? <span className="text-green-600 flex items-center gap-1.5"><Check className="w-4 h-4" /> Saved</span> : null}
+          {saving ? <span className="text-gray-400 flex items-center gap-1.5"><Loader2 className="w-4 h-4 animate-spin" /> {t("Saving…")}</span>
+            : saved ? <span className="text-green-600 flex items-center gap-1.5"><Check className="w-4 h-4" /> {t("Saved")}</span> : null}
         </span>
         {value && !saving && (
-          <button onClick={() => choose(null)} className="text-xs text-gray-400 hover:text-red-500 flex items-center gap-1"><X className="w-3 h-3" /> Clear</button>
+          <button onClick={() => choose(null)} className="text-xs text-gray-400 hover:text-red-500 flex items-center gap-1"><X className="w-3 h-3" /> {t("Clear")}</button>
         )}
       </div>
     </div>

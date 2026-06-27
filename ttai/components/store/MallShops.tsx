@@ -1,6 +1,7 @@
 'use client'
 
 import { useRef, useState } from 'react'
+import { useT } from '@/lib/i18n/client'
 import Link from 'next/link'
 import {
   Star, ChevronLeft, ChevronRight, X, MapPin, Truck, ShoppingBag,
@@ -205,12 +206,13 @@ function StoreDrawer({ s, onClose }: { s: MallStore; onClose: () => void }) {
 }
 
 export function MallShops({ groups }: { groups: MallGroup[] }) {
+  const t = useT()
   const [open, setOpen] = useState<MallStore | null>(null)
   const [q, setQ] = useState('')
   if (!groups.length) {
     return (
       <div className="rounded-2xl bg-white border border-gray-200 shadow-sm p-12 text-center text-gray-400">
-        <Store className="w-10 h-10 mx-auto mb-3 opacity-30" /><p className="text-sm">No stores open in this area yet.</p>
+        <Store className="w-10 h-10 mx-auto mb-3 opacity-30" /><p className="text-sm">{t("No stores open in this area yet.")}</p>
       </div>
     )
   }
@@ -221,14 +223,14 @@ export function MallShops({ groups }: { groups: MallGroup[] }) {
       {/* Store search */}
       <div className="rounded-2xl bg-white border border-gray-200 shadow-sm p-2.5 flex items-center gap-2">
         <Search className="w-4 h-4 text-gray-400 ml-2 flex-shrink-0" />
-        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search stores in the mall…" className="flex-1 bg-transparent text-sm focus:outline-none" />
-        {q && <button onClick={() => setQ('')} className="text-xs font-bold text-[#0B1F4D] hover:underline mr-2">Clear</button>}
+        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("Search stores in the mall…")} className="flex-1 bg-transparent text-sm focus:outline-none" />
+        {q && <button onClick={() => setQ('')} className="text-xs font-bold text-[#0B1F4D] hover:underline mr-2">{t("Clear")}</button>}
       </div>
 
       {matches ? (
         matches.length ? (
           <div className="rounded-2xl bg-white border border-gray-200 shadow-sm p-4 sm:p-5">
-            <p className="text-sm font-bold text-gray-500 mb-4">{matches.length} store{matches.length !== 1 ? 's' : ''} matching &quot;{q}&quot;</p>
+            <p className="text-sm font-bold text-gray-500 mb-4">{matches.length} {t("store")}{matches.length !== 1 ? 's' : ''} matching &quot;{q}&quot;</p>
             <div className="flex flex-wrap gap-4">{matches.map((s) => <StoreCard key={s.id} s={s} onOpen={setOpen} />)}</div>
           </div>
         ) : (

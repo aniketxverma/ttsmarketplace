@@ -1,6 +1,7 @@
 'use client'
 
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
+import { useT } from '@/lib/i18n/client'
 import { Package, Store, LayoutGrid } from 'lucide-react'
 import { MARKET_REGIONS, getRegion } from '@/lib/market-regions'
 
@@ -25,6 +26,7 @@ export function MarketplaceTopBar({
   activeProvince?: string
   activeCity?: string
 }) {
+  const t = useT()
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -72,7 +74,7 @@ export function MarketplaceTopBar({
       <div className="rounded-2xl border border-gray-100 bg-gradient-to-r from-[#0B1F4D] to-[#1a3a7a] overflow-hidden">
         <div className="px-5 sm:px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-widest text-[#F5A623]">{region.name} Market</p>
+            <p className="text-[11px] font-bold uppercase tracking-widest text-[#F5A623]">{region.name} {t("Market")}</p>
             <h2 className="text-lg sm:text-xl font-extrabold text-white leading-tight">{bannerTitle}</h2>
           </div>
           {/* Region switcher — enabled regions are clickable; others show "soon" */}
@@ -81,7 +83,7 @@ export function MarketplaceTopBar({
               const active = region.id === r.id
               if (!r.enabled) return (
                 <span key={r.id} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold text-white/35 cursor-not-allowed">
-                  {r.name}<span className="text-[9px] uppercase tracking-wide bg-white/10 px-1 py-0.5 rounded">soon</span>
+                  {r.name}<span className="text-[9px] uppercase tracking-wide bg-white/10 px-1 py-0.5 rounded">{t("soon")}</span>
                 </span>
               )
               return (
@@ -110,10 +112,10 @@ export function MarketplaceTopBar({
         {/* Level 3 — provinces of the selected country */}
         {provinces.length > 0 && (
           <div className="bg-white/[0.04] border-t border-white/10 px-3 sm:px-4 py-2 flex items-center gap-2 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
-            <span className="flex-shrink-0 text-[10px] font-bold uppercase tracking-wider text-white/40 mr-1">Province</span>
+            <span className="flex-shrink-0 text-[10px] font-bold uppercase tracking-wider text-white/40 mr-1">{t("Province")}</span>
             <button onClick={() => navigate({ province: null, city: null })}
               className={`flex-shrink-0 px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-colors ${!activeProvince ? 'bg-white text-[#0B1F4D]' : 'text-white/70 hover:bg-white/10'}`}>
-              All
+              {t("All")}
             </button>
             {provinces.map((p) => {
               const active = activeProvince === p.slug
@@ -130,10 +132,10 @@ export function MarketplaceTopBar({
         {/* Level 4 — cities / districts of the selected province */}
         {cities.length > 0 && (
           <div className="bg-white/[0.02] border-t border-white/10 px-3 sm:px-4 py-2 flex items-center gap-2 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
-            <span className="flex-shrink-0 text-[10px] font-bold uppercase tracking-wider text-white/40 mr-1">Area</span>
+            <span className="flex-shrink-0 text-[10px] font-bold uppercase tracking-wider text-white/40 mr-1">{t("Area")}</span>
             <button onClick={() => navigate({ city: null })}
               className={`flex-shrink-0 px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-colors ${!activeCity ? 'bg-white text-[#0B1F4D]' : 'text-white/70 hover:bg-white/10'}`}>
-              All
+              {t("All")}
             </button>
             {cities.map((c) => {
               const active = activeCity === c.slug

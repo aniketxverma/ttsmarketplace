@@ -1,12 +1,14 @@
 'use client'
 
 import { useState } from 'react'
+import { useT } from '@/lib/i18n/client'
 import { Check, Loader2 } from 'lucide-react'
 import { SELL_MODES } from '@/lib/outlet'
 
 /** Lets an Outlet supplier choose how buyers can transact with their lots.
  *  Saves suppliers.outlet_sell_mode via /api/supplier/brand. */
 export function SellModeChooser({ initial }: { initial: string | null }) {
+  const t = useT()
   const [value, setValue] = useState<string | null>(initial)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -25,8 +27,8 @@ export function SellModeChooser({ initial }: { initial: string | null }) {
   return (
     <div className="rounded-xl border bg-card p-5 space-y-3 max-w-2xl">
       <div>
-        <h2 className="font-semibold">How you sell in the Outlet Zone</h2>
-        <p className="text-sm text-muted-foreground mt-0.5">Controls the buttons buyers see on your lots.</p>
+        <h2 className="font-semibold">{t("How you sell in the Outlet Zone")}</h2>
+        <p className="text-sm text-muted-foreground mt-0.5">{t("Controls the buttons buyers see on your lots.")}</p>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
         {SELL_MODES.map((m) => {
@@ -44,8 +46,8 @@ export function SellModeChooser({ initial }: { initial: string | null }) {
         })}
       </div>
       <div className="h-5 text-sm">
-        {saving ? <span className="text-gray-400 flex items-center gap-1.5"><Loader2 className="w-4 h-4 animate-spin" /> Saving…</span>
-          : saved ? <span className="text-green-600 flex items-center gap-1.5"><Check className="w-4 h-4" /> Saved</span> : null}
+        {saving ? <span className="text-gray-400 flex items-center gap-1.5"><Loader2 className="w-4 h-4 animate-spin" /> {t("Saving…")}</span>
+          : saved ? <span className="text-green-600 flex items-center gap-1.5"><Check className="w-4 h-4" /> {t("Saved")}</span> : null}
       </div>
     </div>
   )

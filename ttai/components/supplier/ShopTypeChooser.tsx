@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useT } from '@/lib/i18n/client'
 import Link from 'next/link'
 import { Building2, ShoppingBag, Check, Loader2, Lock } from 'lucide-react'
 
@@ -10,6 +11,7 @@ import { Building2, ShoppingBag, Check, Loader2, Lock } from 'lucide-react'
  * /api/supplier/brand (admin-side update).
  */
 export function ShopTypeChooser({ initial, paid }: { initial: 'wholesale' | 'retail' | 'both'; paid: boolean }) {
+  const t = useT()
   const [value, setValue] = useState<'wholesale' | 'retail' | 'both'>(initial)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -46,9 +48,9 @@ export function ShopTypeChooser({ initial, paid }: { initial: 'wholesale' | 'ret
   return (
     <div className="rounded-xl border bg-card p-5 space-y-4 max-w-2xl">
       <div>
-        <h2 className="font-semibold">Shop type</h2>
+        <h2 className="font-semibold">{t("Shop type")}</h2>
         <p className="text-sm text-muted-foreground mt-0.5">
-          Choose the shop you sell on. One channel is included free — selling on <strong>both</strong> needs a paid plan.
+          {t("Choose the shop you sell on. One channel is included free — selling on")} <strong>{t("both")}</strong> {t("needs a paid plan.")}
         </p>
       </div>
 
@@ -62,16 +64,16 @@ export function ShopTypeChooser({ initial, paid }: { initial: 'wholesale' | 'ret
         className={`w-full rounded-xl border-2 p-3 flex items-center justify-between transition-all ${
           value === 'both' ? 'border-[#F5A623] bg-amber-50' : 'border-dashed border-gray-200'} ${!paid ? 'opacity-70 cursor-not-allowed' : 'hover:border-[#F5A623]'}`}>
         <span className="flex items-center gap-2 text-sm font-bold text-[#0B1F4D]">
-          {!paid && <Lock className="w-4 h-4 text-[#F5A623]" />} Sell on both shops
+          {!paid && <Lock className="w-4 h-4 text-[#F5A623]" />} {t("Sell on both shops")}
         </span>
         {value === 'both' ? <Check className="w-5 h-5 text-[#F5A623]" />
-          : !paid ? <Link href="/pricing" className="text-xs font-bold text-[#F5A623] underline">Upgrade</Link>
-          : <span className="text-xs text-gray-400">Choose</span>}
+          : !paid ? <Link href="/pricing" className="text-xs font-bold text-[#F5A623] underline">{t("Upgrade")}</Link>
+          : <span className="text-xs text-gray-400">{t("Choose")}</span>}
       </button>
 
       <div className="h-5 text-sm">
-        {saving ? <span className="text-gray-400 flex items-center gap-1.5"><Loader2 className="w-4 h-4 animate-spin" /> Saving…</span>
-          : saved ? <span className="text-green-600 flex items-center gap-1.5"><Check className="w-4 h-4" /> Saved</span> : null}
+        {saving ? <span className="text-gray-400 flex items-center gap-1.5"><Loader2 className="w-4 h-4 animate-spin" /> {t("Saving…")}</span>
+          : saved ? <span className="text-green-600 flex items-center gap-1.5"><Check className="w-4 h-4" /> {t("Saved")}</span> : null}
       </div>
     </div>
   )

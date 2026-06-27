@@ -1,12 +1,14 @@
 'use client'
 
 import { useState } from 'react'
+import { useT } from '@/lib/i18n/client'
 import { useRouter } from 'next/navigation'
 import { ShoppingCart, Megaphone, Send, CheckCircle2 } from 'lucide-react'
 import { CONDITIONS, SELLING_UNITS, OUTLET_CATEGORIES } from '@/lib/outlet'
 
 /** Post a buying request or selling opportunity to the Outlet Zone trade board. */
 export function PostRequestForm({ loggedIn }: { loggedIn: boolean }) {
+  const t = useT()
   const router = useRouter()
   const [kind, setKind] = useState<'buy' | 'sell'>('buy')
   const [sending, setSending] = useState(false)
@@ -39,9 +41,9 @@ export function PostRequestForm({ loggedIn }: { loggedIn: boolean }) {
   if (!loggedIn) {
     return (
       <div className="rounded-2xl border border-gray-200 bg-white p-6 text-center">
-        <p className="font-bold text-[#0B1F4D]">Post a buying request or selling opportunity</p>
-        <p className="text-sm text-gray-500 mt-1">Log in to post on the trade board — brokers, suppliers and buyers welcome.</p>
-        <a href="/login" className="inline-flex items-center gap-2 rounded-xl bg-[#0B1F4D] text-white px-6 py-3 text-sm font-bold mt-4 hover:bg-[#162d6e] transition-colors">Log in to post</a>
+        <p className="font-bold text-[#0B1F4D]">{t("Post a buying request or selling opportunity")}</p>
+        <p className="text-sm text-gray-500 mt-1">{t("Log in to post on the trade board — brokers, suppliers and buyers welcome.")}</p>
+        <a href="/login" className="inline-flex items-center gap-2 rounded-xl bg-[#0B1F4D] text-white px-6 py-3 text-sm font-bold mt-4 hover:bg-[#162d6e] transition-colors">{t("Log in to post")}</a>
       </div>
     )
   }
@@ -50,9 +52,9 @@ export function PostRequestForm({ loggedIn }: { loggedIn: boolean }) {
     return (
       <div className="rounded-2xl border border-green-100 bg-white p-8 text-center">
         <CheckCircle2 className="w-12 h-12 text-green-500 mx-auto" />
-        <p className="mt-3 text-lg font-extrabold text-[#0B1F4D]">Posted to the trade board</p>
-        <p className="text-sm text-gray-500 mt-1">Your {kind === 'buy' ? 'buying request' : 'selling opportunity'} is now live. Buyers and sellers can contact you directly.</p>
-        <button onClick={() => setDone(false)} className="mt-4 text-sm font-bold text-[#0B1F4D] underline">Post another</button>
+        <p className="mt-3 text-lg font-extrabold text-[#0B1F4D]">{t("Posted to the trade board")}</p>
+        <p className="text-sm text-gray-500 mt-1">{t("Your")} {kind === 'buy' ? 'buying request' : 'selling opportunity'} {t("is now live. Buyers and sellers can contact you directly.")}</p>
+        <button onClick={() => setDone(false)} className="mt-4 text-sm font-bold text-[#0B1F4D] underline">{t("Post another")}</button>
       </div>
     )
   }
@@ -62,8 +64,8 @@ export function PostRequestForm({ loggedIn }: { loggedIn: boolean }) {
 
   return (
     <form onSubmit={onSubmit} className="rounded-2xl border border-gray-200 bg-white p-6 sm:p-7">
-      <h3 className="text-lg font-extrabold text-[#0B1F4D]">Post to the trade board</h3>
-      <p className="text-sm text-gray-500 mt-0.5">Brokers, suppliers and outlet buyers — publish what you need or what you have.</p>
+      <h3 className="text-lg font-extrabold text-[#0B1F4D]">{t("Post to the trade board")}</h3>
+      <p className="text-sm text-gray-500 mt-0.5">{t("Brokers, suppliers and outlet buyers — publish what you need or what you have.")}</p>
 
       <div className="grid grid-cols-2 gap-2.5 mt-4">
         {([['buy', 'Buying request', ShoppingCart], ['sell', 'Selling opportunity', Megaphone]] as const).map(([k, label, Icon]) => (
@@ -76,24 +78,24 @@ export function PostRequestForm({ loggedIn }: { loggedIn: boolean }) {
       </div>
 
       <div className="grid sm:grid-cols-2 gap-3 mt-4">
-        <label className="block sm:col-span-2"><span className={lbl}>Title *</span>
+        <label className="block sm:col-span-2"><span className={lbl}>{t("Title *")}</span>
           <input name="title" required className={input} placeholder={kind === 'buy' ? 'e.g. Looking for 5 pallets of mixed electronics returns' : 'e.g. 2 truckloads Bosch overstock available'} /></label>
-        <label className="block"><span className={lbl}>Company</span><input name="companyName" className={input} /></label>
-        <label className="block"><span className={lbl}>Country</span><input name="countryName" className={input} placeholder="e.g. Spain" /></label>
-        <label className="block"><span className={lbl}>Category</span>
-          <input name="category" list="tb-cats" className={input} placeholder="e.g. Electronics" />
+        <label className="block"><span className={lbl}>{t("Company")}</span><input name="companyName" className={input} /></label>
+        <label className="block"><span className={lbl}>{t("Country")}</span><input name="countryName" className={input} placeholder={t("e.g. Spain")} /></label>
+        <label className="block"><span className={lbl}>{t("Category")}</span>
+          <input name="category" list="tb-cats" className={input} placeholder={t("e.g. Electronics")} />
           <datalist id="tb-cats">{OUTLET_CATEGORIES.map((c) => <option key={c} value={c} />)}</datalist></label>
-        <label className="block"><span className={lbl}>Brand</span><input name="brand" className={input} placeholder="e.g. Samsung (or Mixed)" /></label>
-        <label className="block"><span className={lbl}>Condition</span>
-          <select name="condition" className={input}><option value="">Any</option>{CONDITIONS.map((c) => <option key={c.key} value={c.key}>{c.label}</option>)}</select></label>
-        <label className="block"><span className={lbl}>Unit</span>
-          <select name="sellingUnit" className={input}><option value="">Any</option>{SELLING_UNITS.map((u) => <option key={u.key} value={u.key}>{u.label}</option>)}</select></label>
-        <label className="block"><span className={lbl}>Quantity</span><input name="quantity" className={input} placeholder="e.g. 5 pallets / 1x40ft" /></label>
-        <label className="block"><span className={lbl}>Budget / Price</span><input name="budget" className={input} placeholder="e.g. €8,000 or Ask" /></label>
-        <label className="block sm:col-span-2"><span className={lbl}>Details</span>
-          <textarea name="description" rows={3} className={input} placeholder="Anything that helps the other side respond fast…" /></label>
-        <label className="block"><span className={lbl}>Contact email</span><input name="contactEmail" type="email" className={input} placeholder="(defaults to your account email)" /></label>
-        <label className="block"><span className={lbl}>WhatsApp</span><input name="contactWhatsapp" className={input} placeholder="+34…" /></label>
+        <label className="block"><span className={lbl}>{t("Brand")}</span><input name="brand" className={input} placeholder={t("e.g. Samsung (or Mixed)")} /></label>
+        <label className="block"><span className={lbl}>{t("Condition")}</span>
+          <select name="condition" className={input}><option value="">{t("Any")}</option>{CONDITIONS.map((c) => <option key={c.key} value={c.key}>{c.label}</option>)}</select></label>
+        <label className="block"><span className={lbl}>{t("Unit")}</span>
+          <select name="sellingUnit" className={input}><option value="">{t("Any")}</option>{SELLING_UNITS.map((u) => <option key={u.key} value={u.key}>{u.label}</option>)}</select></label>
+        <label className="block"><span className={lbl}>{t("Quantity")}</span><input name="quantity" className={input} placeholder={t("e.g. 5 pallets / 1x40ft")} /></label>
+        <label className="block"><span className={lbl}>{t("Budget / Price")}</span><input name="budget" className={input} placeholder={t("e.g. €8,000 or Ask")} /></label>
+        <label className="block sm:col-span-2"><span className={lbl}>{t("Details")}</span>
+          <textarea name="description" rows={3} className={input} placeholder={t("Anything that helps the other side respond fast…")} /></label>
+        <label className="block"><span className={lbl}>{t("Contact email")}</span><input name="contactEmail" type="email" className={input} placeholder="(defaults to your account email)" /></label>
+        <label className="block"><span className={lbl}>{t("WhatsApp")}</span><input name="contactWhatsapp" className={input} placeholder="+34…" /></label>
       </div>
 
       {error && <p className="text-sm text-red-600 mt-3">{error}</p>}

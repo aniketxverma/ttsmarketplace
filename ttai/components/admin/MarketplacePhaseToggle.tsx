@@ -1,11 +1,13 @@
 'use client'
 
 import { useState } from 'react'
+import { useT } from '@/lib/i18n/client'
 import { useRouter } from 'next/navigation'
 import { Lock, Rocket, Loader2, Check } from 'lucide-react'
 
 /** Admin switch: keep the marketplace in Pre-Opening, or open it (Opening Day). */
 export function MarketplacePhaseToggle({ initial, launchDate }: { initial: boolean; launchDate: string }) {
+  const t = useT()
   const router = useRouter()
   const [open, setOpen] = useState(initial)
   const [busy, setBusy] = useState(false)
@@ -46,7 +48,7 @@ export function MarketplacePhaseToggle({ initial, launchDate }: { initial: boole
         </div>
         <div>
           <p className="font-bold text-[#0B1F4D]">
-            Marketplace phase: {open ? 'OPEN (live)' : 'Pre-Opening'}
+            {t("Marketplace phase:")} {open ? 'OPEN (live)' : 'Pre-Opening'}
           </p>
           <p className="text-sm text-gray-500 mt-0.5 max-w-xl">
             {open
@@ -59,12 +61,12 @@ export function MarketplacePhaseToggle({ initial, launchDate }: { initial: boole
         {open ? (
           <button onClick={() => set(false)} disabled={busy}
             className="inline-flex items-center gap-2 rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm font-bold text-gray-700 hover:bg-gray-50 disabled:opacity-50">
-            {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Lock className="w-4 h-4" />} Back to Pre-Opening
+            {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Lock className="w-4 h-4" />} {t("Back to Pre-Opening")}
           </button>
         ) : (
           <button onClick={() => set(true)} disabled={busy}
             className="inline-flex items-center gap-2 rounded-xl bg-green-600 text-white px-5 py-2.5 text-sm font-extrabold hover:bg-green-700 disabled:opacity-50">
-            {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Rocket className="w-4 h-4" />} Open Marketplace
+            {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Rocket className="w-4 h-4" />} {t("Open Marketplace")}
           </button>
         )}
       </div>
@@ -76,7 +78,7 @@ export function MarketplacePhaseToggle({ initial, launchDate }: { initial: boole
           <label className="block text-xs font-bold uppercase tracking-widest text-gray-500 mb-1.5">Launch date &amp; time</label>
           <input type="datetime-local" value={date} onChange={(e) => setDate(e.target.value)}
             className="w-full rounded-xl border border-gray-300 px-3 py-2.5 text-sm font-semibold text-[#0B1F4D] focus:border-[#0B1F4D] focus:outline-none" />
-          <p className="text-[11px] text-gray-400 mt-1.5">Drives the live “Opening Soon” countdown on the homepage.</p>
+          <p className="text-[11px] text-gray-400 mt-1.5">{t("Drives the live “Opening Soon” countdown on the homepage.")}</p>
         </div>
         <button onClick={saveDate} disabled={busy || !date}
           className="inline-flex items-center gap-2 rounded-xl bg-[#0B1F4D] text-white px-5 py-2.5 text-sm font-extrabold hover:bg-[#13306e] disabled:opacity-50">

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useT } from '@/lib/i18n/client'
 import { FileSpreadsheet, Download, Eye, Calendar } from 'lucide-react'
 import { CatalogViewer } from './CatalogViewer'
 
@@ -16,6 +17,7 @@ const fmtDate = (d?: string) => (d ? new Date(d).toLocaleDateString('en-GB', { d
 // "Supplier Catalog" — shows the supplier's uploaded Excel with download + an
 // in-browser preview (category tabs, search, pagination).
 export function SupplierCatalog({ documents }: { documents: Doc[] }) {
+  const t = useT()
   const [open, setOpen] = useState<Doc | null>(null)
   const excels = documents.filter(isExcel)
   if (!excels.length) return null
@@ -24,7 +26,7 @@ export function SupplierCatalog({ documents }: { documents: Doc[] }) {
     <section className="rounded-2xl bg-white border border-gray-100 shadow-sm p-5 sm:p-6">
       <div className="flex items-center gap-2 mb-4">
         <FileSpreadsheet className="w-5 h-5 text-green-600" />
-        <h2 className="text-lg font-extrabold text-[#0B1F4D]">Supplier Catalog</h2>
+        <h2 className="text-lg font-extrabold text-[#0B1F4D]">{t("Supplier Catalog")}</h2>
       </div>
       <div className="space-y-3">
         {excels.map((d) => {
@@ -42,8 +44,8 @@ export function SupplierCatalog({ documents }: { documents: Doc[] }) {
                 </div>
               </div>
               <div className="flex items-center gap-2 flex-shrink-0">
-                <button onClick={() => setOpen(d)} className="inline-flex items-center gap-1.5 rounded-lg bg-[#0B1F4D] text-white px-4 py-2 text-xs font-bold hover:bg-[#162d6e] transition-colors"><Eye className="w-4 h-4" /> Preview</button>
-                <a href={d.file_url} download className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-4 py-2 text-xs font-bold text-gray-700 hover:border-[#0B1F4D] transition-colors"><Download className="w-4 h-4" /> Download</a>
+                <button onClick={() => setOpen(d)} className="inline-flex items-center gap-1.5 rounded-lg bg-[#0B1F4D] text-white px-4 py-2 text-xs font-bold hover:bg-[#162d6e] transition-colors"><Eye className="w-4 h-4" /> {t("Preview")}</button>
+                <a href={d.file_url} download className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 px-4 py-2 text-xs font-bold text-gray-700 hover:border-[#0B1F4D] transition-colors"><Download className="w-4 h-4" /> {t("Download")}</a>
               </div>
             </div>
           )

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useT } from '@/lib/i18n/client'
 import Image from 'next/image'
 import { Bot, Sparkles } from 'lucide-react'
 import { askAssistant } from './AssistantActions'
@@ -10,6 +11,7 @@ import { askAssistant } from './AssistantActions'
  * live "online" pulse, a speech-bubble hint, and click-to-open the chat.
  */
 export function AssistantAvatar({ url, size = 132 }: { url: string | null; size?: number }) {
+  const t = useT()
   const [hover, setHover] = useState(false)
   return (
     <button
@@ -22,7 +24,7 @@ export function AssistantAvatar({ url, size = 132 }: { url: string | null; size?
     >
       {/* speech bubble hint */}
       <span className={`absolute -top-3 -left-24 z-20 whitespace-nowrap rounded-xl bg-white text-[#0B1F4D] text-xs font-bold px-3 py-1.5 shadow-lg transition-all duration-300 ${hover ? 'opacity-100 -translate-y-1' : 'opacity-0 translate-y-1 pointer-events-none'}`}>
-        Ask me anything 💬
+        {t("Ask me anything 💬")}
         <span className="absolute -bottom-1 right-4 w-2 h-2 bg-white rotate-45" />
       </span>
 

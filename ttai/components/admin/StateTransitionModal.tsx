@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useT } from '@/lib/i18n/client'
 
 interface StateTransitionModalProps {
   supplierId: string
@@ -15,6 +16,7 @@ export function StateTransitionModal({
   onSuccess,
   onClose,
 }: StateTransitionModalProps) {
+  const t = useT()
   const [reason, setReason] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -44,13 +46,13 @@ export function StateTransitionModal({
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
       <div className="bg-card rounded-xl border shadow-xl p-6 w-full max-w-md space-y-4">
-        <h2 className="font-semibold">Transition to {targetStatus}</h2>
+        <h2 className="font-semibold">{t("Transition to")} {targetStatus}</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1">
-            <label className="text-sm font-medium">Reason *</label>
+            <label className="text-sm font-medium">{t("Reason *")}</label>
             <textarea
               className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm h-24 resize-none focus:outline-none focus:ring-2 focus:ring-ring"
-              placeholder="Explain the reason for this status change (min 5 chars)..."
+              placeholder={t("Explain the reason for this status change (min 5 chars)...")}
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               required
@@ -60,7 +62,7 @@ export function StateTransitionModal({
           {error && <p className="text-sm text-destructive bg-destructive/10 px-3 py-2 rounded-md">{error}</p>}
           <div className="flex gap-3 justify-end">
             <button type="button" onClick={onClose} className="rounded-md border px-4 py-2 text-sm hover:bg-accent">
-              Cancel
+              {t("Cancel")}
             </button>
             <button type="submit" disabled={loading} className="rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm font-medium hover:bg-primary/90 disabled:opacity-50">
               {loading ? 'Confirming...' : `Confirm → ${targetStatus}`}

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useT } from '@/lib/i18n/client'
 import { Check, Factory, Truck, Store } from 'lucide-react'
 import { ROLE_PLANS } from '@/lib/pricing'
 import { SubscribeButton } from '@/app/(public)/pricing/SubscribeButton'
@@ -8,6 +9,7 @@ import { SubscribeButton } from '@/app/(public)/pricing/SubscribeButton'
 const ICONS: Record<string, typeof Factory> = { factory: Factory, truck: Truck, store: Store }
 
 export function RolePlans({ loggedIn, currentTier }: { loggedIn: boolean; currentTier: string }) {
+  const t = useT()
   const [active, setActive] = useState(ROLE_PLANS[0].key)
   const set = ROLE_PLANS.find((r) => r.key === active) ?? ROLE_PLANS[0]
   const hasPlan = currentTier !== 'free'
@@ -34,7 +36,7 @@ export function RolePlans({ loggedIn, currentTier }: { loggedIn: boolean; curren
         {set.plans.map((p) => (
           <div key={p.tier}
             className={`relative rounded-3xl bg-white p-6 flex flex-col border transition-all duration-300 ${p.highlight ? 'border-transparent shadow-2xl ring-2 ring-[#7c3aed] md:-translate-y-2' : 'border-gray-100 shadow-lg hover:shadow-xl'}`}>
-            {p.highlight && <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#7c3aed] text-white text-[11px] font-extrabold px-3 py-1 rounded-full uppercase tracking-wide">Most popular</span>}
+            {p.highlight && <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#7c3aed] text-white text-[11px] font-extrabold px-3 py-1 rounded-full uppercase tracking-wide">{t("Most popular")}</span>}
             <div className="flex items-center gap-2.5 mb-1">
               <span className="w-2.5 h-2.5 rounded-full" style={{ background: set.accent }} />
               <h3 className="text-lg font-extrabold text-[#0B1F4D]">{p.name}</h3>

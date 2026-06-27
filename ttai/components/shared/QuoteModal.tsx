@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useT } from '@/lib/i18n/client'
 import { X, Quote, Send, Building2, CheckCircle2 } from 'lucide-react'
 
 /**
@@ -18,6 +19,7 @@ export function QuoteModal({
   email?: string | null
   productName?: string | null
 }) {
+  const t = useT()
   const [form, setForm] = useState({ name: '', company: '', email: '', phone: '', qty: '', target: '', message: '' })
   const [sent, setSent] = useState(false)
   const set = (k: keyof typeof form, v: string) => setForm((p) => ({ ...p, [k]: v }))
@@ -52,33 +54,33 @@ export function QuoteModal({
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
       <div className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden">
         <div className="flex items-center justify-between px-5 py-4 bg-gradient-to-r from-[#0B1F4D] to-[#1a3a7a] text-white">
-          <h3 className="font-extrabold flex items-center gap-2"><Quote className="w-5 h-5 text-[#F5A623]" /> Request a Quotation</h3>
+          <h3 className="font-extrabold flex items-center gap-2"><Quote className="w-5 h-5 text-[#F5A623]" /> {t("Request a Quotation")}</h3>
           <button onClick={onClose} className="w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center"><X className="w-4 h-4" /></button>
         </div>
 
         {sent ? (
           <div className="p-8 text-center">
             <CheckCircle2 className="w-14 h-14 text-green-500 mx-auto mb-3" />
-            <p className="text-lg font-extrabold text-gray-900">Request ready to send</p>
-            <p className="text-sm text-gray-500 mt-1">We&apos;ve opened {whatsapp ? 'WhatsApp' : 'your email'} with your quotation to <strong>{company}</strong>. Just press send.</p>
-            <button onClick={onClose} className="mt-5 rounded-xl bg-[#0B1F4D] text-white font-bold px-6 py-2.5 text-sm hover:bg-[#162d6e] transition-colors">Done</button>
+            <p className="text-lg font-extrabold text-gray-900">{t("Request ready to send")}</p>
+            <p className="text-sm text-gray-500 mt-1">We&apos;ve opened {whatsapp ? 'WhatsApp' : 'your email'} {t("with your quotation to")} <strong>{company}</strong>. Just press send.</p>
+            <button onClick={onClose} className="mt-5 rounded-xl bg-[#0B1F4D] text-white font-bold px-6 py-2.5 text-sm hover:bg-[#162d6e] transition-colors">{t("Done")}</button>
           </div>
         ) : (
           <form onSubmit={submit} className="p-5 space-y-3">
-            <p className="text-xs text-gray-500 flex items-center gap-1.5"><Building2 className="w-3.5 h-3.5" /> To: <strong className="text-gray-800">{company}</strong>{productName ? <> · {productName}</> : null}</p>
+            <p className="text-xs text-gray-500 flex items-center gap-1.5"><Building2 className="w-3.5 h-3.5" /> {t("To:")} <strong className="text-gray-800">{company}</strong>{productName ? <> · {productName}</> : null}</p>
             <div className="grid grid-cols-2 gap-3">
-              <input className={INPUT} required placeholder="Your name *" value={form.name} onChange={(e) => set('name', e.target.value)} />
-              <input className={INPUT} placeholder="Your company" value={form.company} onChange={(e) => set('company', e.target.value)} />
-              <input className={INPUT} required type="email" placeholder="Email *" value={form.email} onChange={(e) => set('email', e.target.value)} />
-              <input className={INPUT} placeholder="Phone / WhatsApp" value={form.phone} onChange={(e) => set('phone', e.target.value)} />
-              <input className={INPUT} required placeholder="Quantity / MOQ *" value={form.qty} onChange={(e) => set('qty', e.target.value)} />
-              <input className={INPUT} placeholder="Target price (optional)" value={form.target} onChange={(e) => set('target', e.target.value)} />
+              <input className={INPUT} required placeholder={t("Your name *")} value={form.name} onChange={(e) => set('name', e.target.value)} />
+              <input className={INPUT} placeholder={t("Your company")} value={form.company} onChange={(e) => set('company', e.target.value)} />
+              <input className={INPUT} required type="email" placeholder={t("Email *")} value={form.email} onChange={(e) => set('email', e.target.value)} />
+              <input className={INPUT} placeholder={t("Phone / WhatsApp")} value={form.phone} onChange={(e) => set('phone', e.target.value)} />
+              <input className={INPUT} required placeholder={t("Quantity / MOQ *")} value={form.qty} onChange={(e) => set('qty', e.target.value)} />
+              <input className={INPUT} placeholder={t("Target price (optional)")} value={form.target} onChange={(e) => set('target', e.target.value)} />
             </div>
-            <textarea className={`${INPUT} h-20 resize-none`} placeholder="Message — specs, delivery terms, destination…" value={form.message} onChange={(e) => set('message', e.target.value)} />
+            <textarea className={`${INPUT} h-20 resize-none`} placeholder={t("Message — specs, delivery terms, destination…")} value={form.message} onChange={(e) => set('message', e.target.value)} />
             <button type="submit" className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-[#1f7a3a] hover:bg-[#1a6a32] text-white font-extrabold py-3 text-sm transition-colors">
-              <Send className="w-4 h-4" /> Send request {whatsapp ? 'via WhatsApp' : 'by email'}
+              <Send className="w-4 h-4" /> {t("Send request")} {whatsapp ? 'via WhatsApp' : 'by email'}
             </button>
-            <p className="text-[11px] text-gray-400 text-center">Goes directly to the supplier — no account needed.</p>
+            <p className="text-[11px] text-gray-400 text-center">{t("Goes directly to the supplier — no account needed.")}</p>
           </form>
         )}
       </div>

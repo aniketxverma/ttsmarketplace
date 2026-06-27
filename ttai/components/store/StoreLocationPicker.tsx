@@ -1,6 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import { useT } from '@/lib/i18n/client'
 import { ChevronDown } from 'lucide-react'
 
 type Country = { iso: string; name: string }
@@ -11,6 +12,7 @@ type City = { id: string; name: string }
 export function StoreLocationPicker({ countries, cities, country, city, basePath = '/store-center', label = 'Explore Location' }: {
   countries: Country[]; cities: City[]; country: string; city: string; basePath?: string; label?: string
 }) {
+  const t = useT()
   const router = useRouter()
 
   const go = (c: string, ci: string) => {
@@ -61,7 +63,7 @@ export function StoreLocationPicker({ countries, cities, country, city, basePath
       {(country || city) && (
         <button onClick={() => go('', '')}
           className="rounded-xl bg-[#0B1F4D] hover:bg-[#162d6e] text-white text-xs font-bold px-4 py-2.5 transition-colors flex-shrink-0">
-          Reset
+          {t("Reset")}
         </button>
       )}
     </div>

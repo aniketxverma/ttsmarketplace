@@ -9,6 +9,7 @@ let src = fs.readFileSync(FILE, 'utf8')
 
 if (!/^\s*['"]use client['"]/m.test(src)) { console.log('SKIP not-client:', FILE); process.exit(0) }
 if (/useT\(/.test(src)) { console.log('SKIP wired:', FILE); process.exit(0) }
+if (/\b(const|let|var)\s+t\b\s*=/.test(src)) { console.log('SKIP (t already declared):', FILE); process.exit(0) }
 
 const UI = (t) => {
   const x = t.trim()
@@ -22,15 +23,20 @@ const UI = (t) => {
 
 const sf = ts.createSourceFile(FILE, src, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX)
 
+// Find the main exported component: prefer `export default function`, else the
+// first `export function PascalCase` (named-export components).
 let mainFn = null
 function findMain(node) {
   if (ts.isFunctionDeclaration(node) && node.modifiers &&
-      node.modifiers.some((m) => m.kind === ts.SyntaxKind.ExportKeyword) &&
-      node.modifiers.some((m) => m.kind === ts.SyntaxKind.DefaultKeyword)) { mainFn = node }
+      node.modifiers.some((m) => m.kind === ts.SyntaxKind.ExportKeyword)) {
+    const isDefault = node.modifiers.some((m) => m.kind === ts.SyntaxKind.DefaultKeyword)
+    const isComponent = isDefault || (node.name && /^[A-Z]/.test(node.name.getText(sf)))
+    if (isComponent && (isDefault || !mainFn)) mainFn = node
+  }
   ts.forEachChild(node, findMain)
 }
 findMain(sf)
-if (!mainFn || !mainFn.body) { console.log('WARN no default-export fn:', FILE); process.exit(0) }
+if (!mainFn || !mainFn.body) { console.log('WARN no exported component fn:', FILE); process.exit(0) }
 
 const edits = []
 const strings = new Set()

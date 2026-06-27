@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { useT } from '@/lib/i18n/client'
 import { createClient } from '@/lib/supabase/client'
 import { FileSpreadsheet, FileText, FileImage, File as FileIcon, Download, Trash2, Upload, Loader2 } from 'lucide-react'
 
@@ -28,6 +29,7 @@ const INPUT = 'w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:
  * supplier's brand page. Writes to supplier_documents with is_public = true.
  */
 export function CatalogueManager({ supplierId }: { supplierId: string }) {
+  const t = useT()
   const supabase = createClient()
   const [docs, setDocs] = useState<Doc[]>([])
   const [title, setTitle] = useState('')
@@ -77,32 +79,32 @@ export function CatalogueManager({ supplierId }: { supplierId: string }) {
     <div className="space-y-5">
       <div>
         <h3 className="font-bold text-[#0B1F4D]">Catalogues &amp; Price Lists</h3>
-        <p className="text-sm text-gray-500 mt-0.5">Upload PDF / Excel files. They appear in the <strong>Supplier Documents</strong> panel on your public profile for buyers to download.</p>
+        <p className="text-sm text-gray-500 mt-0.5">{t("Upload PDF / Excel files. They appear in the")} <strong>{t("Supplier Documents")}</strong> {t("panel on your public profile for buyers to download.")}</p>
       </div>
 
       <form onSubmit={upload} className="rounded-2xl border border-gray-100 bg-gray-50/60 p-4 space-y-3">
         <div className="grid sm:grid-cols-2 gap-3">
           <div className="space-y-1">
-            <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Type</label>
+            <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">{t("Type")}</label>
             <select className={INPUT} value={docType} onChange={(e) => setDocType(e.target.value)}>
-              <option value="catalog">Product Catalogue</option>
-              <option value="price_list">Price List</option>
-              <option value="brochure">Brochure</option>
-              <option value="other">Other</option>
+              <option value="catalog">{t("Product Catalogue")}</option>
+              <option value="price_list">{t("Price List")}</option>
+              <option value="brochure">{t("Brochure")}</option>
+              <option value="other">{t("Other")}</option>
             </select>
           </div>
           <div className="space-y-1">
-            <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Title (optional)</label>
-            <input className={INPUT} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Catalogue 2026" />
+            <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">{t("Title (optional)")}</label>
+            <input className={INPUT} value={title} onChange={(e) => setTitle(e.target.value)} placeholder={t("e.g. Catalogue 2026")} />
           </div>
         </div>
         <div className="space-y-1">
-          <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">File (PDF, Excel, Word, image — max 25MB)</label>
+          <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">{t("File (PDF, Excel, Word, image — max 25MB)")}</label>
           <input ref={fileRef} type="file" accept=".pdf,.xls,.xlsx,.csv,.doc,.docx,.png,.jpg,.jpeg,.webp" required className="w-full text-sm" />
         </div>
         <button type="submit" disabled={uploading}
           className="inline-flex items-center gap-2 rounded-xl bg-[#0B1F4D] text-white px-4 py-2 text-sm font-bold hover:bg-[#162d6e] transition-colors disabled:opacity-50">
-          {uploading ? <><Loader2 className="w-4 h-4 animate-spin" /> Uploading…</> : <><Upload className="w-4 h-4" /> Upload to profile</>}
+          {uploading ? <><Loader2 className="w-4 h-4 animate-spin" /> {t("Uploading…")}</> : <><Upload className="w-4 h-4" /> {t("Upload to profile")}</>}
         </button>
       </form>
 
@@ -122,7 +124,7 @@ export function CatalogueManager({ supplierId }: { supplierId: string }) {
             </div>
           )
         })}
-        {!docs.length && <p className="text-sm text-gray-400 text-center py-8 border border-dashed border-gray-200 rounded-xl">No catalogues uploaded yet</p>}
+        {!docs.length && <p className="text-sm text-gray-400 text-center py-8 border border-dashed border-gray-200 rounded-xl">{t("No catalogues uploaded yet")}</p>}
       </div>
     </div>
   )
