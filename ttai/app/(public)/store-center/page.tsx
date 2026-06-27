@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { canPurchaseOnline } from '@/lib/retail'
 import { StoreLocationPicker } from '@/components/store/StoreLocationPicker'
 import { MallShops, type MallGroup } from '@/components/store/MallShops'
 import Link from 'next/link'
@@ -58,12 +59,15 @@ export default async function ShoppingMallPage({ searchParams }: { searchParams:
   const rootOf = (cid?: string | null): any => { let c = cid ? catById[cid] : null; for (let i = 0; c && c.parent_id && i < 8; i++) c = catById[c.parent_id]; return c ?? null }
 
   // ── Retail shops in this location ──
+  // Only suppliers with an ACTIVE Online Shop appear in the Mall (and Today's
+  // Deals below). B2B-only suppliers stay in the B2B Marketplace.
   let supQ = (supabase.from('suppliers') as any)
     .select('id, legal_name, trade_name, logo_url, banner_image, brand_slug, reliability_tier, tagline, description, country_id, city_id, whatsapp, working_hours, min_order_value_cents, countries(name)')
     .eq('status', 'ACTIVE').in('marketplace_context', ['retail', 'both'])
   if (activeCountry) supQ = supQ.eq('country_id', activeCountry.id)
   if (activeCity)    supQ = supQ.eq('city_id', activeCity.id)
-  const allShops = await safe<any[]>(supQ.limit(500), [])
+  const allShops = (await safe<any[]>(supQ.limit(500), []))
+    .filter((s: any) => canPurchaseOnline(s.trade_name) || canPurchaseOnline(s.legal_name) || canPurchaseOnline(s.brand_slug))
   const shops = allShops.slice(0, 24)
   const totalStores = allShops.length
   const locLabel = activeCity?.name ?? activeCountry?.name ?? 'All Locations'
