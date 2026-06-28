@@ -31,6 +31,10 @@ function Storefront({ s, onOpen, wide = false }: { s: MallSupplier; onOpen: (s: 
         {s.banner ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={s.banner} alt={s.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+        ) : s.products[0]?.img ? (
+          // No banner yet → show a real product image instead of a blank gradient.
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={s.products[0].img} alt={s.name} className="w-full h-full object-contain p-4 bg-gradient-to-br from-gray-50 to-white group-hover:scale-105 transition-transform duration-500" />
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-[#0B1F4D] to-[#1a3a7a]" />
         )}
