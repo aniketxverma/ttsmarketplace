@@ -14,6 +14,7 @@ import { canSeeB2B, tierRank } from '@/lib/business-chain'
 import { getMarketplaceOpen, PRE_OPENING_NOTICE } from '@/lib/marketplace-phase'
 import { translateCached } from '@/lib/i18n/content'
 import { getMotherBrands } from '@/lib/network'
+import { getDistNetwork } from '@/lib/distribution-network'
 import { getLocale } from '@/lib/i18n/server'
 import Link from 'next/link'
 
@@ -287,6 +288,10 @@ export default async function BrandPage({ params }: { params: { slug: string } }
   // network (e.g. a Chtaura distributor), badge it "Powered by <mother brand>".
   const motherBrand = (await getMotherBrands(supabase, [supplier.id])).get(supplier.id) ?? null
 
+  // Global Distribution Network (mother factories) — read via service role since
+  // app_settings isn't anon-readable. Shows the hub-and-spoke "Network" tab.
+  const distNetwork = await getDistNetwork(createAdminClient(), supplier.id)
+
   // Matchmaking gate: hide all direct contact for non-members so every CTA below
   // (and the BrandTabs contact tab) collapses to the "Unlock contact" prompt.
   if (!contactUnlocked) {
@@ -427,6 +432,7 @@ export default async function BrandPage({ params }: { params: { slug: string } }
       <div className="max-w-7xl mx-auto px-4 sm:px-8 mt-5 pb-24 sm:pb-10">
         <BrandTabs
           supplier={supplier as any}
+          network={distNetwork}
           products={products}
           gallery={(galleryRes.data ?? []) as any[]}
           certifications={(certsRes.data ?? []) as any[]}

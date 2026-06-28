@@ -6,6 +6,8 @@ import Link from 'next/link'
 import { BusinessCard } from '@/components/brand/BusinessCard'
 import { SupplierCatalog } from '@/components/brand/SupplierCatalog'
 import { CatalogueOverview } from '@/components/brand/CatalogueOverview'
+import { DistributionNetwork } from '@/components/brand/DistributionNetwork'
+import type { DistNetwork } from '@/lib/distribution-network'
 
 const isoFlag = (iso?: string | null) =>
   iso && iso.length === 2 ? iso.toUpperCase().replace(/./g, (c) => String.fromCodePoint(127397 + c.charCodeAt(0))) : ''
@@ -96,6 +98,7 @@ interface Props {
   reviews: Review[]; documents: Document[]; avgRating: number; sectionVisibility: Record<string, boolean>
   pos: any[]; brandSlug: string; shareUrl?: string
   channel?: Channel | null; channelPosts?: ChannelPost[]
+  network?: DistNetwork | null
   isAuthenticated?: boolean
   canSeeB2B?: boolean
   contactUnlocked?: boolean
@@ -528,6 +531,7 @@ const CANAL_POST_TYPES: Record<string, { label: string; badge: string; Icon: Rea
 
 // ── Nav config (static IDs — labels translated inside component) ──────────────
 const NAV_ITEM_IDS = [
+  { id: 'network',        msgKey: 'brand.tab_network',  Icon: Globe,          accent: '#0B1F4D' },
   { id: 'products',       msgKey: 'brand.tab_products', Icon: Package,        accent: '#0B1F4D' },
   { id: 'about',          msgKey: 'brand.tab_about',    Icon: Info,           accent: '#1D4ED8' },
   { id: 'gallery',        msgKey: 'brand.tab_gallery',  Icon: Images,         accent: '#5B21B6' },
@@ -554,7 +558,7 @@ const POS_TYPE_CONFIG: Record<string, { label: string; color: string; bg: string
 export function BrandTabs({
   supplier, products, gallery, certifications, reviews, documents,
   avgRating, sectionVisibility, pos, brandSlug, shareUrl,
-  channel, channelPosts = [], isAuthenticated = false, canSeeB2B = false,
+  channel, channelPosts = [], network = null, isAuthenticated = false, canSeeB2B = false,
   contactUnlocked = false, categoryRoots = [],
 }: Props) {
   const t = useT()
@@ -632,6 +636,7 @@ export function BrandTabs({
 
   // Visible nav
   const visibleNav = NAV_ITEMS.filter(item => {
+    if (item.id === 'network'        && (!network || (network.nodes?.length ?? 0) === 0)) return false
     if (item.id === 'products'       && products.length === 0) return false
     if (item.id === 'canal'          && !channel) return false
     if (item.id === 'gallery'        && (gallery.length === 0 || sectionVisibility.gallery === false)) return false
@@ -743,6 +748,13 @@ export function BrandTabs({
 
       {/* ── PAGE CONTENT ───────────────────────────────────────────────────── */}
       <div className="mt-8 flex flex-col gap-16 sm:gap-20 pb-28 sm:pb-14">
+
+        {/* ══════════════ GLOBAL DISTRIBUTION NETWORK ═════════════════════════ */}
+        {network && (network.nodes?.length ?? 0) > 0 && (
+          <section id="sec-network" data-reveal className="rounded-2xl border border-gray-100 bg-white shadow-sm p-5 sm:p-7">
+            <DistributionNetwork net={network} />
+          </section>
+        )}
 
         {/* ══════════════ SUPPLIER CATALOG (Excel) ════════════════════════════ */}
         <section id="sec-catalog" data-reveal><SupplierCatalog documents={documents as any} /></section>

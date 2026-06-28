@@ -6,6 +6,8 @@ import Link from 'next/link'
 import { Star, X, MapPin, Package, Store, ArrowRight, Clock } from 'lucide-react'
 import { QuoteButton } from '@/components/shared/QuoteButton'
 import { SupplierStatusBadge } from '@/components/brand/SupplierTrust'
+import { DistributionNetwork } from '@/components/brand/DistributionNetwork'
+import type { DistNetwork } from '@/lib/distribution-network'
 
 export type SupProduct = { slug: string; name: string; img: string; price: string }
 export type MallSupplier = {
@@ -15,6 +17,7 @@ export type MallSupplier = {
   whatsapp: string | null; years: number | null; count: number; kindLabel: string; premium: boolean
   industry?: string | null
   motherBrand?: string | null
+  network?: DistNetwork | null
   products: SupProduct[]
 }
 
@@ -86,7 +89,7 @@ function SupplierDrawer({ s, onClose }: { s: MallSupplier; onClose: () => void }
   return (
     <div className="fixed inset-0 z-[70] flex justify-end">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative w-full max-w-md h-full bg-white shadow-2xl overflow-y-auto">
+      <div className={`relative w-full ${s.network ? 'max-w-3xl' : 'max-w-md'} h-full bg-white shadow-2xl overflow-y-auto`}>
         <div className="relative h-44">
           {s.banner ? (/* eslint-disable-next-line @next/next/no-img-element */<img src={s.banner} alt={s.name} className="w-full h-full object-cover" />) : <div className="w-full h-full bg-gradient-to-br from-[#0B1F4D] to-[#1a3a7a]" />}
           <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
@@ -119,6 +122,13 @@ function SupplierDrawer({ s, onClose }: { s: MallSupplier; onClose: () => void }
             <QuoteButton company={s.name} whatsapp={s.whatsapp} className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#F5A623] text-[#0B1F4D] font-extrabold py-2.5 text-sm hover:bg-[#fbb93a] transition-colors" />
           </div>
           {wa && <a href={wa} target="_blank" rel="noopener noreferrer" className="mt-2 block text-center rounded-xl border border-green-200 text-green-600 font-bold py-2.5 text-sm hover:bg-green-50 transition-colors">{tr("Chat on WhatsApp")}</a>}
+
+          {/* Global Distribution Network — pick your zone before entering the shop */}
+          {s.network && (s.network.nodes?.length ?? 0) > 0 && (
+            <div className="mt-5 rounded-2xl border border-gray-100 bg-gray-50/50 p-4">
+              <DistributionNetwork net={s.network} />
+            </div>
+          )}
 
           {s.products.length > 0 && (
             <>

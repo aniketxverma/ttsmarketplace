@@ -240,6 +240,7 @@ export default {
     out_of_stock:  'Out of stock',
   },
   brand: {
+    tab_network:   'Network',
     tab_products:  'Products',
     tab_canal:     'Canal',
     tab_about:     'About',

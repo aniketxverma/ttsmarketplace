@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { getLocale } from '@/lib/i18n/server'
 import { localizeUI } from '@/lib/i18n/ui'
 import { getMotherBrands } from '@/lib/network'
+import { getDistNetworkMap } from '@/lib/distribution-network'
 import { SupplierMall } from '@/components/marketplace/SupplierMall'
 import {
   accessFor, chainLevel, directoryAccess, entityKind,
@@ -203,6 +204,9 @@ export async function BrandDirectory({
   // Sales-network lineage — members of a mother brand's network get a
   // "Powered by <brand>" badge on their storefront card.
   const motherBrands = await getMotherBrands(supabase, suppliers.map((s) => s.id))
+  // Global Distribution Network — mother factories show the hub-and-spoke circle
+  // in their click-preview drawer (app_settings via admin — not anon-readable).
+  const distNets = await getDistNetworkMap(createAdminClient(), suppliers.map((s) => s.id))
 
   // Mall-style supplier objects (storefronts + drawer).
   const mallSuppliers = suppliers.map((s) => ({
@@ -216,6 +220,7 @@ export async function BrandDirectory({
     industry: industryBySup[s.id]?.name ?? null,
     premium: !!s.is_featured, products: prodBySup[s.id] ?? [],
     motherBrand: motherBrands.get(s.id)?.name ?? null,
+    network: distNets.get(s.id) ?? null,
   }))
 
   // ── Mall-style hero data (image + live stats + animated sector pins) ──
