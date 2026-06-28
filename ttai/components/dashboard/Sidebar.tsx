@@ -100,7 +100,7 @@ export function Sidebar({ role, className }: { role: UserRole; className?: strin
   const items = NAV_BY_ROLE[role] ?? BUYER_NAV
 
   return (
-    <aside className={className ?? 'w-56 flex-shrink-0 border-r bg-muted/30 min-h-[calc(100vh-4rem)]'}>
+    <aside className={className ?? 'w-56 flex-shrink-0 border-r bg-muted/30 h-[calc(100vh-4rem)] overflow-y-auto'}>
       <nav className="p-4 space-y-1">
         {items.map((item) => (
           <Link
