@@ -16,9 +16,11 @@ const ICON: Record<Department, React.ReactNode> = {
  * The client picks a department; the ticket is auto-assigned to that manager and
  * lands in /admin/control-center. Drop it on any page (defaults to a contact box).
  */
-export function ControlCenterForm({ defaultDepartment = 'marketplace' as Department, sourceForm = 'contact' }: {
+export function ControlCenterForm({ defaultDepartment = 'marketplace' as Department, sourceForm = 'contact', defaultSubject = '' }: {
   defaultDepartment?: Department
   sourceForm?: string
+  /** Pre-fill the Subject field (e.g. from a ?topic= link) so the inquiry is identifiable. */
+  defaultSubject?: string
 }) {
   const t = useT()
   const [department, setDepartment] = useState<Department>(defaultDepartment)
@@ -102,7 +104,7 @@ export function ControlCenterForm({ defaultDepartment = 'marketplace' as Departm
         <Field name="email" label="Email" type="email" required />
         <Field name="phone" label="Phone / WhatsApp" />
         <Field name="countryName" label="Country" />
-        <Field name="subject" label="Subject" />
+        <Field name="subject" label="Subject" defaultValue={defaultSubject} />
       </div>
 
       <label className="block mt-3">
@@ -124,11 +126,11 @@ export function ControlCenterForm({ defaultDepartment = 'marketplace' as Departm
   )
 }
 
-function Field({ name, label, type = 'text', required = false }: { name: string; label: string; type?: string; required?: boolean }) {
+function Field({ name, label, type = 'text', required = false, defaultValue }: { name: string; label: string; type?: string; required?: boolean; defaultValue?: string }) {
   return (
     <label className="block">
       <span className="text-xs font-bold text-gray-600">{label}{required && <span className="text-red-500"> *</span>}</span>
-      <input name={name} type={type} required={required}
+      <input name={name} type={type} required={required} defaultValue={defaultValue}
         className="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:border-[#0B1F4D] focus:ring-1 focus:ring-[#0B1F4D] outline-none" />
     </label>
   )

@@ -9,10 +9,17 @@ export const metadata = { title: 'Contact · TTAI EMA', description: 'Get in tou
 const VALID = ['marketplace', 'logistics', 'consulting'] as const
 type Dept = typeof VALID[number]
 
-export default async function ContactPage({ searchParams }: { searchParams: { dept?: string } }) {
-  
-  const tt = await localizeUI(["Contact us", "Email", "Head Office", "Company", "Online"], getLocale())
+// A ?topic= on the contact link pre-fills the Subject so the inquiry is identifiable.
+const TOPIC_SUBJECT: Record<string, string> = {
+  'distribution-network': 'TTAIEMA Official Distribution Network — Request a Private Presentation',
+}
+
+export default async function ContactPage({ searchParams }: { searchParams: { dept?: string; topic?: string } }) {
+
+  const subjectEn = TOPIC_SUBJECT[searchParams.topic ?? ''] ?? ''
+  const tt = await localizeUI(["Contact us", "Email", "Head Office", "Company", "Online", ...(subjectEn ? [subjectEn] : [])], getLocale())
   const dept: Dept = (VALID.includes(searchParams.dept as Dept) ? searchParams.dept : 'marketplace') as Dept
+  const defaultSubject = subjectEn ? tt(subjectEn) : ''
   return (
     <div className="bg-gray-50 min-h-screen">
       <div className="bg-gradient-to-br from-[#0B1F4D] to-[#1e3a8a] text-white">
@@ -54,7 +61,7 @@ export default async function ContactPage({ searchParams }: { searchParams: { de
       </div>
 
       <div className="container mx-auto px-4 max-w-3xl pb-14">
-        <ControlCenterForm defaultDepartment={dept} />
+        <ControlCenterForm defaultDepartment={dept} defaultSubject={defaultSubject} />
       </div>
     </div>
   )
