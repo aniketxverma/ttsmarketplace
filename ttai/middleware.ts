@@ -99,8 +99,17 @@ export async function middleware(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   const path = request.nextUrl.pathname
 
+  // Social / link-preview crawlers (and search bots) may read PUBLIC marketing
+  // pages so share cards render. They never reach gated dashboards (the auth
+  // gate below still blocks them — this only relaxes the B2B browse gate).
+  const ua = request.headers.get('user-agent') || ''
+  const isCrawler = /facebookexternalhit|Facebot|Twitterbot|WhatsApp|LinkedInBot|Slackbot|TelegramBot|Discordbot|Pinterest|Googlebot|bingbot|Applebot|redditbot|SkypeUriPreview|Embedly|Iframely|vkShare|W3C_Validator|Bot|bot|Crawler|crawler/i.test(ua)
+
   // ── Auth gate (dashboard routes) ────────────────────────────────────────
-  if (!user && PROTECTED.some((p) => path.startsWith(p))) {
+  // Segment-aware match so '/suppliers' (public directory) is NOT caught by the
+  // '/supplier' (dashboard) prefix.
+  const matchesSegment = (prefixes: string[]) => prefixes.some((p) => path === p || path.startsWith(p + '/'))
+  if (!user && matchesSegment(PROTECTED)) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     url.searchParams.set('redirect', path)
@@ -113,7 +122,7 @@ export async function middleware(request: NextRequest) {
   // account. Carry category/region through so they land on the retail equivalent.
   // /b2b (Trade Hub) is TTAI EMA's public catalogue — anyone can view it.
   const B2B_ONLY = ['/suppliers', '/distributors', '/factories', '/marketplace']
-  if (!user && B2B_ONLY.some((p) => path.startsWith(p))) {
+  if (!user && !isCrawler && B2B_ONLY.some((p) => path.startsWith(p))) {
     const url = request.nextUrl.clone()
     url.pathname = '/store'
     return NextResponse.redirect(url)
