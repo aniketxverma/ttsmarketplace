@@ -116,6 +116,7 @@ export default {
     subscriptions: 'Subscriptions',
     points_of_sale: 'My Locations',
     sales_network: 'Sales Network',
+    distribution_network: 'Distribution Network',
     send_offers: 'Send Offers',
     orders: 'Orders',
     messages: 'Messages',

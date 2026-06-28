@@ -27,6 +27,7 @@ const SUPPLIER_NAV: NavItem[] = [
   { key: 'subscriptions', href: '/buyer/channels',         icon: <RadioIcon /> },
   { key: 'points_of_sale', href: '/supplier/pos',          icon: <PinIcon /> },
   { key: 'sales_network', href: '/supplier/network',       icon: <NetworkIcon /> },
+  { key: 'distribution_network', href: '/supplier/distribution-network', icon: <GlobeIcon /> },
   { key: 'send_offers',   href: '/supplier/offers',        icon: <MegaphoneIcon /> },
   { key: 'orders',        href: '/supplier/orders',        icon: <OrderIcon /> },
   { key: 'purchase_requests', href: '/supplier/requests',  icon: <OrderIcon /> },
