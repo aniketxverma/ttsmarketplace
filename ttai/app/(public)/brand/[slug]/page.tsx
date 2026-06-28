@@ -13,6 +13,7 @@ import { SupplierStatusBadge, HostedByTTAIEMA } from '@/components/brand/Supplie
 import { canSeeB2B, tierRank } from '@/lib/business-chain'
 import { getMarketplaceOpen, PRE_OPENING_NOTICE } from '@/lib/marketplace-phase'
 import { translateCached } from '@/lib/i18n/content'
+import { getMotherBrands } from '@/lib/network'
 import { getLocale } from '@/lib/i18n/server'
 import Link from 'next/link'
 
@@ -66,7 +67,7 @@ const TIER_CONFIG: Record<string, {
 
 export default async function BrandPage({ params }: { params: { slug: string } }) {
   
-  const tt = await localizeUI(["Home", "Suppliers", "Add to Favorites", "Share", "Verification Pending", "Since", "Products", "Follow Shop", "Contact Supplier", "products", "WhatsApp", "Call Now"], getLocale())
+  const tt = await localizeUI(["Home", "Suppliers", "Add to Favorites", "Share", "Verification Pending", "Since", "Products", "Follow Shop", "Contact Supplier", "products", "WhatsApp", "Call Now", "Powered by"], getLocale())
   const supabase = createClient()
 
   const { data: supplier } = await supplierQuery(supabase, params.slug, `
@@ -282,6 +283,10 @@ export default async function BrandPage({ params }: { params: { slug: string } }
     supplier.description = de || supplier.description
   }
 
+  // Sales-network lineage — if this shop belongs to another brand's official
+  // network (e.g. a Chtaura distributor), badge it "Powered by <mother brand>".
+  const motherBrand = (await getMotherBrands(supabase, [supplier.id])).get(supplier.id) ?? null
+
   // Matchmaking gate: hide all direct contact for non-members so every CTA below
   // (and the BrandTabs contact tab) collapses to the "Unlock contact" prompt.
   if (!contactUnlocked) {
@@ -351,6 +356,20 @@ export default async function BrandPage({ params }: { params: { slug: string } }
                   )}
                   {catalogueService && (
                     <span className="inline-flex items-center gap-1 bg-green-50 text-green-700 text-xs font-bold px-2.5 py-1 rounded-full" title="Catalogue built & maintained by TTAIEMA">📊 Powered by TTAIEMA catalogue</span>
+                  )}
+                  {motherBrand && (
+                    motherBrand.slug ? (
+                      <Link href={`/brand/${motherBrand.slug}`}
+                        className="inline-flex items-center gap-1 bg-[#0B1F4D]/5 text-[#0B1F4D] border border-[#0B1F4D]/15 text-xs font-bold px-2.5 py-1 rounded-full hover:bg-[#0B1F4D]/10 transition-colors"
+                        title={`Official sales-network partner of ${motherBrand.name}`}>
+                        🤝 {tt('Powered by')} {motherBrand.name}
+                      </Link>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 bg-[#0B1F4D]/5 text-[#0B1F4D] border border-[#0B1F4D]/15 text-xs font-bold px-2.5 py-1 rounded-full"
+                        title={`Official sales-network partner of ${motherBrand.name}`}>
+                        🤝 {tt('Powered by')} {motherBrand.name}
+                      </span>
+                    )
                   )}
                 </div>
                 {/* Meta chips */}

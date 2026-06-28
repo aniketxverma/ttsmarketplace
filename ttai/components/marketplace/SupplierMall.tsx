@@ -14,12 +14,14 @@ export type MallSupplier = {
   status?: string | null; protected?: boolean; premiumPartner?: boolean
   whatsapp: string | null; years: number | null; count: number; kindLabel: string; premium: boolean
   industry?: string | null
+  motherBrand?: string | null
   products: SupProduct[]
 }
 
 const badgeProps = (s: MallSupplier) => ({ status: s.status, reliability_tier: s.tier, ttaiema_protected: s.protected, premium_partner: s.premiumPartner })
 
 function Storefront({ s, onOpen, wide = false }: { s: MallSupplier; onOpen: (s: MallSupplier) => void; wide?: boolean }) {
+  const t = useT()
   const initials = s.name.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase()
   return (
     <div className={`group relative rounded-2xl bg-white border border-gray-100 shadow-sm overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-200 ${wide ? 'sm:col-span-2 lg:col-span-2' : ''}`}>
@@ -50,6 +52,9 @@ function Storefront({ s, onOpen, wide = false }: { s: MallSupplier; onOpen: (s: 
         </div>
         {s.industry && (
           <span className="inline-flex items-center gap-1 rounded-full bg-[#0B1F4D]/5 text-[#0B1F4D] text-[10px] font-bold px-2 py-0.5 mb-2">{s.industry}</span>
+        )}
+        {s.motherBrand && (
+          <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-bold px-2 py-0.5 mb-2 ml-1" title={`Official network partner of ${s.motherBrand}`}>🤝 {t('Powered by')} {s.motherBrand}</span>
         )}
         {/* product window */}
         <div className={`grid ${wide ? 'grid-cols-6' : 'grid-cols-4'} gap-1.5 mb-3`}>

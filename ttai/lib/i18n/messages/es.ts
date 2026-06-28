@@ -1,4 +1,5 @@
 export default {
+  "Powered by": "Impulsado por",
   "Shop": "Tienda",
   "NEW": "NUEVO",
   "Hosted by TTAIEMA Marketplace": "Organizado por TTAIEMA Marketplace",
