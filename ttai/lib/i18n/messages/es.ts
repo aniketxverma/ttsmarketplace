@@ -1,4 +1,6 @@
 export default {
+  "Shop": "Tienda",
+  "NEW": "NUEVO",
   "Hosted by TTAIEMA Marketplace": "Organizado por TTAIEMA Marketplace",
   "What do statuses mean? →": "¿Qué significan los estados? →",
   "Promotion": "Promoción",

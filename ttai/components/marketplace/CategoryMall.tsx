@@ -13,6 +13,10 @@ export type MallCat = {
   count: number
   subs: string[]
   products: MallProduct[]
+  /** Override link (e.g. the Outlet card points at /outlet, not a category). */
+  href?: string
+  /** Small corner badge, e.g. "NEW" on the distinct Outlet card. */
+  badge?: string
 }
 
 const ICONS: Record<string, typeof Package> = {
@@ -27,29 +31,33 @@ function price(cents: number, currency: string) {
 function Row({ c }: { c: MallCat }) {
   const t = useT()
   const Icon = ICONS[c.icon] ?? Package
+  const target = c.href ?? `/marketplace?category=${c.slug}`
 
   return (
-    <div className="overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-sm hover:shadow-lg transition-shadow duration-300">
+    <div className={`overflow-hidden rounded-3xl border bg-white shadow-sm hover:shadow-lg transition-shadow duration-300 ${c.badge ? 'border-orange-200' : 'border-gray-100'}`}>
       <div className="flex flex-col lg:flex-row items-stretch">
-        {/* Hero panel — clickable into the category */}
+        {/* Hero panel — clickable into the category (or /outlet for the Outlet card) */}
         <Link
-          href={`/marketplace?category=${c.slug}`}
+          href={target}
           className="group relative overflow-hidden lg:w-[300px] flex-shrink-0 p-6 sm:p-7 text-white flex flex-col justify-between"
           style={{ background: `linear-gradient(135deg, ${c.accent}, ${c.accent}cc)` }}
         >
           <Icon className="absolute -bottom-7 -right-6 w-44 h-44 text-white/10 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3" strokeWidth={1.1} />
           <div className="relative">
-            <div className="w-14 h-14 rounded-2xl bg-white/20 border border-white/25 backdrop-blur flex items-center justify-center mb-4 shadow-inner">
-              <Icon className="w-8 h-8 text-white" />
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-14 h-14 rounded-2xl bg-white/20 border border-white/25 backdrop-blur flex items-center justify-center shadow-inner">
+                <Icon className="w-8 h-8 text-white" />
+              </div>
+              {c.badge && <span className="rounded-md bg-red-600 text-white text-[10px] font-extrabold uppercase tracking-wide px-2 py-1">{t(c.badge)}</span>}
             </div>
             <h3 className="text-2xl font-extrabold leading-tight">{c.name}</h3>
-            <p className="text-white/85 text-sm mt-1 font-semibold">{c.count} products</p>
+            <p className="text-white/85 text-sm mt-1 font-semibold">{c.count} {t('products')}</p>
             {c.subs.length > 0 && (
               <p className="text-white/70 text-xs mt-3 leading-relaxed line-clamp-2">{c.subs.join(' · ')}</p>
             )}
           </div>
           <span className="relative mt-6 inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-extrabold w-fit group-hover:gap-3 transition-all shadow-sm" style={{ color: c.accent }}>
-            Shop {c.name} <ArrowRight className="w-4 h-4" />
+            {t('Shop')} {c.name} <ArrowRight className="w-4 h-4" />
           </span>
         </Link>
 
@@ -93,7 +101,7 @@ function Row({ c }: { c: MallCat }) {
 
       {/* Footer — category name + view all */}
       <Link
-        href={`/marketplace?category=${c.slug}`}
+        href={target}
         className="flex items-center justify-between gap-3 px-5 sm:px-6 py-3 border-t border-gray-100 bg-white hover:bg-gray-50/70 transition-colors"
       >
         <span className="inline-flex items-center gap-2 font-extrabold text-sm" style={{ color: c.accent }}>
@@ -101,7 +109,7 @@ function Row({ c }: { c: MallCat }) {
           {c.name}
         </span>
         <span className="inline-flex items-center gap-1 text-xs sm:text-sm font-bold text-gray-500 hover:text-[#0B1F4D]">
-          View all {c.count} products <ArrowRight className="w-4 h-4" />
+          {t('View all')} {c.count} {t('products')} <ArrowRight className="w-4 h-4" />
         </span>
       </Link>
     </div>

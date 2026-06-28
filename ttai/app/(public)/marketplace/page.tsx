@@ -165,6 +165,7 @@ export default async function MarketplacePage({
     'Brand:', 'All Brands', 'No shops found', 'Try a different category or country', 'See all products →',
     'No catalogues yet', 'Browse all products →', 'Products', 'Popular Brands', 'Shop the brands you trust',
     'No products found', 'Try adjusting your filters or search query',
+    'Outlet & Return Goods', 'Amazon Returns', 'Overstock', 'Liquidations', 'Pallets & Truckloads',
   ], locale)
   const allCats = await localizeCategoryNames(categoriesRes.data ?? [], locale)
 
@@ -257,6 +258,9 @@ export default async function MarketplacePage({
       .eq('is_published', true)
       .eq('suppliers.status', 'ACTIVE')
       .in('marketplace_context', ['wholesale', 'both'])
+      // Outlet / return goods get their OWN section — never mixed into the
+      // new-goods categories (keeps "new" vs "clearance/returns" unambiguous).
+      .not('is_outlet', 'is', true)
     if (activeSupplier) q = q.eq('supplier_id', activeSupplier)
     if (searchParams.hub === 'ttaiema') q = q.eq('suppliers.is_house', true) // Trade Hub → our own goods only
     if (activeCountryId) q = q.eq('suppliers.country_id', activeCountryId)
@@ -480,6 +484,33 @@ export default async function MarketplacePage({
   // Order: admin priority first, then product count (popular) — never random.
   const prioOf = (slug: string) => { const c: any = allCats.find((x) => x.slug === slug); return c?.priority ?? 0 }
   mallCats.sort((a, b) => prioOf(b.slug) - prioOf(a.slug) || b.count - a.count)
+
+  // ── Outlet & Return Goods — its OWN distinct card (never mixed into the
+  // new-goods categories above). Same dark look as the homepage Outlet hub so
+  // shoppers immediately read it as clearance/returns, not new stock. ──
+  let outletCat: MallCat | null = null
+  if (isGroupedView) {
+    const { data: outletRows } = await (supabase.from('products') as any)
+      .select('id, slug, name, price_cents, currency_code, product_images(url, sort_order), suppliers!supplier_id!inner(status)')
+      .eq('is_outlet', true).eq('is_published', true).eq('suppliers.status', 'ACTIVE')
+      .order('created_at', { ascending: false }).limit(60)
+    const outletProducts = ((outletRows ?? []) as any[])
+      .map((p) => {
+        const img = ((p.product_images ?? []) as any[]).slice().sort((a, b) => a.sort_order - b.sort_order)[0]?.url ?? ''
+        return { slug: p.slug ?? p.id, name: p.name as string, img, priceCents: p.price_cents as number, currency: (p.currency_code as string) ?? 'EUR' }
+      })
+      .filter((p) => p.img)
+    if (outletProducts.length) {
+      const { count: outletCount } = await (supabase.from('products') as any)
+        .select('id', { count: 'exact', head: true }).eq('is_outlet', true).eq('is_published', true)
+      outletCat = {
+        name: tt('Outlet & Return Goods'), slug: '__outlet__', accent: '#2a1c0c',
+        icon: 'package', count: outletCount ?? outletProducts.length,
+        subs: [tt('Amazon Returns'), tt('Overstock'), tt('Liquidations'), tt('Pallets & Truckloads')],
+        products: outletProducts.slice(0, 18), href: '/outlet', badge: 'NEW',
+      }
+    }
+  }
 
   // Popular Brands strip — order known brands first, then by presence in catalogue.
   const BRAND_PRIORITY = ['Apple', 'Samsung', 'Xiaomi', 'Huawei', 'JBL', 'Sony', 'LG', 'Philips', 'Bosch', "De'Longhi", 'Dyson', 'Garmin', 'Fitbit', 'Realme', 'Anker', 'Google', 'Honor', 'Chtaura', 'Nestlé', 'Coca-Cola', 'Pepsi', 'Red Bull', 'Rozil', 'XO']
@@ -872,7 +903,7 @@ export default async function MarketplacePage({
                       </div>
                     </div>
                   )}
-                  <CategoryMall categories={mallCats} />
+                  <CategoryMall categories={outletCat ? [outletCat, ...mallCats] : mallCats} />
                 </div>
               )
             }
