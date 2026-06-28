@@ -903,7 +903,9 @@ export default async function MarketplacePage({
                       </div>
                     </div>
                   )}
-                  <CategoryMall categories={outletCat ? [outletCat, ...mallCats] : mallCats} />
+                  <CategoryMall categories={outletCat
+                    ? [...mallCats.slice(0, Math.ceil(mallCats.length / 2)), outletCat, ...mallCats.slice(Math.ceil(mallCats.length / 2))]
+                    : mallCats} />
                 </div>
               )
             }
