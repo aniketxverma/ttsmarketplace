@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation'
 import { localizeUI } from '@/lib/i18n/ui'
 import Image from 'next/image'
 import {
-  Crown, ShieldCheck, Award, Store, Lock, Heart, Share2, MapPin, Calendar,
+  Crown, ShieldCheck, Award, Store, Lock, Heart, MapPin, Calendar,
   Package, Globe2, MessageCircle, UserPlus, Mail, Headphones,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
@@ -324,7 +324,6 @@ export default async function BrandPage({ params }: { params: { slug: string } }
           </nav>
           <div className="hidden sm:flex items-center gap-4 flex-shrink-0 text-sm text-gray-500">
             <span className="flex items-center gap-1.5"><Heart className="w-4 h-4" /> {tt("Add to Favorites")}</span>
-            <span className="flex items-center gap-1.5"><Share2 className="w-4 h-4" /> {tt("Share")}</span>
           </div>
         </div>
       </div>
