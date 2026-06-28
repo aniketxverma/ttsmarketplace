@@ -41,6 +41,8 @@ export function DistributionNetwork({ net, contactBase = '/contact' }: { net: Di
       <button onClick={onClick} className="group flex flex-col items-center text-center w-[120px]">
         <span className="relative w-16 h-16 rounded-full bg-white border-2 shadow-sm flex items-center justify-center text-2xl transition-transform group-hover:scale-110"
           style={{ borderColor: cfg.color }}>
+          {/* pulsing ring to highlight open "looking for partner" countries */}
+          {cfg.opportunity && <span className="absolute inset-0 rounded-full animate-ping" style={{ border: `2px solid ${cfg.color}`, animationDuration: '2.2s' }} />}
           {flag(n.iso)}
           {n.verified && <BadgeCheck className="absolute -bottom-1 -right-1 w-5 h-5 text-green-600 bg-white rounded-full" />}
           {cfg.opportunity && <Search className="absolute -bottom-1 -right-1 w-4 h-4 text-white rounded-full p-0.5" style={{ background: cfg.color }} />}
@@ -72,16 +74,36 @@ export function DistributionNetwork({ net, contactBase = '/contact' }: { net: Di
 
       {/* ── Circle (md+) ── */}
       <div className="relative hidden md:block mx-auto mt-6 aspect-square w-full max-w-[720px]">
-        {/* dashed world backdrop + connectors */}
+        {/* dashed world backdrop + animated connectors */}
         <svg viewBox="0 0 100 100" className="absolute inset-0 w-full h-full">
-          <circle cx="50" cy="50" r={R} fill="none" stroke="#e5e7eb" strokeWidth="0.2" strokeDasharray="0.6 0.8" />
-          {pos.map((p, i) => (
-            <line key={i} x1="50" y1="50" x2={p.x} y2={p.y} stroke={NET_STATUS[nodes[i].status].color} strokeWidth="0.3" strokeDasharray="1 1" opacity="0.45" />
-          ))}
+          {/* slow-rotating orbit ring */}
+          <g>
+            <animateTransform attributeName="transform" type="rotate" from="0 50 50" to="360 50 50" dur="70s" repeatCount="indefinite" />
+            <circle cx="50" cy="50" r={R} fill="none" stroke="#cbd5e1" strokeWidth="0.25" strokeDasharray="0.6 1.4" opacity="0.7" />
+          </g>
+          {pos.map((p, i) => {
+            const color = NET_STATUS[nodes[i].status].color
+            return (
+              <g key={i}>
+                {/* flowing dashed link */}
+                <line x1="50" y1="50" x2={p.x} y2={p.y} stroke={color} strokeWidth="0.3" strokeDasharray="1 1.1" opacity="0.4">
+                  <animate attributeName="stroke-dashoffset" values="0;-2.1" dur="1.4s" repeatCount="indefinite" />
+                </line>
+                {/* traveling "broadcast" dot from the factory out to each country */}
+                <circle r="0.75" fill={color}>
+                  <animate attributeName="cx" values={`50;${p.x}`} dur="2.8s" begin={`${i * 0.3}s`} repeatCount="indefinite" />
+                  <animate attributeName="cy" values={`50;${p.y}`} dur="2.8s" begin={`${i * 0.3}s`} repeatCount="indefinite" />
+                  <animate attributeName="opacity" values="0;1;1;0" dur="2.8s" begin={`${i * 0.3}s`} repeatCount="indefinite" />
+                </circle>
+              </g>
+            )
+          })}
         </svg>
 
         {/* Centre — head office / factory */}
         <div className="absolute z-10 flex flex-col items-center text-center" style={{ left: '50%', top: '50%', transform: 'translate(-50%,-50%)' }}>
+          {/* soft pulsing halo */}
+          <span className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-32 lg:w-40 lg:h-40 rounded-full bg-[#0B1F4D]/15 animate-ping" style={{ animationDuration: '3.5s' }} />
           <span className="relative w-32 h-32 lg:w-40 lg:h-40 rounded-full overflow-hidden border-4 border-white shadow-xl bg-[#0B1F4D] flex items-center justify-center">
             {net.center.image
               /* eslint-disable-next-line @next/next/no-img-element */
