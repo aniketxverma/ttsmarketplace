@@ -18,6 +18,12 @@ import {
 export const metadata = {
   title: 'Outlet Zone · Clearance, Returns & Liquidation B2B · TTAI EMA',
   description: 'Customer returns, overstock, clearance and liquidation lots from suppliers, retail chains, distributors and brokers — by pallet, truckload and container.',
+  openGraph: {
+    title: 'TTAIZ Outlet Zone · Clearance, Returns & Liquidation',
+    description: 'Buy and sell returns, overstock, clearance and liquidation lots from top global brands and retailers.',
+    images: [{ url: '/og-outlet.jpg', width: 1717, height: 916, alt: 'TTAIZ Outlet Zone' }],
+  },
+  twitter: { card: 'summary_large_image' as const, images: ['/og-outlet.jpg'] },
 }
 
 const ROLE_ICON: Record<string, any> = {
