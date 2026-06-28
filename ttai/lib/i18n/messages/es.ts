@@ -1,4 +1,6 @@
 export default {
+  "Hosted by TTAIEMA Marketplace": "Organizado por TTAIEMA Marketplace",
+  "What do statuses mean? →": "¿Qué significan los estados? →",
   "Promotion": "Promoción",
   "View opportunity": "Ver oportunidad",
   "PROMOTION": "PROMOCIÓN",

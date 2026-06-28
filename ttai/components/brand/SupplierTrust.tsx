@@ -1,6 +1,7 @@
+'use client'
+
 import Link from 'next/link'
-import { getLocale } from '@/lib/i18n/server'
-import { localizeUI } from '@/lib/i18n/ui'
+import { useT } from '@/lib/i18n/client'
 import { resolveSupplierStatus, type SupplierStatusInfo } from '@/lib/supplier-status'
 
 type Sup = { status?: string | null; reliability_tier?: string | null; ttaiema_protected?: boolean | null; premium_partner?: boolean | null }
@@ -22,8 +23,8 @@ export function SupplierStatusBadge({ supplier, size = 'md', withDot = true }: {
  * clear TTAIEMA hosts/built the site but the company is independently operated
  * (unless TTAIEMA Protected). Protects the TTAIEMA brand from supplier disputes.
  */
-export async function HostedByTTAIEMA({ companyName, supplier }: { companyName: string; supplier: Sup }) {
-  const tt = await localizeUI(['Hosted by TTAIEMA Marketplace','What do statuses mean? →'], getLocale())
+export function HostedByTTAIEMA({ companyName, supplier }: { companyName: string; supplier: Sup }) {
+  const tt = useT()
   const s = resolveSupplierStatus(supplier)
   const protectedSvc = s.key === 'protected'
   return (
