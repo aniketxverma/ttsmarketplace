@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 
@@ -10,16 +10,26 @@ export default function ResetPasswordPage() {
   const [success, setSuccess] = useState(false)
   const [loading, setLoading] = useState(false)
 
+  // Coming back from the email link → ?mode=confirm shows the "set new password" form.
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('mode') === 'confirm') setMode('confirm')
+  }, [])
+
   async function handleRequest(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setError(null)
     setLoading(true)
     const email = (new FormData(e.currentTarget)).get('email') as string
-    const supabase = createClient()
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password?mode=confirm`,
-    })
-    if (error) { setError(error.message) } else { setSuccess(true) }
+    try {
+      // Send via our own mailer (Resend/SMTP) — reliable, unlike Supabase's built-in email.
+      const res = await fetch('/api/auth/forgot-password', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email }),
+      })
+      if (!res.ok) throw new Error((await res.json().catch(() => ({})))?.error || 'failed')
+      setSuccess(true)
+    } catch (e: any) {
+      setError(e.message === 'failed' ? 'Could not send the reset email. Please try again.' : e.message)
+    }
     setLoading(false)
   }
 
