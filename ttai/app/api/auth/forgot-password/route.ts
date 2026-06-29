@@ -3,6 +3,7 @@ import React from 'react'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendEmailFireAndForget } from '@/lib/email/send'
 import { ResetPasswordEmail } from '@/lib/email/templates/ResetPasswordEmail'
+import { appBaseUrl } from '@/lib/app-url'
 
 /**
  * Send a password-reset link through OUR mailer (Resend / SMTP) instead of
@@ -16,7 +17,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Please enter a valid email.' }, { status: 400 })
   }
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || new URL(req.url).origin
+  const appUrl = appBaseUrl()
   const redirectTo = `${appUrl}/api/auth/callback?next=${encodeURIComponent('/reset-password?mode=confirm')}`
 
   try {

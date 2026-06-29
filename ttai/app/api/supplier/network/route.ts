@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendEmailFireAndForget } from '@/lib/email/send'
 import { SalesNetworkInviteEmail } from '@/lib/email/templates/SalesNetworkInviteEmail'
+import { appBaseUrl } from '@/lib/app-url'
 
 /**
  * Sales Network — inviter (supplier) side. Create / list / revoke invitations.
@@ -30,7 +31,7 @@ export async function POST(req: NextRequest) {
   if (body.action === 'invite') {
     const company = String(body.company_name ?? '').trim()
     if (!company) return NextResponse.json({ error: 'Company name is required' }, { status: 400 })
-    const LEVELS = ['customer', 'sales_point', 'distributor', 'master_distributor']
+    const LEVELS = ['distributor', 'importer', 'wholesaler', 'retailer', 'point_of_sale', 'customer', 'sales_point', 'master_distributor']
     const row = {
       inviter_supplier_id: supplier.id,
       company_name: company,
@@ -40,14 +41,14 @@ export async function POST(req: NextRequest) {
       country: body.country || null,
       city: body.city || null,
       address: body.address || null,
-      level: LEVELS.includes(body.level) ? body.level : 'sales_point',
+      level: LEVELS.includes(body.level) ? body.level : 'distributor',
       status: 'pending',
       token: token(),
     }
     const ins = await (admin.from('sales_network') as any).insert(row).select('*').single()
     if (ins.error) return NextResponse.json({ error: ins.error.message }, { status: 500 })
 
-    const base = process.env.NEXT_PUBLIC_APP_URL ?? ''
+    const base = appBaseUrl()
     const link = `${base}/join/${ins.data.token}`
     const inviterName = supplier.trade_name ?? supplier.legal_name ?? 'A supplier'
 

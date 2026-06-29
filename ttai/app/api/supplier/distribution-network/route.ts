@@ -2,7 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 
-const VALID_STATUS = ['official', 'importer', 'exclusive', 'retail', 'agent', 'office', 'coming_soon']
+const VALID_STATUS = [
+  'distributor', 'importer', 'wholesaler', 'retailer', 'point_of_sale', 'agent', 'office',
+  'looking_distributor', 'looking_importer', 'looking_wholesaler', 'looking_retailer', 'looking_agent',
+  'coming_soon',
+]
 const str = (v: any, max: number) => (v == null ? '' : String(v)).slice(0, max)
 
 /** Save the signed-in supplier's Global Distribution Network config. */

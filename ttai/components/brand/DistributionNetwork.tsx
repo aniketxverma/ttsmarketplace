@@ -12,6 +12,9 @@ function flag(iso: string) {
     : '🌍'
 }
 
+// Safe status lookup — tolerates legacy/unknown keys so the circle never crashes.
+const ST = (s: string) => (NET_STATUS as Record<string, typeof NET_STATUS['distributor']>)[s] ?? NET_STATUS.distributor
+
 /**
  * A mother factory's Global Distribution Network as a hub-and-spoke circle:
  * factory in the centre, partner/opportunity countries around it. Click a country
@@ -24,9 +27,9 @@ export function DistributionNetwork({ net, contactBase = '/contact' }: { net: Di
 
   const stats = [
     { Icon: Globe, value: nodes.length, label: t('Countries') },
-    { Icon: Handshake, value: nodes.filter((n) => n.status === 'official').length, label: t('Official Partners') },
+    { Icon: Handshake, value: nodes.filter((n) => ST(n.status).group === 'partner').length, label: t('Official Partners') },
     { Icon: ShieldCheck, value: nodes.filter((n) => n.verified).length, label: t('Verified Partners') },
-    { Icon: Search, value: nodes.filter((n) => NET_STATUS[n.status]?.opportunity).length, label: t('Looking for Partners') },
+    { Icon: Search, value: nodes.filter((n) => ST(n.status).opportunity).length, label: t('Looking for Partners') },
   ]
 
   const R = 38 // circle radius in % (kept in so node labels don't clip the edge)
@@ -36,7 +39,7 @@ export function DistributionNetwork({ net, contactBase = '/contact' }: { net: Di
   })
 
   const Node = ({ n, onClick }: { n: NetNode; onClick: () => void }) => {
-    const cfg = NET_STATUS[n.status]
+    const cfg = ST(n.status)
     return (
       <button onClick={onClick} className="group flex flex-col items-center text-center w-[120px]">
         <span className="relative w-16 h-16 rounded-full bg-white border-2 shadow-sm flex items-center justify-center text-2xl transition-transform group-hover:scale-110"
@@ -82,7 +85,7 @@ export function DistributionNetwork({ net, contactBase = '/contact' }: { net: Di
             <circle cx="50" cy="50" r={R} fill="none" stroke="#cbd5e1" strokeWidth="0.25" strokeDasharray="0.6 1.4" opacity="0.7" />
           </g>
           {pos.map((p, i) => {
-            const color = NET_STATUS[nodes[i].status].color
+            const color = ST(nodes[i].status).color
             return (
               <g key={i}>
                 {/* flowing dashed link */}
@@ -130,7 +133,7 @@ export function DistributionNetwork({ net, contactBase = '/contact' }: { net: Di
       {/* ── Grid (mobile) ── */}
       <div className="md:hidden grid grid-cols-2 gap-2.5 mt-5">
         {nodes.map((n, i) => {
-          const cfg = NET_STATUS[n.status]
+          const cfg = ST(n.status)
           return (
             <button key={i} onClick={() => setSel(n)} className="rounded-xl border bg-white p-3 text-left flex items-start gap-2" style={{ borderColor: `${cfg.color}55` }}>
               <span className="text-xl">{flag(n.iso)}</span>
@@ -154,7 +157,7 @@ export function DistributionNetwork({ net, contactBase = '/contact' }: { net: Di
 
       {/* ── Detail / Apply card ── */}
       {sel && (() => {
-        const cfg = NET_STATUS[sel.status]
+        const cfg = ST(sel.status)
         return (
           <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setSel(null)} />

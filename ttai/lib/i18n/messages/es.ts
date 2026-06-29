@@ -1,4 +1,12 @@
 export default {
+  "Official Importer": "Importador Oficial",
+  "Wholesaler": "Mayorista",
+  "Retailer": "Minorista",
+  "Point of Sale": "Punto de Venta",
+  "Sales Agent": "Agente de Ventas",
+  "Looking for Wholesaler": "Buscando Mayorista",
+  "Active partner (you have them)": "Socio activo (los tienes)",
+  "Looking for new partner": "Buscando nuevo socio",
   "View Distribution Network": "Ver Red de Distribución",
   "Warehouse / factory photo (shown in the centre)": "Foto del almacén / fábrica (mostrada en el centro)",
   "Warehouse / factory photo": "Foto del almacén / fábrica",

@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { UserPlus, Users, MapPin, Check, Clock, Copy, MessageCircle, Trash2, X, Link2, Network, Store, Building2, Crown } from 'lucide-react'
+import { UserPlus, Users, MapPin, Check, Clock, Copy, MessageCircle, Trash2, X, Link2, Network, Store, Building2, Truck, Boxes } from 'lucide-react'
 
 type Member = {
   id: string
@@ -19,21 +19,30 @@ type Member = {
   member_supplier_id: string | null
 }
 
+// Partner types follow the distribution chain: Distributor → Importer →
+// Wholesaler → Retailer → Point of Sale (+ Customer). Each appears on the map.
 const LEVELS = [
-  { value: 'customer',           label: 'Customer',           hint: 'View products · place orders',                Icon: Users },
-  { value: 'sales_point',        label: 'Sales Point',        hint: 'Buy & sell · appear on the map',               Icon: Store },
-  { value: 'distributor',        label: 'Distributor',        hint: 'Manage local sales points · own network',      Icon: Building2 },
-  { value: 'master_distributor', label: 'Master Distributor', hint: 'Manage distributors · regional control',       Icon: Crown },
+  { value: 'distributor',   label: 'Distributor',   hint: 'Buys in bulk · manages its own network',  Icon: Building2 },
+  { value: 'importer',      label: 'Importer',      hint: 'Imports & resells in their country',       Icon: Truck },
+  { value: 'wholesaler',    label: 'Wholesaler',    hint: 'Bulk supply to retailers & shops',         Icon: Boxes },
+  { value: 'retailer',      label: 'Retailer',      hint: 'Sells to end customers',                   Icon: Store },
+  { value: 'point_of_sale', label: 'Point of Sale', hint: 'A single shop · appears on the map',       Icon: MapPin },
+  { value: 'customer',      label: 'Customer',      hint: 'View products · place orders',             Icon: Users },
 ]
 const LEVEL_META: Record<string, { label: string; cls: string }> = {
-  customer:           { label: 'Customer',           cls: 'bg-gray-100 text-gray-700' },
-  sales_point:        { label: 'Sales Point',        cls: 'bg-blue-100 text-blue-700' },
   distributor:        { label: 'Distributor',        cls: 'bg-purple-100 text-purple-700' },
-  master_distributor: { label: 'Master Distributor', cls: 'bg-amber-100 text-amber-800' },
+  importer:           { label: 'Importer',           cls: 'bg-teal-100 text-teal-700' },
+  wholesaler:         { label: 'Wholesaler',         cls: 'bg-cyan-100 text-cyan-700' },
+  retailer:           { label: 'Retailer',           cls: 'bg-indigo-100 text-indigo-700' },
+  point_of_sale:      { label: 'Point of Sale',      cls: 'bg-sky-100 text-sky-700' },
+  customer:           { label: 'Customer',           cls: 'bg-gray-100 text-gray-700' },
+  // legacy values (existing rows)
+  sales_point:        { label: 'Point of Sale',      cls: 'bg-sky-100 text-sky-700' },
+  master_distributor: { label: 'Distributor',        cls: 'bg-purple-100 text-purple-700' },
 }
 
 const INPUT = 'w-full rounded-xl border border-gray-200 px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0B1F4D]/20 focus:border-[#0B1F4D] bg-white'
-const emptyForm = () => ({ company_name: '', contact_person: '', email: '', whatsapp: '', country: '', city: '', address: '', level: 'sales_point' })
+const emptyForm = () => ({ company_name: '', contact_person: '', email: '', whatsapp: '', country: '', city: '', address: '', level: 'distributor' })
 
 export function NetworkManager({ initialMembers, appUrl, inviterName }: { initialMembers: Member[]; appUrl: string; inviterName: string }) {
   const [members, setMembers] = useState<Member[]>(initialMembers)

@@ -4,7 +4,12 @@
 // Seeded per supplier in app_settings (key `dist_network:<supplierId>`); a
 // dashboard editor comes later.
 
-export type NetStatus = 'official' | 'importer' | 'exclusive' | 'retail' | 'agent' | 'office' | 'coming_soon'
+export type NetStatus =
+  // Active partners you already have
+  | 'distributor' | 'importer' | 'wholesaler' | 'retailer' | 'point_of_sale' | 'agent' | 'office'
+  // Open opportunities — looking for new partners
+  | 'looking_distributor' | 'looking_importer' | 'looking_wholesaler' | 'looking_retailer' | 'looking_agent'
+  | 'coming_soon'
 
 export type NetNode = {
   iso: string                 // ISO-2, drives the flag (e.g. 'DE')
@@ -21,14 +26,32 @@ export type DistNetwork = {
   nodes: NetNode[]
 }
 
-export const NET_STATUS: Record<NetStatus, { label: string; color: string; opportunity: boolean }> = {
-  official:    { label: 'Official Distributor',              color: '#16a34a', opportunity: false },
-  importer:    { label: 'Looking for Importer',              color: '#2563eb', opportunity: true },
-  exclusive:   { label: 'Looking for Exclusive Distributor', color: '#f59e0b', opportunity: true },
-  retail:      { label: 'Looking for Retail Partner',        color: '#a855f7', opportunity: true },
-  agent:       { label: 'Looking for Sales Agent',           color: '#ef4444', opportunity: true },
-  office:      { label: 'Branch Office',                     color: '#0ea5e9', opportunity: false },
-  coming_soon: { label: 'Coming Soon',                       color: '#9ca3af', opportunity: false },
+export type StatusGroup = 'partner' | 'opportunity' | 'other'
+
+export const NET_STATUS: Record<NetStatus, { label: string; color: string; opportunity: boolean; group: StatusGroup }> = {
+  // ── Active partners you already have ──
+  distributor:   { label: 'Official Distributor', color: '#16a34a', opportunity: false, group: 'partner' },
+  importer:      { label: 'Official Importer',    color: '#0d9488', opportunity: false, group: 'partner' },
+  wholesaler:    { label: 'Wholesaler',           color: '#0891b2', opportunity: false, group: 'partner' },
+  retailer:      { label: 'Retailer',             color: '#4f46e5', opportunity: false, group: 'partner' },
+  point_of_sale: { label: 'Point of Sale',        color: '#0ea5e9', opportunity: false, group: 'partner' },
+  agent:         { label: 'Sales Agent',          color: '#64748b', opportunity: false, group: 'partner' },
+  office:        { label: 'Branch Office',         color: '#2563eb', opportunity: false, group: 'partner' },
+  // ── Open opportunities — looking for new partners ──
+  looking_distributor: { label: 'Looking for Exclusive Distributor', color: '#f59e0b', opportunity: true, group: 'opportunity' },
+  looking_importer:    { label: 'Looking for Importer',              color: '#3b82f6', opportunity: true, group: 'opportunity' },
+  looking_wholesaler:  { label: 'Looking for Wholesaler',           color: '#06b6d4', opportunity: true, group: 'opportunity' },
+  looking_retailer:    { label: 'Looking for Retail Partner',       color: '#a855f7', opportunity: true, group: 'opportunity' },
+  looking_agent:       { label: 'Looking for Sales Agent',          color: '#ef4444', opportunity: true, group: 'opportunity' },
+  // ── Other ──
+  coming_soon:   { label: 'Coming Soon',           color: '#9ca3af', opportunity: false, group: 'other' },
+}
+
+/** Map a sales-network partner level → the matching map status (used on auto-link). */
+export const LEVEL_TO_STATUS: Record<string, NetStatus> = {
+  distributor: 'distributor', master_distributor: 'distributor',
+  importer: 'importer', wholesaler: 'wholesaler', retailer: 'retailer',
+  point_of_sale: 'point_of_sale', sales_point: 'point_of_sale', customer: 'retailer',
 }
 
 /** Resolve a node's `profile` (a TTAIZ brand slug or a full URL) to a link. */
@@ -57,8 +80,9 @@ export async function getDistNetwork(admin: any, supplierId: string): Promise<Di
 export async function linkMemberToNetwork(
   admin: any,
   inviterSupplierId: string,
-  member: { supplierId: string; company: string; countryName?: string | null },
+  member: { supplierId: string; company: string; countryName?: string | null; level?: string | null },
 ): Promise<void> {
+  const partnerStatus: NetStatus = LEVEL_TO_STATUS[member.level ?? ''] ?? 'distributor'
   // Resolve an ISO-2 from the free-text country (for the flag).
   let iso = ''
   if (member.countryName) {
@@ -83,8 +107,9 @@ export async function linkMemberToNetwork(
   // Already linked? (idempotent)
   let node = nodes.find((n) => n.profile === member.supplierId)
   if (!node) {
-    // Link an existing un-linked node that matches by company name or country.
-    node = nodes.find((n) => !n.profile && n.status === 'official' && (
+    // Link an existing un-linked node that matches by company name or country
+    // (an "official" / "looking for …" placeholder the factory pre-created).
+    node = nodes.find((n) => !n.profile && (
       (!!n.company && n.company.toLowerCase() === member.company.toLowerCase()) ||
       (!!iso && (n.iso ?? '').toUpperCase() === iso)
     ))
@@ -92,11 +117,12 @@ export async function linkMemberToNetwork(
   if (node) {
     node.profile = member.supplierId
     node.verified = true
-    node.status = 'official'
+    // Promote a "looking for …" opportunity to the matching active partner type.
+    if (NET_STATUS[node.status]?.opportunity || node.status === 'coming_soon') node.status = partnerStatus
     if (!node.company) node.company = member.company
     if (iso && !node.iso) node.iso = iso
   } else {
-    nodes.push({ iso, country: member.countryName || member.company, status: 'official', company: member.company, profile: member.supplierId, verified: true })
+    nodes.push({ iso, country: member.countryName || member.company, status: partnerStatus, company: member.company, profile: member.supplierId, verified: true })
   }
   net.nodes = nodes
 

@@ -110,6 +110,7 @@ export async function POST(req: NextRequest) {
       supplierId: supplier.id,
       company: invite.company_name,
       countryName: invite.country,
+      level: invite.level,
     })
   } catch { /* never block accept */ }
 

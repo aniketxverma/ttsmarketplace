@@ -4,6 +4,7 @@ import { localizeUI } from '@/lib/i18n/ui'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { requireAuth } from '@/lib/auth/rbac'
+import { appBaseUrl } from '@/lib/app-url'
 import { NetworkManager } from './NetworkManager'
 
 export const dynamic = 'force-dynamic'
@@ -32,7 +33,7 @@ export default async function SalesNetworkPage() {
     members = data ?? []
   } catch { /* table not migrated yet */ }
 
-  const base = process.env.NEXT_PUBLIC_APP_URL ?? ''
+  const base = appBaseUrl()
   const inviterName = supplier.trade_name ?? supplier.legal_name ?? 'My company'
 
   return (

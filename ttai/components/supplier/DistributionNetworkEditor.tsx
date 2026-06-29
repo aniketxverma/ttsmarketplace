@@ -7,10 +7,10 @@ import { NET_STATUS, type DistNetwork, type NetNode, type NetStatus } from '@/li
 import { DistributionNetwork } from '@/components/brand/DistributionNetwork'
 import { ImageUpload } from '@/components/ImageUpload'
 
-const STATUS_OPTIONS = Object.entries(NET_STATUS) as [NetStatus, { label: string; color: string; opportunity: boolean }][]
+const STATUS_OPTIONS = Object.entries(NET_STATUS) as [NetStatus, { label: string; color: string; opportunity: boolean; group: string }][]
 const flag = (iso: string) => (iso && iso.length === 2 ? iso.toUpperCase().replace(/./g, (c) => String.fromCodePoint(127397 + c.charCodeAt(0))) : '🏳️')
 
-const blankNode = (): NetNode => ({ iso: '', country: '', status: 'official', company: '', profile: '', verified: false, benefits: [] })
+const blankNode = (): NetNode => ({ iso: '', country: '', status: 'distributor', company: '', profile: '', verified: false, benefits: [] })
 
 export function DistributionNetworkEditor({ initial }: { initial: DistNetwork | null }) {
   const t = useT()
@@ -94,7 +94,15 @@ export function DistributionNetworkEditor({ initial }: { initial: DistNetwork | 
                     <input className={input} maxLength={2} value={n.iso} onChange={(e) => setNode(i, { iso: e.target.value.toUpperCase() })} placeholder="DE" /></label>
                   <label className="block"><span className="text-[11px] font-bold text-gray-500">{t("Status")}</span>
                     <select className={input} value={n.status} onChange={(e) => setNode(i, { status: e.target.value as NetStatus })}>
-                      {STATUS_OPTIONS.map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+                      <optgroup label={t('Active partner (you have them)')}>
+                        {STATUS_OPTIONS.filter(([, v]) => v.group === 'partner').map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+                      </optgroup>
+                      <optgroup label={t('Looking for new partner')}>
+                        {STATUS_OPTIONS.filter(([, v]) => v.group === 'opportunity').map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+                      </optgroup>
+                      <optgroup label={t('Other')}>
+                        {STATUS_OPTIONS.filter(([, v]) => v.group === 'other').map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+                      </optgroup>
                     </select></label>
                 </div>
                 <div className="grid sm:grid-cols-2 gap-2.5 mt-2.5">
