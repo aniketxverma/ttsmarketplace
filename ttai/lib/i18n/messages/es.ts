@@ -1,4 +1,10 @@
 export default {
+  "More Countries": "Más Países",
+  "Official Distributors": "Distribuidores Oficiales",
+  "Looking for Distributor": "Buscando Distribuidor",
+  "Sales Agents": "Agentes de Ventas",
+  "Looking for Distributor / Importer": "Buscando Distribuidor / Importador",
+  "Sales Agent / Retail Partner": "Agente de Ventas / Socio Minorista",
   "Europe": "Europa",
   "Middle East": "Medio Oriente",
   "Americas": "Américas",
