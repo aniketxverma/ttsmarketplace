@@ -41,7 +41,7 @@ export function NetworkManager({ initialMembers, appUrl, inviterName }: { initia
   const [form, setForm] = useState(emptyForm())
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [justInvited, setJustInvited] = useState<{ link: string; member: Member } | null>(null)
+  const [justInvited, setJustInvited] = useState<{ link: string; member: Member; emailed?: boolean } | null>(null)
   const [copied, setCopied] = useState(false)
 
   const set = (k: string, v: any) => setForm((f) => ({ ...f, [k]: v }))
@@ -81,7 +81,7 @@ export function NetworkManager({ initialMembers, appUrl, inviterName }: { initia
     setSaving(false)
     if (!res.ok) { setError(j.error ?? 'Failed to create invite'); return }
     setMembers((list) => [j.invite, ...list])
-    setJustInvited({ link: j.link, member: j.invite })
+    setJustInvited({ link: j.link, member: j.invite, emailed: j.emailed })
     setShowForm(false); setForm(emptyForm())
   }
 
@@ -214,7 +214,9 @@ export function NetworkManager({ initialMembers, appUrl, inviterName }: { initia
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
             <div className="w-12 h-12 rounded-2xl bg-green-100 flex items-center justify-center mx-auto mb-3"><Link2 className="w-6 h-6 text-green-600" /></div>
             <h2 className="text-lg font-extrabold text-[#0B1F4D] text-center">Invitation ready for {justInvited.member.company_name}</h2>
-            <p className="text-xs text-gray-400 text-center mt-1 mb-4">Share this link — they create a free store and join your network.</p>
+            {justInvited.emailed
+              ? <p className="text-xs font-bold text-green-600 text-center mt-1 mb-4">✓ We emailed the invitation to {justInvited.member.email}. You can also share the link below.</p>
+              : <p className="text-xs text-gray-400 text-center mt-1 mb-4">Share this link — they create a free store and join your network.</p>}
             <div className="flex items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5">
               <input readOnly value={justInvited.link} className="flex-1 bg-transparent text-xs text-gray-600 outline-none" />
               <button onClick={() => copy(justInvited.link)} className="text-xs font-bold text-[#0B1F4D] hover:underline whitespace-nowrap">{copied ? 'Copied!' : 'Copy'}</button>

@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
+import React from 'react'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { sendEmailFireAndForget } from '@/lib/email/send'
+import { SalesNetworkInviteEmail } from '@/lib/email/templates/SalesNetworkInviteEmail'
 
 /**
  * Sales Network — inviter (supplier) side. Create / list / revoke invitations.
@@ -47,7 +50,19 @@ export async function POST(req: NextRequest) {
     const base = process.env.NEXT_PUBLIC_APP_URL ?? ''
     const link = `${base}/join/${ins.data.token}`
     const inviterName = supplier.trade_name ?? supplier.legal_name ?? 'A supplier'
-    return NextResponse.json({ ok: true, invite: ins.data, link, inviterName })
+
+    // Email the invitation through our own mailer (Resend/SMTP) when an email is given.
+    let emailed = false
+    if (ins.data.email) {
+      sendEmailFireAndForget({
+        to: ins.data.email,
+        role: 'contact',
+        subject: `${inviterName} invited you to join their network on TTAIZ`,
+        react: React.createElement(SalesNetworkInviteEmail, { inviterName, company, link }),
+      })
+      emailed = true
+    }
+    return NextResponse.json({ ok: true, invite: ins.data, link, inviterName, emailed })
   }
 
   // ── Revoke / delete an invitation ─────────────────────────────────────
