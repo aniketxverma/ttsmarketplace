@@ -29,7 +29,7 @@ export function DistributionNetwork({ net, contactBase = '/contact' }: { net: Di
     { Icon: Search, value: nodes.filter((n) => NET_STATUS[n.status]?.opportunity).length, label: t('Looking for Partners') },
   ]
 
-  const R = 41 // circle radius in %
+  const R = 38 // circle radius in % (kept in so node labels don't clip the edge)
   const pos = nodes.map((_, i) => {
     const a = ((-90 + (i * 360) / Math.max(1, nodes.length)) * Math.PI) / 180
     return { x: 50 + R * Math.cos(a), y: 50 + R * Math.sin(a) }
@@ -100,20 +100,23 @@ export function DistributionNetwork({ net, contactBase = '/contact' }: { net: Di
           })}
         </svg>
 
-        {/* Centre — head office / factory */}
-        <div className="absolute z-10 flex flex-col items-center text-center" style={{ left: '50%', top: '50%', transform: 'translate(-50%,-50%)' }}>
+        {/* Centre — head office / factory. The image is the centred element; the
+            label floats absolutely below it so it never pushes the image off-centre. */}
+        <div className="absolute z-10" style={{ left: '50%', top: '50%', transform: 'translate(-50%,-50%)' }}>
           {/* soft pulsing halo */}
-          <span className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-32 lg:w-40 lg:h-40 rounded-full bg-[#0B1F4D]/15 animate-ping" style={{ animationDuration: '3.5s' }} />
-          <span className="relative w-32 h-32 lg:w-40 lg:h-40 rounded-full overflow-hidden border-4 border-white shadow-xl bg-[#0B1F4D] flex items-center justify-center">
+          <span className="absolute inset-0 rounded-full bg-[#0B1F4D]/15 animate-ping" style={{ animationDuration: '3.5s' }} />
+          <span className="relative block w-32 h-32 lg:w-40 lg:h-40 rounded-full overflow-hidden border-4 border-white shadow-xl bg-[#0B1F4D] flex items-center justify-center">
             {net.center.image
               /* eslint-disable-next-line @next/next/no-img-element */
               ? <img src={net.center.image} alt="" className="w-full h-full object-cover" />
               : <span className="text-5xl">{flag(net.center.iso)}</span>}
             <span className="absolute bottom-1 right-1 w-7 h-7 rounded-full bg-white shadow flex items-center justify-center text-base">{flag(net.center.iso)}</span>
           </span>
-          <p className="mt-2 text-sm font-extrabold text-[#0B1F4D] leading-tight max-w-[150px]">{net.center.title}</p>
-          <p className="text-[11px] text-gray-500">{net.center.subtitle}</p>
-          {net.center.since && <p className="text-[11px] font-bold text-green-600">{net.center.since}</p>}
+          <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-44 text-center pointer-events-none">
+            <p className="text-sm font-extrabold text-[#0B1F4D] leading-tight">{net.center.title}</p>
+            <p className="text-[11px] text-gray-500">{net.center.subtitle}</p>
+            {net.center.since && <p className="text-[11px] font-bold text-green-600">{net.center.since}</p>}
+          </div>
         </div>
 
         {/* Country nodes */}
