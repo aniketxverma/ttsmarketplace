@@ -48,6 +48,63 @@ export async function getDistNetwork(admin: any, supplierId: string): Promise<Di
   } catch { return null }
 }
 
+/**
+ * When a partner accepts a sales-network invite, reflect them on the inviter's
+ * distribution-network map: link/verify a matching node (by country or company)
+ * or add a new official node. Idempotent. Centre image = inviter's banner when
+ * the map doesn't exist yet.
+ */
+export async function linkMemberToNetwork(
+  admin: any,
+  inviterSupplierId: string,
+  member: { supplierId: string; company: string; countryName?: string | null },
+): Promise<void> {
+  // Resolve an ISO-2 from the free-text country (for the flag).
+  let iso = ''
+  if (member.countryName) {
+    try {
+      const { data: c } = await (admin.from('countries') as any).select('iso_code').ilike('name', member.countryName.trim()).maybeSingle()
+      iso = (c?.iso_code ?? '').toUpperCase()
+    } catch { /* countries lookup best-effort */ }
+  }
+
+  let net = await getDistNetwork(admin, inviterSupplierId)
+  if (!net) {
+    let center: DistNetwork['center'] = { title: 'Head Office / Factory', subtitle: '', iso: '', since: null, image: null }
+    try {
+      const { data: sup } = await (admin.from('suppliers') as any)
+        .select('banner_image, countries(iso_code, name)').eq('id', inviterSupplierId).maybeSingle()
+      center = { title: 'Head Office / Factory', subtitle: (sup?.countries as any)?.name ?? '', iso: ((sup?.countries as any)?.iso_code ?? '').toUpperCase(), since: null, image: sup?.banner_image ?? null }
+    } catch { /* best-effort */ }
+    net = { center, nodes: [] }
+  }
+
+  const nodes = net.nodes ?? []
+  // Already linked? (idempotent)
+  let node = nodes.find((n) => n.profile === member.supplierId)
+  if (!node) {
+    // Link an existing un-linked node that matches by company name or country.
+    node = nodes.find((n) => !n.profile && n.status === 'official' && (
+      (!!n.company && n.company.toLowerCase() === member.company.toLowerCase()) ||
+      (!!iso && (n.iso ?? '').toUpperCase() === iso)
+    ))
+  }
+  if (node) {
+    node.profile = member.supplierId
+    node.verified = true
+    node.status = 'official'
+    if (!node.company) node.company = member.company
+    if (iso && !node.iso) node.iso = iso
+  } else {
+    nodes.push({ iso, country: member.countryName || member.company, status: 'official', company: member.company, profile: member.supplierId, verified: true })
+  }
+  net.nodes = nodes
+
+  try {
+    await (admin.from('app_settings') as any).upsert({ key: `dist_network:${inviterSupplierId}`, value: JSON.stringify(net) }, { onConflict: 'key' })
+  } catch { /* never block the accept flow */ }
+}
+
 /** Map of supplierId → network for a batch (for directory cards / previews). */
 export async function getDistNetworkMap(admin: any, supplierIds: string[]): Promise<Map<string, DistNetwork>> {
   const out = new Map<string, DistNetwork>()

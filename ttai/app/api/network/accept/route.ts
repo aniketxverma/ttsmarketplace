@@ -102,5 +102,16 @@ export async function POST(req: NextRequest) {
     imported_catalog: imported > 0,
   }).eq('id', invite.id)
 
+  // Reflect the new partner on the inviter's Distribution Network map automatically
+  // (links/verifies a matching country node, or adds a new official one).
+  try {
+    const { linkMemberToNetwork } = await import('@/lib/distribution-network')
+    await linkMemberToNetwork(admin, invite.inviter_supplier_id, {
+      supplierId: supplier.id,
+      company: invite.company_name,
+      countryName: invite.country,
+    })
+  } catch { /* never block accept */ }
+
   return NextResponse.json({ ok: true, imported })
 }
