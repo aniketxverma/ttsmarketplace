@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useT } from '@/lib/i18n/client'
 import { Plus, Trash2, Save, CheckCircle2, Globe } from 'lucide-react'
-import { NET_STATUS, type DistNetwork, type NetNode, type NetStatus } from '@/lib/distribution-network'
+import { NET_STATUS, regionForIso, REGION_EMOJI, type DistNetwork, type NetNode, type NetStatus } from '@/lib/distribution-network'
 import { DistributionNetwork } from '@/components/brand/DistributionNetwork'
 import { ImageUpload } from '@/components/ImageUpload'
 
@@ -90,7 +90,7 @@ export function DistributionNetworkEditor({ initial }: { initial: DistNetwork | 
                 <div className="grid sm:grid-cols-[1fr_90px_1fr] gap-2.5">
                   <label className="block"><span className="text-[11px] font-bold text-gray-500">{t("Country")} {flag(n.iso)}</span>
                     <input className={input} value={n.country} onChange={(e) => setNode(i, { country: e.target.value })} placeholder={t("Germany")} /></label>
-                  <label className="block"><span className="text-[11px] font-bold text-gray-500">ISO-2</span>
+                  <label className="block"><span className="text-[11px] font-bold text-gray-500">ISO-2 {n.iso && <span className="text-[#0B1F4D]">· {REGION_EMOJI[regionForIso(n.iso)]} {t(regionForIso(n.iso))}</span>}</span>
                     <input className={input} maxLength={2} value={n.iso} onChange={(e) => setNode(i, { iso: e.target.value.toUpperCase() })} placeholder="DE" /></label>
                   <label className="block"><span className="text-[11px] font-bold text-gray-500">{t("Status")}</span>
                     <select className={input} value={n.status} onChange={(e) => setNode(i, { status: e.target.value as NetStatus })}>

@@ -54,6 +54,38 @@ export const LEVEL_TO_STATUS: Record<string, NetStatus> = {
   point_of_sale: 'point_of_sale', sales_point: 'point_of_sale', customer: 'retailer',
 }
 
+// ── Continent grouping ──────────────────────────────────────────────────────
+// The map drills Factory → Continent → Country. The continent is derived from
+// each node's ISO so the factory only enters the country.
+const ISO_REGION: Record<string, string> = {
+  // Europe
+  ES: 'Europe', DE: 'Europe', FR: 'Europe', IT: 'Europe', BE: 'Europe', NL: 'Europe', GB: 'Europe', PT: 'Europe', PL: 'Europe',
+  SE: 'Europe', NO: 'Europe', DK: 'Europe', FI: 'Europe', IE: 'Europe', AT: 'Europe', CH: 'Europe', CZ: 'Europe', SK: 'Europe',
+  HU: 'Europe', RO: 'Europe', BG: 'Europe', GR: 'Europe', HR: 'Europe', RS: 'Europe', SI: 'Europe', LT: 'Europe', LV: 'Europe',
+  EE: 'Europe', UA: 'Europe', RU: 'Europe', LU: 'Europe',
+  // Middle East
+  AE: 'Middle East', SA: 'Middle East', QA: 'Middle East', KW: 'Middle East', BH: 'Middle East', OM: 'Middle East',
+  JO: 'Middle East', LB: 'Middle East', IL: 'Middle East', IQ: 'Middle East', IR: 'Middle East', SY: 'Middle East',
+  YE: 'Middle East', TR: 'Middle East',
+  // Americas
+  US: 'Americas', CA: 'Americas', MX: 'Americas', BR: 'Americas', AR: 'Americas', CL: 'Americas', CO: 'Americas',
+  PE: 'Americas', EC: 'Americas', UY: 'Americas',
+  // Africa
+  MA: 'Africa', EG: 'Africa', NG: 'Africa', ZA: 'Africa', KE: 'Africa', GH: 'Africa', DZ: 'Africa', TN: 'Africa',
+  ET: 'Africa', CI: 'Africa', SN: 'Africa',
+  // Asia
+  CN: 'Asia', JP: 'Asia', KR: 'Asia', IN: 'Asia', ID: 'Asia', TH: 'Asia', VN: 'Asia', MY: 'Asia', SG: 'Asia',
+  PH: 'Asia', PK: 'Asia', BD: 'Asia', HK: 'Asia', TW: 'Asia', KZ: 'Asia',
+  // Oceania
+  AU: 'Oceania', NZ: 'Oceania',
+}
+export const REGION_EMOJI: Record<string, string> = {
+  'Europe': '🇪🇺', 'Middle East': '🕌', 'Americas': '🌎', 'Africa': '🌍', 'Asia': '🌏', 'Oceania': '🦘', 'Other': '🌐',
+}
+export function regionForIso(iso?: string | null): string {
+  return ISO_REGION[(iso ?? '').toUpperCase()] ?? 'Other'
+}
+
 /** Resolve a node's `profile` (a TTAIZ brand slug or a full URL) to a link. */
 export function profileHref(profile?: string | null): string | null {
   const p = (profile ?? '').trim()

@@ -1,4 +1,12 @@
 export default {
+  "Europe": "Europa",
+  "Middle East": "Medio Oriente",
+  "Americas": "Américas",
+  "Africa": "África",
+  "Asia": "Asia",
+  "Oceania": "Oceanía",
+  "tap a region to explore its countries": "toca una región para explorar sus países",
+  "countries": "países",
   "Official Importer": "Importador Oficial",
   "Wholesaler": "Mayorista",
   "Retailer": "Minorista",

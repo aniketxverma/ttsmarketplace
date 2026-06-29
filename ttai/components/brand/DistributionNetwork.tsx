@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useT } from '@/lib/i18n/client'
 import { ShieldCheck, Search, ArrowRight, X, Globe, Handshake, BadgeCheck, MapPin } from 'lucide-react'
-import { NET_STATUS, profileHref, type DistNetwork, type NetNode } from '@/lib/distribution-network'
+import { NET_STATUS, profileHref, regionForIso, REGION_EMOJI, type DistNetwork, type NetNode } from '@/lib/distribution-network'
 
 function flag(iso: string) {
   return iso && iso.length === 2
@@ -23,6 +23,7 @@ const ST = (s: string) => (NET_STATUS as Record<string, typeof NET_STATUS['distr
 export function DistributionNetwork({ net, contactBase = '/contact' }: { net: DistNetwork; contactBase?: string }) {
   const t = useT()
   const [sel, setSel] = useState<NetNode | null>(null)
+  const [activeRegion, setActiveRegion] = useState<string | null>(null)
   const nodes = net.nodes ?? []
 
   const stats = [
@@ -32,11 +33,36 @@ export function DistributionNetwork({ net, contactBase = '/contact' }: { net: Di
     { Icon: Search, value: nodes.filter((n) => ST(n.status).opportunity).length, label: t('Looking for Partners') },
   ]
 
+  // Group by continent → drill Factory → Continent → Country (continent derived
+  // from each node's ISO). With a single continent we skip straight to countries.
+  const regionMap = new Map<string, NetNode[]>()
+  for (const n of nodes) { const r = regionForIso(n.iso); const arr = regionMap.get(r); if (arr) arr.push(n); else regionMap.set(r, [n]) }
+  const regions = Array.from(regionMap, ([region, ns]) => ({ region, nodes: ns }))
+  const multiRegion = regions.length > 1
+  const showRegions = multiRegion && !activeRegion
+  const drillNodes = !multiRegion ? nodes : (regionMap.get(activeRegion ?? '') ?? [])
+
+  type Item = { region: string; count: number } | { node: NetNode }
+  const items: Item[] = showRegions
+    ? regions.map((r) => ({ region: r.region, count: r.nodes.length }))
+    : drillNodes.map((node) => ({ node }))
+  const itemColor = (it: Item) => ('node' in it ? ST(it.node.status).color : '#0B1F4D')
+
   const R = 38 // circle radius in % (kept in so node labels don't clip the edge)
-  const pos = nodes.map((_, i) => {
-    const a = ((-90 + (i * 360) / Math.max(1, nodes.length)) * Math.PI) / 180
+  const pos = items.map((_, i) => {
+    const a = ((-90 + (i * 360) / Math.max(1, items.length)) * Math.PI) / 180
     return { x: 50 + R * Math.cos(a), y: 50 + R * Math.sin(a) }
   })
+
+  const RegionBubble = ({ region, count, onClick }: { region: string; count: number; onClick: () => void }) => (
+    <button onClick={onClick} className="group flex flex-col items-center text-center w-[120px]">
+      <span className="relative w-16 h-16 rounded-full bg-[#0B1F4D] text-white border-2 border-[#0B1F4D] shadow flex items-center justify-center text-2xl transition-transform group-hover:scale-110">
+        {REGION_EMOJI[region] ?? '🌐'}
+      </span>
+      <span className="mt-1.5 text-[12px] font-extrabold text-[#0B1F4D] leading-none">{t(region)}</span>
+      <span className="text-[10px] font-semibold text-gray-400 leading-tight mt-0.5">{count} {t('countries')}</span>
+    </button>
+  )
 
   const Node = ({ n, onClick }: { n: NetNode; onClick: () => void }) => {
     const cfg = ST(n.status)
@@ -75,6 +101,17 @@ export function DistributionNetwork({ net, contactBase = '/contact' }: { net: Di
         ))}
       </div>
 
+      {/* Breadcrumb — Factory › Continent */}
+      {multiRegion && (
+        <div className="flex flex-wrap items-center gap-2 mt-4 text-sm">
+          <button onClick={() => setActiveRegion(null)} className={`font-bold ${activeRegion ? 'text-[#0B1F4D] hover:underline' : 'text-gray-400'}`}>
+            🌐 {t('All regions')}
+          </button>
+          {activeRegion && <><span className="text-gray-300">›</span><span className="font-extrabold text-[#0B1F4D]">{REGION_EMOJI[activeRegion]} {t(activeRegion)}</span></>}
+          {showRegions && <span className="text-gray-400">— {t('tap a region to explore its countries')}</span>}
+        </div>
+      )}
+
       {/* ── Circle (md+) ── */}
       <div className="relative hidden md:block mx-auto mt-6 aspect-square w-full max-w-[720px]">
         {/* dashed world backdrop + animated connectors */}
@@ -85,7 +122,7 @@ export function DistributionNetwork({ net, contactBase = '/contact' }: { net: Di
             <circle cx="50" cy="50" r={R} fill="none" stroke="#cbd5e1" strokeWidth="0.25" strokeDasharray="0.6 1.4" opacity="0.7" />
           </g>
           {pos.map((p, i) => {
-            const color = ST(nodes[i].status).color
+            const color = itemColor(items[i])
             return (
               <g key={i}>
                 {/* flowing dashed link */}
@@ -122,28 +159,43 @@ export function DistributionNetwork({ net, contactBase = '/contact' }: { net: Di
           </div>
         </div>
 
-        {/* Country nodes */}
-        {nodes.map((n, i) => (
+        {/* Continent bubbles (level 0) or country nodes (drilled in / single region) */}
+        {items.map((it, i) => (
           <div key={i} className="absolute z-10" style={{ left: `${pos[i].x}%`, top: `${pos[i].y}%`, transform: 'translate(-50%,-50%)' }}>
-            <Node n={n} onClick={() => setSel(n)} />
+            {'node' in it
+              ? <Node n={it.node} onClick={() => setSel(it.node)} />
+              : <RegionBubble region={it.region} count={it.count} onClick={() => setActiveRegion(it.region)} />}
           </div>
         ))}
       </div>
 
       {/* ── Grid (mobile) ── */}
-      <div className="md:hidden grid grid-cols-2 gap-2.5 mt-5">
-        {nodes.map((n, i) => {
-          const cfg = ST(n.status)
-          return (
-            <button key={i} onClick={() => setSel(n)} className="rounded-xl border bg-white p-3 text-left flex items-start gap-2" style={{ borderColor: `${cfg.color}55` }}>
-              <span className="text-xl">{flag(n.iso)}</span>
+      <div className="md:hidden mt-5">
+        {multiRegion && activeRegion && (
+          <button onClick={() => setActiveRegion(null)} className="mb-3 text-sm font-bold text-[#0B1F4D] hover:underline">← {t('All regions')}</button>
+        )}
+        <div className="grid grid-cols-2 gap-2.5">
+          {items.map((it, i) => 'node' in it ? (() => {
+            const n = it.node, cfg = ST(n.status)
+            return (
+              <button key={i} onClick={() => setSel(n)} className="rounded-xl border bg-white p-3 text-left flex items-start gap-2" style={{ borderColor: `${cfg.color}55` }}>
+                <span className="text-xl">{flag(n.iso)}</span>
+                <span className="min-w-0">
+                  <span className="block text-[13px] font-extrabold text-[#0B1F4D] leading-tight">{n.country}</span>
+                  <span className="block text-[10px] font-semibold leading-tight" style={{ color: cfg.color }}>{t(cfg.label)}</span>
+                </span>
+              </button>
+            )
+          })() : (
+            <button key={i} onClick={() => setActiveRegion(it.region)} className="rounded-xl border border-[#0B1F4D]/20 bg-[#0B1F4D]/[0.04] p-3 text-left flex items-center gap-2">
+              <span className="text-xl">{REGION_EMOJI[it.region] ?? '🌐'}</span>
               <span className="min-w-0">
-                <span className="block text-[13px] font-extrabold text-[#0B1F4D] leading-tight">{n.country}</span>
-                <span className="block text-[10px] font-semibold leading-tight" style={{ color: cfg.color }}>{t(cfg.label)}</span>
+                <span className="block text-[13px] font-extrabold text-[#0B1F4D] leading-tight">{t(it.region)}</span>
+                <span className="block text-[10px] font-semibold text-gray-400 leading-tight">{it.count} {t('countries')}</span>
               </span>
             </button>
-          )
-        })}
+          ))}
+        </div>
       </div>
 
       {/* Legend */}
