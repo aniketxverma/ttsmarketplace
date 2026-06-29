@@ -26,6 +26,7 @@ export async function POST(req: NextRequest) {
       verified: !!n.verified,
     }
     if (n.company) out.company = str(n.company, 120)
+    if (n.profile) out.profile = str(n.profile, 200)
     const benefits = Array.isArray(n.benefits) ? n.benefits.map((b: any) => str(b, 80)).filter(Boolean).slice(0, 8) : []
     if (benefits.length) out.benefits = benefits
     return out

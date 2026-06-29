@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useT } from '@/lib/i18n/client'
 import { ShieldCheck, Search, ArrowRight, X, Globe, Handshake, BadgeCheck, MapPin } from 'lucide-react'
-import { NET_STATUS, type DistNetwork, type NetNode } from '@/lib/distribution-network'
+import { NET_STATUS, profileHref, type DistNetwork, type NetNode } from '@/lib/distribution-network'
 
 function flag(iso: string) {
   return iso && iso.length === 2
@@ -169,10 +169,18 @@ export function DistributionNetwork({ net, contactBase = '/contact' }: { net: Di
                 </div>
 
                 {sel.company && (
-                  <div className="mt-3 flex items-center gap-2 rounded-xl bg-gray-50 border border-gray-100 px-3 py-2">
-                    <MapPin className="w-4 h-4 text-gray-400" />
-                    <span className="text-sm font-semibold text-gray-700">{sel.company}</span>
-                  </div>
+                  profileHref(sel.profile) ? (
+                    <Link href={profileHref(sel.profile)!} className="mt-3 flex items-center gap-2 rounded-xl bg-[#0B1F4D]/5 border border-[#0B1F4D]/15 px-3 py-2 hover:bg-[#0B1F4D]/10 transition-colors group/co">
+                      <MapPin className="w-4 h-4 text-[#0B1F4D]" />
+                      <span className="text-sm font-bold text-[#0B1F4D] group-hover/co:underline">{sel.company}</span>
+                      <ArrowRight className="w-3.5 h-3.5 text-[#0B1F4D] ml-auto group-hover/co:translate-x-0.5 transition-transform" />
+                    </Link>
+                  ) : (
+                    <div className="mt-3 flex items-center gap-2 rounded-xl bg-gray-50 border border-gray-100 px-3 py-2">
+                      <MapPin className="w-4 h-4 text-gray-400" />
+                      <span className="text-sm font-semibold text-gray-700">{sel.company}</span>
+                    </div>
+                  )
                 )}
 
                 {cfg.opportunity && (sel.benefits?.length ?? 0) > 0 && (

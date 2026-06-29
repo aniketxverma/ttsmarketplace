@@ -11,6 +11,7 @@ export type NetNode = {
   country: string             // display name
   status: NetStatus
   company?: string | null     // official partner's company name
+  profile?: string | null     // the distributor's TTAIZ profile (brand slug or full URL) — makes the company name a link
   verified?: boolean          // verified by TTAIEMA
   benefits?: string[]         // for open opportunities (shown in the apply card)
 }
@@ -25,9 +26,17 @@ export const NET_STATUS: Record<NetStatus, { label: string; color: string; oppor
   importer:    { label: 'Looking for Importer',              color: '#2563eb', opportunity: true },
   exclusive:   { label: 'Looking for Exclusive Distributor', color: '#f59e0b', opportunity: true },
   retail:      { label: 'Looking for Retail Partner',        color: '#a855f7', opportunity: true },
-  agent:       { label: 'Looking for Sales Agent',           color: '#ec4899', opportunity: true },
+  agent:       { label: 'Looking for Sales Agent',           color: '#ef4444', opportunity: true },
   office:      { label: 'Branch Office',                     color: '#0ea5e9', opportunity: false },
   coming_soon: { label: 'Coming Soon',                       color: '#9ca3af', opportunity: false },
+}
+
+/** Resolve a node's `profile` (a TTAIZ brand slug or a full URL) to a link. */
+export function profileHref(profile?: string | null): string | null {
+  const p = (profile ?? '').trim()
+  if (!p) return null
+  if (/^https?:\/\//i.test(p)) return p
+  return `/brand/${p.replace(/^\/?(brand\/)?/i, '')}`
 }
 
 /** Read one supplier's network config. Defensive — never throws on a public page. */

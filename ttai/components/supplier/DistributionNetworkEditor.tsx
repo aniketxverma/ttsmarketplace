@@ -9,7 +9,7 @@ import { DistributionNetwork } from '@/components/brand/DistributionNetwork'
 const STATUS_OPTIONS = Object.entries(NET_STATUS) as [NetStatus, { label: string; color: string; opportunity: boolean }][]
 const flag = (iso: string) => (iso && iso.length === 2 ? iso.toUpperCase().replace(/./g, (c) => String.fromCodePoint(127397 + c.charCodeAt(0))) : '🏳️')
 
-const blankNode = (): NetNode => ({ iso: '', country: '', status: 'official', company: '', verified: false, benefits: [] })
+const blankNode = (): NetNode => ({ iso: '', country: '', status: 'official', company: '', profile: '', verified: false, benefits: [] })
 
 export function DistributionNetworkEditor({ initial }: { initial: DistNetwork | null }) {
   const t = useT()
@@ -103,6 +103,10 @@ export function DistributionNetworkEditor({ initial }: { initial: DistNetwork | 
                     <span className="text-sm font-semibold text-gray-600">{t("Verified partner")}</span>
                   </label>
                 </div>
+                {!cfg.opportunity && (
+                  <label className="block mt-2.5"><span className="text-[11px] font-bold text-gray-500">{t("Distributor's TTAIZ profile — slug or link (makes the company name clickable)")}</span>
+                    <input className={input} value={n.profile ?? ''} onChange={(e) => setNode(i, { profile: e.target.value })} placeholder="chomakher  ·  https://ttaiz.com/brand/chomakher" /></label>
+                )}
                 {cfg.opportunity && (
                   <label className="block mt-2.5"><span className="text-[11px] font-bold text-gray-500">{t("Benefits (one per line — shown on the Apply card)")}</span>
                     <textarea className={input} rows={3} value={(n.benefits ?? []).join('\n')}
