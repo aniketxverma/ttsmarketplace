@@ -1,4 +1,6 @@
 export default {
+  "Warehouse / factory photo (shown in the centre)": "Foto del almacén / fábrica (mostrada en el centro)",
+  "Warehouse / factory photo": "Foto del almacén / fábrica",
   "Distributor's TTAIZ profile — slug or link (makes the company name clickable)": "Perfil TTAIZ del distribuidor — slug o enlace (hace que el nombre de la empresa sea clicable)",
   "Head Office / Factory (centre)": "Oficina central / Fábrica (centro)",
   "Title": "Título",

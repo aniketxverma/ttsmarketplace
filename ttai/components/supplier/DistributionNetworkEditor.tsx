@@ -5,6 +5,7 @@ import { useT } from '@/lib/i18n/client'
 import { Plus, Trash2, Save, CheckCircle2, Globe } from 'lucide-react'
 import { NET_STATUS, type DistNetwork, type NetNode, type NetStatus } from '@/lib/distribution-network'
 import { DistributionNetwork } from '@/components/brand/DistributionNetwork'
+import { ImageUpload } from '@/components/ImageUpload'
 
 const STATUS_OPTIONS = Object.entries(NET_STATUS) as [NetStatus, { label: string; color: string; opportunity: boolean }][]
 const flag = (iso: string) => (iso && iso.length === 2 ? iso.toUpperCase().replace(/./g, (c) => String.fromCodePoint(127397 + c.charCodeAt(0))) : '🏳️')
@@ -63,8 +64,9 @@ export function DistributionNetworkEditor({ initial }: { initial: DistNetwork | 
             <input className={input} maxLength={2} value={center.iso} onChange={(e) => setCenter({ ...center, iso: e.target.value.toUpperCase() })} placeholder="LB" /></label>
           <label className="block"><span className="text-xs font-bold text-gray-600">{t("Since (optional)")}</span>
             <input className={input} value={center.since ?? ''} onChange={(e) => setCenter({ ...center, since: e.target.value })} placeholder={t("Since 1936")} /></label>
-          <label className="block sm:col-span-2"><span className="text-xs font-bold text-gray-600">{t("Centre image URL (optional — your factory photo)")}</span>
-            <input className={input} value={center.image ?? ''} onChange={(e) => setCenter({ ...center, image: e.target.value })} placeholder="https://…" /></label>
+          <div className="block sm:col-span-2"><span className="text-xs font-bold text-gray-600">{t("Warehouse / factory photo (shown in the centre)")}</span>
+            <div className="mt-1"><ImageUpload value={center.image || null} onChange={(url) => setCenter({ ...center, image: url })} folder="banners" aspect="wide" label={t("Warehouse / factory photo")} /></div>
+          </div>
         </div>
       </div>
 
