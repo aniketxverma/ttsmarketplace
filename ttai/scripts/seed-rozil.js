@@ -386,7 +386,7 @@ async function main() {
   console.log('\n═══════════════════════════════════════════════════════')
   console.log('  ✅ Rozil brand seeded successfully!')
   console.log(`  → View at: http://localhost:3000/brand/rozil`)
-  console.log(`  → Or live: https://ttai.es/brand/rozil`)
+  console.log(`  → Or live: https://ttaiz.com/brand/rozil`)
   console.log('═══════════════════════════════════════════════════════')
   console.log('\n  Next: upload images to Supabase storage')
   console.log('  1. Put images into:  scripts/rozil-images/')

@@ -11,7 +11,7 @@ export const metadata = {
 
 export default async function SupplierStatusPage() {
   
-  const tt = await localizeUI(["TTAIEMA Protected", "Each company website (e.g.", "ttai.es/rozil", "Browse verified suppliers →"], getLocale())
+  const tt = await localizeUI(["TTAIEMA Protected", "Each company website (e.g.", "ttaiz.com/rozil", "Browse verified suppliers →"], getLocale())
   return (
     <div className="min-h-screen bg-[#F4F6FB]">
       {/* Hero */}
@@ -57,7 +57,7 @@ export default async function SupplierStatusPage() {
         <div className="rounded-2xl border border-gray-200 bg-gray-50/70 p-5 sm:p-6 mt-6">
           <p className="text-sm font-extrabold text-[#0B1F4D]">Hosted by TTAIEMA Marketplace · Website created by TTAIEMA</p>
           <p className="text-xs text-gray-500 mt-1.5 leading-relaxed">
-            {tt("Each company website (e.g.")} <code className="text-[#0B1F4D]">{tt("ttai.es/rozil")}</code>) is created and hosted by TTAIEMA.
+            {tt("Each company website (e.g.")} <code className="text-[#0B1F4D]">{tt("ttaiz.com/rozil")}</code>) is created and hosted by TTAIEMA.
             The company is independently operated by the supplier and is responsible for its own products, stock, delivery
             and customer service — unless the transaction is marked <strong className="text-blue-600">{tt("TTAIEMA Protected")}</strong>,
             in which case TTAIEMA is officially involved in the process.
