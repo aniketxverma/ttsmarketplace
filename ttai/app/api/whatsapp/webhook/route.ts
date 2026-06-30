@@ -129,7 +129,7 @@ export async function POST(req: NextRequest) {
       ins = await (admin.from('channel_posts') as any).insert(row)
     }
 
-    const site = process.env.NEXT_PUBLIC_APP_URL ?? 'https://ttai.es'
+    const site = process.env.NEXT_PUBLIC_APP_URL ?? 'https://ttaiz.com'
     await sendText(from, `✅ Your offer is live on TTAI EMA.\n${site}/channel/${match.id}`)
   } catch (e) {
     console.error('whatsapp webhook error:', (e as Error).message)

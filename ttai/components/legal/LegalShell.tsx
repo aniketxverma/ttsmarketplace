@@ -5,7 +5,7 @@ export const COMPANY = {
   cif: 'B52038130',
   address: 'Calle Sor Alegría, 4 - Local 1, 52002 Melilla, Spain',
   email: 'info@ttaiema.com',
-  sites: ['www.ttaiema.com', 'www.ttai.es'],
+  sites: ['www.ttaiema.com', 'www.ttaiz.com'],
 }
 
 export function LegalShell({ title, subtitle, updated, children }: { title: string; subtitle?: string; updated?: string; children: ReactNode }) {

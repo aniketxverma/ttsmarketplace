@@ -503,7 +503,7 @@ export default function RegisterPage() {
                   usernameStatus === 'ok'      ? 'text-green-500 font-semibold' :
                   usernameStatus === 'taken'   ? 'text-red-500 font-semibold'   :
                   usernameStatus === 'invalid' ? 'text-orange-500 font-semibold' : 'text-gray-400'}`}>
-                  {usernameStatus === 'ok'      ? `✓ @${form.username} is available — profile.ttai.es/${form.username}` :
+                  {usernameStatus === 'ok'      ? `✓ @${form.username} is available — profile.ttaiz.com/${form.username}` :
                    usernameStatus === 'taken'   ? `✗ @${form.username} is already taken` :
                    usernameStatus === 'invalid' ? 'Only lowercase letters, numbers, and underscores' :
                    'Letters, numbers and underscores only · 3–20 characters'}

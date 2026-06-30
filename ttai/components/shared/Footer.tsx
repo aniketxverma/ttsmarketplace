@@ -101,8 +101,9 @@ export async function Footer() {
               <p className="font-bold text-blue-200">FULL SOFTRONIC S.L.</p>
               <p>CIF: B52038130</p>
               <p>Calle Sor Alegría, 4 - Local 1, 52002 Melilla, Spain</p>
+              <p>Almacén: Calle 29 de Junio nº 3, Pol. Ind. San Nicolás, 04746 La Mojonera (Almería), Spain</p>
               <p><a href="mailto:info@ttaiema.com" className="hover:text-white transition-colors">info@ttaiema.com</a></p>
-              <p className="flex gap-2"><a href="https://www.ttaiema.com" className="hover:text-white transition-colors">ttaiema.com</a><span>·</span><a href="https://www.ttai.es" className="hover:text-white transition-colors">ttai.es</a></p>
+              <p className="flex gap-2"><a href="https://www.ttaiema.com" className="hover:text-white transition-colors">ttaiema.com</a><span>·</span><a href="https://www.ttaiz.com" className="hover:text-white transition-colors">ttaiz.com</a></p>
             </div>
           </div>
 
