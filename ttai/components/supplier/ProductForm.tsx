@@ -307,14 +307,28 @@ export function ProductForm({
 
     const supabase = createClient()
 
-    // If a recently-added column (e.g. discount %) isn't migrated yet, drop those
-    // keys and retry so saving still works.
-    const OPTIONAL_KEYS = ['box_discount_pct', 'pallet_discount_pct', 'truck_discount_pct',
-      'brand_name', 'source_type', 'original_supplier_id', 'current_owner_id', 'created_by', 'price_on_request', 'specs',
-      'condition', 'warranty', 'warehouse_location', 'delivery_days', 'shipping_cents',
-      'retail_available', 'delivery_scope', 'is_outlet', 'outlet_source', 'lot_type', 'selling_unit']
-    const stripOptional = (obj: any) => { const o = { ...obj }; OPTIONAL_KEYS.forEach(k => delete o[k]); return o }
-    const isMissingColumn = (msg?: string | null) => !!msg && /column|does not exist|discount_pct/i.test(msg)
+    // Some recently-added columns may not be migrated yet on every environment.
+    // Retry the write dropping ONLY the specific column named in the error — so a
+    // single un-migrated column (e.g. *_discount_pct) can never silently discard
+    // other fields like is_outlet / condition / retail_available in the same save.
+    const missingColumn = (msg?: string | null): string | null => {
+      const m = msg?.match(/column\s+"?(?:[a-z_]+\.)?([a-z_]+)"?\s+does not exist/i)
+      return m ? m[1] : null
+    }
+    async function saveResilient(
+      run: (body: any) => PromiseLike<{ error: { message: string } | null; data?: any }>,
+      body: Record<string, any>,
+    ): Promise<{ error: { message: string } | null; data?: any }> {
+      const payloadBody: Record<string, any> = { ...body }
+      for (let i = 0; i < 12; i++) {
+        const res = await run(payloadBody)
+        if (!res.error) return res
+        const col = missingColumn(res.error.message)
+        if (!col || !(col in payloadBody)) return res // not a fixable missing-column error
+        delete payloadBody[col]
+      }
+      return run(payloadBody)
+    }
 
     // Only one product per line can be the family cover — clear the flag on siblings.
     async function dedupeCover(currentId: string | null) {
@@ -332,10 +346,10 @@ export function ProductForm({
       // Provenance: this supplier is the origin + current owner (captured once).
       const { data: { user } } = await supabase.auth.getUser()
       const provenance = { original_supplier_id: supplierId, current_owner_id: supplierId, source_type: 'Supplier', created_by: user?.id ?? null }
-      let ins = await supabase.from('products').insert({ ...payload, ...provenance, supplier_id: supplierId }).select('id').single()
-      if (ins.error && isMissingColumn(ins.error.message)) {
-        ins = await supabase.from('products').insert({ ...stripOptional(payload), supplier_id: supplierId }).select('id').single()
-      }
+      const ins = await saveResilient(
+        (body: any) => supabase.from('products').insert(body).select('id').single(),
+        { ...payload, ...provenance, supplier_id: supplierId },
+      )
       const newProduct = ins.data
       if (ins.error || !newProduct) { setError(ins.error?.message ?? 'Insert failed'); setLoading(false); return }
       await dedupeCover(newProduct.id)
@@ -353,11 +367,16 @@ export function ProductForm({
         await (supabase.from('product_images') as any).insert({ product_id: newProduct.id, url: upJson.url, sort_order: i, image_role: pendingRoles[i] || null })
       }
     } else if (mode === 'edit' && productId) {
-      let upd = await supabase.from('products').update(payload).eq('id', productId)
-      if (upd.error && isMissingColumn(upd.error.message)) {
-        upd = await supabase.from('products').update(stripOptional(payload)).eq('id', productId)
-      }
+      const upd = await saveResilient(
+        (body: any) => supabase.from('products').update(body).eq('id', productId).select('id'),
+        payload,
+      )
       if (upd.error) { setError(upd.error.message); setLoading(false); return }
+      if (Array.isArray(upd.data) && upd.data.length === 0) {
+        // Update matched 0 rows (RLS / ownership) — surface it instead of a false "saved".
+        setError('Nothing was saved — the product could not be updated (permission issue). Please retry or contact support.')
+        setLoading(false); return
+      }
       await dedupeCover(productId)
       // Re-link to the master catalog in case the name/EAN changed.
       fetch('/api/supplier/master', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'link', productId }) }).catch(() => {})
