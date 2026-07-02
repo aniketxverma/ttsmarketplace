@@ -47,13 +47,18 @@ export function CatalogueManager({ supplierId }: { supplierId: string }) {
     if (!fileRef.current?.files?.[0]) return
     setUploading(true)
     const file = fileRef.current.files[0]
-    const path = `documents/${supplierId}/${Date.now()}-${file.name}`
-    const { error: upErr } = await supabase.storage.from('brand-assets').upload(path, file)
-    if (upErr) { alert(upErr.message); setUploading(false); return }
-    const { data: urlData } = supabase.storage.from('brand-assets').getPublicUrl(path)
+    // Upload through the server endpoint (service-role → brand-assets); the
+    // browser client can't write to the bucket directly (storage RLS).
+    const fd = new FormData()
+    fd.append('file', file)
+    fd.append('folder', 'docs')
+    const upRes = await fetch('/api/upload', { method: 'POST', body: fd })
+    const upJson = await upRes.json().catch(() => ({}))
+    if (!upRes.ok || !upJson.url) { alert(upJson.error || 'Upload failed'); setUploading(false); return }
+    const fileUrl = upJson.url as string
 
     const row: Record<string, unknown> = {
-      supplier_id: supplierId, doc_type: docType, file_url: urlData.publicUrl,
+      supplier_id: supplierId, doc_type: docType, file_url: fileUrl,
       title: title.trim() || (docType === 'price_list' ? 'Price List' : docType === 'brochure' ? 'Brochure' : 'Catalogue'),
       file_name: file.name, file_size_bytes: file.size, is_public: true,
     }
@@ -61,7 +66,7 @@ export function CatalogueManager({ supplierId }: { supplierId: string }) {
     const { data, error } = await supabase.from('supplier_documents').insert(row as any).select().single()
     if (error && /column|does not exist/i.test(error.message)) {
       const { data: legacy } = await supabase.from('supplier_documents')
-        .insert({ supplier_id: supplierId, doc_type: docType, file_url: urlData.publicUrl } as any).select().single()
+        .insert({ supplier_id: supplierId, doc_type: docType, file_url: fileUrl } as any).select().single()
       inserted = legacy as Doc
     } else inserted = data as Doc
     if (inserted) setDocs((p) => [inserted!, ...p])
