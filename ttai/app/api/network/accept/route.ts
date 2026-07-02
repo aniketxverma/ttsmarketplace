@@ -106,11 +106,17 @@ export async function POST(req: NextRequest) {
   // (links/verifies a matching country node, or adds a new official one).
   try {
     const { linkMemberToNetwork } = await import('@/lib/distribution-network')
+    // Resolve the member's brand slug so the map card links to their brand page.
+    const { data: memberSup } = await (admin.from('suppliers') as any)
+      .select('brand_slug').eq('id', supplier.id).maybeSingle()
     await linkMemberToNetwork(admin, invite.inviter_supplier_id, {
+      inviteId: invite.id,
       supplierId: supplier.id,
+      brandSlug: memberSup?.brand_slug ?? null,
       company: invite.company_name,
       countryName: invite.country,
       level: invite.level,
+      verified: true,
     })
   } catch { /* never block accept */ }
 

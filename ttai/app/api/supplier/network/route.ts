@@ -48,6 +48,15 @@ export async function POST(req: NextRequest) {
     const ins = await (admin.from('sales_network') as any).insert(row).select('*').single()
     if (ins.error) return NextResponse.json({ error: ins.error.message }, { status: 500 })
 
+    // Reflect the invited partner on the inviter's Distribution Network map right
+    // away as a pending (unverified) node — it's upgraded to verified on accept.
+    try {
+      const { linkMemberToNetwork } = await import('@/lib/distribution-network')
+      await linkMemberToNetwork(admin, supplier.id, {
+        inviteId: ins.data.id, company, countryName: row.country, level: row.level, verified: false,
+      })
+    } catch { /* never block invite creation */ }
+
     const base = appBaseUrl()
     const link = `${base}/join/${ins.data.token}`
     const inviterName = supplier.trade_name ?? supplier.legal_name ?? 'A supplier'
@@ -72,6 +81,11 @@ export async function POST(req: NextRequest) {
       .select('inviter_supplier_id').eq('id', body.id).maybeSingle()
     if (!inv || inv.inviter_supplier_id !== supplier.id) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     await (admin.from('sales_network') as any).delete().eq('id', body.id)
+    // Remove the matching node from the Distribution Network map.
+    try {
+      const { unlinkInviteFromNetwork } = await import('@/lib/distribution-network')
+      await unlinkInviteFromNetwork(admin, supplier.id, body.id)
+    } catch { /* never block revoke */ }
     return NextResponse.json({ ok: true })
   }
 

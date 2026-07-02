@@ -19,6 +19,8 @@ export type NetNode = {
   profile?: string | null     // the distributor's TTAIZ profile (brand slug or full URL) — makes the company name a link
   verified?: boolean          // verified by TTAIEMA
   benefits?: string[]         // for open opportunities (shown in the apply card)
+  sourceInviteId?: string     // sales_network invite this node was linked from (idempotency + unlink)
+  autoAdded?: boolean         // node created by a sales-network invite (vs a hand-curated one)
 }
 
 export type DistNetwork = {
@@ -104,15 +106,26 @@ export async function getDistNetwork(admin: any, supplierId: string): Promise<Di
 }
 
 /**
- * When a partner accepts a sales-network invite, reflect them on the inviter's
- * distribution-network map: link/verify a matching node (by country or company)
- * or add a new official node. Idempotent. Centre image = inviter's banner when
- * the map doesn't exist yet.
+ * Reflect a sales-network member on the inviter's distribution-network map.
+ * Called twice in a member's lifecycle, keyed by the invite id (idempotent):
+ *   • on invite  — adds a pending node (verified:false, no profile link yet);
+ *   • on accept  — upgrades it (verified:true, links to the member's brand slug).
+ * Links/verifies a matching hand-curated node (by company or country) when one
+ * exists, otherwise adds a new node. Centre image = inviter's banner when the
+ * map doesn't exist yet.
  */
 export async function linkMemberToNetwork(
   admin: any,
   inviterSupplierId: string,
-  member: { supplierId: string; company: string; countryName?: string | null; level?: string | null },
+  member: {
+    inviteId?: string
+    supplierId?: string | null
+    brandSlug?: string | null       // resolvable brand slug → makes the card a link (set on accept)
+    company: string
+    countryName?: string | null
+    level?: string | null
+    verified?: boolean              // true once the member has accepted
+  },
 ): Promise<void> {
   const partnerStatus: NetStatus = LEVEL_TO_STATUS[member.level ?? ''] ?? 'distributor'
   // Resolve an ISO-2 from the free-text country (for the flag).
@@ -136,31 +149,61 @@ export async function linkMemberToNetwork(
   }
 
   const nodes = net.nodes ?? []
-  // Already linked? (idempotent)
-  let node = nodes.find((n) => n.profile === member.supplierId)
+  // Already linked from this invite? (idempotent — the invite→accept upgrade)
+  let node = member.inviteId ? nodes.find((n) => n.sourceInviteId === member.inviteId) : undefined
+  // Legacy: previously linked by supplier id stored in `profile`.
+  if (!node && member.supplierId) node = nodes.find((n) => n.profile === member.supplierId)
   if (!node) {
     // Link an existing un-linked node that matches by company name or country
     // (an "official" / "looking for …" placeholder the factory pre-created).
-    node = nodes.find((n) => !n.profile && (
+    node = nodes.find((n) => !n.sourceInviteId && !n.profile && (
       (!!n.company && n.company.toLowerCase() === member.company.toLowerCase()) ||
       (!!iso && (n.iso ?? '').toUpperCase() === iso)
     ))
   }
   if (node) {
-    node.profile = member.supplierId
-    node.verified = true
+    if (member.inviteId) node.sourceInviteId = member.inviteId
+    if (member.brandSlug) node.profile = member.brandSlug
+    if (member.verified) node.verified = true
     // Promote a "looking for …" opportunity to the matching active partner type.
     if (NET_STATUS[node.status]?.opportunity || node.status === 'coming_soon') node.status = partnerStatus
     if (!node.company) node.company = member.company
     if (iso && !node.iso) node.iso = iso
   } else {
-    nodes.push({ iso, country: member.countryName || member.company, status: partnerStatus, company: member.company, profile: member.supplierId, verified: true })
+    nodes.push({
+      iso, country: member.countryName || member.company, status: partnerStatus,
+      company: member.company, profile: member.brandSlug ?? null, verified: !!member.verified,
+      sourceInviteId: member.inviteId, autoAdded: true,
+    })
   }
   net.nodes = nodes
 
   try {
     await (admin.from('app_settings') as any).upsert({ key: `dist_network:${inviterSupplierId}`, value: JSON.stringify(net) }, { onConflict: 'key' })
-  } catch { /* never block the accept flow */ }
+  } catch { /* never block the invite/accept flow */ }
+}
+
+/**
+ * Remove (or revert) the map node created from a revoked sales-network invite.
+ * Auto-added nodes are dropped; a hand-curated node that we linked is reverted
+ * to an un-linked placeholder so the factory keeps its curated entry.
+ */
+export async function unlinkInviteFromNetwork(admin: any, inviterSupplierId: string, inviteId: string): Promise<void> {
+  if (!inviteId) return
+  const net = await getDistNetwork(admin, inviterSupplierId)
+  if (!net?.nodes?.length) return
+  let changed = false
+  net.nodes = net.nodes.filter((n) => {
+    if (n.sourceInviteId !== inviteId) return true
+    changed = true
+    if (n.autoAdded) return false            // drop nodes we created
+    delete n.sourceInviteId; n.profile = null; n.verified = false  // revert curated ones
+    return true
+  })
+  if (!changed) return
+  try {
+    await (admin.from('app_settings') as any).upsert({ key: `dist_network:${inviterSupplierId}`, value: JSON.stringify(net) }, { onConflict: 'key' })
+  } catch { /* never block revoke */ }
 }
 
 /** Map of supplierId → network for a batch (for directory cards / previews). */
