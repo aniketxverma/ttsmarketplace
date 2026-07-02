@@ -3,7 +3,7 @@
 import { useMemo } from 'react'
 import { useT } from '@/lib/i18n/client'
 import Link from 'next/link'
-import { FileSpreadsheet, ArrowRight, Package, Layers, Boxes } from 'lucide-react'
+import { ArrowRight, Package, Layers, Boxes } from 'lucide-react'
 
 type P = {
   id: string; name: string; slug?: string | null; price_cents: number | null; currency_code?: string | null
@@ -19,7 +19,7 @@ const money = (c?: number | null, cur = 'EUR') =>
  * thousands of products; instead we surface main brands, main categories and
  * 4–5 featured products per category, with a "View Full Excel Catalogue" button.
  */
-export function CatalogueOverview({ products, hasExcel, perCategory = 5 }: { products: P[]; hasExcel?: boolean; perCategory?: number }) {
+export function CatalogueOverview({ products, perCategory = 5 }: { products: P[]; hasExcel?: boolean; perCategory?: number }) {
   const t = useT()
   const { brands, groups, familyCount } = useMemo(() => {
     const brandSet = new Set<string>()
@@ -53,11 +53,6 @@ export function CatalogueOverview({ products, hasExcel, perCategory = 5 }: { pro
             <span className="inline-flex items-center gap-1"><Package className="w-3.5 h-3.5" />{products.length}+ products</span>
           </div>
         </div>
-        {hasExcel && (
-          <a href="#sec-catalog" className="inline-flex items-center gap-2 rounded-xl bg-green-600 text-white px-4 py-2.5 text-sm font-bold hover:bg-green-700 transition-colors">
-            <FileSpreadsheet className="w-4 h-4" /> {t("View Full Excel Catalogue")}
-          </a>
-        )}
       </div>
 
       {/* Main brands */}
