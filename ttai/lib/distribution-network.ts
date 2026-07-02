@@ -96,12 +96,29 @@ export function profileHref(profile?: string | null): string | null {
   return `/brand/${p.replace(/^\/?(brand\/)?/i, '')}`
 }
 
-/** Read one supplier's network config. Defensive — never throws on a public page. */
-export async function getDistNetwork(admin: any, supplierId: string): Promise<DistNetwork | null> {
+/**
+ * A partner is public once accepted. Pending sales-network invites (linked but
+ * not yet verified) are hidden from public maps; hand-curated nodes (no
+ * sourceInviteId) and accepted partners always show.
+ */
+const isPublicNode = (n: NetNode) => !(n.sourceInviteId && !n.verified)
+
+/** Drop not-yet-accepted invite nodes for public display. */
+export function toPublicNet(net: DistNetwork | null): DistNetwork | null {
+  if (!net) return net
+  return { ...net, nodes: (net.nodes ?? []).filter(isPublicNode) }
+}
+
+/**
+ * Read one supplier's network config. Defensive — never throws on a public page.
+ * Pass publicOnly on public surfaces to hide pending (unaccepted) invite nodes.
+ */
+export async function getDistNetwork(admin: any, supplierId: string, publicOnly = false): Promise<DistNetwork | null> {
   try {
     const { data } = await (admin.from('app_settings') as any).select('value').eq('key', `dist_network:${supplierId}`).maybeSingle()
     if (!data?.value) return null
-    return typeof data.value === 'string' ? JSON.parse(data.value) : data.value
+    const net: DistNetwork = typeof data.value === 'string' ? JSON.parse(data.value) : data.value
+    return publicOnly ? toPublicNet(net) : net
   } catch { return null }
 }
 
@@ -206,7 +223,10 @@ export async function unlinkInviteFromNetwork(admin: any, inviterSupplierId: str
   } catch { /* never block revoke */ }
 }
 
-/** Map of supplierId → network for a batch (for directory cards / previews). */
+/**
+ * Map of supplierId → network for a batch (public directory cards / previews).
+ * Pending (unaccepted) invite nodes are filtered out.
+ */
 export async function getDistNetworkMap(admin: any, supplierIds: string[]): Promise<Map<string, DistNetwork>> {
   const out = new Map<string, DistNetwork>()
   const ids = Array.from(new Set(supplierIds.filter(Boolean)))
@@ -216,7 +236,10 @@ export async function getDistNetworkMap(admin: any, supplierIds: string[]): Prom
     const { data } = await (admin.from('app_settings') as any).select('key, value').in('key', keys)
     for (const r of (data ?? []) as any[]) {
       const id = r.key.replace('dist_network:', '')
-      try { out.set(id, typeof r.value === 'string' ? JSON.parse(r.value) : r.value) } catch { /* skip bad json */ }
+      try {
+        const net: DistNetwork = typeof r.value === 'string' ? JSON.parse(r.value) : r.value
+        out.set(id, toPublicNet(net)!)
+      } catch { /* skip bad json */ }
     }
   } catch { /* app_settings unreadable */ }
   return out

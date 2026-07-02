@@ -290,7 +290,7 @@ export default async function BrandPage({ params }: { params: { slug: string } }
 
   // Global Distribution Network (mother factories) — read via service role since
   // app_settings isn't anon-readable. Shows the hub-and-spoke "Network" tab.
-  const distNetwork = await getDistNetwork(createAdminClient(), supplier.id)
+  const distNetwork = await getDistNetwork(createAdminClient(), supplier.id, true)
 
   // Matchmaking gate: hide all direct contact for non-members so every CTA below
   // (and the BrandTabs contact tab) collapses to the "Unlock contact" prompt.
