@@ -79,7 +79,6 @@ export function DistributionNetwork({ net, contactBase = '/contact' }: { net: Di
     const cat = catOf(n.status)
     const Icon = CAT_ICON[cat]
     const color = CAT_COLOR[cat]
-    const href = profileHref(n.profile)
     const inner = (
       <>
         <span className="text-xl flex-shrink-0">{flag(n.iso)}</span>
@@ -93,9 +92,9 @@ export function DistributionNetwork({ net, contactBase = '/contact' }: { net: Di
     )
     const cls = 'dn-card group rounded-xl border border-gray-200 bg-white shadow-sm hover:shadow-lg hover:-translate-y-0.5 hover:border-[color:var(--dn-c)] transition-all px-3 py-2 flex items-center gap-2.5 w-full'
     const style = { ['--dn-c' as any]: color, animationDelay: `${(idx % 6) * 70}ms` }
-    return href
-      ? <Link href={href} className={cls} style={style}>{inner}</Link>
-      : <button onClick={() => setSel(n)} className={cls} style={style}>{inner}</button>
+    // Always open the preview popup (company + verified + action). It routes to
+    // the partner's profile when they have one, otherwise to apply/contact.
+    return <button onClick={() => setSel(n)} className={cls} style={style}>{inner}</button>
   }
 
   // ── Country-card column (+ "X More Countries") ──
@@ -245,11 +244,27 @@ export function DistributionNetwork({ net, contactBase = '/contact' }: { net: Di
                     </ul>
                   </div>
                 )}
-                <Link href={`${contactBase}${contactBase.includes('?') ? '&' : '?'}topic=distribution-network&country=${encodeURIComponent(sel.country)}`}
-                  className="mt-4 w-full inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-extrabold text-white transition-opacity hover:opacity-90"
-                  style={{ background: cfg.opportunity ? cfg.color : '#0B1F4D' }}>
-                  {cfg.opportunity ? t('Apply Now') : t('Contact this distributor')} <ArrowRight className="w-4 h-4" />
-                </Link>
+                {(() => {
+                  const profile = profileHref(sel.profile)
+                  // Partner with a TTAIZ page → go straight to their profile (contact them there).
+                  if (profile && !cfg.opportunity) {
+                    return (
+                      <Link href={profile}
+                        className="mt-4 w-full inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-extrabold text-white transition-opacity hover:opacity-90"
+                        style={{ background: cfg.color }}>
+                        {t('View profile & contact')} <ArrowRight className="w-4 h-4" />
+                      </Link>
+                    )
+                  }
+                  // Opportunity → apply; otherwise a generic contact fallback (no page to link to).
+                  return (
+                    <Link href={`${contactBase}${contactBase.includes('?') ? '&' : '?'}topic=distribution-network&country=${encodeURIComponent(sel.country)}`}
+                      className="mt-4 w-full inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-extrabold text-white transition-opacity hover:opacity-90"
+                      style={{ background: cfg.opportunity ? cfg.color : '#0B1F4D' }}>
+                      {cfg.opportunity ? t('Apply Now') : t('Contact this distributor')} <ArrowRight className="w-4 h-4" />
+                    </Link>
+                  )
+                })()}
               </div>
             </div>
           </div>
