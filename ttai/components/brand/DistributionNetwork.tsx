@@ -32,6 +32,28 @@ const CAT_COLOR = { official: '#16a34a', looking: '#2563eb', agent: '#ea580c' }
 
 const MAX_CARDS = 5
 
+// Scoped animations for the network infographic — flowing connector lines with a
+// traveling glow, staggered card entrance, floating balloons + a soft radar ring.
+const DN_ANIM = `
+.dn-root .dn-link{position:relative;align-self:center;--dn-c:#94a3b8}
+.dn-link-h{width:2.25rem;height:2px;background:repeating-linear-gradient(90deg,var(--dn-c) 0 5px,transparent 5px 11px);background-size:11px 2px;animation:dnDashH 1s linear infinite;opacity:.85}
+.dn-link-v{height:1.75rem;width:2px;margin:0 auto;background:repeating-linear-gradient(180deg,var(--dn-c) 0 5px,transparent 5px 11px);background-size:2px 11px;animation:dnDashV 1s linear infinite;opacity:.85}
+@keyframes dnDashH{to{background-position:11px 0}}
+@keyframes dnDashV{to{background-position:0 11px}}
+.dn-pulse{position:absolute;width:7px;height:7px;border-radius:9999px;background:var(--dn-c);box-shadow:0 0 8px 1px var(--dn-c)}
+.dn-link-h .dn-pulse{top:50%;transform:translateY(-50%);animation:dnTravelH 2.2s ease-in-out infinite}
+.dn-link-v .dn-pulse{left:50%;transform:translateX(-50%);animation:dnTravelV 2.2s ease-in-out infinite}
+@keyframes dnTravelH{0%{left:-3px;opacity:0}12%{opacity:1}88%{opacity:1}100%{left:calc(100% - 3px);opacity:0}}
+@keyframes dnTravelV{0%{top:-3px;opacity:0}12%{opacity:1}88%{opacity:1}100%{top:calc(100% - 3px);opacity:0}}
+.dn-root .dn-card{opacity:0;animation:dnIn .5s cubic-bezier(.2,.7,.3,1) forwards}
+@keyframes dnIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.dn-balloon{animation:dnFloat 6s ease-in-out infinite}
+@keyframes dnFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+.dn-ring{border:2px solid var(--dn-c);opacity:0;animation:dnRadar 2.8s ease-out infinite}
+@keyframes dnRadar{0%{transform:scale(.7);opacity:.55}100%{transform:scale(1.6);opacity:0}}
+@media (prefers-reduced-motion:reduce){.dn-link-h,.dn-link-v,.dn-pulse,.dn-card,.dn-balloon,.dn-ring{animation:none!important}.dn-card{opacity:1!important}}
+`
+
 export function DistributionNetwork({ net, contactBase = '/contact' }: { net: DistNetwork; contactBase?: string }) {
   const t = useT()
   const [sel, setSel] = useState<NetNode | null>(null)
@@ -53,7 +75,7 @@ export function DistributionNetwork({ net, contactBase = '/contact' }: { net: Di
   const byId = (id: string) => regions.find((r) => r.region === id)
 
   // ── A single country card ──
-  const CountryCard = ({ n }: { n: NetNode }) => {
+  const CountryCard = ({ n, idx = 0 }: { n: NetNode; idx?: number }) => {
     const cat = catOf(n.status)
     const Icon = CAT_ICON[cat]
     const color = CAT_COLOR[cat]
@@ -69,16 +91,17 @@ export function DistributionNetwork({ net, contactBase = '/contact' }: { net: Di
         <Icon className="w-4 h-4 flex-shrink-0" style={{ color }} />
       </>
     )
-    const cls = 'rounded-xl border border-gray-200 bg-white shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all px-3 py-2 flex items-center gap-2.5 w-full'
+    const cls = 'dn-card group rounded-xl border border-gray-200 bg-white shadow-sm hover:shadow-lg hover:-translate-y-0.5 hover:border-[color:var(--dn-c)] transition-all px-3 py-2 flex items-center gap-2.5 w-full'
+    const style = { ['--dn-c' as any]: color, animationDelay: `${(idx % 6) * 70}ms` }
     return href
-      ? <Link href={href} className={cls}>{inner}</Link>
-      : <button onClick={() => setSel(n)} className={cls}>{inner}</button>
+      ? <Link href={href} className={cls} style={style}>{inner}</Link>
+      : <button onClick={() => setSel(n)} className={cls} style={style}>{inner}</button>
   }
 
   // ── Country-card column (+ "X More Countries") ──
   const Cards = ({ r }: { r: Region }) => (
     <div className="flex flex-col gap-2 w-[208px]">
-      {r.nodes.slice(0, MAX_CARDS).map((n, i) => <CountryCard key={i} n={n} />)}
+      {r.nodes.slice(0, MAX_CARDS).map((n, i) => <CountryCard key={i} n={n} idx={i} />)}
       {r.nodes.length > MAX_CARDS && (
         <div className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-center text-[11px] font-bold text-gray-500">
           + {r.nodes.length - MAX_CARDS} {t('More Countries')}
@@ -89,8 +112,9 @@ export function DistributionNetwork({ net, contactBase = '/contact' }: { net: Di
 
   // ── The continent "balloon" (map badge + counts) ──
   const Balloon = ({ r }: { r: Region }) => (
-    <div className="rounded-[28px] border-2 bg-white shadow-md px-5 py-4 w-[228px] text-center flex-shrink-0" style={{ borderColor: r.color }}>
-      <span className="mx-auto w-16 h-16 rounded-full flex items-center justify-center text-3xl" style={{ background: `${r.color}1A` }}>
+    <div className="dn-balloon rounded-[28px] border-2 bg-white shadow-md hover:shadow-xl transition-shadow px-5 py-4 w-[228px] text-center flex-shrink-0" style={{ borderColor: r.color }}>
+      <span className="dn-emoji relative mx-auto w-16 h-16 rounded-full flex items-center justify-center text-3xl" style={{ background: `${r.color}1A` }}>
+        <span className="dn-ring absolute inset-0 rounded-full" style={{ ['--dn-c' as any]: r.color }} />
         {REGION_EMOJI[r.region] ?? '🌐'}
       </span>
       <p className="mt-2 text-lg font-black tracking-tight" style={{ color: r.color }}>{t(r.region).toUpperCase()}</p>
@@ -102,8 +126,12 @@ export function DistributionNetwork({ net, contactBase = '/contact' }: { net: Di
       </div>
     </div>
   )
+  // Animated connector — flowing dashes toward the factory + a glowing pulse that
+  // travels along the line (implies goods/orders moving through the network).
   const dash = (color: string, vertical = false) =>
-    <div className={vertical ? 'h-6 border-l-2 border-dashed mx-auto' : 'w-7 border-t-2 border-dashed self-center'} style={{ borderColor: color }} />
+    <div className={`dn-link ${vertical ? 'dn-link-v' : 'dn-link-h'}`} style={{ ['--dn-c' as any]: color }}>
+      <span className="dn-pulse" />
+    </div>
 
   // ── Factory centre ──
   const Factory = (
@@ -125,7 +153,8 @@ export function DistributionNetwork({ net, contactBase = '/contact' }: { net: Di
   const others = regions.filter((r) => !['Europe', 'Middle East', 'Africa', 'Asia', 'Americas'].includes(r.region))
 
   return (
-    <div>
+    <div className="dn-root">
+      <style>{DN_ANIM}</style>
       <div className="text-center">
         <h2 className="text-2xl sm:text-3xl font-black text-[#0B1F4D] tracking-tight">{t('Global Distribution Network')}</h2>
         <p className="text-sm text-gray-500 mt-0.5">{t('Our presence around the world and opportunities for new partnerships')}</p>
@@ -144,7 +173,7 @@ export function DistributionNetwork({ net, contactBase = '/contact' }: { net: Di
           <div className="flex items-center gap-2 justify-self-start">{as && <><Balloon r={as} />{dash(as.color)}<Cards r={as} /></>}</div>
           {/* Row 3 — Americas centred under the factory */}
           <div />
-          {am ? <div className="flex flex-col items-center gap-2"><Balloon r={am} />{dash(am.color, true)}<div className="flex flex-wrap justify-center gap-2 max-w-[680px]">{am.nodes.slice(0, MAX_CARDS + 1).map((n, i) => <div key={i} className="w-[200px]"><CountryCard n={n} /></div>)}{am.nodes.length > MAX_CARDS + 1 && <div className="w-[150px] rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 flex items-center justify-center text-[11px] font-bold text-gray-500">+ {am.nodes.length - (MAX_CARDS + 1)} {t('More Countries')}</div>}</div></div> : <div />}
+          {am ? <div className="flex flex-col items-center gap-2"><Balloon r={am} />{dash(am.color, true)}<div className="flex flex-wrap justify-center gap-2 max-w-[680px]">{am.nodes.slice(0, MAX_CARDS + 1).map((n, i) => <div key={i} className="w-[200px]"><CountryCard n={n} idx={i} /></div>)}{am.nodes.length > MAX_CARDS + 1 && <div className="w-[150px] rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 flex items-center justify-center text-[11px] font-bold text-gray-500">+ {am.nodes.length - (MAX_CARDS + 1)} {t('More Countries')}</div>}</div></div> : <div />}
           <div />
         </div>
         {others.length > 0 && (
@@ -170,7 +199,7 @@ export function DistributionNetwork({ net, contactBase = '/contact' }: { net: Di
               </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 p-3">
-              {r.nodes.slice(0, 6).map((n, i) => <CountryCard key={i} n={n} />)}
+              {r.nodes.slice(0, 6).map((n, i) => <CountryCard key={i} n={n} idx={i} />)}
               {r.nodes.length > 6 && <div className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-center text-[11px] font-bold text-gray-500">+ {r.nodes.length - 6} {t('More Countries')}</div>}
             </div>
           </div>
